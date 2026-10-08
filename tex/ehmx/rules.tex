@@ -507,4 +507,80 @@ $ping(x;k)\mapsto k\,x$ なら，$x:\beta$ と
 $k:\arr{\beta}{\chi}{a}$ から節の結果型は $a$ となり，
 $\forall\beta.\beta=a$ は生成されない．
 
+\clearpage
+\section{元の System F$^{\xi}$ で止まる導出木}
+元の構文には \textbf{let} と暗黙の型適用がないため，前頁の式を
+次の明示的な核の式に直す．$\Delta=\gamma::\mathbf T$ とし，
+\[
+\begin{gathered}
+\Sigma(ping)=\forall\beta::\mathbf T.\beta\to\beta,
+\qquad S=\arr{\gamma}{\varnothing}{\gamma},\\
+B^\star=\mathbf{perform}\ ping[S]\,(\lambda z:\gamma.z),\\
+H^\star=\mathbf{handle}\ B^\star\ \mathbf{with}\
+\{\mathbf{return}\ r\mapsto r;\ ping(x;k)\mapsto x\}.
+\end{gathered}
+\]
+
+\noindent\textbf{本体は導出できる．}
+\begin{prooftree}
+\AxiomC{$z:\gamma\in(z:\gamma)$}
+\RightLabel{\scriptsize\textsc{TVar}}
+\UnaryInfC{$\Delta\mid z:\gamma\vdash z:\gamma\mid\varnothing$}
+\RightLabel{\scriptsize\textsc{TAbs}}
+\UnaryInfC{$\Delta\mid\varnothing\vdash\lambda z:\gamma.z:S\mid\varnothing$}
+\RightLabel{\scriptsize\textsc{TPerform} $\beta:=S$}
+\UnaryInfC{$\Delta\mid\varnothing\vdash B^\star:S\mid\{ping\}$}
+\end{prooftree}
+
+\noindent\textbf{Handler 規則を置くと，操作節で止まる．}
+結果型 $R$ と結果効果 $\epsilon_o$ は外側の $\Delta$ で選ぶ．
+操作節だけが新しい剛性変数 $\beta$ の下で検査される．
+\[
+\Gamma_{op}=x:\beta,\ k:\arr{\beta}{\epsilon_o}{R},
+\qquad \beta\notin\operatorname{FV}(R).
+\]
+\[
+\frac{\Delta\mid\varnothing\vdash B^\star:S\mid\{ping\}
+\qquad
+\boxed{\Delta\mid\varnothing\overset{?}{\vdash}
+  h:S\mid\{ping\}\Rightarrow R\mid\epsilon_o}}
+{\Delta\mid\varnothing\overset{?}{\vdash}H^\star:R\mid\epsilon_o}
+\quad\textsc{THandle}
+\]
+ここで $h=\{\mathbf{return}\ r\mapsto r;\ ping(x;k)\mapsto x\}$．
+枠内に \textsc{THandler} を適用しようとすると，その前提は
+\[
+\frac{\begin{gathered}
+\{ping\}\subseteq\{ping\}\cup\epsilon_o
+\qquad \Sigma(ping)=\forall\beta::\mathbf T.\beta\to\beta\\
+\Delta\mid r:S\vdash r:R\mid\epsilon_o
+\qquad
+\boxed{\Delta,\beta::\mathbf T\mid\Gamma_{op}
+  \overset{?}{\vdash}x:R\mid\epsilon_o}
+\end{gathered}}
+{\Delta\mid\varnothing\overset{?}{\vdash}
+  h:S\mid\{ping\}\Rightarrow R\mid\epsilon_o}
+\quad\textsc{THandler}
+\]
+となる．枠は未証明の前提であり，これらは完成した導出木ではない．
+例えば $R=S,\epsilon_o=\varnothing$ なら return 節は通る．
+\begin{prooftree}
+\AxiomC{$x:\beta\in\Gamma_{op}$}
+\RightLabel{\scriptsize\textsc{TVar}}
+\UnaryInfC{$\Delta,\beta::\mathbf T\mid\Gamma_{op}
+  \vdash x:\beta\mid\varnothing$}
+\end{prooftree}
+\noindent
+$x$ の型は $\beta$ であって $S$ ではない．
+\textsc{TSub} で $R$ に変えるには
+\[
+\boxed{\Delta,\beta::\mathbf T\vdash\beta<:R}
+\]
+が必要だが，元の部分型規則は型変数に対して反射律
+$\beta<:\beta$ しか与えず，外側で固定した $R$ には導けない．
+効果 $\varnothing\subseteq\epsilon_o$ は障害ではない．
+したがって $H^\star$ には元の System F$^{\xi}$ の
+完成した型付け導出木がない．前頁の
+$\forall\beta.\beta=a$ は，同じ障害を EHM(X) の等式制約で表したもの．
+
 \end{document}
