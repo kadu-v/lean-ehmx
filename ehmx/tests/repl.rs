@@ -46,7 +46,6 @@ fn qualified_value_let_and_exact_assumption() {
 #[test]
 fn operation_and_handler_keep_symbolic_effect() {
     let mut s = Session::new();
-    s.process(":op ping : forall a. a -> a").unwrap();
     s.process(":bind y : Int").unwrap();
     let output = s.process("perform ping y").unwrap();
     assert!(output.contains("effect: {ping}"));
@@ -61,8 +60,8 @@ fn operation_and_handler_keep_symbolic_effect() {
 #[test]
 fn failed_declaration_does_not_change_environment() {
     let mut s = Session::new();
-    assert!(s.process(":op ping : a -> a").is_err());
-    assert_eq!(s.process(":env").unwrap(), "empty environment");
+    assert!(s.process(":op pong : a -> a").is_err());
+    assert_eq!(s.process(":env").unwrap(), "op ping: α0 -> α0");
     assert!(
         s.process("missing")
             .unwrap_err()
@@ -78,9 +77,30 @@ fn effect_polymorphic_scheme_and_binder_errors() {
     let out = s.process("h x").unwrap();
     assert!(out.contains("effect: {μ"));
     assert!(out.contains("= Int"));
-    s.process(":op ping : forall a. a -> a").unwrap();
     assert!(
         s.process("handle (perform ping x) with { return r -> r; ping(v;v) -> v }")
             .is_err()
+    );
+}
+
+#[test]
+fn ping_is_builtin_and_restored_by_reset() {
+    let mut s = Session::new();
+    assert!(
+        s.process("perform ping 1")
+            .unwrap()
+            .contains("effect: {ping}")
+    );
+    assert!(
+        s.process(":op ping : forall a. a -> a")
+            .unwrap_err()
+            .contains("already declared")
+    );
+    s.process(":reset").unwrap();
+    assert_eq!(s.process(":env").unwrap(), "op ping: α0 -> α0");
+    assert!(
+        s.process("perform ping true")
+            .unwrap()
+            .contains("effect: {ping}")
     );
 }

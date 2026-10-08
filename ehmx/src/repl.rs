@@ -3,7 +3,7 @@ use crate::infer::{self, Supply};
 use crate::parse::{NamedExpr, NamedTy, OpAst, Parser, SchemeAst};
 use std::collections::BTreeMap;
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct Session {
     ops: BTreeMap<String, Id>,
     op_names: BTreeMap<Id, String>,
@@ -15,6 +15,36 @@ pub struct Session {
     next_ty: Id,
     next_eff: Id,
     next_op: Id,
+}
+impl Default for Session {
+    fn default() -> Self {
+        let mut ops = BTreeMap::new();
+        ops.insert("ping".into(), 0);
+        let mut op_names = BTreeMap::new();
+        op_names.insert(0, "ping".into());
+        let mut sig = BTreeMap::new();
+        sig.insert(
+            0,
+            OpDecl {
+                type_vars: [0].into_iter().collect(),
+                effect_vars: Default::default(),
+                input: Ty::Var(0),
+                output: Ty::Var(0),
+            },
+        );
+        Self {
+            ops,
+            op_names,
+            sig,
+            bindings: vec![],
+            assumptions: vec![],
+            free_types: BTreeMap::new(),
+            free_effects: BTreeMap::new(),
+            next_ty: 1,
+            next_eff: 0,
+            next_op: 1,
+        }
+    }
 }
 impl Session {
     pub fn new() -> Self {
@@ -230,7 +260,7 @@ impl Session {
         }
         match line {
             ":quit"|":q"=>return Ok("quit".into()),
-            ":help"=>return Ok("expr | :infer expr | :op name : forall a. a -> a | :bind name : forall a. Eq a => a -{}-> a | :assume Eq Int | :env | :reset | :quit\nEffect variables begin with ?, e.g. forall a ?e. a -{?e}-> a\n↑/↓: input history; Ctrl-C: clear input; Ctrl-D: exit".into()),
+            ":help"=>return Ok("expr | :infer expr | :op name : forall a. a -> a | :bind name : forall a. Eq a => a -{}-> a | :assume Eq Int | :env | :reset | :quit\nBuilt-in operation: ping : forall a. a -> a\nEffect variables begin with ?, e.g. forall a ?e. a -{?e}-> a\n↑/↓: input history; Ctrl-C: clear input; Ctrl-D: exit".into()),
             ":reset"=>{*self=Self::new();return Ok("environment reset".into())},
             ":env"=>return Ok(self.environment()),
             _=>{}
