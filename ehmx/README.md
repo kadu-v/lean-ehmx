@@ -16,3 +16,5 @@ ehmx> f 1
 ```
 
 `:help` lists the commands. A bare expression infers its type, effect, and remaining constraints. The REPL does not execute expressions or unify type variables. Effect variables in declarations begin with `?`, for example `forall a ?e. a -{?e}-> a`.
+
+Use ↑/↓ to navigate commands entered in the current session. Ctrl-C clears the current input; Ctrl-D exits.

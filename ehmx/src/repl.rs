@@ -230,7 +230,7 @@ impl Session {
         }
         match line {
             ":quit"|":q"=>return Ok("quit".into()),
-            ":help"=>return Ok("expr | :infer expr | :op name : forall a. a -> a | :bind name : forall a. Eq a => a -{}-> a | :assume Eq Int | :env | :reset | :quit\nEffect variables begin with ?, e.g. forall a ?e. a -{?e}-> a".into()),
+            ":help"=>return Ok("expr | :infer expr | :op name : forall a. a -> a | :bind name : forall a. Eq a => a -{}-> a | :assume Eq Int | :env | :reset | :quit\nEffect variables begin with ?, e.g. forall a ?e. a -{?e}-> a\n↑/↓: input history; Ctrl-C: clear input; Ctrl-D: exit".into()),
             ":reset"=>{*self=Self::new();return Ok("environment reset".into())},
             ":env"=>return Ok(self.environment()),
             _=>{}

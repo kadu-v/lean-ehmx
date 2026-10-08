@@ -1,19 +1,30 @@
 use ehmx::repl::Session;
-use std::io::{self, Write};
+use rustyline::{DefaultEditor, error::ReadlineError};
 
 fn main() {
     let mut session = Session::new();
     println!("EHM(X) inference REPL — :help for commands");
-    let stdin = io::stdin();
-    loop {
-        print!("ehmx> ");
-        if io::stdout().flush().is_err() {
-            break;
+    let mut editor = match DefaultEditor::new() {
+        Ok(editor) => editor,
+        Err(error) => {
+            eprintln!("error: {error}");
+            return;
         }
-        let mut line = String::new();
-        match stdin.read_line(&mut line) {
-            Ok(0) | Err(_) => break,
-            Ok(_) => {}
+    };
+    loop {
+        let line = match editor.readline("ehmx> ") {
+            Ok(line) => line,
+            Err(ReadlineError::Interrupted) => continue,
+            Err(ReadlineError::Eof) => break,
+            Err(error) => {
+                eprintln!("error: {error}");
+                break;
+            }
+        };
+        if !line.trim().is_empty() {
+            if let Err(error) = editor.add_history_entry(line.as_str()) {
+                eprintln!("history error: {error}");
+            }
         }
         match session.process(&line) {
             Ok(s) if s == "quit" => break,
