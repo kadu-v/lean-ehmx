@@ -80,9 +80,9 @@ I_\rho(\delta)=I_\rho(\epsilon)\setminus\{\op\}.
 \]
 \[
 \begin{gathered}
-\mathbf{handle}\ E[\mathbf{perform}\ \op[\bar\theta]\ v]\ \mathbf{with}\ h
+\mathbf{handle}\ E[\mathbf{perform}\ \op\ v]\ \mathbf{with}\ h
 \longrightarrow
-e_o[\bar\beta\mapsto\bar\theta][x\mapsto v][k\mapsto k_E],\\
+e_o[x\mapsto v][k\mapsto k_E],\\
 \op\notin\operatorname{handled}(E),\qquad
 k_E=\lambda y.\mathbf{handle}\ E[y]\ \mathbf{with}\ h.
 \end{gathered}
@@ -181,47 +181,38 @@ C\models\operatorname{Split}(\op,\epsilon_{in},\delta)
 \figfoot
 
 \clearpage
-\section*{制約生成 \quad $\mathcal J_\Gamma\llbracket e:\tau\mid\epsilon\rrbracket=C$}
+\section*{制約生成 \quad $\operatorname{Gen}_\Gamma(e)=(\tau,\epsilon,C)$}
 \fighead{Figure 6. 構文に沿った生成方程式}
 \[
-\Gamma(x)=\forall\bar\beta.P\Rightarrow\tau_x,
-\qquad
 \begin{aligned}
-\J{x}{\tau}{\epsilon}
-&=\exists\bar a.\bigl(P[\bar a/\bar\beta]
-\land\tau=\tau_x[\bar a/\bar\beta]
-\land\epsilon\equiv\varnothing\bigr).
+\Gamma(x)=\sigma=\forall\bar\beta.P\Rightarrow\tau_x,
+\quad\theta\text{ は }\bar\beta\text{ の許容される改名}
+&\Longrightarrow\operatorname{Gen}_\Gamma(x)
+  =(\theta\tau_x,\varnothing,\theta P),\\
+\operatorname{Gen}_{\Gamma,x:a}(e)=(b,\eta,C)
+&\Longrightarrow\operatorname{Gen}_\Gamma(\lambda x.e)
+  =(\arr{a}{\eta}{b},\varnothing,C).
 \end{aligned}
 \]
 \[
 \begin{aligned}
-\J{\lambda x.e}{\tau}{\epsilon}
-&=\exists a,b,\eta.\bigl(
-\Jx{\Gamma,x:a}{e}{b}{\eta}
-\land\tau=\arr{a}{\eta}{b}
-\land\epsilon\equiv\varnothing\bigr).
+\operatorname{Gen}_\Gamma(e_1)=(\tau_1,\epsilon_1,C_1),\quad
+\operatorname{Gen}_\Gamma(e_2)=(\tau_2,\epsilon_2,C_2)
+&\Longrightarrow\operatorname{Gen}_\Gamma(e_1\,e_2)\\
+&\quad=(b,\epsilon_1\cup\epsilon_2\cup\eta,
+ C_1\land C_2\land(\tau_1=\arr{\tau_2}{\eta}{b})).
 \end{aligned}
 \]
 \[
 \begin{aligned}
-\J{e_1\,e_2}{\tau}{\epsilon}
-&=\exists a,\eta,\epsilon_1,\epsilon_2.\bigl(
-\J{e_1}{\arr{a}{\eta}{\tau}}{\epsilon_1}
-\land\J{e_2}{a}{\epsilon_2}\\
-&\hspace{31mm}\land\epsilon\equiv\epsilon_1\cup\epsilon_2\cup\eta\bigr).
+\Sigma(\op)=\forall\bar\beta.\tau_a\to\tau_b,\quad
+\operatorname{Gen}_\Gamma(e)=(\tau,\eta,C)
+&\Longrightarrow\operatorname{Gen}_\Gamma(\mathbf{perform}\ \op\ e)\\
+&\quad=(\theta\tau_b,\{\op\}\cup\eta,
+  C\land(\tau=\theta\tau_a)).
 \end{aligned}
 \]
-\[
-\Sigma(\op)=\forall\bar\beta.\tau_a\to\tau_b,
-\qquad
-\begin{aligned}
-\J{\mathbf{perform}\ \op\ e}{\tau}{\epsilon}
-&=\exists\bar a,\eta.\bigl(
-\J{e}{\tau_a[\bar a/\bar\beta]}{\eta}
-\land\tau=\tau_b[\bar a/\bar\beta]
-\land\epsilon\equiv\eta\cup\{\op\}\bigr).
-\end{aligned}
-\]
+\[a,b,\eta,\theta\text{ は使用時に新たに選ぶ。}\]
 \figfoot
 
 \vspace{5mm}
@@ -231,19 +222,18 @@ C\models\operatorname{Split}(\op,\epsilon_{in},\delta)
 \operatorname{Gen}(\Gamma,v)=(\tau_1,\varnothing,C_1),\qquad
 A=\operatorname{FV}(\tau_1,C_1)\setminus\operatorname{FV}(\Gamma),\\
 \sigma=\forall A.C_1\Rightarrow\tau_1,
-\qquad\operatorname{Gen}(\Gamma,x:\sigma,e_2)=(\tau_2,\epsilon_2,C_2).
+\qquad\operatorname{Gen}_{\Gamma,x:\sigma}(e_2)=(\tau_2,\epsilon_2,C_2).
 \end{gathered}
 \]
 \[
 \begin{aligned}
-\operatorname{Gen}(\Gamma,\mathbf{let}\ x=v\ \mathbf{in}\ e_2)
+\operatorname{Gen}_\Gamma(\mathbf{let}\ x=v\ \mathbf{in}\ e_2)
 &=(\tau_2,\epsilon_2,C_2),\\[2mm]
-\J{\mathbf{let}\ x=e_1\ \mathbf{in}\ e_2}{\tau}{\epsilon}
-&=\exists a,\epsilon_1,\epsilon_2.\bigl(
-  \J{e_1}{a}{\epsilon_1}\land
-  \Jx{\Gamma,x:a}{e_2}{\tau}{\epsilon_2}
-  \land\epsilon\equiv\epsilon_1\cup\epsilon_2\bigr),
-\qquad \neg\operatorname{Value}(e_1).
+\operatorname{Gen}_\Gamma(e_1)=(\tau_1,\epsilon_1,C_1),\quad
+\operatorname{Gen}_{\Gamma,x:\tau_1}(e_2)=(\tau_2,\epsilon_2,C_2)
+&\Longrightarrow\operatorname{Gen}_\Gamma(\mathbf{let}\ x=e_1\ \mathbf{in}\ e_2)\\
+&\quad=(\tau_2,\epsilon_1\cup\epsilon_2,C_1\land C_2),
+\quad\neg\operatorname{Value}(e_1).
 \end{aligned}
 \]
 \figfoot
@@ -255,23 +245,22 @@ A=\operatorname{FV}(\tau_1,C_1)\setminus\operatorname{FV}(\Gamma),\\
 \begin{gathered}
 \Sigma(\op)=\forall\overline{\beta::\kappa}.\tau_a\to\tau_b,
 \qquad a,\delta,\chi\ \text{fresh},\\[1mm]
-C_{in}=\J{e}{\tau_{in}}{\epsilon_{in}},
-\qquad C_r=\Jx{\Gamma,r:\tau_{in}}{e_r}{\tau_r}{\epsilon_r},\\
-C_o=\Jx{\Gamma,x:\tau_a,k:\arr{\tau_b}{\chi}{a}}
-{e_o}{\tau_o}{\epsilon_o}.
+\operatorname{Gen}_\Gamma(e)=(\tau_{in},\epsilon_{in},C_{in}),\\
+\operatorname{Gen}_{\Gamma,r:\tau_{in}}(e_r)
+ =(\tau_r,\epsilon_r,C_r),\\
+\operatorname{Gen}_{\Gamma,x:\tau_a,k:\arr{\tau_b}{\chi}{a}}(e_o)
+ =(\tau_o,\epsilon_o,C_o).
 \end{gathered}
 \]
 \[
 \boxed{\begin{aligned}
-\J{\mathbf{handle}\ e\ \mathbf{with}\ h}{\tau}{\epsilon}
-=\exists\tau_{in},a,\delta,\chi,\epsilon_{in},\epsilon_r,\tau_o,\epsilon_o.\bigl(
-&C_{in}\land C_r\land(\tau_r=a)\\
-&\land\forall\bar\beta.
-  (C_o\land\tau_o=a\land\epsilon_o\subseteq\chi)\\
-&\land\operatorname{Split}(\op,\epsilon_{in},\delta)
-\land\delta\subseteq\chi
-\land\epsilon_r\subseteq\chi\\
-&\land\tau=a\land\epsilon\equiv\chi\bigr).
+\operatorname{Gen}_\Gamma(\mathbf{handle}\ e\ \mathbf{with}\ h)
+&=(a,\chi,C),\\
+C&=C_{in}\land C_r\land(\tau_r=a)\\
+ &\quad\land\forall\bar\beta.
+   (C_o\land\tau_o=a\land\epsilon_o\subseteq\chi)\\
+ &\quad\land\operatorname{Split}(\op,\epsilon_{in},\delta)
+   \land\delta\subseteq\chi\land\epsilon_r\subseteq\chi.
 \end{aligned}}
 \]
 \[
