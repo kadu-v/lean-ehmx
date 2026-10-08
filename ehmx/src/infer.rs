@@ -32,6 +32,7 @@ pub enum InferError {
     TypeMismatch,
     EffectMismatch,
     LacksViolation,
+    RigidTypeMismatch,
 }
 
 fn scope_ok<P: Predicate>(
@@ -288,9 +289,30 @@ pub fn simplify_atom<P: Predicate>(c: Constraint<P>) -> Result<Constraint<P>, In
     }
 }
 pub fn simplify<P: Predicate>(c: Constraint<P>) -> Result<Constraint<P>, InferError> {
+    if rigid_var_equality(&c, &BTreeSet::new()) {
+        return Err(InferError::RigidTypeMismatch);
+    }
     match c {
         Constraint::And(a, b) => Ok(Constraint::and(simplify(*a)?, simplify(*b)?)),
         atom => simplify_atom(atom),
+    }
+}
+
+fn rigid_var_equality<P: Predicate>(c: &Constraint<P>, bound: &BTreeSet<Id>) -> bool {
+    // A universally quantified type variable cannot equal a distinct fixed
+    // variable for every instantiation.
+    match c {
+        Constraint::And(a, b) => rigid_var_equality(a, bound) || rigid_var_equality(b, bound),
+        Constraint::AllTy(i, inner) => {
+            let mut bound = bound.clone();
+            bound.insert(*i);
+            rigid_var_equality(inner, &bound)
+        }
+        Constraint::AllEff(_, inner) => rigid_var_equality(inner, bound),
+        Constraint::TypeEq(Ty::Var(a), Ty::Var(b)) => {
+            a != b && (bound.contains(a) || bound.contains(b))
+        }
+        _ => false,
     }
 }
 pub fn assumptions<P: Predicate>(ps: &[P]) -> Constraint<P> {

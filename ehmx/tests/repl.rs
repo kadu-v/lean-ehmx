@@ -104,3 +104,18 @@ fn ping_is_builtin_and_restored_by_reset() {
             .contains("effect: {ping}")
     );
 }
+
+#[test]
+fn polymorphic_ping_clause_cannot_return_its_argument() {
+    let mut s = Session::new();
+    let invalid =
+        r"handle (let x = \x -> x in perform ping x) with { return r -> r; ping(x;k) -> x }";
+    assert!(
+        s.process(invalid)
+            .unwrap_err()
+            .contains("RigidTypeMismatch")
+    );
+    let valid =
+        r"handle (let x = \x -> x in perform ping x) with { return r -> r; ping(x;k) -> k x }";
+    assert!(s.process(valid).unwrap().contains("effect: {μ"));
+}

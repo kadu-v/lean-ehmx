@@ -319,8 +319,13 @@ impl Session {
             types: self.next_ty + 1,
             effects: self.next_eff + 1,
         };
-        let r = infer::infer_qualified(&self.sig, &ctx, &e, supply, &self.assumptions)
-            .map_err(|e| format!("inference failed: {e:?}"))?;
+        let r = infer::infer_qualified(&self.sig, &ctx, &e, supply, &self.assumptions).map_err(
+            |e| match e {
+                infer::InferError::RigidTypeMismatch =>
+                    "inference failed: RigidTypeMismatch (a polymorphic operation argument cannot have the handler's fixed result type)".into(),
+                e => format!("inference failed: {e:?}"),
+            },
+        )?;
         Ok(format!(
             "type: {}\neffect: {}\nconstraints: {}",
             self.show_ty(&r.ty),

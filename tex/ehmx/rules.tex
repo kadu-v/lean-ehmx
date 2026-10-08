@@ -2,6 +2,7 @@
 \usepackage[margin=16mm]{geometry}
 \usepackage{amsmath,amssymb,mathtools}
 \usepackage{array}
+\usepackage{amsthm}
 \pagestyle{plain}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{3pt}
@@ -20,6 +21,9 @@
 \newcommand{\pair}[2]{%
 \begin{minipage}[t]{0.49\linewidth}\centering #1\end{minipage}\hfill%
 \begin{minipage}[t]{0.49\linewidth}\centering #2\end{minipage}\par}
+\newtheorem{proposition}{命題}[section]
+\newtheorem{lemma}[proposition]{補題}
+\newtheorem{theorem}[proposition]{定理}
 
 \begin{document}
 \begin{center}
@@ -289,17 +293,11 @@ C&=C_{in}\land C_r\land(\tau_r=a)\\
 \begin{aligned}
 (\arr{a_1}{\eta_1}{b_1})=(\arr{a_2}{\eta_2}{b_2})
 &\rightsquigarrow (a_1=a_2)\land(b_1=b_2)\land(\eta_1\equiv\eta_2),\\
-\operatorname{simplify}(C)=R
+\operatorname{simplify}(C)=\operatorname{some}(R)
 &\Longrightarrow\ \forall\rho.\ \rho\models R\Rightarrow\rho\models C,\\
 \operatorname{resolve}_X(A,C)=R_X
 &\Longrightarrow\ \forall\rho.\ \rho\models A\land R_X\Rightarrow\rho\models C.
 \end{aligned}
-\]
-\[
-\boxed{
-\operatorname{inferQualified}(\Sigma,X,A,\Gamma,e)=(\tau,\epsilon,C)
-\quad\Longrightarrow\quad
-C;\Gamma\vdash_{\mathrm{EHM}(X)}e:\tau\mid\epsilon.}
 \]
 \[\text{型変数の単一化・principal type・操作的安全性はこの証明の対象外。}\]
 \figfoot
@@ -325,5 +323,104 @@ C_{e}=Eq\,\alpha\land(\varnothing\subseteq\chi)
 \end{gathered}
 \]
 \figfoot
+
+\clearpage
+\section{主要な補題・命題・定理}
+\[
+R\models C\ \stackrel{\mathrm{def}}{\Longleftrightarrow}\
+\forall\rho.\ \rho\models R\Rightarrow\rho\models C,
+\qquad
+\operatorname{Assume}(A)=\bigwedge_{p\in A}p.
+\]
+
+\begin{lemma}[操作の厳密な除去]
+任意の評価 $\rho$ について，
+\[
+\rho\models\operatorname{Split}(\op,\epsilon,\delta)
+\quad\Longleftrightarrow\quad
+I_\rho(\delta)=I_\rho(\epsilon)\setminus\{\op\}.
+\]
+\end{lemma}
+
+\begin{lemma}[剛性変数の全称閉包]
+型変数・効果変数の有限集合 $B_T,B_E$ について，
+\[
+\operatorname{Close}_{B_T,B_E}(D)
+\ \stackrel{\mathrm{def}}{=}\
+\forall B_T.\forall B_E.D,
+\qquad
+\operatorname{Close}_{B_T,B_E}(D)\models D.
+\]
+\end{lemma}
+
+\begin{proposition}[多相操作引数の固定結果型への漏出]
+$i\ne j$ ならば，
+\[
+\neg\exists\rho.\ \rho\models
+\forall\alpha_i.(\alpha_i=\alpha_j).
+\]
+\end{proposition}
+
+\begin{lemma}[値の生成効果]
+\[
+\operatorname{Value}(v)\ \land\
+\operatorname{Gen}_\Gamma(v)=(\tau,\epsilon,C)
+\quad\Longrightarrow\quad \epsilon=\varnothing.
+\]
+\end{lemma}
+
+\begin{proposition}[宣言的型付けに対する生成規則の健全性]
+\[
+\operatorname{Gen}_\Gamma(e)=(\tau,\epsilon,C)
+\quad\Longrightarrow\quad
+C;\Gamma\vdash_{\mathrm{EHM}(X)}e:\tau\mid\epsilon.
+\]
+\end{proposition}
+
+\begin{proposition}[実行可能な生成器の規則への適合]
+\[
+\operatorname{generate}(\Sigma,X,\Gamma,e,s)=\operatorname{some}(r)
+\quad\Longrightarrow\quad
+\operatorname{Gen}_\Gamma(e)=(r.\tau,r.\epsilon,r.C).
+\]
+\end{proposition}
+
+\begin{lemma}[簡約器の健全性]
+\[
+\operatorname{simplify}(C)=\operatorname{some}(R)
+\quad\Longrightarrow\quad R\models C.
+\]
+\end{lemma}
+
+\begin{lemma}[追加述語の解決の健全性]
+\[
+\operatorname{Assume}(A)\land\operatorname{resolve}_X(A,C)
+\models C.
+\]
+\end{lemma}
+
+\begin{theorem}[EHM(X) 推論の健全性]
+\[
+\operatorname{inferQualified}(\Sigma,X,A,\Gamma,e,s)
+=\operatorname{some}(r)
+\quad\Longrightarrow\quad
+r.C;\Gamma\vdash_{\mathrm{EHM}(X)}e:r.\tau\mid r.\epsilon.
+\]
+ここで $r.C$ は $\operatorname{Assume}(A)$ と未解決の制約を含む．
+\end{theorem}
+
+\noindent
+$ping(x;k)\mapsto x$ は上の命題により充足不能となる．
+$ping(x;k)\mapsto k\,x$ では $\chi=\varnothing$ は一解だが，
+この推論器は最小効果を選ばず $\chi$ と包含制約を残す．
+
+{\footnotesize\noindent
+対応する Lean 定理：\texttt{Constraint.split\_iff},
+\texttt{Constraint.close\_current},
+\texttt{Constraint.rigid\_var\_eq\_unsat}.\\
+\texttt{Generate.value\_effect}, \texttt{Generate.sound},
+\texttt{generate\_sound}.\\
+\texttt{simplify\_sound}, \texttt{resolveX\_sound},
+\texttt{inferQualified\_sound}.\par}
 
 \end{document}

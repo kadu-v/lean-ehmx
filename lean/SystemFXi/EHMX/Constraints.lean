@@ -101,4 +101,17 @@ theorem Constraint.close_current {X : Domain} (types effects : Finset Nat)
     (Constraint.closeTypes_current (types.sort (· ≤ ·)) _)
     (Constraint.closeEffects_current (effects.sort (· ≤ ·)) c)
 
+/-- A rigid operation type variable cannot equal an independent fixed type
+variable at every instantiation. -/
+theorem Constraint.rigid_var_eq_unsat {X : Domain} (i j : Nat)
+    (hij : i ≠ j) (ρ : Valuation) :
+    ¬ (Constraint.allTy (X := X) i (.typeEq (.var i) (.var j))).holds ρ := by
+  intro h
+  have h0 := h (.atom 0)
+  have h1 := h (.atom 1)
+  have hji : j ≠ i := Ne.symm hij
+  simp [Constraint.holds, Ty.eval, hji] at h0 h1
+  have h01 := h0.trans h1.symm
+  cases h01
+
 end SystemFXi.EHMX
