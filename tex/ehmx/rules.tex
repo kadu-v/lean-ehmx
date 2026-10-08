@@ -510,12 +510,13 @@ $\forall\beta.\beta=a$ は生成されない．
 \clearpage
 \section{元の System F$^{\xi}$ で止まる導出木}
 元の構文には \textbf{let} と暗黙の型適用がないため，前頁の式を
-次の明示的な核の式に直す．$\Delta=\gamma::\mathbf T$ とし，
+次の明示的な核の式に直す．
 \[
 \begin{gathered}
 \Sigma(ping)=\forall\beta::\mathbf T.\beta\to\beta,
-\qquad S=\arr{\gamma}{\varnothing}{\gamma},\\
-B^\star=\mathbf{perform}\ ping[S]\,(\lambda z:\gamma.z),\\
+\qquad \Delta=\gamma::\mathbf T,\\
+B^\star=\mathbf{perform}\ ping[\arr{\gamma}{\varnothing}{\gamma}]
+  \, (\lambda z:\gamma.z),\\
 H^\star=\mathbf{handle}\ B^\star\ \mathbf{with}\
 \{\mathbf{return}\ r\mapsto r;\ ping(x;k)\mapsto x\}.
 \end{gathered}
@@ -527,37 +528,49 @@ H^\star=\mathbf{handle}\ B^\star\ \mathbf{with}\
 \RightLabel{\scriptsize\textsc{TVar}}
 \UnaryInfC{$\Delta\mid z:\gamma\vdash z:\gamma\mid\varnothing$}
 \RightLabel{\scriptsize\textsc{TAbs}}
-\UnaryInfC{$\Delta\mid\varnothing\vdash\lambda z:\gamma.z:S\mid\varnothing$}
-\RightLabel{\scriptsize\textsc{TPerform} $\beta:=S$}
-\UnaryInfC{$\Delta\mid\varnothing\vdash B^\star:S\mid\{ping\}$}
+\UnaryInfC{$\Delta\mid\varnothing\vdash\lambda z:\gamma.z:
+  \arr{\gamma}{\varnothing}{\gamma}\mid\varnothing$}
+\RightLabel{\scriptsize\textsc{TPerform}
+  $\beta:=\arr{\gamma}{\varnothing}{\gamma}$}
+\UnaryInfC{$\Delta\mid\varnothing\vdash B^\star:
+  \arr{\gamma}{\varnothing}{\gamma}\mid\{ping\}$}
 \end{prooftree}
 
 \noindent\textbf{Handler の導出は操作節で止まる．}
-結果型 $S$，結果効果 $\varnothing$ に具体化すると，
+結果型 $\arr{\gamma}{\varnothing}{\gamma}$，
+結果効果 $\varnothing$ に具体化すると，
 \textsc{THandler} の効果条件は
 $\{ping\}\subseteq\{ping\}\cup\varnothing=\{ping\}$ となり成立する．
 return 節も \textsc{TVar} から
-$\Delta\mid r:S\vdash r:S\mid\varnothing$ と導ける．
+$\Delta\mid r:\arr{\gamma}{\varnothing}{\gamma}
+\vdash r:\arr{\gamma}{\varnothing}{\gamma}\mid\varnothing$ と導ける．
 残る前提だけを枠で示す．
+\[
+\Gamma_{op}=x:\beta,\quad
+k:\arr{\beta}{\varnothing}{(\arr{\gamma}{\varnothing}{\gamma})}.
+\]
 \begin{prooftree}
-\AxiomC{$\Delta\mid\varnothing\vdash B^\star:S\mid\{ping\}$}
-\AxiomC{$\Delta\mid r:S\vdash r:S\mid\varnothing$}
-\AxiomC{$\boxed{\Delta,\beta::\mathbf T\mid
-  x:\beta,\ k:\arr{\beta}{\varnothing}{S}
-  \overset{?}{\vdash}x:S\mid\varnothing}$}
+\AxiomC{$\Delta\mid\varnothing\vdash B^\star:
+  \arr{\gamma}{\varnothing}{\gamma}\mid\{ping\}$}
+\AxiomC{$\Delta\mid r:\arr{\gamma}{\varnothing}{\gamma}
+  \vdash r:\arr{\gamma}{\varnothing}{\gamma}\mid\varnothing$}
+\AxiomC{$\boxed{\Delta,\beta::\mathbf T\mid\Gamma_{op}
+  \overset{?}{\vdash}x:\arr{\gamma}{\varnothing}{\gamma}
+  \mid\varnothing}$}
 \RightLabel{\scriptsize\textsc{THandler}}
 \BinaryInfC{$\Delta\mid\varnothing\overset{?}{\vdash}
   \left\{\begin{aligned}
     \mathbf{return}\ r&\mapsto r;\\
     ping(x;k)&\mapsto x
   \end{aligned}\right\}
-  :S\mid\{ping\}\Rightarrow S\mid\varnothing$}
+  :\arr{\gamma}{\varnothing}{\gamma}\mid\{ping\}
+  \Rightarrow\arr{\gamma}{\varnothing}{\gamma}\mid\varnothing$}
 \RightLabel{\scriptsize\textsc{THandle}}
 \BinaryInfC{$\Delta\mid\varnothing\overset{?}{\vdash}
-  H^\star:S\mid\varnothing$}
+  H^\star:\arr{\gamma}{\varnothing}{\gamma}\mid\varnothing$}
 \end{prooftree}
 枠は未証明の前提であり，これは完成した導出木ではない．
-操作節の環境を $\Gamma_{op}=x:\beta,k:\arr{\beta}{\varnothing}{S}$ と書くと，
+操作節の $x$ に \textsc{TVar} を適用すると，
 \begin{prooftree}
 \AxiomC{$x:\beta\in\Gamma_{op}$}
 \RightLabel{\scriptsize\textsc{TVar}}
@@ -565,14 +578,15 @@ $\Delta\mid r:S\vdash r:S\mid\varnothing$ と導ける．
   \vdash x:\beta\mid\varnothing$}
 \end{prooftree}
 \noindent
-$x$ の型は $\beta$ であって $S$ ではない．
-\textsc{TSub} で $S$ に変えるには
+$x$ の型は $\beta$ であって
+$\arr{\gamma}{\varnothing}{\gamma}$ ではない．
+\textsc{TSub} で関数型に変えるには
 \[
 \boxed{\Delta,\beta::\mathbf T\vdash
   \beta<:\arr{\gamma}{\varnothing}{\gamma}}
 \]
 が必要だが，元の部分型規則は型変数に対して反射律
-$\beta<:\beta$ しか与えず，外側で固定した $S$ には導けない．
+$\beta<:\beta$ しか与えず，外側で固定した関数型には導けない．
 結果型を別の外側の型 $R$ に変えても $\beta<:R$ が必要になる．
 効果 $\varnothing\subseteq\epsilon_o$ は障害ではない．
 したがって $H^\star$ には元の System F$^{\xi}$ の
