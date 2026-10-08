@@ -30,13 +30,14 @@
 \fighead{Figure 1. 構文・制約・効果の解釈}
 \[
 \begin{aligned}
-e &::= x\mid\lambda x.e\mid e_1\,e_2\mid
+e &::= x\mid n\mid\mathbf{true}\mid\mathbf{false}
+ \mid\lambda x.e\mid e_1\,e_2\mid
  \mathbf{let}\ x=e_1\ \mathbf{in}\ e_2
  \mid\mathbf{perform}\ \op\ e
  \mid\mathbf{handle}\ e\ \mathbf{with}\ h,\\
 h &::=\{\mathbf{return}\ r\mapsto e_r;\ \op(x;k)\mapsto e_o\},
-\qquad v::=x\mid\lambda x.e,\\
-\tau &::=\alpha\mid\arr{\tau}{\epsilon}{\tau},
+\qquad v::=x\mid n\mid\mathbf{true}\mid\mathbf{false}\mid\lambda x.e,\\
+\tau &::=\alpha\mid Int\mid Bool\mid\arr{\tau}{\epsilon}{\tau},
 \qquad \epsilon::=\varnothing\mid\{\op\}\mid\mu\mid\epsilon\cup\epsilon,\\
 \sigma &::=\forall\bar\alpha,\bar\mu.\ P\Rightarrow\tau,\\
 C &::=\top\mid C\land C\mid\tau=\tau\mid
@@ -123,7 +124,14 @@ k_E=\lambda y.\mathbf{handle}\ E[y]\ \mathbf{with}\ h.
 \rulelabel{Perform}
 \]
 }
-\vspace{6mm}
+\[
+\frac{n\in\mathbb Z}{\jd{n}{Int}{\varnothing}}
+\rulelabel{Int}
+\qquad
+\frac{b\in\{\mathbf{true},\mathbf{false}\}}
+{\jd{b}{Bool}{\varnothing}}
+\rulelabel{Bool}
+\]
 \figfoot
 
 \vspace{4mm}
@@ -183,6 +191,12 @@ C\models\operatorname{Split}(\op,\epsilon_{in},\delta)
 \clearpage
 \section*{制約生成 \quad $\operatorname{Gen}_\Gamma(e)=(\tau,\epsilon,C)$}
 \fighead{Figure 6. 構文に沿った生成方程式}
+\[
+\operatorname{Gen}_\Gamma(n)=(Int,\varnothing,\top),
+\qquad
+\operatorname{Gen}_\Gamma(b)=(Bool,\varnothing,\top)
+\quad(b\in\{\mathbf{true},\mathbf{false}\}).
+\]
 \[
 \begin{aligned}
 \Gamma(x)=\sigma=\forall\bar\beta.P\Rightarrow\tau_x,

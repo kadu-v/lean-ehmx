@@ -1,5 +1,6 @@
 lean/.lake/
 tex/build/
+ehmx/target/
 *.aux
 *.fdb_latexmk
 *.fls

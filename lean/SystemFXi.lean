@@ -1,7 +1,7 @@
 import SystemFXi.Safety
 import SystemFXi.EffectPolySafety
 import SystemFXi.EffectPolyExamples
-import SystemFXi.EHMX.Classes
+import SystemFXi.EHMX.Examples
 
 /-!
 # System Fξ

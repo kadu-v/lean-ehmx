@@ -18,6 +18,10 @@ def simplifyAtom {X : Domain} : Constraint X → Option (Constraint X)
       some (.and (.typeEq a a')
         (.and (.typeEq b b')
           (.and (.effectLe ε ε') (.effectLe ε' ε))))
+  | .typeEq (.base a) (.base b) =>
+      if a = b then some .top else none
+  | .typeEq (.base _) (.arr _ _ _) => none
+  | .typeEq (.arr _ _ _) (.base _) => none
   | .typeEq a b =>
       if a = b then some .top
       else if a.occursBad b then none
@@ -41,26 +45,58 @@ def simplify {X : Domain} : Constraint X → Option (Constraint X)
       some (.and c' d')
   | c => simplifyAtom c
 
+/-- The undecided type equality is retained; equal types become `top`. -/
+private theorem simplify_typeEq_undecided_sound {X : Domain} (a b : Ty)
+    {r : Constraint X}
+    (h : (if a = b then some Constraint.top
+      else if a.occursBad b then none else some (.typeEq a b)) = some r) :
+    r.Entails (.typeEq a b) := by
+  by_cases heq : a = b
+  · simp [heq] at h
+    cases h
+    intro ρ _
+    simp [Constraint.holds, heq]
+  · by_cases hbad : a.occursBad b = true
+    · simp [heq, hbad] at h
+    · simp [heq, hbad] at h
+      cases h
+      exact Constraint.entails_refl _
+
 theorem simplifyAtom_sound {X : Domain} {c r : Constraint X}
     (h : simplifyAtom c = some r) : r.Entails c := by
   cases c with
   | top => simp [simplifyAtom] at h; cases h; exact Constraint.entails_refl _
   | and c d => simp [simplifyAtom] at h; cases h; exact Constraint.entails_refl _
   | typeEq a b =>
-      cases a <;> cases b <;> simp only [simplifyAtom] at h
-      all_goals first
-        | split at h
-          · simp at h; cases h; intro ρ _; simp_all [Constraint.holds]
-          · split at h
-            · simp at h
-            · simp at h; cases h; exact Constraint.entails_refl _
-        | simp at h; cases h
-          intro ρ hh
-          rcases hh with ⟨ha, hb, hεε', hε'ε⟩
-          simp only [Constraint.holds] at *
-          have heff := Finset.Subset.antisymm hεε' hε'ε
-          simp only [Ty.eval]
-          congr 1
+      cases a with
+      | var i =>
+          cases b <;> exact simplify_typeEq_undecided_sound _ _ (by simpa [simplifyAtom] using h)
+      | base u =>
+          cases b with
+          | var i =>
+              exact simplify_typeEq_undecided_sound _ _ (by simpa [simplifyAtom] using h)
+          | base v =>
+              by_cases huv : u = v
+              · simp [simplifyAtom, huv] at h
+                cases h
+                intro ρ _
+                simp [Constraint.holds, huv]
+              · simp [simplifyAtom, huv] at h
+          | arr a ε b => simp [simplifyAtom] at h
+      | arr a ε out =>
+          cases b with
+          | var i =>
+              exact simplify_typeEq_undecided_sound _ _ (by simpa [simplifyAtom] using h)
+          | base u => simp [simplifyAtom] at h
+          | arr a' ε' b' =>
+              simp [simplifyAtom] at h
+              cases h
+              intro ρ hh
+              rcases hh with ⟨ha, hb, hεε', hε'ε⟩
+              simp only [Constraint.holds] at *
+              have heff := Finset.Subset.antisymm hεε' hε'ε
+              simp only [Ty.eval]
+              congr 1
   | effectLe ε η =>
       by_cases hε : ε.vars = ∅
       · by_cases hη : η.vars = ∅

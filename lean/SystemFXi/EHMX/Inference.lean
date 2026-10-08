@@ -11,6 +11,8 @@ inductive Typing (sig : Signature) (X : Domain) :
       σ.AdmissibleRename ρ η →
       C.Entails (σ.instantiate ρ η).2 →
       Typing sig X C Γ (.var i) (σ.instantiate ρ η).1 ∅
+  | int {C Γ} (n : Int) : Typing sig X C Γ (.int n) (.base .int) ∅
+  | bool {C Γ} (b : Bool) : Typing sig X C Γ (.bool b) (.base .bool) ∅
   | lam {C Γ e a b ε} :
       Typing sig X C (Scheme.mono a :: Γ) e b ε →
       Typing sig X C Γ (.lam e) (.arr a ε b) ∅
@@ -65,6 +67,8 @@ inductive Generate (sig : Signature) (X : Domain) :
       σ.AdmissibleRename ρ η →
       Generate sig X Γ (.var i) (σ.instantiate ρ η).1 ∅
         (σ.instantiate ρ η).2
+  | int {Γ} (n : Int) : Generate sig X Γ (.int n) (.base .int) ∅ .top
+  | bool {Γ} (b : Bool) : Generate sig X Γ (.bool b) (.base .bool) ∅ .top
   | lam {Γ e a b ε C} :
       Generate sig X (Scheme.mono a :: Γ) e b ε C →
       Generate sig X Γ (.lam e) (.arr a ε b) ∅ C
@@ -113,6 +117,8 @@ theorem Generate.value_effect {sig : Signature} {X : Domain}
     (h : Generate sig X Γ v τ ε C) (hv : Value v) : ε = ∅ := by
   cases hv with
   | var _ => cases h; rfl
+  | int _ => cases h; rfl
+  | bool _ => cases h; rfl
   | lam _ => cases h; rfl
 
 theorem Generate.sound {sig : Signature} {X : Domain}
@@ -121,6 +127,8 @@ theorem Generate.sound {sig : Signature} {X : Domain}
   induction h with
   | var hlookup hadm =>
       exact Typing.var hlookup hadm (Constraint.entails_refl _)
+  | int n => exact Typing.int n
+  | bool b => exact Typing.bool b
   | lam _ ih =>
       exact Typing.lam ih
   | app hf hx ihf ihx =>

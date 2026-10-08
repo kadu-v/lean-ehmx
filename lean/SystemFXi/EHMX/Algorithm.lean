@@ -35,6 +35,8 @@ def generate (sig : Signature) (X : Domain) (Γ : Context X) :
       let η := renameBound σ.effectVars s.effects
       let (τ, C) := σ.instantiate ρ η
       some ⟨τ, ∅, C, s.advance σ.typeVars σ.effectVars⟩
+  | .int _, s => some ⟨.base .int, ∅, .top, s⟩
+  | .bool _, s => some ⟨.base .bool, ∅, .top, s⟩
   | .lam body, s => do
       let a := Ty.var s.types
       let r ← generate sig X (Scheme.mono a :: Γ) body
@@ -106,7 +108,13 @@ theorem generate_sound {sig : Signature} {X : Domain} {Γ : Context X} {e : Expr
           simp [hσ] at h
           cases h
           exact Generate.var hσ ⟨renameBound_fixed _ _, renameBound_fixed _ _⟩
-  | case2 Γ body s a ih =>
+  | case2 Γ n s =>
+      cases h
+      exact Generate.int n
+  | case3 Γ b s =>
+      cases h
+      exact Generate.bool b
+  | case4 Γ body s a ih =>
       cases hr : generate sig X (Scheme.mono a :: Γ) body
           {s with types := s.types + 1} with
       | none => simp [hr] at h
@@ -114,7 +122,7 @@ theorem generate_sound {sig : Signature} {X : Domain} {Γ : Context X} {e : Expr
           simp [hr] at h
           cases h
           exact Generate.lam (ih hr)
-  | case3 Γ f x s ihf ihx =>
+  | case5 Γ f x s ihf ihx =>
       cases hf : generate sig X Γ f s with
       | none => simp [hf] at h
       | some rf =>
@@ -124,7 +132,7 @@ theorem generate_sound {sig : Signature} {X : Domain} {Γ : Context X} {e : Expr
               simp [hf, hx] at h
               cases h
               exact Generate.app (ihf hf) (ihx rf hx)
-  | case4 Γ e₁ e₂ s ihBound ihVal ihMono =>
+  | case6 Γ e₁ e₂ s ihBound ihVal ihMono =>
       cases h₁ : generate sig X Γ e₁ s with
       | none => simp [h₁] at h
       | some r₁ =>
@@ -152,7 +160,7 @@ theorem generate_sound {sig : Signature} {X : Domain} {Γ : Context X} {e : Expr
                     have := Expr.isValue_iff.mpr hv'
                     simp [hv] at this
                   exact Generate.letMono hnv (ihBound h₁) (ihMono r₁ h₂)
-  | case5 Γ op e s ih =>
+  | case7 Γ op e s ih =>
       cases hd : sig op with
       | none => simp [hd] at h
       | some decl =>
@@ -163,7 +171,7 @@ theorem generate_sound {sig : Signature} {X : Domain} {Γ : Context X} {e : Expr
               cases h
               exact Generate.perform hd
                 ⟨renameBound_fixed _ _, renameBound_fixed _ _⟩ (ih decl he)
-  | case6 Γ body op ret clause s ihBody ihRet ihClause =>
+  | case8 Γ body op ret clause s ihBody ihRet ihClause =>
       cases hd : sig op with
       | none => simp [hd] at h
       | some decl =>

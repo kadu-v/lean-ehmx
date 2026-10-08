@@ -4,13 +4,19 @@ namespace SystemFXi.EHMX
 
 abbrev Effect := SystemFXi.Poly.Effect
 
+inductive BaseTy where
+  | int | bool
+  deriving DecidableEq
+
 inductive Ty where
   | var : Nat → Ty
+  | base : BaseTy → Ty
   | arr : Ty → Effect → Ty → Ty
   deriving DecidableEq
 
 def Ty.rename (ρ : Nat → Nat) (η : Nat → Nat) : Ty → Ty
   | .var i => .var (ρ i)
+  | .base b => .base b
   | .arr a ε b => .arr (a.rename ρ η) (ε.rename η) (b.rename ρ η)
 
 inductive GroundTy where
@@ -24,6 +30,8 @@ structure Valuation where
 
 def Ty.eval (ρ : Valuation) : Ty → GroundTy
   | .var i => ρ.types i
+  | .base .int => .atom 0
+  | .base .bool => .atom 1
   | .arr a ε b => .arr (a.eval ρ) (ε.eval ρ.effects) (b.eval ρ)
 
 /-- X contains static predicates, with the variable sets needed for generalization. -/
@@ -83,10 +91,12 @@ def Constraint.rename {X : Domain} (ρ η : Nat → Nat) : Constraint X → Cons
 
 def Ty.fvTypes : Ty → Finset Nat
   | .var i => {i}
+  | .base _ => ∅
   | .arr a _ b => a.fvTypes ∪ b.fvTypes
 
 def Ty.fvEffects : Ty → Finset Nat
   | .var _ => ∅
+  | .base _ => ∅
   | .arr a ε b => a.fvEffects ∪ ε.vars ∪ b.fvEffects
 
 def Constraint.fvTypes {X : Domain} : Constraint X → Finset Nat
@@ -174,6 +184,8 @@ abbrev Signature := Op → Option OpDecl
 
 inductive Expr where
   | var : Nat → Expr
+  | int : Int → Expr
+  | bool : Bool → Expr
   | lam : Expr → Expr
   | app : Expr → Expr → Expr
   | letE : Expr → Expr → Expr
@@ -183,15 +195,19 @@ inductive Expr where
 
 inductive Value : Expr → Prop where
   | var (i : Nat) : Value (.var i)
+  | int (n : Int) : Value (.int n)
+  | bool (b : Bool) : Value (.bool b)
   | lam (body : Expr) : Value (.lam body)
 
 def Expr.isValue : Expr → Bool
-  | .var _ | .lam _ => true
+  | .var _ | .int _ | .bool _ | .lam _ => true
   | _ => false
 
 theorem Expr.isValue_iff {e : Expr} : e.isValue = true ↔ Value e := by
   cases e <;> simp [Expr.isValue]
   · exact Value.var _
+  · exact Value.int _
+  · exact Value.bool _
   · exact Value.lam _
   all_goals intro h; cases h
 
