@@ -452,6 +452,20 @@ $\mathbf{perform}$ でも操作型引数を $\alpha:=T$ とする．
 \BinaryInfC{$\vdash B:T\mid\{ping\}$}
 \end{prooftree}
 
+\noindent\textbf{宣言的な Handle 規則の適用．}
+本体の前提は上で得た．規則全体には return 節と操作節の前提も要る．
+\begin{prooftree}
+\AxiomC{$C;\varnothing\vdash B:T\mid\{ping\}$}
+\AxiomC{$C;r:T\vdash r:a\mid\varnothing$}
+\AxiomC{$C;x:\beta,\,k:\arr{\beta}{\chi}{a}
+  \vdash x:a\mid\varnothing$}
+\RightLabel{\scriptsize(Handle)}
+\TrinaryInfC{$C;\varnothing\vdash H:a\mid\chi$}
+\end{prooftree}
+第2前提は $C\models T=a$，第3前提は $C\models\beta=a$ を要求する．
+さらに Split と効果包含が必要である．
+従って $B$ の型だけでは結論を得られない．
+
 \noindent\textbf{Handler の制約生成．}
 操作節では別の剛性変数 $\beta$ を導入する．
 $a$ は handler の結果型で，$\beta\notin\operatorname{FV}(a)$ である．
@@ -479,7 +493,9 @@ C_H={}&C_B\land(T=a)
 \]
 $\beta=Int$ と $\beta=Bool$ を選ぶと，同じ固定型 $a$ が
 $Int$ と $Bool$ の両方に等しくなって矛盾する．
-制約生成の導出木は成立するが，$C_H$ を満たす評価は存在しない．
+$C=\top$ では Handle 規則の第3前提を証明できない．
+$C=C_H$ とすれば形式上は規則を適用できるが，
+$C_H$ を満たす評価は存在しない．
 実際の出力では $\theta=\alpha_{10}$, $T=\alpha_6$,
 $\beta=\alpha_0$, $a=\alpha_{11}$,
 $\delta=\mu_7$, $\chi=\mu_8$ に対応する．
