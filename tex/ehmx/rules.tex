@@ -533,7 +533,6 @@ H^\star=\mathbf{handle}\ B^\star\ \mathbf{with}\
 \end{prooftree}
 
 \noindent\textbf{Handler の導出は操作節で止まる．}
-$h=\{\mathbf{return}\ r\mapsto r;\ ping(x;k)\mapsto x\}$ と置く．
 結果型 $S$，結果効果 $\varnothing$ に具体化すると，
 \textsc{THandler} の効果条件は
 $\{ping\}\subseteq\{ping\}\cup\varnothing=\{ping\}$ となり成立する．
@@ -548,7 +547,11 @@ $\Delta\mid r:S\vdash r:S\mid\varnothing$ と導ける．
   \overset{?}{\vdash}x:S\mid\varnothing}$}
 \RightLabel{\scriptsize\textsc{THandler}}
 \BinaryInfC{$\Delta\mid\varnothing\overset{?}{\vdash}
-  h:S\mid\{ping\}\Rightarrow S\mid\varnothing$}
+  \left\{\begin{aligned}
+    \mathbf{return}\ r&\mapsto r;\\
+    ping(x;k)&\mapsto x
+  \end{aligned}\right\}
+  :S\mid\{ping\}\Rightarrow S\mid\varnothing$}
 \RightLabel{\scriptsize\textsc{THandle}}
 \BinaryInfC{$\Delta\mid\varnothing\overset{?}{\vdash}
   H^\star:S\mid\varnothing$}
