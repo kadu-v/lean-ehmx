@@ -1,0 +1,111 @@
+\begin{figure}[p]
+    \small
+    \noindent\fbox{$\Delta \mid \Gamma \vdash e : \sigma\mid\epsilon$}
+
+    \medskip
+    \begin{gather*}
+        \frac{x:\sigma\in\Gamma}
+             {\Delta \mid \Gamma\vdash x:\sigma\mid\varnothing}
+             \;\textsc{TVar}
+        \qquad
+        \frac{\Delta \mid \Gamma,x:\sigma_1\vdash e:\sigma_2\mid\epsilon}
+             {\Delta \mid \Gamma\vdash\lambda x:\sigma_1.e:
+              (\sigma_1\rightarrow~\epsilon~\sigma_2)\mid\varnothing}
+             \;\textsc{TAbs}
+        \\[8pt]
+        \frac{\Delta \mid \Gamma\vdash e_1:
+              (\sigma_1\rightarrow~\epsilon_0~\sigma_2)\mid\epsilon_1
+              \qquad
+              \Delta \mid \Gamma\vdash e_2:\sigma_1\mid\epsilon_2}
+             {\Delta \mid \Gamma\vdash e_1~e_2:
+              \sigma_2\mid(\epsilon_0\cup\epsilon_1\cup\epsilon_2)}
+             \;\textsc{TApp}
+        \\[8pt]
+        \frac{\Delta,\beta::\kappa \mid \Gamma\vdash e:\sigma\mid\varnothing
+              \qquad\beta\notin\mathsf{FV}(\Gamma)}
+             {\Delta \mid \Gamma\vdash
+              \Lambda\beta::\kappa.e:
+              (\forall\beta::\kappa.\sigma)\mid\varnothing}
+             \;\textsc{TTAbs}
+        \\[8pt]
+        \frac{\Delta \mid \Gamma\vdash e:
+              (\forall\beta::\kappa.\sigma)\mid\epsilon
+              \qquad\Delta\vdash\tau::\kappa}
+             {\Delta \mid \Gamma\vdash e\bktt{\tau}:
+              [\beta\mapsto\tau]\sigma\mid\epsilon}
+             \;\textsc{TTApp}
+        \\[8pt]
+        \frac{
+          \begin{gathered}
+          \Sigma(\mathsf{op})=
+              \forall\overline{\beta::\kappa}.\sigma_1\to\sigma_2
+          \qquad
+          \Delta\vdash\overline{\tau}::\overline{\kappa}\\
+          \Delta \mid \Gamma\vdash e:
+              [\overline{\beta}\mapsto\overline{\tau}]\sigma_1
+              \mid\epsilon
+          \end{gathered}}
+             {\Delta \mid \Gamma\vdash
+              \texttt{perform}~\mathsf{op}\bktt{\overline{\tau}}~e:
+              [\overline{\beta}\mapsto\overline{\tau}]\sigma_2
+              \mid(\epsilon\cup\{\mathsf{op}\})}
+             \;\textsc{TPerform}
+        \\[8pt]
+        \frac{\Delta \mid \Gamma\vdash e:\sigma_{\mathrm{in}}\mid\epsilon_{\mathrm{in}}
+              \qquad
+              \Delta \mid \Gamma\vdash h:
+              \sigma_{\mathrm{in}}\mid\epsilon_{\mathrm{in}}
+              \Rightarrow\sigma_{\mathrm{out}}\mid\epsilon_{\mathrm{out}}}
+             {\Delta \mid \Gamma\vdash
+              \texttt{handle}~e~\texttt{with}~h:
+              \sigma_{\mathrm{out}}\mid\epsilon_{\mathrm{out}}}
+             \;\textsc{THandle}
+        \\[8pt]
+        \frac{\Delta \mid \Gamma\vdash e:\sigma\mid\epsilon
+              \qquad\Delta\vdash\sigma<:\sigma'
+              \qquad\Delta\vdash\epsilon'::\mathbf{E}
+              \qquad\epsilon\subseteq\epsilon'}
+             {\Delta \mid \Gamma\vdash e:\sigma'\mid\epsilon'}
+             \;\textsc{TSub}
+    \end{gather*}
+
+    \caption{Typing rules of System F$^{\xi}$}
+    \label{systemf:typing-rules}
+\end{figure}
+
+\begin{figure}[p]
+    \small
+    \noindent\fbox{$\Delta \mid \Gamma\vdash h:
+        \sigma_{\mathrm{in}}\mid\epsilon_{\mathrm{in}}
+        \Rightarrow\sigma_{\mathrm{out}}\mid\epsilon_{\mathrm{out}}$}
+
+    \medskip
+    \begin{gather*}
+        \frac{
+          \begin{gathered}
+          \epsilon_{\mathrm{in}}\subseteq
+             \{\mathsf{op}\}\cup\epsilon_{\mathrm{out}}\\
+          \Sigma(\mathsf{op})=
+             \forall\overline{\beta::\kappa}.\sigma_1\to\sigma_2\\
+          \Delta \mid \Gamma,x_r:\sigma_{\mathrm{in}}
+             \vdash e_r:\sigma_{\mathrm{out}}\mid\epsilon_{\mathrm{out}}\\
+          \Delta,\overline{\beta::\kappa} \mid \Gamma_{\mathrm{op}}
+             \vdash e_{\mathsf{op}}:
+             \sigma_{\mathrm{out}}\mid\epsilon_{\mathrm{out}}
+          \end{gathered}}
+             {\Delta \mid \Gamma\vdash
+              \{\texttt{return}~x_r\mapsto e_r,
+                \mathsf{op}(x;k)\mapsto e_{\mathsf{op}}\}:
+              \sigma_{\mathrm{in}}\mid\epsilon_{\mathrm{in}}
+              \Rightarrow\sigma_{\mathrm{out}}\mid\epsilon_{\mathrm{out}}}
+             \;\textsc{THandler}
+    \end{gather*}
+    \[
+       \Gamma_{\mathrm{op}}=\Gamma,\ x:\sigma_1,\
+          k:\sigma_2\rightarrow~\epsilon_{\mathrm{out}}~
+          \sigma_{\mathrm{out}}.
+    \]
+
+    \caption{Handler typing rule of System F$^{\xi}$}
+    \label{systemf:handler-typing-rules}
+\end{figure}

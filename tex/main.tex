@@ -1,0 +1,32 @@
+\documentclass[a4paper,11pt]{ltjsarticle}
+
+\usepackage[left=20mm,right=20mm,top=25mm,bottom=30mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{bussproofs}
+\usepackage{hyperref}
+
+\newtheorem{proposition}{命題}[section]
+\newtheorem{lemma}[proposition]{補題}
+\newtheorem{theorem}[proposition]{定理}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Macro
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\lbktt}{\texttt{[}}
+\newcommand{\rbktt}{\texttt{]}}
+\newcommand{\bktt}[1]{\texttt{[} #1 \texttt{]}}
+\newcommand{\dom}[1]{\mathbf{dom}(#1)}
+\newcommand{\fv}[1]{\mathbf{fv}(#1)}
+\newcommand{\ftv}[1]{\mathbf{ftv}(#1)}
+
+\title{System F$^{\xi}$}
+\author{Kazuki Ikemori}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\input{sections/SystemFXi}
+
+\end{document}

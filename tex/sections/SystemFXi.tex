@@ -1,0 +1,31 @@
+\section{\texorpdfstring{System F$^{\xi}$}{System Fξ}}
+
+System F$^{\xi}$ の構文，カインド規則，型規則，評価文脈，簡約規則を示す．
+型変数 $\alpha$ は kind $\mathbf{T}$，効果変数 $\mu$ は kind $\mathbf{E}$ を持つ．
+$\beta::\kappa$ は $\alpha::\mathbf{T}$ または
+$\mu::\mathbf{E}$ を表す規則中の略記である．
+多相引数 $\tau$ は対応する kind の型 $\sigma$ または効果 $\epsilon$ である．
+従って
+$\forall\mu::\mathbf{E}.\sigma$ と $\Lambda\mu::\mathbf{E}.e$ により
+効果多相性を表せる．操作宣言も両 kind の変数を量化できる．
+例えば，$\mu::\mathbf{E}$ の下で
+$(\sigma_1\rightarrow~\mu~\sigma_2)$ は潜在効果が効果変数そのものの
+関数型であり，$\epsilon=\mu$ を表せる．
+効果式は集合として解釈し，和集合は結合的・交換的・冪等で，
+$\varnothing$ は単位元である．
+$\Delta\vdash\epsilon_1\subseteq\epsilon_2$ は，
+$\Delta$ の各効果変数に任意の有限な操作集合を割り当てる
+すべての環境 $\rho$ について
+$I_\rho(\epsilon_1)\subseteq I_\rho(\epsilon_2)$
+が成立することをいう．
+以下，$\Delta$ が明らかな場合には包含判定の $\Delta\vdash$ を省略する．
+すべての判定で現れる型と効果は well-kinded とする．
+
+\input{figures/SystemFXi/syntax}
+\input{figures/SystemFXi/kinding}
+\input{figures/SystemFXi/subtyping}
+\input{figures/SystemFXi/typing}
+\input{figures/SystemFXi/evaluation}
+\clearpage
+
+\input{sections/SystemFXiSafety}

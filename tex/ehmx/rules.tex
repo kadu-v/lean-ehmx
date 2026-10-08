@@ -1,0 +1,326 @@
+\documentclass[a4paper,10pt]{ltjsarticle}
+\usepackage[margin=16mm]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{array}
+\pagestyle{plain}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3pt}
+\allowdisplaybreaks[0]
+
+\newcommand{\op}{\mathit{op}}
+\newcommand{\llbracket}{\mathopen{[\![}}
+\newcommand{\rrbracket}{\mathclose{]\!]}}
+\newcommand{\arr}[3]{#1\xrightarrow{#2}#3}
+\newcommand{\jd}[3]{C;\Gamma\vdash #1:#2\mid #3}
+\newcommand{\J}[3]{\mathcal J_{\Gamma}\llbracket #1:#2\mid #3\rrbracket}
+\newcommand{\Jx}[4]{\mathcal J_{#1}\llbracket #2:#3\mid #4\rrbracket}
+\newcommand{\rulelabel}[1]{\quad\textsc{(#1)}}
+\newcommand{\fighead}[1]{\noindent\rule{\linewidth}{0.8pt}\par\textbf{#1}\par\vspace{-2mm}}
+\newcommand{\figfoot}{\vspace{-2mm}\noindent\rule{\linewidth}{0.8pt}}
+\newcommand{\pair}[2]{%
+\begin{minipage}[t]{0.49\linewidth}\centering #1\end{minipage}\hfill%
+\begin{minipage}[t]{0.49\linewidth}\centering #2\end{minipage}\par}
+
+\begin{document}
+\begin{center}
+{\Large\bfseries EHM(X): 形式規則一覧}\\[2mm]
+{\small System F$^{\xi}$ に集合効果 handler と静的述語 $X$ を加える rank-1 表層}
+\end{center}
+
+\fighead{Figure 1. 構文・制約・効果の解釈}
+\[
+\begin{aligned}
+e &::= x\mid\lambda x.e\mid e_1\,e_2\mid
+ \mathbf{let}\ x=e_1\ \mathbf{in}\ e_2
+ \mid\mathbf{perform}\ \op\ e
+ \mid\mathbf{handle}\ e\ \mathbf{with}\ h,\\
+h &::=\{\mathbf{return}\ r\mapsto e_r;\ \op(x;k)\mapsto e_o\},
+\qquad v::=x\mid\lambda x.e,\\
+\tau &::=\alpha\mid\arr{\tau}{\epsilon}{\tau},
+\qquad \epsilon::=\varnothing\mid\{\op\}\mid\mu\mid\epsilon\cup\epsilon,\\
+\sigma &::=\forall\bar\alpha,\bar\mu.\ P\Rightarrow\tau,\\
+C &::=\top\mid C\land C\mid\tau=\tau\mid
+ \epsilon\subseteq\epsilon\mid\op\notin\epsilon\mid p_X
+ \mid\forall\alpha.C\mid\forall\mu.C.
+\end{aligned}
+\]
+\[
+\epsilon\equiv\epsilon'
+\quad\stackrel{\mathrm{def}}{\Longleftrightarrow}\quad
+(\epsilon\subseteq\epsilon')\land(\epsilon'\subseteq\epsilon).
+\]
+\[
+\operatorname{NF}(\epsilon)=(L_\epsilon,V_\epsilon),
+\qquad
+I_\rho(\epsilon)=L_\epsilon\cup
+\bigcup_{\mu\in V_\epsilon}\rho(\mu),
+\qquad
+I_\rho(\{Read\}\cup\mu)=\{Read\}\cup\rho(\mu).
+\]
+\[
+\boxed{\operatorname{Split}(\op,\epsilon,\delta)
+\ \stackrel{\mathrm{def}}{=}\
+(\delta\subseteq\epsilon)\land
+(\epsilon\subseteq\{\op\}\cup\delta)\land
+(\op\notin\delta)}
+\]
+\[
+\rho\models\operatorname{Split}(\op,\epsilon,\delta)
+\quad\Longleftrightarrow\quad
+I_\rho(\delta)=I_\rho(\epsilon)\setminus\{\op\}.
+\]
+\figfoot
+
+\vspace{4mm}
+\fighead{Figure 2. 値呼びの簡約規則}
+\[
+(\lambda x.e)\,v\longrightarrow e[x\mapsto v]
+\qquad
+\mathbf{handle}\ v\ \mathbf{with}\ h\longrightarrow e_r[r\mapsto v].
+\]
+\[
+\begin{gathered}
+\mathbf{handle}\ E[\mathbf{perform}\ \op[\bar\theta]\ v]\ \mathbf{with}\ h
+\longrightarrow
+e_o[\bar\beta\mapsto\bar\theta][x\mapsto v][k\mapsto k_E],\\
+\op\notin\operatorname{handled}(E),\qquad
+k_E=\lambda y.\mathbf{handle}\ E[y]\ \mathbf{with}\ h.
+\end{gathered}
+\]
+\figfoot
+
+\clearpage
+\section*{宣言的型付け \quad $C;\Gamma\vdash e:\tau\mid\epsilon$}
+\fighead{Figure 3. 基本規則}
+\pair{
+\[
+\frac{\Gamma(x)=\forall\bar\beta.P\Rightarrow\tau
+\quad C\models P[\bar\theta/\bar\beta]}
+{\jd{x}{\tau[\bar\theta/\bar\beta]}{\varnothing}}
+\rulelabel{Var}
+\]
+}{
+\[
+\frac{C;\Gamma,x:a\vdash e:b\mid\eta}
+{\jd{\lambda x.e}{\arr{a}{\eta}{b}}{\varnothing}}
+\rulelabel{Abs}
+\]
+}
+\pair{
+\[
+\frac{\jd{e_1}{\arr{a}{\eta}{b}}{\epsilon_1}
+\quad\jd{e_2}{a}{\epsilon_2}}
+{\jd{e_1\,e_2}{b}{\epsilon_1\cup\epsilon_2\cup\eta}}
+\rulelabel{App}
+\]
+}{
+\[
+\frac{\begin{gathered}
+\Sigma(\op)=\forall\bar\beta.\tau_a\to\tau_b\\
+\jd{e}{\tau_a[\bar\theta/\bar\beta]}{\eta}
+\end{gathered}}
+{\jd{\mathbf{perform}\ \op\ e}{\tau_b[\bar\theta/\bar\beta]}{\eta\cup\{\op\}}}
+\rulelabel{Perform}
+\]
+}
+\vspace{6mm}
+\figfoot
+
+\vspace{4mm}
+\fighead{Figure 4. 値制限付き let}
+\[
+\frac{
+\begin{gathered}
+C_1;\Gamma\vdash v:\tau_1\mid\varnothing
+\quad A=\operatorname{FV}(C_1,\tau_1)\setminus\operatorname{FV}(\Gamma)\\
+\sigma=\forall A.C_1\Rightarrow\tau_1
+\quad C_2;\Gamma,x:\sigma\vdash e_2:\tau_2\mid\epsilon_2
+\end{gathered}
+}{
+C_2;\Gamma\vdash\mathbf{let}\ x=v\ \mathbf{in}\ e_2:\tau_2\mid\epsilon_2
+}\rulelabel{LetVal}
+\]
+\[
+\frac{
+\neg\operatorname{Value}(e_1)
+\quad\jd{e_1}{\tau_1}{\epsilon_1}
+\quad C;\Gamma,x:\tau_1\vdash e_2:\tau_2\mid\epsilon_2
+}{
+\jd{\mathbf{let}\ x=e_1\ \mathbf{in}\ e_2}
+{\tau_2}{\epsilon_1\cup\epsilon_2}
+}\rulelabel{LetMono}
+\]
+\figfoot
+
+\vspace{4mm}
+\fighead{Figure 5. Deep handler}
+\[
+\frac{
+\begin{gathered}
+\Sigma(\op)=\forall\overline{\beta::\kappa}.\tau_a\to\tau_b
+\qquad \jd{e}{\tau_{in}}{\epsilon_{in}}\\
+C;\Gamma,r:\tau_{in}\vdash e_r:\tau_{out}\mid\epsilon_r\\
+C;\Gamma,x:\tau_a,
+ k:\arr{\tau_b}{\chi}{\tau_{out}}
+ \vdash e_o:\tau_{out}\mid\epsilon_o\\
+C\models\operatorname{Split}(\op,\epsilon_{in},\delta)
+\quad C\models\delta\subseteq\chi
+\quad C\models\epsilon_r\subseteq\chi
+\quad C\models\epsilon_o\subseteq\chi
+\end{gathered}
+}{
+\jd{\mathbf{handle}\ e\ \mathbf{with}\
+\{\mathbf{return}\ r\mapsto e_r;\ \op(x;k)\mapsto e_o\}}
+{\tau_{out}}{\chi}
+}\rulelabel{Handle}
+\]
+\[
+\bar\beta\ \text{rigid in the operation clause},\qquad
+\bar\beta\cap\operatorname{FV}(\Gamma,\tau_{in},\tau_{out},\epsilon_{in},\epsilon_r,\chi,\delta)=\varnothing.
+\]
+\figfoot
+
+\clearpage
+\section*{制約生成 \quad $\mathcal J_\Gamma\llbracket e:\tau\mid\epsilon\rrbracket=C$}
+\fighead{Figure 6. 構文に沿った生成方程式}
+\[
+\Gamma(x)=\forall\bar\beta.P\Rightarrow\tau_x,
+\qquad
+\begin{aligned}
+\J{x}{\tau}{\epsilon}
+&=\exists\bar a.\bigl(P[\bar a/\bar\beta]
+\land\tau=\tau_x[\bar a/\bar\beta]
+\land\epsilon\equiv\varnothing\bigr).
+\end{aligned}
+\]
+\[
+\begin{aligned}
+\J{\lambda x.e}{\tau}{\epsilon}
+&=\exists a,b,\eta.\bigl(
+\Jx{\Gamma,x:a}{e}{b}{\eta}
+\land\tau=\arr{a}{\eta}{b}
+\land\epsilon\equiv\varnothing\bigr).
+\end{aligned}
+\]
+\[
+\begin{aligned}
+\J{e_1\,e_2}{\tau}{\epsilon}
+&=\exists a,\eta,\epsilon_1,\epsilon_2.\bigl(
+\J{e_1}{\arr{a}{\eta}{\tau}}{\epsilon_1}
+\land\J{e_2}{a}{\epsilon_2}\\
+&\hspace{31mm}\land\epsilon\equiv\epsilon_1\cup\epsilon_2\cup\eta\bigr).
+\end{aligned}
+\]
+\[
+\Sigma(\op)=\forall\bar\beta.\tau_a\to\tau_b,
+\qquad
+\begin{aligned}
+\J{\mathbf{perform}\ \op\ e}{\tau}{\epsilon}
+&=\exists\bar a,\eta.\bigl(
+\J{e}{\tau_a[\bar a/\bar\beta]}{\eta}
+\land\tau=\tau_b[\bar a/\bar\beta]
+\land\epsilon\equiv\eta\cup\{\op\}\bigr).
+\end{aligned}
+\]
+\figfoot
+
+\vspace{5mm}
+\fighead{Figure 7. let の生成と局所的な一般化}
+\[
+\begin{gathered}
+\operatorname{Gen}(\Gamma,v)=(\tau_1,\varnothing,C_1),\qquad
+A=\operatorname{FV}(\tau_1,C_1)\setminus\operatorname{FV}(\Gamma),\\
+\sigma=\forall A.C_1\Rightarrow\tau_1,
+\qquad\operatorname{Gen}(\Gamma,x:\sigma,e_2)=(\tau_2,\epsilon_2,C_2).
+\end{gathered}
+\]
+\[
+\begin{aligned}
+\operatorname{Gen}(\Gamma,\mathbf{let}\ x=v\ \mathbf{in}\ e_2)
+&=(\tau_2,\epsilon_2,C_2),\\[2mm]
+\J{\mathbf{let}\ x=e_1\ \mathbf{in}\ e_2}{\tau}{\epsilon}
+&=\exists a,\epsilon_1,\epsilon_2.\bigl(
+  \J{e_1}{a}{\epsilon_1}\land
+  \Jx{\Gamma,x:a}{e_2}{\tau}{\epsilon_2}
+  \land\epsilon\equiv\epsilon_1\cup\epsilon_2\bigr),
+\qquad \neg\operatorname{Value}(e_1).
+\end{aligned}
+\]
+\figfoot
+
+\clearpage
+\section*{Handler の生成・解決・健全性}
+\fighead{Figure 8. Handler の制約生成}
+\[
+\begin{gathered}
+\Sigma(\op)=\forall\overline{\beta::\kappa}.\tau_a\to\tau_b,
+\qquad a,\delta,\chi\ \text{fresh},\\[1mm]
+C_{in}=\J{e}{\tau_{in}}{\epsilon_{in}},
+\qquad C_r=\Jx{\Gamma,r:\tau_{in}}{e_r}{\tau_r}{\epsilon_r},\\
+C_o=\Jx{\Gamma,x:\tau_a,k:\arr{\tau_b}{\chi}{a}}
+{e_o}{\tau_o}{\epsilon_o}.
+\end{gathered}
+\]
+\[
+\boxed{\begin{aligned}
+\J{\mathbf{handle}\ e\ \mathbf{with}\ h}{\tau}{\epsilon}
+=\exists\tau_{in},a,\delta,\chi,\epsilon_{in},\epsilon_r,\tau_o,\epsilon_o.\bigl(
+&C_{in}\land C_r\land(\tau_r=a)\\
+&\land\forall\bar\beta.
+  (C_o\land\tau_o=a\land\epsilon_o\subseteq\chi)\\
+&\land\operatorname{Split}(\op,\epsilon_{in},\delta)
+\land\delta\subseteq\chi
+\land\epsilon_r\subseteq\chi\\
+&\land\tau=a\land\epsilon\equiv\chi\bigr).
+\end{aligned}}
+\]
+\[
+\bar\beta\ \text{rigid};\qquad
+\bar\beta\cap\operatorname{FV}(\Gamma,\tau_{in},a,\delta,\chi,\epsilon_{in},\epsilon_r)=\varnothing.
+\]
+\figfoot
+
+\vspace{4mm}
+\fighead{Figure 9. 解決器の保存条件}
+\[
+\begin{aligned}
+(\arr{a_1}{\eta_1}{b_1})=(\arr{a_2}{\eta_2}{b_2})
+&\rightsquigarrow (a_1=a_2)\land(b_1=b_2)\land(\eta_1\equiv\eta_2),\\
+\operatorname{simplify}(C)=R
+&\Longrightarrow\ \forall\rho.\ \rho\models R\Rightarrow\rho\models C,\\
+\operatorname{resolve}_X(A,C)=R_X
+&\Longrightarrow\ \forall\rho.\ \rho\models A\land R_X\Rightarrow\rho\models C.
+\end{aligned}
+\]
+\[
+\boxed{
+\operatorname{inferQualified}(\Sigma,X,A,\Gamma,e)=(\tau,\epsilon,C)
+\quad\Longrightarrow\quad
+C;\Gamma\vdash_{\mathrm{EHM}(X)}e:\tau\mid\epsilon.}
+\]
+\[\text{型変数の単一化・principal type・操作的安全性はこの証明の対象外。}\]
+\figfoot
+
+\vspace{4mm}
+\fighead{Figure 10. $ping$ の制約簡約}
+\[
+\begin{gathered}
+\Sigma(ping)=\forall\beta.\beta\to\beta,
+\qquad
+f:\forall\alpha.\ Eq\,\alpha\Rightarrow\arr{\alpha}{\varnothing}{\alpha},\\
+g=\lambda x.\mathbf{perform}\ ping\,(f\,x),
+\qquad
+g:\forall\alpha.\ Eq\,\alpha\Rightarrow\arr{\alpha}{\{ping\}}{\alpha},\\
+e=\mathbf{handle}\ (g\,y)\ \mathbf{with}\
+\{\mathbf{return}\ r\mapsto r;\ ping(x;k)\mapsto k\,x\},\\
+\operatorname{Split}(ping,\{ping\},\delta)\Longrightarrow\delta=\varnothing,
+\qquad \epsilon_r=\varnothing,
+\qquad\epsilon_o=\chi,\\
+C_{e}=Eq\,\alpha\land(\varnothing\subseteq\chi)
+\land(\chi\subseteq\chi),
+\qquad \chi=\varnothing\ \text{is one solution}.
+\end{gathered}
+\]
+\figfoot
+
+\end{document}

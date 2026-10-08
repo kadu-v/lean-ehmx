@@ -1,0 +1,69 @@
+\begin{figure}[p]
+    \small
+    \begin{align*}
+        E &::= \square
+             \mid E~e
+             \mid v~E
+             \mid E\bktt{\tau}
+             \mid \texttt{perform}~\mathsf{op}
+                  \bktt{\overline{\tau}}~E
+             \mid \texttt{handle}~E~\texttt{with}~h
+    \end{align*}
+    \caption{Evaluation contexts of System F$^{\xi}$}
+    \label{systemf:evaluation-contexts}
+\end{figure}
+
+\begin{figure}[p]
+    \small
+    \noindent\fbox{$e\longrightarrow e'$}
+
+    \medskip
+    \begin{gather*}
+        (\lambda x:\sigma.e)~v
+        \longrightarrow [x\mapsto v]e
+        \qquad\textsc{EAppAbs}
+        \\[6pt]
+        (\Lambda\beta::\kappa.e)\bktt{\tau}
+        \longrightarrow [\beta\mapsto\tau]e
+        \qquad\textsc{ETAppAbs}
+        \\[6pt]
+        \frac{(\texttt{return}~x_r\mapsto e_r)\in h}
+             {\texttt{handle}~v~\texttt{with}~h
+              \longrightarrow [x_r\mapsto v]e_r}
+        \qquad\textsc{EReturn}
+        \\[6pt]
+        \begin{gathered}
+        \texttt{handle}~
+          E[\texttt{perform}~\mathsf{op}
+             \bktt{\overline{\tau}}~v]~
+          \texttt{with}~h
+        \longrightarrow
+          [k\mapsto k_E][x\mapsto v]
+          [\overline{\beta}\mapsto\overline{\tau}]
+          e_{\mathsf{op}}\\
+        (\mathsf{op}(x;k)\mapsto e_{\mathsf{op}})\in h,
+        \qquad\mathsf{op}\notin\mathbf{handled}(E),\\
+        k_E=\lambda y:
+          [\overline{\beta}\mapsto\overline{\tau}]\sigma_2.
+          \texttt{handle}~E[y]~\texttt{with}~h,\\
+        \Sigma(\mathsf{op})=
+          \forall\overline{\beta::\kappa}.\sigma_1\to\sigma_2
+        \end{gathered}
+        \qquad\textsc{EPerform}
+        \\[6pt]
+        \frac{e\longrightarrow e'}{E[e]\longrightarrow E[e']}
+        \qquad\textsc{EContext}
+    \end{gather*}
+    \[\begin{gathered}
+        \dom{h}=\{\mathsf{op}\}\quad
+        \text{for }h=\{\texttt{return}~x_r\mapsto e_r,
+          \mathsf{op}(x;k)\mapsto e_{\mathsf{op}}\},
+        \\
+        \mathbf{handled}(\square)=\varnothing,\qquad
+        \mathbf{handled}(\texttt{handle}~E~\texttt{with}~h)
+          =\mathbf{handled}(E)\cup\dom{h}.
+    \end{gathered}\]
+
+    \caption{Evaluation rules of System F$^{\xi}$}
+    \label{systemf:evaluation-rules}
+\end{figure}

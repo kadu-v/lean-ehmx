@@ -1,0 +1,17 @@
+import SystemFXi.Safety
+import SystemFXi.EffectPolySafety
+import SystemFXi.EffectPolyExamples
+import SystemFXi.EHMX.Classes
+
+/-!
+# System Fξ
+
+旧形式の `SystemFXi.Safety` と、効果変数を持つ
+`SystemFXi.Poly.effect_safety` までの全モジュールを公開する。
+
+* `SystemFXi.Syntax`, `Substitution`, `Typing`, `Semantics` — 言語の定義
+* `SystemFXi.Subtyping`, `TypeLemmas`, `TermLemmas` — 基本補題
+* `SystemFXi.Progress`, `Preservation`, `Safety` — 型安全性と効果安全性
+* `SystemFXi.EffectPoly*` — kind `T` と `E` の同時置換、効果多相な型安全性
+* `SystemFXi.EHMX.*` — 集合効果 handler と静的述語を持つ表層言語の制約生成・健全性
+-/

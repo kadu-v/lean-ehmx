@@ -1,0 +1,430 @@
+\section{安全性の補題と定理}
+\label{sec:systemfxi-safety}
+
+以下は Lean で形式化した命題のステートメントである．証明はここでは記さない．
+以下の命題に現れる項環境 $\Gamma$ の各型は，$\Delta$ の下で整形式とする．
+大域的シグネチャ $\Sigma$ は整形式とする．すなわち，各宣言
+$\Sigma(\mathsf{op})=
+ \forall\overline{\beta::\kappa}.
+ \sigma_{\mathrm{arg}}\to\sigma_{\mathrm{res}}$
+の引数型と結果型は，宣言された型・効果変数の下で kind $\mathbf{T}$ を持つ．
+kind を保つ型・効果変数の同時改名・置換をそれぞれ $\rho$，$\chi$，
+項変数の改名・置換をそれぞれ $\rho_t$，$s_t$ と書く．
+置換はすべて，必要に応じて束縛変数を改名する捕獲回避置換とする．
+$\mathsf{Val}(e)$ は値判定，$E[e]$ は評価文脈への代入である．
+未処理操作を
+\[
+  \mathsf{Unhandled}(e,\mathsf{op})
+  \quad\Longleftrightarrow\quad
+  \exists E,\overline{\tau},v.\quad
+    e=E[\texttt{perform}~\mathsf{op}
+      \bktt{\overline{\tau}}~v]
+    \ \land\ \mathsf{Val}(v)
+    \ \land\;
+    \mathsf{op}\notin\mathbf{handled}(E)
+\]
+で定義する．証明で用いる $\mathsf{Open}_{\Sigma}(e,\epsilon)$ は，
+この条件に加えて $\mathsf{op}\in\epsilon$ と，
+$\Sigma$ における操作宣言・型引数の arity の一致を記録する命題である．
+
+\subsection{部分型と置換}
+
+\begin{lemma}[部分型の反射律と推移律]
+\label{lem:fxi-subtyping}
+整形式な型 $\sigma,\sigma_1,\sigma_2,\sigma_3$ について，
+\[
+  \Delta\vdash\sigma<:\sigma,
+  \qquad
+  \frac{\Delta\vdash\sigma_1<:\sigma_2
+        \quad\Delta\vdash\sigma_2<:\sigma_3}
+       {\Delta\vdash\sigma_1<:\sigma_3}.
+\]
+\end{lemma}
+
+\begin{lemma}[型・効果変数の改名と置換]
+\label{lem:fxi-type-structural}
+$\rho$ が $\Delta$ の変数を同じ kind の $\Delta'$ の変数へ写し，
+$\chi$ が $\Delta$ の各変数を $\Delta'$ で整形式な同じ kind の
+型または効果へ写すとする．
+このとき，次の各判定は保存される．
+\begin{align*}
+  \Delta\vdash\sigma::\mathbf{T}
+    &\Longrightarrow
+      \Delta'\vdash\rho(\sigma)::\mathbf{T},
+      \quad
+      \Delta'\vdash\sigma[\chi]::\mathbf{T},\\
+  \Delta\vdash\epsilon::\mathbf{E}
+    &\Longrightarrow
+      \Delta'\vdash\rho(\epsilon)::\mathbf{E},
+      \quad
+      \Delta'\vdash\epsilon[\chi]::\mathbf{E},\\
+  \Delta\vdash\sigma_1<:\sigma_2
+    &\Longrightarrow
+      \Delta'\vdash\rho(\sigma_1)<:\rho(\sigma_2),
+      \quad
+      \Delta'\vdash\sigma_1[\chi]<:\sigma_2[\chi].
+\end{align*}
+\end{lemma}
+
+\begin{lemma}[型付き項の型・効果変数改名・置換]
+\label{lem:fxi-typing-type-substitution}
+補題 \ref{lem:fxi-type-structural} と同じ条件の下で，
+\begin{align*}
+  \Delta\mid\Gamma\vdash e:\sigma\mid\epsilon
+  &\Longrightarrow
+    \Delta'\mid\rho(\Gamma)\vdash
+      \rho(e):\rho(\sigma)\mid\rho(\epsilon),\\
+  \Delta\mid\Gamma\vdash e:\sigma\mid\epsilon
+  &\Longrightarrow
+    \Delta'\mid\Gamma[\chi]\vdash
+      e[\chi]:\sigma[\chi]\mid\epsilon[\chi].
+\end{align*}
+特に，$\Delta\vdash\tau::\kappa$ なら
+\[
+  \Delta,\beta::\kappa\mid\Gamma
+    \vdash e:\sigma\mid\epsilon
+  \quad\land\quad
+  \beta\notin\mathsf{FV}(\Gamma)
+  \Longrightarrow
+  \Delta\mid\Gamma\vdash
+    [\beta\mapsto\tau]e:
+    [\beta\mapsto\tau]\sigma\mid
+      [\beta\mapsto\tau]\epsilon.
+\]
+\end{lemma}
+
+\begin{lemma}[項変数の改名と置換]
+\label{lem:fxi-term-substitution}
+$\rho_t$ が $\Gamma$ の各変数を同じ型の $\Gamma'$ の変数へ写すとする．
+また，$s_t$ が各 $x:\sigma\in\Gamma$ に対して
+$\Delta\mid\Gamma'\vdash s_t(x):\sigma\mid\varnothing$
+を満たすとする．このとき，
+\begin{align*}
+  \Delta\mid\Gamma\vdash e:\sigma\mid\epsilon
+  &\Longrightarrow
+    \Delta\mid\Gamma'\vdash\rho_t(e):\sigma\mid\epsilon,\\
+  \Delta\mid\Gamma\vdash e:\sigma\mid\epsilon
+  &\Longrightarrow
+    \Delta\mid\Gamma'\vdash e[s_t]:\sigma\mid\epsilon.
+\end{align*}
+特に，
+\[
+  \frac{\Delta\mid\Gamma,x:\sigma_1
+            \vdash e:\sigma_2\mid\epsilon
+        \quad
+        \Delta\mid\Gamma\vdash v:\sigma_1\mid\varnothing}
+       {\Delta\mid\Gamma\vdash
+          [x\mapsto v]e:\sigma_2\mid\epsilon}.
+\]
+\end{lemma}
+
+\begin{proposition}[置換に関する補助等式]
+\label{prop:fxi-substitution-equations}
+型と効果の恒等改名・恒等置換，改名と置換の合成について，
+\begin{align*}
+  \operatorname{id}(\sigma)&=\sigma,
+  &\sigma[\operatorname{id}]&=\sigma,\\
+  \rho'(\rho(\sigma))
+    &=(\rho'\circ\rho)(\sigma),
+  &(\sigma[\chi])[\upsilon]
+    &=\sigma[\beta\mapsto(\chi(\beta))[\upsilon]],\\
+  \rho(\sigma[\chi])
+    &=\sigma[\beta\mapsto\rho(\chi(\beta))],
+  &(\rho(\sigma))[\chi]
+    &=\sigma[\beta\mapsto\chi(\rho(\beta))].
+\end{align*}
+束縛子の下の置換も捕獲を避けて行う．
+同じ等式は効果式にも成り立つ．特に
+$\mu[\mu\mapsto\epsilon]=\epsilon$，
+$(\epsilon_1\cup\epsilon_2)[\chi]
+ =\epsilon_1[\chi]\cup\epsilon_2[\chi]$ である．
+操作宣言の型を型引数で具体化する置換は，
+外側の改名・置換と交換する．
+\end{proposition}
+
+\begin{lemma}[宣言型の具体化]
+\label{lem:fxi-declaration-instantiation}
+$\Delta,\overline{\beta::\kappa}\vdash
+\delta::\mathbf{T}$ かつ
+$\Delta\vdash\overline{\tau}::\overline{\kappa}$
+ならば，
+\[
+  \Delta\vdash
+    [\overline{\beta}\mapsto\overline{\tau}]
+      \delta::\mathbf{T}.
+\]
+\end{lemma}
+
+\subsection{型付けの反転と評価文脈}
+
+\begin{lemma}[値の空効果]
+\label{lem:fxi-value-pure}
+\[
+  \mathsf{Val}(v)
+  \quad\land\quad
+  \Delta\mid\Gamma\vdash v:\sigma\mid\epsilon
+  \Longrightarrow
+  \Delta\mid\Gamma\vdash v:\sigma\mid\varnothing.
+\]
+\end{lemma}
+
+\begin{lemma}[閉じた値の canonical forms]
+\label{lem:fxi-canonical-forms}
+閉じた値が関数型を持つなら項抽象，全称型を持つなら型抽象である：
+\begin{align*}
+  \mathsf{Val}(v)
+  \ \land\
+  \varnothing\mid\varnothing\vdash
+    v:(\sigma_1\rightarrow~\epsilon~\sigma_2)
+      \mid\epsilon_v
+  &\Longrightarrow
+    \exists\sigma_a,e.\ v=\lambda x:\sigma_a.e,\\
+  \mathsf{Val}(v)
+  \ \land\
+  \varnothing\mid\varnothing\vdash
+    v:(\forall\beta::\kappa.\sigma)
+      \mid\epsilon_v
+  &\Longrightarrow
+    \exists e.\ v=\Lambda\beta::\kappa.e.
+\end{align*}
+\end{lemma}
+
+\begin{lemma}[抽象の型付けの反転]
+\label{lem:fxi-abstraction-inversion}
+$\Delta\mid\Gamma\vdash
+\lambda x:\sigma_a.e:
+(\sigma_1\rightarrow~\epsilon~\sigma_2)\mid\epsilon_v$
+ならば，ある $\sigma_0,\epsilon_0$ について
+\[
+  \begin{aligned}
+    \Delta\mid\Gamma,x:\sigma_a
+      &\vdash e:\sigma_0\mid\epsilon_0,\\
+    \Delta\vdash
+      (\sigma_a\rightarrow~\epsilon_0~\sigma_0)
+      &<: (\sigma_1\rightarrow~\epsilon~\sigma_2).
+  \end{aligned}
+\]
+また，$\Delta\mid\Gamma\vdash
+\Lambda\beta::\kappa.e:
+(\forall\beta::\kappa.\sigma)\mid\epsilon_v$
+ならば，$\beta\notin\mathsf{FV}(\Gamma)$ であり，
+ある $\sigma_0$ について
+\[
+  \begin{aligned}
+    \Delta,\beta::\kappa\mid\Gamma
+      &\vdash e:\sigma_0\mid\varnothing,\\
+    \Delta\vdash
+      (\forall\beta::\kappa.\sigma_0)
+      &<: (\forall\beta::\kappa.\sigma).
+  \end{aligned}
+\]
+\end{lemma}
+
+\begin{lemma}[操作呼出しの型付けの反転]
+\label{lem:fxi-perform-inversion}
+$\Sigma(\mathsf{op})=
+\forall\overline{\beta::\kappa}.
+\sigma_{\mathrm{arg}}\to\sigma_{\mathrm{res}}$ とする．
+\[
+  \Delta\mid\Gamma\vdash
+    \texttt{perform}~\mathsf{op}
+      \bktt{\overline{\tau}}~v:
+      \sigma\mid\epsilon
+\]
+ならば，$\Delta\vdash\overline{\tau}::\overline{\kappa}$ であり，
+ある $\epsilon_{\mathrm{arg}}$ について
+\[
+  \Delta\mid\Gamma\vdash
+    v:[\overline{\beta}\mapsto\overline{\tau}]
+      \sigma_{\mathrm{arg}}
+      \mid\epsilon_{\mathrm{arg}},
+  \qquad
+  \Delta\vdash
+    [\overline{\beta}\mapsto\overline{\tau}]
+      \sigma_{\mathrm{res}}<:\sigma,
+  \qquad
+  \mathsf{op}\in\epsilon.
+\]
+\end{lemma}
+
+\begin{lemma}[評価文脈の改名・差替え・部分式]
+\label{lem:fxi-context}
+項変数の改名と評価文脈への代入は交換する：
+\[
+  \rho_t(E[e])=(\rho_t E)[\rho_t(e)].
+\]
+また，任意の $\sigma_0,\epsilon_0$ について
+\[
+  \Delta\mid\Gamma\vdash e:\sigma_0\mid\epsilon_0
+  \Longrightarrow
+  \Delta\mid\Gamma\vdash e':\sigma_0\mid\epsilon_0
+\]
+が成り立つならば，
+\[
+  \Delta\mid\Gamma\vdash E[e]:\sigma\mid\epsilon
+  \Longrightarrow
+  \Delta\mid\Gamma\vdash E[e']:\sigma\mid\epsilon.
+\]
+さらに，$E[e]$ が型付けできるなら，
+ある $\sigma_0,\epsilon_0$ について
+$\Delta\mid\Gamma\vdash e:\sigma_0\mid\epsilon_0$ である．
+\end{lemma}
+
+\begin{lemma}[多相操作節の具体化]
+\label{lem:fxi-clause-instantiation}
+$h=\{\texttt{return}~x_r\mapsto e_r,\,
+  \mathsf{op}(x;k)\mapsto e_{\mathsf{op}}\}$ とし，
+\textsc{THandler} の前提が成り立つとする．
+$\Sigma(\mathsf{op})=
+\forall\overline{\beta::\kappa}.
+\sigma_{\mathrm{arg}}\to\sigma_{\mathrm{res}}$，
+$\Delta\vdash\overline{\tau}::\overline{\kappa}$ のとき，
+\[
+  \Delta\mid
+  \Gamma,\,
+  x:[\overline{\beta}\mapsto\overline{\tau}]
+      \sigma_{\mathrm{arg}},\,
+  k:([\overline{\beta}\mapsto\overline{\tau}]
+      \sigma_{\mathrm{res}})
+      \rightarrow~\epsilon_{\mathrm{out}}~
+      \sigma_{\mathrm{out}}
+  \vdash
+  [\overline{\beta}\mapsto\overline{\tau}]
+    e_{\mathsf{op}}:
+    \sigma_{\mathrm{out}}\mid\epsilon_{\mathrm{out}}.
+\]
+\end{lemma}
+
+\begin{lemma}[deep 継続の型付け]
+\label{lem:fxi-resumption}
+$\Delta\mid\Gamma\vdash
+\texttt{handle}~
+ E[\texttt{perform}~\mathsf{op}\bktt{\overline{\tau}}~v]
+ \texttt{with}~h:
+ \sigma_{\mathrm{out}}\mid\epsilon_{\mathrm{out}}$
+とし，$\Sigma(\mathsf{op})$ は補題
+\ref{lem:fxi-clause-instantiation} と同じ宣言であるとする．
+\[
+  k_E =
+    \lambda y:
+      [\overline{\beta}\mapsto\overline{\tau}]
+        \sigma_{\mathrm{res}}.
+    \texttt{handle}~E[y]~\texttt{with}~h
+\]
+と置けば，
+\[
+  \Delta\mid\Gamma\vdash k_E:
+  \bigl(
+    [\overline{\beta}\mapsto\overline{\tau}]
+      \sigma_{\mathrm{res}}
+    \rightarrow~\epsilon_{\mathrm{out}}~
+      \sigma_{\mathrm{out}}
+  \bigr)\mid\varnothing.
+\]
+\end{lemma}
+
+\begin{lemma}[操作節の項置換]
+\label{lem:fxi-operation-substitution}
+$\Delta\mid\Gamma,x:\sigma_{\mathrm{arg}},
+ k:\sigma_{\mathrm{res}}\rightarrow~\epsilon~\sigma
+ \vdash e_{\mathsf{op}}:\sigma\mid\epsilon$，
+$\Delta\mid\Gamma\vdash v:\sigma_{\mathrm{arg}}\mid\varnothing$，
+$\Delta\mid\Gamma\vdash k_E:
+ (\sigma_{\mathrm{res}}\rightarrow~\epsilon~\sigma)
+ \mid\varnothing$ ならば，
+\[
+  \Delta\mid\Gamma\vdash
+    [k\mapsto k_E][x\mapsto v]e_{\mathsf{op}}:
+    \sigma\mid\epsilon.
+\]
+\end{lemma}
+
+\subsection{進行と保存}
+
+\begin{proposition}[基本簡約の型保存]
+\label{prop:fxi-redex-preservation}
+$\Delta\mid\Gamma\vdash e:\sigma\mid\epsilon$ とする．
+EAppAbs，ETAppAbs，EReturn の各規則によって $e\longrightarrow e'$
+ならば，$\Delta\mid\Gamma\vdash e':\sigma\mid\epsilon$ である．
+また，$\mathsf{op}\notin\mathbf{handled}(E)$ である
+EPerform の簡約も同じ型と効果の上界を保存する．
+\end{proposition}
+
+\begin{theorem}[Progress]
+\label{thm:fxi-progress}
+閉じた式について
+$\varnothing\mid\varnothing\vdash e:\sigma\mid\epsilon$
+ならば，次のいずれかが成り立つ：
+\[
+  \mathsf{Val}(e)
+  \quad\lor\quad
+  \exists e'.\ e\longrightarrow e'
+  \quad\lor\quad
+  \exists E,\mathsf{op},\overline{\tau},v.\quad
+    \begin{gathered}
+      e=E[\texttt{perform}~\mathsf{op}
+          \bktt{\overline{\tau}}~v],\\
+      \mathsf{Val}(v),\quad
+      \mathsf{op}\notin\mathbf{handled}(E),\quad
+      \mathsf{op}\in\epsilon.
+    \end{gathered}
+\]
+最後の場合，操作宣言は $\Sigma$ に存在し，型引数の数はその arity に等しい．
+\end{theorem}
+
+\begin{proposition}[空効果の Progress]
+\label{prop:fxi-empty-progress}
+\[
+  \varnothing\mid\varnothing\vdash
+    e:\sigma\mid\varnothing
+  \Longrightarrow
+  \mathsf{Val}(e)
+  \ \lor\;
+  \exists e'.\ e\longrightarrow e'.
+\]
+\end{proposition}
+
+\begin{theorem}[Preservation]
+\label{thm:fxi-preservation}
+\[
+  \Delta\mid\Gamma\vdash e:\sigma\mid\epsilon
+  \quad\land\quad
+  e\longrightarrow e'
+  \Longrightarrow
+  \Delta\mid\Gamma\vdash e':\sigma\mid\epsilon.
+\]
+\end{theorem}
+
+\begin{lemma}[多歩の型保存]
+\label{lem:fxi-multistep-preservation}
+\[
+  \Delta\mid\Gamma\vdash e:\sigma\mid\epsilon
+  \quad\land\quad
+  e\longrightarrow^{*}e'
+  \Longrightarrow
+  \Delta\mid\Gamma\vdash e':\sigma\mid\epsilon.
+\]
+\end{lemma}
+
+\begin{theorem}[Effect safety]
+\label{thm:fxi-effect-safety}
+$\longrightarrow^{*}$ を $\longrightarrow$ の反射推移閉包とする．
+$\varnothing\mid\varnothing\vdash e:\sigma\mid\epsilon$
+かつ $e\longrightarrow^{*}e'$ ならば，
+\[
+  \mathsf{Val}(e')
+  \quad\lor\quad
+  \exists e''.\ e'\longrightarrow e''
+  \quad\lor\quad
+  \exists E,\mathsf{op},\overline{\tau},v.\quad
+    \begin{gathered}
+      e'=E[\texttt{perform}~\mathsf{op}
+           \bktt{\overline{\tau}}~v],\\
+      \mathsf{Val}(v),\quad
+      \mathsf{op}\notin\mathbf{handled}(E),\quad
+      \mathsf{op}\in\epsilon.
+    \end{gathered}
+\]
+特に，$\epsilon=\varnothing$ ならば，
+到達可能な各 $e'$ は値であるか，一歩簡約できる．
+\end{theorem}

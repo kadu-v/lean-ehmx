@@ -1,0 +1,31 @@
+\begin{figure}[h]
+    \begin{align*}
+         & \text{Value}                     &  & v        &  & ::=  &  & x                                                                                                    & \\
+         &                                  &  &          &  & \mid &  & \lambda x : \sigma. e                                                                                & \\
+         &                                  &  &          &  & \mid &  & \Lambda \alpha :: \mathbf{T}. e                                                               & \\
+         &                                  &  &          &  & \mid &  & \Lambda \mu :: \mathbf{E}. e                                                                  & \\
+         & \text{Expression}                &  & e        &  & ::=  &  & v                                                                                                    & \\
+         &                                  &  &          &  & \mid &  & e~e                                                                                                  & \\
+         &                                  &  &          &  & \mid &  & e\bktt{\tau}                                                                                        & \\
+         &                                  &  &          &  & \mid &  & \texttt{perform}~\textbf{\texttt{op}}\bktt{\overline{\tau}}~e                                       & \\
+         &                                  &  &          &  & \mid &  & \texttt{handle}~e~\texttt{with}~h                                                                    & \\
+         & \text{Handler}                   &  & h        &  & ::=  &  & \{ \texttt{return}~x_r \mapsto e_r,\ \textbf{\texttt{op}}(x; k) \mapsto e_{\mathsf{op}} \} & \\
+         & \text{Kind}                      &  & \kappa   &  & ::=  &  & \mathbf{T}\mid\mathbf{E}                                                                                 & \\
+         & \text{Polymorphic argument}      &  & \tau   &  & ::=  &  & \sigma\mid\epsilon                                                                                   & \\
+         & \text{Type}                      &  & \sigma   &  & ::=  &  & \alpha                                                                                               & \\
+         &                                  &  &          &  & \mid &  & \sigma \rightarrow~\epsilon~\sigma                                                                   & \\
+         &                                  &  &          &  & \mid &  & \forall \alpha :: \mathbf{T}. \sigma                                                          & \\
+         &                                  &  &          &  & \mid &  & \forall \mu :: \mathbf{E}. \sigma                                                             & \\
+         & \text{Effects}                   &  & \epsilon &  & ::=  &  & \varnothing                                                                                           & \\
+         &                                  &  &          &  & \mid &  & \{\textbf{\texttt{op}}\}\mid\mu\mid\epsilon\cup\epsilon                                             & \\
+         & \text{Effect Signature}          &  & \Sigma   &  & ::=  &  & \bullet                                                                                              & \\
+         &                                  &  &          &  & \mid &  & \textbf{\texttt{op}}: \forall \overline{\beta :: \kappa}. \sigma \rightarrow \sigma ~\uplus~ \Sigma  & \\
+         & \text{Term Variable Environment} &  & \Gamma   &  & ::=  &  & \bullet                                                                                              & \\
+         &                                  &  &          &  & \mid &  & x: \sigma, \Gamma                                                                                    & \\
+         & \text{Kind Environment}          &  & \Delta   &  & ::=  &  & \bullet                                                                                              & \\
+         &                                  &  &          &  & \mid &  & \alpha::\mathbf{T},\Delta                                                                       & \\
+         &                                  &  &          &  & \mid &  & \mu::\mathbf{E},\Delta
+    \end{align*}
+    \caption{Syntax of System F$^{\xi}$}
+    \label{systemf:syntax}
+\end{figure}
