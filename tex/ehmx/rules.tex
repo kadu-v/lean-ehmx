@@ -3,6 +3,7 @@
 \usepackage{amsmath,amssymb,mathtools}
 \usepackage{array}
 \usepackage{amsthm}
+\usepackage{bussproofs}
 \pagestyle{plain}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{3pt}
@@ -422,5 +423,72 @@ $ping(x;k)\mapsto k\,x$ では $\chi=\varnothing$ は一解だが，
 \texttt{generate\_sound}.\\
 \texttt{simplify\_sound}, \texttt{resolveX\_sound},
 \texttt{inferQualified\_sound}.\par}
+
+\clearpage
+\section{導出木：$ping(x;k)\mapsto x$ の制約}
+\[
+\begin{gathered}
+\Sigma(ping)=\forall\alpha.\alpha\to\alpha,\qquad
+\sigma_{id}=\forall\gamma.\arr{\gamma}{\varnothing}{\gamma},\qquad
+T=\arr{\theta}{\varnothing}{\theta},\\
+B=\mathbf{let}\ id=\lambda z.z\ \mathbf{in}\
+  \mathbf{perform}\ ping\ id,\\
+H=\mathbf{handle}\ B\ \mathbf{with}\
+\{\mathbf{return}\ r\mapsto r;\ ping(x;k)\mapsto x\}.
+\end{gathered}
+\]
+
+\noindent\textbf{本体の導出．}
+$id$ は $\sigma_{id}$ から $T$ に具体化し，
+$\mathbf{perform}$ でも操作型引数を $\alpha:=T$ とする．
+\begin{prooftree}
+\AxiomC{$z:\theta\vdash z:\theta\mid\varnothing$}
+\RightLabel{\scriptsize(Abs)}
+\UnaryInfC{$\vdash\lambda z.z:T\mid\varnothing$}
+\AxiomC{$id:\sigma_{id}\vdash id:T\mid\varnothing$}
+\RightLabel{\scriptsize(Perform $\alpha:=T$)}
+\UnaryInfC{$id:\sigma_{id}\vdash\mathbf{perform}\ ping\ id:T\mid\{ping\}$}
+\RightLabel{\scriptsize(LetVal)}
+\BinaryInfC{$\vdash B:T\mid\{ping\}$}
+\end{prooftree}
+
+\noindent\textbf{Handler の制約生成．}
+操作節では別の剛性変数 $\beta$ を導入する．
+$a$ は handler の結果型で，$\beta\notin\operatorname{FV}(a)$ である．
+\begin{prooftree}
+\AxiomC{$\operatorname{Gen}_{\varnothing}(B)=(T,\{ping\},C_B)$}
+\AxiomC{$\operatorname{Gen}_{r:T}(r)=(T,\varnothing,\top)$}
+\AxiomC{$\operatorname{Gen}_{x:\beta,\,k:\arr{\beta}{\chi}{a}}(x)
+  =(\beta,\varnothing,\top)$}
+\RightLabel{\scriptsize(Handle)}
+\TrinaryInfC{$\operatorname{Gen}_{\varnothing}(H)=(a,\chi,C_H)$}
+\end{prooftree}
+\[
+\begin{aligned}
+C_H={}&C_B\land(T=a)
+\land\underbrace{\forall\beta.(\beta=a\land\varnothing\subseteq\chi)}
+  _{\text{操作節の結果型 }\tau_o=a}\\
+&\land\operatorname{Split}(ping,\{ping\},\delta)
+\land\delta\subseteq\chi\land\varnothing\subseteq\chi.
+\end{aligned}
+\]
+\[
+\operatorname{Split}(ping,\{ping\},\delta)\Longrightarrow\delta=\varnothing,
+\qquad
+\boxed{\forall\beta.\beta=a\quad\text{は充足不能}}.
+\]
+$\beta=Int$ と $\beta=Bool$ を選ぶと，同じ固定型 $a$ が
+$Int$ と $Bool$ の両方に等しくなって矛盾する．
+制約生成の導出木は成立するが，$C_H$ を満たす評価は存在しない．
+実際の出力では $\theta=\alpha_{10}$, $T=\alpha_6$,
+$\beta=\alpha_0$, $a=\alpha_{11}$,
+$\delta=\mu_7$, $\chi=\mu_8$ に対応する．
+$C_B$ 内の $(\arr{\alpha_{10}}{\varnothing}{\alpha_{10}})=\alpha_6$
+を解いた形で本体の導出木を表示した．
+
+\noindent
+$ping(x;k)\mapsto k\,x$ なら，$x:\beta$ と
+$k:\arr{\beta}{\chi}{a}$ から節の結果型は $a$ となり，
+$\forall\beta.\beta=a$ は生成されない．
 
 \end{document}
