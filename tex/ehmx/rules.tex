@@ -430,7 +430,7 @@ I_\rho(r.\epsilon)=I_{\rho'}(r.\epsilon).
 \land\operatorname{LawfulSupport}(X)\land\operatorname{LawfulFVRename}(X)}
 \]
 \[
-\boxed{\text{handler を含む全項の生成完全性・意味論的主要型を Lean で証明済み}}
+\boxed{\text{handler を含む全項の生成完全性・推論結果の主要性を Lean で証明済み}}
 \]
 \begin{center}
 \small
@@ -450,7 +450,7 @@ scheme 具体例と有限範囲の改名 & 双方向の意味保存，既存の�
 文脈の scheme 包含と変数ケース & 公開入口 \texttt{generateFresh} の変数ケースまで Lean で証明済み\\
 後続の部分式で先行制約を保つ補題 & 支持集合の意味保存と，handler を含む生成器全体の供給上界を Lean で証明済み\\
 handler の scope 判定 & 生成した body・return・操作節から \texttt{HandlerScope} と \texttt{ClauseScope} の成立を Lean で証明済み\\
-文脈全体・handler を含む完全性と主要型 & \texttt{Typing.generate\_complete} と \texttt{Typing.generateFresh\_principal} を Lean で証明済み
+文脈全体・handler を含む完全性と主要型 & \texttt{Typing.generate\_complete}，\texttt{Typing.generateFresh\_principal}，\texttt{Typing.inferQualifiedTotal\_principal} を Lean で証明済み
 \end{tabular}
 \end{center}
 
@@ -619,7 +619,7 @@ I_\rho(\epsilon_g)=I_\rho(\epsilon).
 Lean では \texttt{Typing.core\_generate\_complete}．
 \end{proposition}
 
-\begin{theorem}[EHM(X) の生成完全性と意味論的主要型]
+\begin{theorem}[EHM(X) の生成完全性と推論結果の主要性]
 $\operatorname{Closed}(\Sigma)$ と
 $\operatorname{LawfulRename}(X)$，
 $\operatorname{LawfulSupport}(X)$，
@@ -643,18 +643,44 @@ $r.C;\Gamma\vdash e:r.\tau\mid r.\epsilon$ を満たす．
 \end{aligned}
 \]
 ただし $\operatorname{generate}(\Sigma,X,\Gamma_g,e,s)=\operatorname{some}(r)$．
-さらに任意の宣言的導出
-$C';\Gamma\vdash e:\tau'\mid\epsilon'$ と
-$\rho\models C'$ に対し，ある $\rho_g$ が存在して
+制約付き型 $Q=(C,\tau,\epsilon)$ の具体例関係を
 \[
-\rho_g\models r.C\quad\land\quad
-I_{\rho_g}(r.\tau)=I_\rho(\tau')\quad\land\quad
-I_{\rho_g}(r.\epsilon)=I_\rho(\epsilon').
+\begin{aligned}
+Q_g\succeq_\Gamma Q_d\ \Longleftrightarrow\
+\forall\rho_d.\ \rho_d\models C_d\Longrightarrow\exists\rho_g.\quad
+&\rho_g|_{\operatorname{FV}(\Gamma)}=
+  \rho_d|_{\operatorname{FV}(\Gamma)}\\
+{}\land{}&\rho_g\models C_g\ \land\
+I_{\rho_g}(\tau_g)=I_{\rho_d}(\tau_d)\ \land\
+I_{\rho_g}(\epsilon_g)=I_{\rho_d}(\epsilon_d)
+\end{aligned}
 \]
-Lean では，異なる文脈の scheme 包含と開始供給以下の名前の保存を含む
-\texttt{Typing.generate\_complete} を帰納法で証明し，
-\texttt{Typing.generateFresh\_principal} を導いた．
-これは制約の解による意味論的主要性である．
+と定義する．型変数と効果変数の両方について文脈の自由名を固定する．
+これは HM($X$) の constrained type の具体例順序を，
+型と効果の対に拡張したものである．
+生成結果 $r$ 自身に型がつき，任意の宣言的導出
+$C';\Gamma\vdash e:\tau'\mid\epsilon'$ に対して
+\[
+\boxed{(r.C,r.\tau,r.\epsilon)\succeq_\Gamma
+       (C',\tau',\epsilon')}
+\]
+が成り立つ．さらに明示的仮定 $A$ 付きの実行可能な推論結果
+$q=\operatorname{inferQualifiedTotal}(\Sigma,X,A,\Gamma,e,s)$ について
+\[
+\boxed{(q.C,q.\tau,q.\epsilon)\succeq_\Gamma
+       (\operatorname{Assume}(A)\land C',\tau',\epsilon')}
+\]
+が成り立つ．$\operatorname{Assume}(A)\land C'$ に解があれば
+$q.C$ にも解がある．
+Lean で対応する定理を証明済み：
+{\footnotesize\par\noindent
+\texttt{Typing.generate\_complete},
+\texttt{Typing.generateFresh\_principal},\\
+\texttt{Typing.inferQualifiedTotal\_principal},\\
+\texttt{Typing.inferQualifiedTotal\_realizable}.\par}
+主要性はこの具体例順序に関する主張である．
+制約を正規形まで解く主張には，HM($X$) と同様，
+$X$ の principal normal form 条件が別途必要である．
 \end{theorem}
 
 \begin{lemma}[量化した操作節での包含保存]

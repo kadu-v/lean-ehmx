@@ -1,4 +1,4 @@
-import SystemFXi.EHMX.Algorithm
+import SystemFXi.EHMX.Solver
 
 namespace SystemFXi.EHMX
 
@@ -89,9 +89,10 @@ private theorem foldl_union_mem {α : Type}
       aesop
 
 theorem BoundedInputs.seed {sig : Signature} {X : Domain}
-    (Γ : Context X) (e : Expr) (s : Supply) :
-    BoundedInputs sig X Γ e.ops (s.seed sig Γ e []) := by
-  have hs := s.seed_above_inputs sig Γ e []
+    (Γ : Context X) (e : Expr) (s : Supply)
+    (A : List X.Pred := []) :
+    BoundedInputs sig X Γ e.ops (s.seed sig Γ e A) := by
+  have hs := s.seed_above_inputs sig Γ e A
   constructor
   · intro σ hσ i hi
     apply hs.1 i
@@ -5588,9 +5589,21 @@ end SystemFXi.EHMX
 
 namespace SystemFXi.EHMX
 
-/-- For every declaratively typable expression, including handlers, the
-generated qualified type is sound and every other declarative typing is its
-semantic instance. -/
+/-- HM(X)-style instance order for an inferred constrained type and effect.
+Every solution of the candidate typing is an instance of the inferred result,
+with the free variables of the environment held fixed. -/
+def Output.MoreGeneralThan {X : Domain} (Γ : Context X)
+    (r : Output X) (C : Constraint X) (τ : Ty) (ε : Effect) : Prop :=
+  ∀ vd, C.holds vd →
+    ∃ wg : Valuation,
+      (∀ i ∈ Γ.fvTypes, wg.types i = vd.types i) ∧
+      (∀ i ∈ Γ.fvEffects, wg.effects i = vd.effects i) ∧
+      r.constraints.holds wg ∧
+      r.ty.eval wg = τ.eval vd ∧
+      r.effect.eval wg.effects = ε.eval vd.effects
+
+/-- The generated constrained type is most general among *all* declarative
+typings of the same expression in the same environment, including handlers. -/
 theorem Typing.generateFresh_principal
     {sig : Signature} {X : Domain}
     (hRename : LawfulRename X)
@@ -5605,16 +5618,15 @@ theorem Typing.generateFresh_principal
       Typing sig X r.constraints Γ e r.ty r.effect ∧
       ∀ (C : Constraint X) (τ : Ty) (ε : Effect),
         Typing sig X C Γ e τ ε →
-        ∀ vd : Valuation, C.holds vd →
-          ∃ wg : Valuation,
-            r.constraints.holds wg ∧
-            r.ty.eval wg = τ.eval vd ∧
-            r.effect.eval wg.effects = ε.eval vd.effects := by
+        r.MoreGeneralThan Γ C τ ε := by
   let seed := s.seed sig Γ e []
+  have hb : BoundedInputs sig X Γ e.ops seed :=
+    BoundedInputs.seed Γ e s
+  have hfv := hb.contextFVBelow
   obtain ⟨r, hr, _⟩ :=
     h₀.generate_complete hRename hSupport
       hFVRename hClosed Γ e.ops seed
-      rfl (Finset.Subset.rfl) (BoundedInputs.seed Γ e s)
+      rfl (Finset.Subset.rfl) hb
   refine ⟨r, ?_, ?_, ?_⟩
   · exact hr
   · exact (generate_sound hr).sound
@@ -5622,11 +5634,123 @@ theorem Typing.generateFresh_principal
     obtain ⟨r', hr', hcov⟩ :=
       h'.generate_complete hRename hSupport
         hFVRename hClosed Γ e.ops seed
-        rfl (Finset.Subset.rfl) (BoundedInputs.seed Γ e s)
+        rfl (Finset.Subset.rfl) hb
     rw [hr] at hr'
     cases hr'
     rcases hcov vd vd (Context.moreGeneralAt_refl Γ vd) hC' with
-      ⟨wg, _, _, hCg, hTy, hEff⟩
-    exact ⟨wg, hCg, hTy, hEff⟩
+      ⟨wg, hBelowT, hBelowE, hCg, hTy, hEff⟩
+    exact ⟨wg,
+      (fun i hi => (hBelowT i (hfv.1 i hi)).symm),
+      (fun i hi => (hBelowE i (hfv.2 i hi)).symm),
+      hCg, hTy, hEff⟩
+
+private theorem assumptions_fvTypes_mem_iff {X : Domain}
+    (A : List X.Pred) (i : Nat) :
+    i ∈ (assumptions A).fvTypes ↔
+      ∃ p ∈ A, i ∈ X.fvTypes p := by
+  induction A with
+  | nil => simp [assumptions, Constraint.fvTypes]
+  | cons p ps ih =>
+      simp [assumptions, Constraint.fvTypes, ih]
+
+private theorem assumptions_fvEffects_mem_iff {X : Domain}
+    (A : List X.Pred) (i : Nat) :
+    i ∈ (assumptions A).fvEffects ↔
+      ∃ p ∈ A, i ∈ X.fvEffects p := by
+  induction A with
+  | nil => simp [assumptions, Constraint.fvEffects]
+  | cons p ps ih =>
+      simp [assumptions, Constraint.fvEffects, ih]
+
+/-- The actual total inference entry point returns the most general
+constrained type relative to its explicit class assumptions. -/
+theorem Typing.inferQualifiedTotal_principal
+    {sig : Signature} {X : Domain} [DecidableEq X.Pred]
+    (hRename : LawfulRename X)
+    (hSupport : LawfulSupport X)
+    (hFVRename : LawfulFVRename X)
+    (hClosed : sig.Closed)
+    (A : List X.Pred) (Γ : Context X) (e : Expr) (s : Supply)
+    {C₀ : Constraint X} {τ₀ : Ty} {ε₀ : Effect}
+    (h₀ : Typing sig X C₀ Γ e τ₀ ε₀) :
+    ∃ r : Output X,
+      inferQualifiedTotal sig X A Γ e s = some r ∧
+      Typing sig X r.constraints Γ e r.ty r.effect ∧
+      ∀ (C : Constraint X) (τ : Ty) (ε : Effect),
+        Typing sig X C Γ e τ ε →
+        r.MoreGeneralThan Γ (.and (assumptions A) C) τ ε := by
+  let seed := s.seed sig Γ e A
+  have hb : BoundedInputs sig X Γ e.ops seed :=
+    BoundedInputs.seed Γ e s A
+  have hfv := hb.contextFVBelow
+  obtain ⟨g, hg, _⟩ :=
+    h₀.generate_complete hRename hSupport hFVRename hClosed
+      Γ e.ops seed rfl (Finset.Subset.rfl) hb
+  let r : Output X :=
+    {g with constraints :=
+      (.and (assumptions A) (resolveX A (simplifyTotal g.constraints)))}
+  have hr : inferQualifiedTotal sig X A Γ e s = some r := by
+    simp [inferQualifiedTotal, seed, hg, r]
+  refine ⟨r, hr, inferQualifiedTotal_sound hr, ?_⟩
+  intro C τ ε h' vd hAC
+  obtain ⟨g', hg', hcov⟩ :=
+    h'.generate_complete hRename hSupport hFVRename hClosed
+      Γ e.ops seed rfl (Finset.Subset.rfl) hb
+  rw [hg] at hg'
+  cases hg'
+  rcases hcov vd vd (Context.moreGeneralAt_refl Γ vd) hAC.2 with
+    ⟨wg, hBelowT, hBelowE, hCg, hTy, hEff⟩
+  have hAssumeT : ∀ i ∈ (assumptions A).fvTypes,
+      vd.types i = wg.types i := by
+    intro i hi
+    rcases (assumptions_fvTypes_mem_iff A i).mp hi with ⟨p, hp, hpi⟩
+    apply hBelowT i
+    apply (s.seed_above_inputs sig Γ e A).1 i
+    apply Finset.mem_union_right
+    exact (foldl_union_mem X.fvTypes A ∅ i).mpr
+      (Or.inr ⟨p, hp, hpi⟩)
+  have hAssumeE : ∀ i ∈ (assumptions A).fvEffects,
+      vd.effects i = wg.effects i := by
+    intro i hi
+    rcases (assumptions_fvEffects_mem_iff A i).mp hi with ⟨p, hp, hpi⟩
+    apply hBelowE i
+    apply (s.seed_above_inputs sig Γ e A).2 i
+    apply Finset.mem_union_right
+    exact (foldl_union_mem X.fvEffects A ∅ i).mpr
+      (Or.inr ⟨p, hp, hpi⟩)
+  have hAwg : (assumptions A).holds wg :=
+    ((Constraint.holds_support hSupport (assumptions A)
+      vd wg hAssumeT hAssumeE).mp hAC.1)
+  have hR : r.constraints.holds wg := by
+    change (Constraint.and (assumptions A)
+      (resolveX A (simplifyTotal g.constraints))).holds wg
+    exact (resolveX_equiv A (simplifyTotal g.constraints) wg).mp
+      ⟨hAwg, (simplifyTotal_equiv g.constraints wg).mp hCg⟩
+  exact ⟨wg,
+    (fun i hi => (hBelowT i (hfv.1 i hi)).symm),
+    (fun i hi => (hBelowE i (hfv.2 i hi)).symm),
+    hR, hTy, hEff⟩
+
+/-- A satisfiable declarative candidate gives a satisfiable inferred
+constraint; principality is therefore non-vacuous for typable inputs. -/
+theorem Typing.inferQualifiedTotal_realizable
+    {sig : Signature} {X : Domain} [DecidableEq X.Pred]
+    (hRename : LawfulRename X)
+    (hSupport : LawfulSupport X)
+    (hFVRename : LawfulFVRename X)
+    (hClosed : sig.Closed)
+    (A : List X.Pred) (Γ : Context X) (e : Expr) (s : Supply)
+    {C : Constraint X} {τ : Ty} {ε : Effect}
+    (h : Typing sig X C Γ e τ ε)
+    (v : Valuation)
+    (hv : (Constraint.and (assumptions A) C).holds v) :
+    ∃ r : Output X,
+      inferQualifiedTotal sig X A Γ e s = some r ∧
+      ∃ w : Valuation, r.constraints.holds w := by
+  obtain ⟨r, hr, _, hprincipal⟩ :=
+    h.inferQualifiedTotal_principal hRename hSupport
+      hFVRename hClosed A Γ e s
+  obtain ⟨w, _, _, hw, _, _⟩ := hprincipal C τ ε h v hv
+  exact ⟨r, hr, w, hw⟩
 
 end SystemFXi.EHMX
