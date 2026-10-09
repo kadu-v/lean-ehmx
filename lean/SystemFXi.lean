@@ -3,6 +3,7 @@ import SystemFXi.EffectPolySafety
 import SystemFXi.EffectPolyExamples
 import SystemFXi.EHMX.Examples
 import SystemFXi.EHMX.Completeness
+import SystemFXi.EHMX.PureUnification
 
 /-!
 # System Fξ
