@@ -11,6 +11,8 @@ import SystemFXi.EHMX.GenericPrincipal
 import SystemFXi.EHMX.GenericCompleteness
 import SystemFXi.EHMX.GenericSupport
 import SystemFXi.EHMX.GenericEffectFresh
+import SystemFXi.EHMX.GenericOrigin
+import SystemFXi.EHMX.GenericHandlerBridge
 import SystemFXi.EHMX.GenericHandlerFree
 import SystemFXi.EHMX.GenericEmbedding
 

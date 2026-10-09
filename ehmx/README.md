@@ -116,6 +116,14 @@ keeps all result free names below its final supply.
 after the starting supply and that fresh operation binders satisfy the
 handler's outer scope check. The complete handler induction still needs the
 clause scope and quantified witness construction.
+`GenericOrigin.lean` proves that generalization leaves only environment free
+names, variable instantiation preserves the source of old names, and the
+handler constructor preserves that property when its three subresults do. It
+also shows that old names in a return result precede the operation binders
+once the return result's origin premise is established.
+`GenericHandlerBridge.lean` turns alignment of every rigid operation assignment
+with a declarative clause into the existential witnesses required by the
+generic handler constraint.
 `GenericEmbedding.lean` verifies the renaming, free-name, and semantic laws
 needed to embed abstract X formulas into that existing proof, but the typing
 and generator transfer is not yet proved.
