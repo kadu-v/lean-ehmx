@@ -42,7 +42,8 @@ e &::= x\mid n\mid\mathbf{true}\mid\mathbf{false}
  \mid\mathbf{handle}\ e\ \mathbf{with}\ h,\\
 h &::=\{\mathbf{return}\ r\mapsto e_r;\ \op(x;k)\mapsto e_o\},
 \qquad v::=x\mid n\mid\mathbf{true}\mid\mathbf{false}\mid\lambda x.e,\\
-\tau &::=\alpha\mid Int\mid Bool\mid\arr{\tau}{\epsilon}{\tau},
+\tau &::=\alpha\mid Int\mid Bool\mid b_n\ (n\in\mathbb N)
+ \mid\arr{\tau}{\epsilon}{\tau},
 \qquad \epsilon::=\varnothing\mid\{\op\}\mid\mu\mid\epsilon\cup\epsilon,\\
 \sigma &::=\forall\bar\alpha,\bar\mu.\ P\Rightarrow\tau,\\
 C &::=\top\mid C\land C\mid\tau=\tau\mid
@@ -66,7 +67,9 @@ I_\rho(\{Read\}\cup\mu)=\{Read\}\cup\rho(\mu).
 \]
 \[
 I_\rho(\alpha)=\rho_T(\alpha),\quad
-I_\rho(Int)=Int,\quad I_\rho(Bool)=Bool,\quad
+I_\rho(Int)=\mathsf{atom}(0),\quad
+I_\rho(Bool)=\mathsf{atom}(1),\quad
+I_\rho(b_n)=\mathsf{atom}(n+2),\quad
 I_\rho(\arr{a}{\epsilon}{b})
 =\arr{I_\rho(a)}{I_\rho(\epsilon)}{I_\rho(b)}.
 \]
@@ -451,6 +454,8 @@ scheme 具体例と有限範囲の改名 & 双方向の意味保存，既存の�
 後続の部分式で先行制約を保つ補題 & 支持集合の意味保存と，handler を含む生成器全体の供給上界を Lean で証明済み\\
 handler の scope 判定 & 生成した body・return・操作節から \texttt{HandlerScope} と \texttt{ClauseScope} の成立を Lean で証明済み\\
 文脈全体・handler を含む完全性と主要型 & \texttt{Typing.generate\_complete}，\texttt{Typing.generateFresh\_principal}，\texttt{Typing.inferQualifiedTotal\_principal} を Lean で証明済み
+\\
+閉じた充足可能な判断の正規化後の主要型 & 結果名を含む制約 $D_q$ を principal normal form にし，再構成型の全宣言的型付けに対する主要性を Lean で証明済み
 \end{tabular}
 \end{center}
 
@@ -690,7 +695,10 @@ N=(R,\theta_T,\theta_E),\qquad
 \operatorname{Rep}(N)
 =\{\rho\mid\exists\omega.\ \omega\models R\land
 \rho=\theta^*\omega\},\\
-U=\operatorname{FV}(D),\quad
+\operatorname{FV}_{\rm sem}(D)
+=\{z\mid\exists\rho,t.\ \rho\not\models D\land
+\rho[z\mapsto t]\models D\},\\
+U=\operatorname{FV}_{\rm sem}(D),\quad
 \operatorname{Rep}_{U}(N)
 =\{\rho|_U\mid\rho\in\operatorname{Rep}(N)\},\\
 \operatorname{NF}_{S}(D,N)
@@ -706,49 +714,69 @@ N\succeq_D N'
 \]
 $S$ は充足可能な解決済み制約の集合を表す．$\theta^*\omega$ は
 型・効果の代入を評価に作用させた結果である．正規形間の順序は
-HM($X$) と同じく元の制約の自由名への射影で定める．抽象正規化器は
-成功時に principal normal form を返し，失敗は「正規形が存在しない」
-ことを表す．成功すれば元の制約は充足可能である．失敗と制約の
-充足不能は区別する．
+HM($X$) と同じく意味的自由名への射影で定める．
+抽象正規化器は成功時に principal normal form を返し，失敗は
+「正規形が存在しない」ことを表す．
 
-\begin{theorem}[HM($X$) に従う正規化と生成型]
-$q=\operatorname{inferQualifiedTotal}(\Sigma,X,A,\Gamma,e,s)$，
-$N=\operatorname{normalize}_{X}(q.C)=(R,\theta)$ とする．
-上の正規化器の条件と，前節の生成完全性の仮定の下で，
+\fighead{Figure 12. 推論結果を含めた正規化問題と再構成}
 \[
 \begin{gathered}
-N\text{ は }q.C\text{ の principal normal form},\\
- (q.C,q.\tau,q.\epsilon)
+q=(C_q,\tau_q,\epsilon_q),\quad
+a_o,\mu_o\notin\operatorname{FV}(q),\\
+D_q=C_q\land(a_o=\tau_q)\land(\mu_o\equiv\epsilon_q),\\
+\operatorname{normalize}_X(D_q)=N=(R,\theta_T,\theta_E),\\
+Q_N=\bigl(R,\theta_T(a_o),\theta_E(\mu_o)\bigr).
+\end{gathered}
+\]
+型・効果の出力名を $D_q$ に含めるので，$D_q$ が充足可能なら
+$a_o,\mu_o\in\operatorname{FV}_{\rm sem}(D_q)$ となる．
+Lean の値領域 $\mathsf{atom}(n)$ は，上記の $Int,Bool,b_n$ で
+閉じた型項として表現できる．\par
+\figfoot
+
+\begin{theorem}[閉じた充足可能な判断に対する正規化後の主要型]
+$\operatorname{FV}(\Gamma)=\varnothing$，$\Sigma$ は閉じているとする．
+宣言的導出 $C_0;\Gamma\vdash e:\tau_0\mid\epsilon_0$ があり，
+$\operatorname{Assume}(A)\land C_0$ が充足可能とする．
+$S$ に $\top$ と同値な制約が含まれ，$X$ が上記の principal normal
+form を返す正規化器を持ち，前節の生成完全性の仮定を満たすなら，
+$q=\operatorname{inferQualifiedTotal}(\Sigma,X,A,\Gamma,e,s)$ と
+$N=\operatorname{normalize}_{X}(D_q)$ が存在し，
+\[
+\begin{gathered}
+N\text{ は }D_q\text{ の principal normal form},\\
+Q_N=\bigl(R,\theta_T(a_o),\theta_E(\mu_o)\bigr)
 \succeq_\Gamma
 (\operatorname{Assume}(A)\land C',\tau',\epsilon')
 \end{gathered}
 \]
 が任意の宣言的導出 $C';\Gamma\vdash e:\tau'\mid\epsilon'$ に対して
-成り立つ．$\omega\models R$ なら，$\theta^*\omega\models q.C$ であり，
-再構成した型・効果の評価は元の推論結果の評価と一致する．
-ここでは再構成型の全宣言的型付けに対する主要性は主張しない．
-正規形間の主要性だけでは，元の制約の各解が正規形で表されるとは
-限らないためである．Lean:
-\texttt{PrincipalNormalizer.principal},
-\texttt{NormalForm.reconstruct\_sound},
-\texttt{Typing.inferQualifiedTotal\_with\_principal\_normalForm}．
+成り立つ．また $\omega\models R$ なら $\theta^*\omega\models D_q$．
+ここで $\succeq_\Gamma$ は，候補の各解に対して環境の自由名を保つ
+再構成型の解があり，型と効果の評価が一致するという具体例順序である．
+Lean:\par
+{\footnotesize\noindent
+\texttt{Typing.inferQualifiedTotal\_normalized\_exists},\\
+\texttt{Typing.inferQualifiedTotal\_with\_principal\_normalForm},\\
+\texttt{NormalForm.reconstruct\_canonical\_principal}.\par}
 \end{theorem}
 
 \begin{proposition}[制約だけを正規化する場合の限界]
 \[
 D=\top,\quad S=\{\alpha=Int\},\quad
 N=(\alpha=Int,\mathrm{id}),\quad
-\operatorname{FV}(D)=\varnothing.
+\operatorname{FV}_{\rm sem}(D)=\varnothing.
 \]
 $N$ は上の射影順序で principal normal form だが，
 $\operatorname{Rep}(N)\subsetneq\operatorname{Sol}(D)$ である．
 推論結果型に $\alpha$ が現れれば，この正規化は $Bool$ の具体例を失う．
-これは HM($X$) の定理への反例ではなく，結果型の情報を含まない
-$q.C$ だけを正規化しても再構成型の主要性が従わないことを示す．
+これは HM($X$) の定理への反例ではなく，出力名を含めずに
+$C_q$ だけを正規化しても再構成型の主要性が従わないことを示す．
 Lean: \texttt{NormalForm.projectionExample\_principal},
 \texttt{NormalForm.projectionExample\_not\_covers}．
 \end{proposition}
 
+\clearpage
 \begin{proposition}[実行可能な型等式の例]
 有限列 $E=[\alpha_i=t_i]$ で各右辺 $t_i$ が閉じた純粋型のとき，
 \texttt{PureEquation.unify} は同じ変数に異なる $t_i$ が

@@ -183,6 +183,7 @@ theorem simplifyAtom_none_unsat {X : Domain} {c : Constraint X}
           | base v =>
               cases u <;> cases v <;>
                 simp [simplifyAtom, Constraint.holds, Ty.eval] at h ⊢
+              omega
           | arr _ _ _ =>
               intro hh
               cases u <;> cases hh

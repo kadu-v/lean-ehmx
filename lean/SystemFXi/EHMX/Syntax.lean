@@ -5,7 +5,7 @@ namespace SystemFXi.EHMX
 abbrev Effect := SystemFXi.Poly.Effect
 
 inductive BaseTy where
-  | int | bool
+  | int | bool | other : Nat → BaseTy
   deriving DecidableEq
 
 inductive Ty where
@@ -45,6 +45,7 @@ def Ty.eval (ρ : Valuation) : Ty → GroundTy
   | .var i => ρ.types i
   | .base .int => .atom 0
   | .base .bool => .atom 1
+  | .base (.other n) => .atom (n + 2)
   | .arr a ε b => .arr (a.eval ρ) (ε.eval ρ.effects) (b.eval ρ)
 
 def Valuation.pullbackSubst (v : Valuation) (θ : Substitution) : Valuation :=
