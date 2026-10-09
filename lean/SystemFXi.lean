@@ -17,6 +17,7 @@ import SystemFXi.EHMX.GenericHandlerBridge
 import SystemFXi.EHMX.GenericHandlerScope
 import SystemFXi.EHMX.GenericHandlerSuccess
 import SystemFXi.EHMX.GenericFullCompleteness
+import SystemFXi.EHMX.SequentialNormalizer
 import SystemFXi.EHMX.GenericHandlerFree
 import SystemFXi.EHMX.GenericEmbedding
 
