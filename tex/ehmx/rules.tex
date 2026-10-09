@@ -614,62 +614,6 @@ $Q_N=(R,\tau_N,\epsilon_N)$ を一般化すると，
 
 この結論は handler を含む $e$ について Lean で証明した．
 
-\section{逐次的な制約簡約と一般化}
-値 \textbf{let} の右辺を推論した直後に制約を簡約する．
-簡約器 $S_X$ は正規形を制約として書き戻し，次を満たす：
-\[
-\forall C,\rho.\quad
- \rho\models_X S_X(C)\ \Longleftrightarrow\ \rho\models_X C.
-\tag{$\mathrm{Eq}$}
-\]
-特に $C\models_X\alpha=Int$ なら
-$S_X(C)\models_X\alpha=Int$ である．したがって環境の
-$y:\alpha$ に関する等式は，簡約で消えても残余制約に保持される．
-恒等簡約 $S_X(C)=C$ もこの条件を満たす．具体的な solver が
-等式を除去するときは，その代入を残余制約に書き戻して
-$(\mathrm{Eq})$ を満たす必要がある．
-構文制約の具体例では，Lean の \texttt{simplifyTotal} がこの等価性を
-満たすため，$Eq$・$Show$ を含むクラス制約体系にも適用できる．
-
-逐次生成器 $W_{S_X}$ は値 \textbf{let} で次の順序を使う：
-\[
-\begin{gathered}
- W_{S_X}(\Gamma,e_1)=(C_1,\tau_1,\varnothing),\qquad
- C_1'=S_X(C_1),\\
- B_1=\operatorname{FV}(C_1,\tau_1)\setminus\operatorname{FV}(\Gamma),
- \qquad\sigma_1=\forall B_1.\ C_1'\Rightarrow\tau_1,\\
- W_{S_X}(\Gamma,x:\sigma_1,e_2)=(C_2,\tau_2,\epsilon_2).
-\end{gathered}
-\]
-実装では一般化する変数の集合を元の生成器から受け継ぎ，
-束縛変数の条件だけを $C_1'$ に置き換える．
-handler の操作節では同じ局所変数の範囲を使う．
-
-\begin{theorem}[逐次推論の健全性・完全性・主要性]
-上の $(\mathrm{Eq})$，操作宣言の閉性，自由変数法則の下で，
-$C_0;\Gamma\vdash e:\tau_0\mid\epsilon_0$ なら
-$W_{S_X}(\Gamma,e)=Q_s=(C_s,\tau_s,\epsilon_s)$ が成功し，
-\[
- C_s;\Gamma\vdash e:\tau_s\mid\epsilon_s,
- \qquad
- \forall C,\tau,\epsilon.\quad
- C;\Gamma\vdash e:\tau\mid\epsilon
- \Longrightarrow Q_s\succeq_\Gamma(C,\tau,\epsilon).
-\]
-また，逐次生成器と元の生成器は成功・失敗が一致する．
-\end{theorem}
-
-\begin{theorem}[逐次結果から得る主要計算型スキーム]
-さらに $X$ の主要正規化器 $N_X$ があり，$\Gamma$ が閉じ，
-$C_0$ が充足可能なら，$Q_s$ の型・効果を出力名に結んだ制約
-$D_{Q_s}$ に $N_X$ を適用して得る計算型スキームは，
-同じ項に付けられるすべての計算型スキームを包含する．
-\end{theorem}
-
-$S_X$ は途中の\emph{等価な制約簡約}，$N_X$ は最後の
-\emph{主要正規形の計算}である．逐次定理は $S_X$ の等価性を
-抽象的に仮定しており，Rust の具体的 solver に対する等価性証明ではない．
-
 \noindent\textbf{解釈上の注意．}
 $\operatorname{Split}(ping,\{ping\},\delta)$ なら
 $\delta=\varnothing$ だが，handler の結果効果 $\chi$ は
@@ -707,11 +651,6 @@ $\delta=\varnothing$ だが，handler の結果効果 $\chi$ は
 \texttt{Generic.Typing.generateFresh\_principal}\\
 抽象 $X$ の handler を含む主要スキーム &
 \texttt{Generic.Typing.infer\_principal\_scheme}\\
-逐次生成と主要計算型スキーム &
-\texttt{Generic.generateSequentialFresh\_correct},
-\texttt{Generic.Typing.generateSequentialFresh\_principal},
-\texttt{Generic.Typing.inferSequential\_principal\_scheme},
-\texttt{Generic.Typing.classSequentialFresh\_principal}\\
 handler のスコープに使う補題 &
 \texttt{Generic.generate\_effect\_fresh},
 \texttt{Generic.generated\_handlerScope\_of\_runs},
