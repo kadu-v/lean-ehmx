@@ -403,6 +403,47 @@ C_{e}=Eq\,\alpha\land(\varnothing\subseteq\chi)
 \operatorname{FV}_T(\tau_a,\tau_b)\subseteq B_T\ \land\
 \operatorname{FV}_E(\tau_a,\tau_b)\subseteq B_E.
 \]
+つまり，各操作の引数型・結果型に現れる型変数と効果変数は，
+その操作宣言の $\forall B_T,B_E$ ですべて束縛される．
+以下では，型変数の改名を $f$，効果変数の改名を $g$ とし，
+$p^{f,g}=X.\operatorname{rename}(f,g,p)$ および
+$\rho^{f,g}_T(i)=\rho_T(f(i))$，
+$\rho^{f,g}_E(i)=\rho_E(g(i))$ と書く．
+$\rho\models_X p$ は，評価 $\rho$ の下で追加述語 $p$ が成り立つことを表す．
+追加述語 $p$ の自由名を $\operatorname{FV}_T(p)$，
+$\operatorname{FV}_E(p)$ としたとき，$X$ に必要な条件は次の三つである．
+\[
+\tag{X1}
+\forall f,g,p,\rho.\qquad
+\rho\models_X p^{f,g}
+\quad\Longleftrightarrow\quad
+\rho^{f,g}\models_X p.
+\]
+改名した述語を評価することと，評価で参照する変数名を改名することは一致する．
+\[
+\tag{X2}
+\begin{gathered}
+\rho_T|_{\operatorname{FV}_T(p)}
+ =\omega_T|_{\operatorname{FV}_T(p)},\qquad
+\rho_E|_{\operatorname{FV}_E(p)}
+ =\omega_E|_{\operatorname{FV}_E(p)}\\
+\Longrightarrow\quad
+(\rho\models_X p\ \Longleftrightarrow\ \omega\models_X p).
+\end{gathered}
+\]
+追加述語の真偽は，宣言した自由名の値だけで決まる．
+\[
+\tag{X3}
+\begin{aligned}
+\operatorname{FV}_T(p^{f,g})
+ &\subseteq f(\operatorname{FV}_T(p)),\\
+\operatorname{FV}_E(p^{f,g})
+ &\subseteq g(\operatorname{FV}_E(p)).
+\end{aligned}
+\]
+改名によって，元の自由名の像以外に新たな自由名は生じない．
+Lean の \texttt{LawfulRename}，\texttt{LawfulSupport}，
+\texttt{LawfulFVRename} は，順に (X1)，(X2)，(X3) を表す．
 \[
 \begin{aligned}
 \operatorname{Used}_T(C)&=\operatorname{FV}_T(C)\cup
@@ -430,23 +471,24 @@ I_\rho(r.\tau)=I_{\rho'}(r.\tau),\quad
 I_\rho(r.\epsilon)=I_{\rho'}(r.\epsilon).
 \end{gathered}
 \]
-\[
-\boxed{\operatorname{Closed}(\Sigma)\land\operatorname{LawfulRename}(X)
-\land\operatorname{LawfulSupport}(X)\land\operatorname{LawfulFVRename}(X)}
-\]
+以下の完全性・主要性の定理では，閉じた操作宣言と (X1)--(X3) を仮定する．
 \[
 \boxed{\text{handler を含む全項の生成完全性・推論結果の主要性を Lean で証明済み}}
 \]
+\figfoot
+
+\clearpage
+\fighead{Table 1. 証明の対応一覧}
 \begin{center}
 \small
 \renewcommand{\arraystretch}{1.2}
 \begin{tabular}{>{\raggedright\arraybackslash}p{0.47\linewidth}|>{\raggedright\arraybackslash}p{0.43\linewidth}}
 必要な補題・仮定 & 現状\\\hline
-$X$ の改名・有限支持・代入法則 & Eq/Show について Lean で証明済み．改名後の自由名は元の自由名の像に含まれる\\
+$X$ の改名・有限支持・自由名の条件 (X1)--(X3) & Eq/Show について Lean で証明済み\\
 新変数と操作宣言の捕獲回避 & seed の上界と再帰中の単調性を Lean で証明済み．変数参照時の seed の安全性も証明済み\\
 scheme 具体例と有限範囲の改名 & 双方向の意味保存，既存の名前を保つ具体例の再現を Lean で証明済み\\
 値 $\mathbf{let}$ の $\exists A.C_1$ & Lean・Rust で実装，自由変数の範囲を Lean で証明済み\\
-閉じた操作シグネチャ & $\operatorname{Closed}(\Sigma)$ を Lean に定義し，操作宣言の自由名がない場合の \texttt{perform} の逆向きを証明済み\\
+閉じた操作シグネチャ & 操作の引数型・結果型の自由名が宣言内で束縛される条件を Lean に定義し，\texttt{perform} の逆向きを証明済み\\
 操作節の $\forall\bar\beta.\exists U_T,U_E$ & 閉じた宣言の改名逆対応，文脈の具体例包含，節の局所射影を Lean で証明済み\\
 制約簡約の解集合の保存 & Lean で証明済み\\
 基本部分の宣言的型付けから生成規則への逆向き & Lean で証明済み\\
@@ -460,6 +502,7 @@ handler の scope 判定 & 生成した body・return・操作節から \texttt{
 閉じた充足可能な判断の主要計算型スキーム & $D_q$ の正規化後に型と効果を一般化し，全宣言的計算型スキームに対する主要性を Lean で証明済み
 \end{tabular}
 \end{center}
+\figfoot
 
 \section{主要な補題・命題・定理}
 \[
@@ -627,10 +670,8 @@ Lean では \texttt{Typing.core\_generate\_complete}．
 \end{proposition}
 
 \begin{theorem}[EHM(X) の生成完全性と推論結果の主要性]
-$\operatorname{Closed}(\Sigma)$ と
-$\operatorname{LawfulRename}(X)$，
-$\operatorname{LawfulSupport}(X)$，
-$\operatorname{LawfulFVRename}(X)$ を仮定する．
+各操作宣言の自由名がその宣言内ですべて束縛され，
+追加述語 $X$ が Figure~11 の (X1)--(X3) を満たすと仮定する．
 handler を含め，$C;\Gamma\vdash e:\tau\mid\epsilon$ なら，
 実行可能な生成器は
 \[
@@ -798,9 +839,12 @@ B_E=\operatorname{FV}_E(C,\tau,\epsilon)
 \figfoot
 
 \begin{theorem}[HM($X$) 型の主要計算型スキーム]
-$\operatorname{FV}(\Gamma)=\varnothing$，$\operatorname{Closed}(\Sigma)$，
-$\Gamma\vdash_c e:\sigma$ とする．上の正規化器の条件と生成完全性の
-仮定の下で，$A=[]$ として得た $q$ と
+$\operatorname{FV}(\Gamma)=\varnothing$，各操作宣言の自由名は
+その宣言内ですべて束縛され，追加述語 $X$ は
+Figure~11 の (X1)--(X3) を満たし，
+$\Gamma\vdash_c e:\sigma$ とする．充足可能な正規化問題には
+主要正規形を返す正規化器があり，解決済み制約の集合 $S$ は
+$\top$ と同値な制約を含むと仮定する．このとき $A=[]$ として得た $q$ と
 $N=\operatorname{normalize}_{X}(D_q)=(R,\theta)$ が存在する．
 $\sigma_o=\operatorname{Gen}^{c}_{\Gamma}
 (R,\theta_T(a_o),\theta_E(\mu_o))$ と置くと，
@@ -1028,7 +1072,7 @@ $\rho_T(0)\ne0$ の改名が $p_0$ を $p_1$ に変えるとする．
 $\Gamma=[\forall\alpha_0.p_0\Rightarrow\alpha_0]$ では
 $\top;\Gamma\vdash x:\alpha_0\mid\varnothing$ だが，
 新変数への改名を行う生成器は充足不能な $p_1$ を出す．
-これは $\operatorname{LawfulRename}(X)$ に違反するため，
+これは改名の意味保存 (X1) に違反するため，
 同条件を置いた完全性の反例ではない．供給変数の衝突も
 $\operatorname{Fresh}$ により除外する．
 Lean: \texttt{classDomain\_lawfulRename},
