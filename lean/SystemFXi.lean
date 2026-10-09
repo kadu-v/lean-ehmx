@@ -5,6 +5,10 @@ import SystemFXi.EHMX.Examples
 import SystemFXi.EHMX.Completeness
 import SystemFXi.EHMX.PureUnification
 import SystemFXi.EHMX.PrincipalScheme
+import SystemFXi.EHMX.ConstraintSystem
+import SystemFXi.EHMX.GenericInference
+import SystemFXi.EHMX.GenericPrincipal
+import SystemFXi.EHMX.GenericEmbedding
 
 /-!
 # System Fξ

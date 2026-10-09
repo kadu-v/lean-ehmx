@@ -88,6 +88,23 @@ pub trait Predicate: Clone + Eq + std::fmt::Debug {
     fn fv_effects(&self) -> BTreeSet<Id>;
 }
 
+/// A constraint system with no additional class predicates. Type and effect
+/// constraints remain available through `ConstraintSystem`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum EmptyPred {}
+
+impl Predicate for EmptyPred {
+    fn rename(&self, _: &impl Fn(Id) -> Id, _: &impl Fn(Id) -> Id) -> Self {
+        match *self {}
+    }
+    fn fv_types(&self) -> BTreeSet<Id> {
+        match *self {}
+    }
+    fn fv_effects(&self) -> BTreeSet<Id> {
+        match *self {}
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ClassPred {
     Eq(Ty),

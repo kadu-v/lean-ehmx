@@ -63,3 +63,35 @@ local to inference; effect names free in the environment remain fixed.
 In a handler clause, the type variables freshly introduced for calls such as `id x` are projected inside the operation's universal quantifier. A constraint of the form `∀α. ∃β. ...` can remain when the witness is not determined by an equality. The solver is not a complete decision procedure for these constraints.
 
 Use ↑/↓ to navigate commands entered in the current session. Ctrl-C clears the current input; Ctrl-D exits.
+
+## Constraint-system API
+
+`system::ConstraintSystem` is the inference parameter. Its associated
+`Formula` is a complete constraint, with operations for conjunction, type
+equality, effect inclusion, exclusion, and existential projection. The
+`handler_clause` method represents the rigid-operation-parameter check with
+local existential witnesses. `system::generate` uses only this interface and
+returns a `QualifiedOutput<X::Formula>`.
+This follows the constraint-system parameter of
+[HM(X)](https://publikationen.bibliothek.kit.edu/26696/1987); the handler
+operation and effect names are the EHM(X) extensions.
+
+`ClassSystem` is the REPL's `Eq`/`Show` instance; `EmptySystem` has the same
+type and effect constraints with no class predicates. The concrete
+`PredicateSystem` implementation retains the existing printed constraint
+syntax. The REPL now uses the generic generator through this instance.
+The Rust trait specifies an API, while the semantic laws of a valid instance
+are stated in `lean/SystemFXi/EHMX/ConstraintSystem.lean`. The current solver
+is specific to `ClassSystem` and remains partial.
+Lean proves generic generation soundness and completeness for the core
+fragment. It proves the semantic steps for polymorphic value `let`, fresh
+variable instantiation, and quantified handler clauses over abstract X.
+It also proves that full monotype principality, once established,
+lifts through HM(X) normalization to a principal computation scheme for any
+valid `ConstraintSystem`. Full monotype completeness over arbitrary X remains
+open because these steps have not yet been connected to the full executable
+generator induction; the existing full theorem applies to the predicate-backed
+syntax instance.
+`GenericEmbedding.lean` verifies the renaming, free-name, and semantic laws
+needed to embed abstract X formulas into that existing proof, but the typing
+and generator transfer is not yet proved.
