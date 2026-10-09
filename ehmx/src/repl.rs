@@ -1,10 +1,12 @@
 use crate::core::*;
 use crate::infer::{self, Supply};
 use crate::parse::{NamedExpr, NamedTy, OpAst, Parser, SchemeAst};
+use crate::solver;
 use std::collections::BTreeMap;
 
 #[derive(Clone)]
 pub struct Session {
+    with_solver: bool,
     ops: BTreeMap<String, Id>,
     op_names: BTreeMap<Id, String>,
     sig: BTreeMap<Id, OpDecl>,
@@ -49,6 +51,7 @@ impl Default for Session {
         };
         Self {
             ops,
+            with_solver: false,
             op_names,
             sig,
             bindings: vec![("eq".into(), eq)],
@@ -64,6 +67,12 @@ impl Default for Session {
 impl Session {
     pub fn new() -> Self {
         Self::default()
+    }
+    pub fn with_solver(with_solver: bool) -> Self {
+        Self {
+            with_solver,
+            ..Self::default()
+        }
     }
     fn type_id(
         &mut self,
@@ -275,8 +284,8 @@ impl Session {
         }
         match line {
             ":quit"|":q"=>return Ok("quit".into()),
-            ":help"=>return Ok("expr | :infer expr | :op name : forall a. a -> a | :bind name : forall a. Eq a => a -{}-> a | :assume Eq Int | :env | :reset | :quit\nBuilt-ins: ping : forall a. a -> a; eq : forall a. Eq a => a -{}-> a -{}-> Bool\nEffect variables begin with ?, e.g. forall a ?e. a -{?e}-> a\n↑/↓: input history; Ctrl-C: clear input; Ctrl-D: exit".into()),
-            ":reset"=>{*self=Self::new();return Ok("environment reset".into())},
+            ":help"=>return Ok(format!("expr | :infer expr | :op name : forall a. a -> a | :bind name : forall a. Eq a => a -{{}}-> a | :assume Eq Int | :env | :reset | :quit\nBuilt-ins: ping : forall a. a -> a; eq : forall a. Eq a => a -{{}}-> a -{{}}-> Bool\nEffect variables begin with ?, e.g. forall a ?e. a -{{?e}}-> a\n{}↑/↓: input history; Ctrl-C: clear input; Ctrl-D: exit", if self.with_solver { "Solver instances: Eq Int, Eq Bool, Show Int, Show Bool; quantified constraints may remain.\n" } else { "" })),
+            ":reset"=>{*self=Self::with_solver(self.with_solver);return Ok("environment reset".into())},
             ":env"=>return Ok(self.environment()),
             _=>{}
         }
@@ -341,6 +350,11 @@ impl Session {
                 e => format!("inference failed: {e:?}"),
             },
         )?;
+        let r = if self.with_solver {
+            solver::solve(r, &self.assumptions).map_err(|e| format!("solver failed: {e:?}"))?
+        } else {
+            r
+        };
         Ok(format!(
             "type: {}\neffect: {}\nconstraints: {}",
             self.show_ty(&r.ty),

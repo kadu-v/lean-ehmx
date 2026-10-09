@@ -2,8 +2,20 @@ use ehmx::repl::Session;
 use rustyline::{DefaultEditor, error::ReadlineError};
 
 fn main() {
-    let mut session = Session::new();
-    println!("EHM(X) inference REPL — :help for commands");
+    let mut args = std::env::args().skip(1);
+    let with_solver = match (args.next().as_deref(), args.next()) {
+        (None, None) => false,
+        (Some("--with-solver"), None) => true,
+        _ => {
+            eprintln!("usage: ehmx [--with-solver]");
+            std::process::exit(2);
+        }
+    };
+    let mut session = Session::with_solver(with_solver);
+    println!(
+        "EHM(X) inference REPL{} — :help for commands",
+        if with_solver { " (solver)" } else { "" }
+    );
     let mut editor = match DefaultEditor::new() {
         Ok(editor) => editor,
         Err(error) => {
