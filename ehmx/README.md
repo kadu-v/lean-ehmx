@@ -86,22 +86,27 @@ syntax. The REPL now uses the generic generator through this instance.
 The Rust trait specifies an API, while the semantic laws of a valid instance
 are stated in `lean/SystemFXi/EHMX/ConstraintSystem.lean`. The current solver
 is specific to `ClassSystem` and remains partial.
-Lean proves generation soundness, completeness, and principality for the full
-language over abstract `X`, including polymorphic `let` and handlers. The
-operation declarations must be closed, and `X` must satisfy `LawfulFV` and
-`LawfulGeneratedFV`. `GenericFullCompleteness.lean` proves that every
-declarative typing is covered by the executable generator's result, and that
-the result is principal among all declarative typings of the expression.
+Lean proves generic generation soundness and completeness for the core
+fragment. It proves the semantic steps for polymorphic value `let`, fresh
+variable instantiation, and quantified handler clauses over abstract X.
+`GenericCompleteness.lean` connects executable generation to these steps for
+variables, lambdas, applications, both forms of `let`, and `perform`, using a
+supply-indexed relation that preserves previously allocated names. It also
+proves executable variable inference is principal over arbitrary X.
 `GenericLogicalInstantiation.lean` proves that projection with diagonal
 equalities has exactly the qualified-scheme instances and bounds its free
 names without inspecting binders inside X formulas. The executable Rust
 generator uses the same construction. Solver mode repeats simplification
 after projection exposes new equalities.
-Given a principal HM(X) normalizer, a closed environment, and a satisfiable
-declarative typing, `GenericFullCompleteness.lean` also proves existence of a
-solved, satisfiable principal computation scheme for expressions with handlers.
-This theorem assumes the normalizer's stated laws; it does not certify the
-REPL's partial Rust solver as such a normalizer.
+It also proves that full monotype principality, once established,
+lifts through HM(X) normalization to a principal computation scheme for any
+valid `ConstraintSystem`. `GenericHandlerFree.lean` completes the executable
+induction for every expression without a handler, including polymorphic
+`let`, and proves principality against all declarative typings of the same
+expression. With a principal HM(X) normalizer it also proves existence of a
+solved principal computation scheme for this fragment. The handler branch
+of completeness over arbitrary X remains open. The existing full theorem
+applies to the predicate-backed syntax instance.
 `LawfulGeneratedFV` states the basic free-name laws implied by HM(X)'s
 projection-based free-variable definition, and the syntax instance satisfies
 them. The generic generator's next supply is proved monotone.
@@ -109,16 +114,16 @@ them. The generic generator's next supply is proved monotone.
 keeps all result free names below its final supply.
 `GenericEffectFresh.lean` proves that immediate effect names are allocated
 after the starting supply and that fresh operation binders satisfy the
-handler's outer scope check.
+handler's outer scope check. The complete handler induction still needs the
+clause scope and quantified witness construction.
 `GenericOrigin.lean` proves that generalization leaves only environment free
 names, variable instantiation preserves the source of old names, and the
 handler constructor preserves that property when its three subresults do. It
 also shows that old names in a return result precede the operation binders
 once the return result's origin premise is established.
-`GenericOriginInduction.lean` proves that origin property by induction over
-the entire executable generator. `GenericHandlerScope.lean` establishes the
-clause scope, and `GenericHandlerSuccess.lean` proves that the generator's
-handler checks succeed after all three subexpressions run.
 `GenericHandlerBridge.lean` turns alignment of every rigid operation assignment
 with a declarative clause into the existential witnesses required by the
 generic handler constraint.
+`GenericEmbedding.lean` verifies the renaming, free-name, and semantic laws
+needed to embed abstract X formulas into that existing proof, but the typing
+and generator transfer is not yet proved.

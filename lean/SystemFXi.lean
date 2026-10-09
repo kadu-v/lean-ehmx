@@ -12,11 +12,7 @@ import SystemFXi.EHMX.GenericCompleteness
 import SystemFXi.EHMX.GenericSupport
 import SystemFXi.EHMX.GenericEffectFresh
 import SystemFXi.EHMX.GenericOrigin
-import SystemFXi.EHMX.GenericOriginInduction
 import SystemFXi.EHMX.GenericHandlerBridge
-import SystemFXi.EHMX.GenericHandlerScope
-import SystemFXi.EHMX.GenericHandlerSuccess
-import SystemFXi.EHMX.GenericFullCompleteness
 import SystemFXi.EHMX.GenericHandlerFree
 import SystemFXi.EHMX.GenericEmbedding
 

@@ -4,21 +4,6 @@ namespace SystemFXi.EHMX.Generic
 
 open SystemFXi.EHMX
 
-/-- A constraint is unchanged when valuations differ only outside its free
-type and effect names. -/
-theorem ConstraintSystem.holds_disjoint_frame (X : ConstraintSystem)
-    (c : X.Formula) (bt be : Finset Nat) (v w : Valuation)
-    (hbt : Disjoint bt (X.freeTypes c))
-    (hbe : Disjoint be (X.freeEffects c))
-    (ht : ∀ i, i ∉ bt → v.types i = w.types i)
-    (he : ∀ i, i ∉ be → v.effects i = w.effects i) :
-    X.holds c v ↔ X.holds c w := by
-  apply X.free_support c v w
-  · intro i hi
-    exact ht i (fun hb => (Finset.disjoint_left.mp hbt) hb hi)
-  · intro i hi
-    exact he i (fun hb => (Finset.disjoint_left.mp hbe) hb hi)
-
 /-- Once the declarative clause can be aligned with every assignment of the
 rigid operation parameters, completeness of the clause generator supplies
 the existential witnesses required by the handler constraint. -/
