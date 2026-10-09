@@ -247,6 +247,31 @@ structure LawfulFV (X : ConstraintSystem) : Prop where
     X.freeEffects (X.handlerClause bt be lt le c) ⊆
       X.freeEffects c \ (be ∪ le)
 
+/-- Free-name laws for the distinguished HM(X) constraints. The original
+HM(X) free-variable definition is induced by projection; this explicit
+interface records the corresponding finite syntactic bounds. -/
+structure LawfulGeneratedFV (X : ConstraintSystem) : Prop where
+  trivial_types : X.freeTypes X.trivial = ∅
+  trivial_effects : X.freeEffects X.trivial = ∅
+  equalType_types : ∀ a b,
+    X.freeTypes (X.equalType a b) ⊆ a.fvTypes ∪ b.fvTypes
+  equalType_effects : ∀ a b,
+    X.freeEffects (X.equalType a b) ⊆ a.fvEffects ∪ b.fvEffects
+  includedEffect_types : ∀ a b,
+    X.freeTypes (X.includedEffect a b) = ∅
+  includedEffect_effects : ∀ a b,
+    X.freeEffects (X.includedEffect a b) ⊆ a.vars ∪ b.vars
+  excludes_types : ∀ op ε,
+    X.freeTypes (X.excludes op ε) = ∅
+  excludes_effects : ∀ op ε,
+    X.freeEffects (X.excludes op ε) ⊆ ε.vars
+  rename_types : ∀ c ft fe,
+    X.freeTypes (X.rename ft fe c) ⊆
+      (X.UsedTypes c).image ft
+  rename_effects : ∀ c ft fe,
+    X.freeEffects (X.rename ft fe c) ⊆
+      (X.UsedEffects c).image fe
+
 theorem LawfulFV.handlerClause_rigid_free {X : ConstraintSystem}
     (h : X.LawfulFV) (bt be lt le : Finset Nat) (c : X.Formula) :
     Disjoint bt (X.freeTypes (X.handlerClause bt be lt le c)) ∧
@@ -512,6 +537,34 @@ theorem syntaxSystem_lawfulFV (D : Domain) (h : LawfulSupport D) :
     rw [Constraint.close_fvEffects, Constraint.project_fvEffects] at hi
     simp only [Finset.mem_sdiff, Finset.mem_union] at hi ⊢
     exact ⟨hi.1.1, fun h => h.elim hi.2 hi.1.2⟩
+
+theorem syntaxSystem_lawfulGeneratedFV (D : Domain)
+    (h : LawfulSupport D) (hr : LawfulFVRename D) :
+    ConstraintSystem.LawfulGeneratedFV
+      (syntaxConstraintSystem D h) := by
+  constructor
+  · simp [syntaxConstraintSystem, Constraint.fvTypes]
+  · simp [syntaxConstraintSystem, Constraint.fvEffects]
+  · intro a b
+    simp [syntaxConstraintSystem, Constraint.fvTypes]
+  · intro a b
+    simp [syntaxConstraintSystem, Constraint.fvEffects]
+  · intro a b
+    simp [syntaxConstraintSystem, Constraint.fvTypes]
+  · intro a b
+    simp [syntaxConstraintSystem, Constraint.fvEffects]
+  · intro op ε
+    simp [syntaxConstraintSystem, Constraint.fvTypes]
+  · intro op ε
+    simp [syntaxConstraintSystem, Constraint.fvEffects]
+  · intro c ft fe
+    simpa [syntaxConstraintSystem, ConstraintSystem.UsedTypes,
+      Constraint.usedTypes] using
+      (Constraint.fvTypes_rename_subset hr c ft fe)
+  · intro c ft fe
+    simpa [syntaxConstraintSystem, ConstraintSystem.UsedEffects,
+      Constraint.usedEffects] using
+      (Constraint.fvEffects_rename_subset hr c ft fe)
 
 def classConstraintSystem (I : ClassEnv) : ConstraintSystem :=
   syntaxConstraintSystem (classDomain I) (classDomain_lawfulSupport I)

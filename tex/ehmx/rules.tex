@@ -412,6 +412,19 @@ let と handler を含まない式については，抽象 $X$ 上で
 保存する補題も抽象 $X$ 上で証明した．変数の帰納段階では，
 スキームの具体例を新しい変数名に実現する補題を証明した．
 任意の抽象 $X$ に対する完全性・主要性は未証明である．
+実行可能な生成器については，変数参照の完全性を
+\texttt{Generic.generateFresh\_var\_principal} で証明した．
+推論途中の変数名を保持する関係に対して，変数参照，ラムダ，
+関数適用，二種類の let，perform，型変換と弱化の各段階も
+抽象 $X$ 上で証明した．全体を結ぶ帰納法では，生成結果の
+自由変数が次の未使用番号より小さいことを別途示す必要がある．
+現在の $X$ の法則だけでは，例えば真制約の自由変数が空とは
+指定されていないため，その補題はまだ得られていない．
+HM($X$) における射影から定まる自由変数に対応する基本制約の
+変数法則を \texttt{LawfulGeneratedFV} として分離し，
+構文インスタンスで成立することを証明した．また，生成器の
+\texttt{next} が入力より小さくならないことは抽象 $X$ 上で証明した．
+内部束縛名の管理を含む生成結果全体の範囲補題は残る．
 生成結果がすべての宣言的型付けより一般的なら，
 その一般化した計算型スキームも各宣言的計算型スキームより
 一般的になることは，抽象 $X$ 上で証明済みである．
@@ -633,6 +646,14 @@ $\delta=\varnothing$ だが，handler の結果効果 $\chi$ は
 \texttt{simplify\_equiv}, \texttt{resolveX\_equiv}\\
 抽象 $X$ の核となる式の完全性 &
 \texttt{Generic.Typing.core\_generate\_complete}\\
+抽象 $X$ の実行可能な変数参照の主要性 &
+\texttt{Generic.generateFresh\_var\_principal}\\
+基本制約の自由変数法則と生成器の番号の単調性 &
+\texttt{syntaxSystem\_lawfulGeneratedFV},
+\texttt{Generic.generate\_next\_mono}\\
+抽象 $X$ の式構成段階 &
+\texttt{Generic.generate\_var\_coversAt},
+\texttt{Generic.Output.CoversAt.lam/app/letMono/letVal/perform}\\
 抽象 $X$ の値 let・変数・操作節の意味的補題 &
 \texttt{Generic.GeneratedCoversAcross.letVal},
 \texttt{Generic.Context.variable\_complete\_at},

@@ -86,12 +86,22 @@ is specific to `ClassSystem` and remains partial.
 Lean proves generic generation soundness and completeness for the core
 fragment. It proves the semantic steps for polymorphic value `let`, fresh
 variable instantiation, and quantified handler clauses over abstract X.
+`GenericCompleteness.lean` connects executable generation to these steps for
+variables, lambdas, applications, both forms of `let`, and `perform`, using a
+supply-indexed relation that preserves previously allocated names. It also
+proves executable variable inference is principal over arbitrary X.
 It also proves that full monotype principality, once established,
 lifts through HM(X) normalization to a principal computation scheme for any
 valid `ConstraintSystem`. Full monotype completeness over arbitrary X remains
 open because these steps have not yet been connected to the full executable
-generator induction; the existing full theorem applies to the predicate-backed
-syntax instance.
+generator induction or the handler branch. The current X laws also do not
+establish that a generated result's free names are below its next supply;
+they do not require `trivial` to have an empty free-name set. The existing
+full theorem applies to the predicate-backed syntax instance.
+`LawfulGeneratedFV` states the basic free-name laws implied by HM(X)'s
+projection-based free-variable definition, and the syntax instance satisfies
+them. The generic generator's next supply is proved monotone. A full support
+bound still needs a representation-independent treatment of internal binders.
 `GenericEmbedding.lean` verifies the renaming, free-name, and semantic laws
 needed to embed abstract X formulas into that existing proof, but the typing
 and generator transfer is not yet proved.

@@ -8,6 +8,7 @@ import SystemFXi.EHMX.PrincipalScheme
 import SystemFXi.EHMX.ConstraintSystem
 import SystemFXi.EHMX.GenericInference
 import SystemFXi.EHMX.GenericPrincipal
+import SystemFXi.EHMX.GenericCompleteness
 import SystemFXi.EHMX.GenericEmbedding
 
 /-!

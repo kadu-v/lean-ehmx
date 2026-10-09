@@ -88,6 +88,31 @@ theorem Scheme.renameSafe_condition {X : ConstraintSystem}
         exact Finset.mem_union_right _ hi
       · simpa [hadm.2 i hiA, hadm.2 j hjA] using hij
 
+/-- The generator's concrete fresh-name map is capture safe above the names
+already present in a qualified scheme. -/
+theorem Scheme.renameBound_safe {X : ConstraintSystem} (σ : Scheme X)
+    (typeBase effectBase : Nat)
+    (ht : ∀ i ∈ σ.freeTypes ∪ X.boundTypes σ.condition,
+      i ≤ typeBase)
+    (he : ∀ i ∈ σ.freeEffects ∪ X.boundEffects σ.condition,
+      i ≤ effectBase) :
+    σ.SafeRename (renameBound σ.typeVars typeBase)
+      (renameBound σ.effectVars effectBase) := by
+  refine ⟨Finset.card_image_of_injOn (renameBound_injOn _ _),
+    Finset.card_image_of_injOn (renameBound_injOn _ _), ?_, ?_⟩
+  · apply Finset.disjoint_left.mpr
+    intro j hj hused
+    rcases Finset.mem_image.mp hj with ⟨i, hi, rfl⟩
+    have hle := ht _ hused
+    simp [renameBound, hi] at hle
+    omega
+  · apply Finset.disjoint_left.mpr
+    intro j hj hused
+    rcases Finset.mem_image.mp hj with ⟨i, hi, rfl⟩
+    have hle := he _ hused
+    simp [renameBound, hi] at hle
+    omega
+
 theorem Scheme.instantiate_groundInstance {X : ConstraintSystem}
     (hRename : X.LawfulSafeRename)
     (σ : Scheme X) (ft fe : Nat → Nat)
@@ -441,6 +466,164 @@ private theorem foldl_union_mem {α : Type}
   | cons x xs ih =>
       simp only [List.foldl_cons, ih, Finset.mem_union, List.mem_cons]
       aesop
+
+/-- The public seed exceeds every name in any scheme selected from the
+environment. This is the executable variable case's freshness invariant. -/
+theorem Supply.seed_above_lookup {X : ConstraintSystem}
+    (s : Supply) (sig : Signature) (Γ : Context X) (e : Expr)
+    (i : Nat) (σ : Scheme X) (hlookup : Γ[i]? = some σ) :
+    (∀ j ∈ σ.usedTypes, j < (Supply.seed s sig Γ e).types) ∧
+    (∀ j ∈ σ.usedEffects, j < (Supply.seed s sig Γ e).effects) := by
+  have hmem : σ ∈ Γ := List.mem_of_getElem? hlookup
+  constructor
+  · intro j hj
+    have hfold : j ∈ Γ.foldl (fun names σ => names ∪ σ.usedTypes) ∅ :=
+      (foldl_union_mem Scheme.usedTypes Γ ∅ j).mpr
+        (Or.inr ⟨σ, hmem, hj⟩)
+    have hsup : j ≤
+        ((Γ.foldl (fun names σ => names ∪ σ.usedTypes) ∅) ∪
+          e.ops.biUnion (fun op => (sig op).elim ∅ OpDecl.usedTypes)).sup id :=
+      Finset.le_sup (f := id) (Finset.mem_union_left _ hfold)
+    dsimp [Supply.seed]
+    omega
+  · intro j hj
+    have hfold : j ∈ Γ.foldl (fun names σ => names ∪ σ.usedEffects) ∅ :=
+      (foldl_union_mem Scheme.usedEffects Γ ∅ j).mpr
+        (Or.inr ⟨σ, hmem, hj⟩)
+    have hsup : j ≤
+        ((Γ.foldl (fun names σ => names ∪ σ.usedEffects) ∅) ∪
+          e.ops.biUnion (fun op => (sig op).elim ∅ OpDecl.usedEffects)).sup id :=
+      Finset.le_sup (f := id) (Finset.mem_union_left _ hfold)
+    dsimp [Supply.seed]
+    omega
+
+theorem Supply.seed_lookup_safe {X : ConstraintSystem}
+    (s : Supply) (sig : Signature) (Γ : Context X) (e : Expr)
+    (i : Nat) (σ : Scheme X) (hlookup : Γ[i]? = some σ) :
+    σ.SafeRename
+      (renameBound σ.typeVars (Supply.seed s sig Γ e).types)
+      (renameBound σ.effectVars (Supply.seed s sig Γ e).effects) := by
+  have hb := Generic.Supply.seed_above_lookup s sig Γ e i σ hlookup
+  apply σ.renameBound_safe
+  · intro j hj
+    have hused : j ∈ σ.usedTypes := by
+      simp [Scheme.usedTypes, Scheme.freeTypes] at hj ⊢
+      aesop
+    exact Nat.le_of_lt (hb.1 j hused)
+  · intro j hj
+    have hused : j ∈ σ.usedEffects := by
+      simp [Scheme.usedEffects, Scheme.freeEffects] at hj ⊢
+      aesop
+    exact Nat.le_of_lt (hb.2 j hused)
+
+theorem generateFresh_var_success {X : ConstraintSystem}
+    (sig : Signature) (Γ : Context X) (s : Supply)
+    (i : Nat) (σ : Scheme X) (hlookup : Γ[i]? = some σ) :
+    ∃ r : Output X,
+      generateFresh sig X Γ (.var i) s = some r := by
+  let seed := Supply.seed s sig Γ (.var i)
+  let ρ := renameBound σ.typeVars seed.types
+  let η := renameBound σ.effectVars seed.effects
+  have hsafe : σ.SafeRename ρ η :=
+    Generic.Supply.seed_lookup_safe s sig Γ (.var i) i σ hlookup
+  refine ⟨⟨(σ.instantiate ρ η).1, ∅,
+    (σ.instantiate ρ η).2, seed.advance σ.typeVars σ.effectVars⟩, ?_⟩
+  simp [generateFresh, generate, seed, hlookup, ρ, η, hsafe]
+
+theorem Scheme.freeTypes_subset_usedTypes {X : ConstraintSystem}
+    (σ : Scheme X) : σ.freeTypes ⊆ σ.usedTypes := by
+  intro i hi
+  simp [Scheme.freeTypes, Scheme.usedTypes] at hi ⊢
+  aesop
+
+theorem Scheme.freeEffects_subset_usedEffects {X : ConstraintSystem}
+    (σ : Scheme X) : σ.freeEffects ⊆ σ.usedEffects := by
+  intro i hi
+  simp [Scheme.freeEffects, Scheme.usedEffects] at hi ⊢
+  aesop
+
+theorem Supply.seed_context_free_below {X : ConstraintSystem}
+    (s : Supply) (sig : Signature) (Γ : Context X) (e : Expr) :
+    (∀ j ∈ Γ.freeTypes, j < (Supply.seed s sig Γ e).types) ∧
+    (∀ j ∈ Γ.freeEffects, j < (Supply.seed s sig Γ e).effects) := by
+  constructor
+  · intro j hj
+    rcases (foldl_union_mem Scheme.freeTypes Γ ∅ j).mp hj with
+      hnil | ⟨σ, hσ, hf⟩
+    · simp at hnil
+    · have hfold : j ∈ Γ.foldl (fun names σ => names ∪ σ.usedTypes) ∅ :=
+        (foldl_union_mem Scheme.usedTypes Γ ∅ j).mpr
+          (Or.inr ⟨σ, hσ, σ.freeTypes_subset_usedTypes hf⟩)
+      have hsup : j ≤
+          ((Γ.foldl (fun names σ => names ∪ σ.usedTypes) ∅) ∪
+            e.ops.biUnion (fun op => (sig op).elim ∅ OpDecl.usedTypes)).sup id :=
+        Finset.le_sup (f := id) (Finset.mem_union_left _ hfold)
+      dsimp [Supply.seed]
+      omega
+  · intro j hj
+    rcases (foldl_union_mem Scheme.freeEffects Γ ∅ j).mp hj with
+      hnil | ⟨σ, hσ, hf⟩
+    · simp at hnil
+    · have hfold : j ∈ Γ.foldl (fun names σ => names ∪ σ.usedEffects) ∅ :=
+        (foldl_union_mem Scheme.usedEffects Γ ∅ j).mpr
+          (Or.inr ⟨σ, hσ, σ.freeEffects_subset_usedEffects hf⟩)
+      have hsup : j ≤
+          ((Γ.foldl (fun names σ => names ∪ σ.usedEffects) ∅) ∪
+            e.ops.biUnion (fun op => (sig op).elim ∅ OpDecl.usedEffects)).sup id :=
+        Finset.le_sup (f := id) (Finset.mem_union_left _ hfold)
+      dsimp [Supply.seed]
+      omega
+
+private theorem renameBound_image_disjoint_below
+    (bound fixed : Finset Nat) (base : Nat)
+    (hbelow : ∀ j ∈ fixed, j < base) :
+    (bound.image (renameBound bound base)) ∩ fixed = ∅ := by
+  rw [← Finset.disjoint_iff_inter_eq_empty, Finset.disjoint_left]
+  intro j hj hfixed
+  rcases Finset.mem_image.mp hj with ⟨i, hi, rfl⟩
+  have hlt := hbelow _ hfixed
+  simp [renameBound, hi] at hlt
+  omega
+
+/-- The executable fresh-variable branch is principal among declarative
+variable uses, including qualified schemes in the context. -/
+theorem generateFresh_var_principal {X : ConstraintSystem}
+    (hRename : X.LawfulSafeRename)
+    (sig : Signature) (Γ : Context X) (s : Supply)
+    (C : X.Formula) (i : Nat) (σ : Scheme X)
+    (hlookup : Γ[i]? = some σ)
+    (ft fe : Nat → Nat)
+    (hadm : σ.AdmissibleRename ft fe)
+    (hsafe : σ.SafeRename ft fe)
+    (hent : X.Entails C (σ.instantiate ft fe).2) :
+    ∃ r : Output X,
+      generateFresh sig X Γ (.var i) s = some r ∧
+      r.MoreGeneralThan Γ C (σ.instantiate ft fe).1 ∅ := by
+  let seed := Supply.seed s sig Γ (.var i)
+  let ρ := renameBound σ.typeVars seed.types
+  let η := renameBound σ.effectVars seed.effects
+  have hsafeG : σ.SafeRename ρ η :=
+    Generic.Supply.seed_lookup_safe s sig Γ (.var i) i σ hlookup
+  have hbelow := Generic.Supply.seed_context_free_below
+    s sig Γ (.var i)
+  have hdisjT : (σ.typeVars.image ρ) ∩ Γ.freeTypes = ∅ :=
+    renameBound_image_disjoint_below σ.typeVars Γ.freeTypes
+      seed.types hbelow.1
+  have hdisjE : (σ.effectVars.image η) ∩ Γ.freeEffects = ∅ :=
+    renameBound_image_disjoint_below σ.effectVars Γ.freeEffects
+      seed.effects hbelow.2
+  refine ⟨⟨(σ.instantiate ρ η).1, ∅,
+    (σ.instantiate ρ η).2, seed.advance σ.typeVars σ.effectVars⟩,
+    ?_, ?_⟩
+  · simp [generateFresh, generate, seed, hlookup, ρ, η, hsafeG]
+  · intro v hv
+    rcases Context.variable_complete_at hRename
+      hlookup hlookup ft fe ρ η hadm hsafe
+      ⟨renameBound_fixed _ _, renameBound_fixed _ _⟩ hsafeG
+      Γ.freeTypes Γ.freeEffects hdisjT hdisjE v v
+      (Context.moreGeneralAt_refl Γ v) (hent v hv) with
+      ⟨w, hT, hE, hC, ht⟩
+    exact ⟨w, hT, hE, hC, ht, rfl⟩
 
 theorem Context.freeTypes_of_mem {X : ConstraintSystem}
     (Γ : Context X) (σ : Scheme X) (h : σ ∈ Γ) :
