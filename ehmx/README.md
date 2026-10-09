@@ -36,6 +36,13 @@ The `Eq` predicate and `eq : forall a. Eq a => a -{}-> a -{}-> Bool` are also av
 In solver mode, the built-in instances are `Eq Int`, `Eq Bool`, `Show Int`, and
 `Show Bool`. For example, `eq 1 2` yields `Bool` with no remaining constraints.
 You can try `Show` with `:bind f : forall a. Show a => a -{}-> a`, then `f true`.
+Solver mode also displays a `scheme` line. For `\x -> eq x x`, it has the form
+`∀α. Eq α => ((α -{}-> Bool) !{})`: the arrow effect is latent in the
+function type, and `!{}` is the effect of evaluating the lambda expression.
+The REPL generalizes only names absent from the environment and `:assume`.
+The scheme is the generalization of the solver's residual result; the
+partial solver does not certify that every such scheme is a principal normal
+form.
 An explicitly declared `:assume` can discharge another exact predicate. A
 class predicate on a still-unknown type stays in the residual constraints.
 The solver also unifies free type equalities and simplifies forced-empty effect

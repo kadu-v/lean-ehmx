@@ -355,12 +355,23 @@ impl Session {
         } else {
             r
         };
-        Ok(format!(
+        let mut display = format!(
             "type: {}\neffect: {}\nconstraints: {}",
             self.show_ty(&r.ty),
             self.show_effect(&r.effect),
             self.show_constraint(&r.constraints)
-        ))
+        );
+        if self.with_solver {
+            let scheme = ComputationScheme::generalize(
+                &ctx,
+                &self.assumptions,
+                r.constraints,
+                r.ty,
+                r.effect,
+            );
+            display.push_str(&format!("\nscheme: {}", self.show_computation_scheme(&scheme)));
+        }
+        Ok(display)
     }
     fn environment(&self) -> String {
         let mut lines = Vec::new();
@@ -397,6 +408,24 @@ impl Session {
             c => format!("{} => ", self.show_constraint(c)),
         };
         format!("{quantifier}{predicate}{}", self.show_ty(&s.result))
+    }
+    fn show_computation_scheme(&self, s: &ComputationScheme<ClassPred>) -> String {
+        let mut vars: Vec<_> = s.type_vars.iter().map(|i| format!("α{i}")).collect();
+        vars.extend(s.effect_vars.iter().map(|i| format!("μ{i}")));
+        let quantifier = if vars.is_empty() {
+            String::new()
+        } else {
+            format!("∀{}. ", vars.join(" "))
+        };
+        let predicate = match &s.predicates {
+            Constraint::Top => String::new(),
+            c => format!("{} => ", self.show_constraint(c)),
+        };
+        format!(
+            "{quantifier}{predicate}({} !{})",
+            self.show_ty(&s.result),
+            self.show_effect(&s.effect)
+        )
     }
     fn show_ty(&self, t: &Ty) -> String {
         match t {

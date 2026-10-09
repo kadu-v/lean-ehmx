@@ -323,6 +323,58 @@ impl<P: Predicate> Scheme<P> {
     }
 }
 
+/// A qualified scheme for a computation, including its immediate effect.
+/// This is the Rust counterpart of `ComputationScheme.generalize` in Lean.
+#[derive(Clone, Debug)]
+pub struct ComputationScheme<P: Predicate> {
+    pub type_vars: BTreeSet<Id>,
+    pub effect_vars: BTreeSet<Id>,
+    pub predicates: Constraint<P>,
+    pub result: Ty,
+    pub effect: Effect,
+}
+
+impl<P: Predicate> ComputationScheme<P> {
+    pub fn generalize(
+        ctx: &[Scheme<P>],
+        assumptions: &[P],
+        predicates: Constraint<P>,
+        result: Ty,
+        effect: Effect,
+    ) -> Self {
+        let fixed_types: BTreeSet<_> = ctx
+            .iter()
+            .flat_map(Scheme::fv_types)
+            .chain(assumptions.iter().flat_map(Predicate::fv_types))
+            .collect();
+        let fixed_effects: BTreeSet<_> = ctx
+            .iter()
+            .flat_map(Scheme::fv_effects)
+            .chain(assumptions.iter().flat_map(Predicate::fv_effects))
+            .collect();
+        let type_vars = predicates
+            .fv_types()
+            .union(&result.fv_types())
+            .copied()
+            .filter(|i| !fixed_types.contains(i))
+            .collect();
+        let effect_vars = predicates
+            .fv_effects()
+            .union(&result.fv_effects())
+            .copied()
+            .chain(effect.vars.iter().copied())
+            .filter(|i| !fixed_effects.contains(i))
+            .collect();
+        Self {
+            type_vars,
+            effect_vars,
+            predicates,
+            result,
+            effect,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct OpDecl {
     pub type_vars: BTreeSet<Id>,
