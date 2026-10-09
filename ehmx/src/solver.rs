@@ -4,7 +4,7 @@
 
 use crate::core::{BaseTy, ClassPred, Constraint, Effect, Id, Ty};
 use crate::infer::Output;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 type C = Constraint<ClassPred>;
 
@@ -21,6 +21,8 @@ pub enum SolveError {
 struct Solver {
     types: BTreeMap<Id, Ty>,
     effects: BTreeMap<Id, Effect>,
+    fixed_types: BTreeSet<Id>,
+    fixed_effects: BTreeSet<Id>,
 }
 
 impl Solver {
@@ -39,7 +41,7 @@ impl Solver {
                 vars: Default::default(),
             },
             |acc, i| match self.effects.get(i) {
-                Some(bound) => acc.union(bound),
+                Some(bound) => acc.union(&self.effect(bound)),
                 None => acc.union(&Effect::var(*i)),
             },
         )
@@ -64,7 +66,13 @@ impl Solver {
                 continue;
             }
             match (left, right) {
-                (Ty::Var(i), t) | (t, Ty::Var(i)) => {
+                (Ty::Var(i), t) if !self.fixed_types.contains(&i) => {
+                    if t.fv_types().contains(&i) {
+                        return Err(SolveError::OccursCheck);
+                    }
+                    self.types.insert(i, t);
+                }
+                (t, Ty::Var(i)) if !self.fixed_types.contains(&i) => {
                     if t.fv_types().contains(&i) {
                         return Err(SolveError::OccursCheck);
                     }
@@ -81,6 +89,7 @@ impl Solver {
                     effects.push(C::EffectLe(e.clone(), e2.clone()));
                     effects.push(C::EffectLe(e2, e));
                 }
+                (a, b) => effects.push(C::TypeEq(a, b)),
             }
         }
         Ok(())
@@ -108,7 +117,8 @@ impl Solver {
                                 _ => None,
                             })
                             .collect();
-                        if right.labels.is_subset(&excluded)
+                        if !self.fixed_effects.contains(&i)
+                            && right.labels.is_subset(&excluded)
                             && self.effects.insert(i, Effect::default()).is_none()
                         {
                             changed = true;
@@ -118,6 +128,41 @@ impl Solver {
             }
         }
         Ok(changed)
+    }
+
+    fn bind_equal_effects(&mut self, atoms: &[C]) -> bool {
+        let pairs: Vec<_> = atoms
+            .iter()
+            .filter_map(|atom| match atom {
+                C::EffectLe(left, right) => Some((self.effect(left), self.effect(right))),
+                _ => None,
+            })
+            .collect();
+        for (left, right) in &pairs {
+            let (Some(&a), Some(&b)) = (left.vars.iter().next(), right.vars.iter().next()) else {
+                continue;
+            };
+            if a == b
+                || left.vars.len() != 1
+                || right.vars.len() != 1
+                || !left.labels.is_empty()
+                || !right.labels.is_empty()
+                || !pairs.iter().any(|(x, y)| x == right && y == left)
+                || (self.fixed_effects.contains(&a) && self.fixed_effects.contains(&b))
+            {
+                continue;
+            }
+            let (from, to) = if self.fixed_effects.contains(&a) {
+                (b, a)
+            } else if self.fixed_effects.contains(&b) || a > b {
+                (a, b)
+            } else {
+                (b, a)
+            };
+            self.effects.insert(from, Effect::var(to));
+            return true;
+        }
+        false
     }
 
     fn atom(&self, atom: C, assumptions: &[ClassPred]) -> Result<C, SolveError> {
@@ -244,6 +289,39 @@ fn effect_witness(i: Id, body: &C, atoms: &[C]) -> Option<(usize, usize, Effect)
                 && matches!(other, C::EffectLe(a, b) if a == term && *b == variable))
             .then(|| (left_index, right_index, term.clone()))
         })
+    })
+}
+
+fn forced_empty_effect(i: Id, atoms: &[C]) -> bool {
+    atoms.iter().any(|atom| {
+        let C::EffectLe(left, right) = atom else {
+            return false;
+        };
+        if !left.vars.contains(&i) || !right.vars.is_empty() {
+            return false;
+        }
+        right.labels.iter().all(|op| {
+            atoms.iter().any(|atom| {
+                matches!(atom, C::Lacks(lacked, effect)
+                    if lacked == op && effect.vars.contains(&i) && !effect.labels.contains(op))
+            })
+        })
+    })
+}
+
+fn sole_effect_bound(i: Id, atoms: &[C]) -> Option<usize> {
+    atoms.iter().enumerate().find_map(|(index, atom)| {
+        let can_choose = match atom {
+            C::EffectLe(left, right) if *right == Effect::var(i) => !left.vars.contains(&i),
+            C::EffectLe(left, _) if *left == Effect::var(i) => true,
+            _ => false,
+        };
+        (can_choose
+            && atoms
+                .iter()
+                .enumerate()
+                .all(|(other, atom)| other == index || !atom.fv_effects().contains(&i)))
+        .then_some(index)
     })
 }
 
@@ -387,6 +465,11 @@ fn reduce_quantified(c: C, assumptions: &[ClassPred]) -> Result<C, SolveError> {
                     conjunction(atoms.into_iter().map(|c| replace_effect(c, i, &witness))),
                     assumptions,
                 )?
+            } else if forced_empty_effect(i, &atoms) {
+                reduce_quantified(replace_effect(body, i, &Effect::default()), assumptions)?
+            } else if let Some(index) = sole_effect_bound(i, &atoms) {
+                atoms.remove(index);
+                reduce_quantified(conjunction(atoms), assumptions)?
             } else if body.fv_effects().contains(&i) {
                 C::ExEff(i, Box::new(body))
             } else {
@@ -399,16 +482,28 @@ fn reduce_quantified(c: C, assumptions: &[ClassPred]) -> Result<C, SolveError> {
 
 /// Solve free type equalities, forced-empty effects, built-in class instances,
 /// and local existential witnesses. Other quantified constraints remain.
-pub fn solve(
+pub fn solve_with_fixed(
     output: Output<ClassPred>,
     assumptions: &[ClassPred],
+    fixed_types: &BTreeSet<Id>,
+    fixed_effects: &BTreeSet<Id>,
 ) -> Result<Output<ClassPred>, SolveError> {
     let mut equations = Vec::new();
     let mut atoms = Vec::new();
     collect_top(output.constraints, &mut equations, &mut atoms);
-    let mut solver = Solver::default();
+    let mut solver = Solver {
+        fixed_types: fixed_types.clone(),
+        fixed_effects: fixed_effects.clone(),
+        ..Solver::default()
+    };
     solver.unify(&mut equations, &mut atoms)?;
-    while solver.bind_empty_effects(&atoms)? {}
+    loop {
+        let emptied = solver.bind_empty_effects(&atoms)?;
+        let equated = solver.bind_equal_effects(&atoms);
+        if !emptied && !equated {
+            break;
+        }
+    }
     let constraints = reduce_quantified(
         conjunction(
             atoms
@@ -424,4 +519,11 @@ pub fn solve(
         constraints,
         next: output.next,
     })
+}
+
+pub fn solve(
+    output: Output<ClassPred>,
+    assumptions: &[ClassPred],
+) -> Result<Output<ClassPred>, SolveError> {
+    solve_with_fixed(output, assumptions, &BTreeSet::new(), &BTreeSet::new())
 }

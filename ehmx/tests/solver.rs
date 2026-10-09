@@ -1,7 +1,8 @@
 use ehmx::core::{ClassPred, Constraint, Effect, Ty};
 use ehmx::infer::{Output, Supply};
 use ehmx::repl::Session;
-use ehmx::solver::solve;
+use ehmx::solver::{solve, solve_with_fixed};
+use std::collections::BTreeSet;
 
 #[test]
 fn eq_and_show_ground_instances_are_resolved() {
@@ -69,6 +70,42 @@ fn solver_keeps_quantified_handler_constraints_and_mode_after_reset() {
         session.process("eq true false").unwrap(),
         "type: Bool\neffect: {}\nconstraints: true\nscheme: (Bool !{})"
     );
+}
+
+#[test]
+fn let_bound_handler_constraints_and_equal_effects_simplify() {
+    let mut session = Session::with_solver(true);
+    let output = session
+        .process(r"let a = \x -> handle (perform ping x) with { return r -> r; ping(x;k) -> k x } in a 1")
+        .unwrap();
+    assert_eq!(
+        output,
+        "type: Int\neffect: {μ25}\nconstraints: true\nscheme: ∀μ25. (Int !{μ25})"
+    );
+}
+
+#[test]
+fn environment_names_are_not_solved_away() {
+    let mut session = Session::with_solver(true);
+    session.process(":bind x : a").unwrap();
+    let output = session.process("x 1").unwrap();
+    assert!(output.contains("constraints: α"));
+    assert!(!output.contains("constraints: true"));
+
+    let equal_effects = Constraint::and(
+        Constraint::EffectLe(Effect::var(0), Effect::var(1)),
+        Constraint::EffectLe(Effect::var(1), Effect::var(0)),
+    );
+    let output = Output {
+        ty: Ty::Var(0),
+        effect: Effect::var(1),
+        constraints: equal_effects.clone(),
+        next: Supply::default(),
+    };
+    let solved =
+        solve_with_fixed(output, &[], &BTreeSet::from([0]), &BTreeSet::from([0, 1])).unwrap();
+    assert_eq!(solved.constraints, equal_effects);
+    assert_eq!(solved.effect, Effect::var(1));
 }
 
 #[test]

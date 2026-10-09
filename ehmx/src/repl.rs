@@ -2,7 +2,7 @@ use crate::core::*;
 use crate::infer::{self, Supply};
 use crate::parse::{NamedExpr, NamedTy, OpAst, Parser, SchemeAst};
 use crate::solver;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Clone)]
 pub struct Session {
@@ -283,11 +283,23 @@ impl Session {
             return Ok(String::new());
         }
         match line {
-            ":quit"|":q"=>return Ok("quit".into()),
-            ":help"=>return Ok(format!("expr | :infer expr | :op name : forall a. a -> a | :bind name : forall a. Eq a => a -{{}}-> a | :assume Eq Int | :env | :reset | :quit\nBuilt-ins: ping : forall a. a -> a; eq : forall a. Eq a => a -{{}}-> a -{{}}-> Bool\nEffect variables begin with ?, e.g. forall a ?e. a -{{?e}}-> a\n{}↑/↓: input history; Ctrl-C: clear input; Ctrl-D: exit", if self.with_solver { "Solver instances: Eq Int, Eq Bool, Show Int, Show Bool; quantified constraints may remain.\n" } else { "" })),
-            ":reset"=>{*self=Self::with_solver(self.with_solver);return Ok("environment reset".into())},
-            ":env"=>return Ok(self.environment()),
-            _=>{}
+            ":quit" | ":q" => return Ok("quit".into()),
+            ":help" => {
+                return Ok(format!(
+                    "expr | :infer expr | :op name : forall a. a -> a | :bind name : forall a. Eq a => a -{{}}-> a | :assume Eq Int | :env | :reset | :quit\nBuilt-ins: ping : forall a. a -> a; eq : forall a. Eq a => a -{{}}-> a -{{}}-> Bool\nEffect variables begin with ?, e.g. forall a ?e. a -{{?e}}-> a\n{}↑/↓: input history; Ctrl-C: clear input; Ctrl-D: exit",
+                    if self.with_solver {
+                        "Solver instances: Eq Int, Eq Bool, Show Int, Show Bool; quantified constraints may remain.\n"
+                    } else {
+                        ""
+                    }
+                ));
+            }
+            ":reset" => {
+                *self = Self::with_solver(self.with_solver);
+                return Ok("environment reset".into());
+            }
+            ":env" => return Ok(self.environment()),
+            _ => {}
         }
         if let Some(rest) = line.strip_prefix(":op ") {
             let (name, sig) = rest
@@ -351,7 +363,18 @@ impl Session {
             },
         )?;
         let r = if self.with_solver {
-            solver::solve(r, &self.assumptions).map_err(|e| format!("solver failed: {e:?}"))?
+            let fixed_types: BTreeSet<_> = ctx
+                .iter()
+                .flat_map(Scheme::fv_types)
+                .chain(self.assumptions.iter().flat_map(Predicate::fv_types))
+                .collect();
+            let fixed_effects: BTreeSet<_> = ctx
+                .iter()
+                .flat_map(Scheme::fv_effects)
+                .chain(self.assumptions.iter().flat_map(Predicate::fv_effects))
+                .collect();
+            solver::solve_with_fixed(r, &self.assumptions, &fixed_types, &fixed_effects)
+                .map_err(|e| format!("solver failed: {e:?}"))?
         } else {
             r
         };
@@ -369,7 +392,10 @@ impl Session {
                 r.ty,
                 r.effect,
             );
-            display.push_str(&format!("\nscheme: {}", self.show_computation_scheme(&scheme)));
+            display.push_str(&format!(
+                "\nscheme: {}",
+                self.show_computation_scheme(&scheme)
+            ));
         }
         Ok(display)
     }

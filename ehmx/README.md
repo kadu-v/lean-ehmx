@@ -54,6 +54,12 @@ constraint simplifies to `true`, while the scheme is `∀μ. (Int !{μ})`.
 The handler rule permits additional output effects, so `μ` is not forced to
 the empty set.
 
+The same simplification works when the handler is inside a value `let`:
+`let a = \x -> handle (perform ping x) with { return r -> r; ping(x;k) -> k x } in a 1`
+has `constraints: true` and a scheme of the form `∀μ. (Int !{μ})`.
+Mutual effect inclusions are identified only when at least one effect name is
+local to inference; effect names free in the environment remain fixed.
+
 In a handler clause, the type variables freshly introduced for calls such as `id x` are projected inside the operation's universal quantifier. A constraint of the form `∀α. ∃β. ...` can remain when the witness is not determined by an equality. The solver is not a complete decision procedure for these constraints.
 
 Use ↑/↓ to navigate commands entered in the current session. Ctrl-C clears the current input; Ctrl-D exits.
