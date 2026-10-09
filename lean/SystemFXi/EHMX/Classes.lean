@@ -15,6 +15,10 @@ def ClassPred.rename (ρ η : Nat → Nat) : ClassPred → ClassPred
   | .eq τ => .eq (τ.rename ρ η)
   | .show τ => .show (τ.rename ρ η)
 
+def ClassPred.subst (θ : Substitution) : ClassPred → ClassPred
+  | .eq τ => .eq (τ.subst θ)
+  | .show τ => .show (τ.subst θ)
+
 def ClassPred.fvTypes : ClassPred → Finset Nat
   | .eq τ | .show τ => τ.fvTypes
 
@@ -29,6 +33,46 @@ def classDomain (I : ClassEnv) : Domain where
     | .show τ => I.showClass (τ.eval ρ)
   fvTypes := ClassPred.fvTypes
   fvEffects := ClassPred.fvEffects
+
+theorem classDomain_lawfulRename (I : ClassEnv) :
+    LawfulRename (classDomain I) := by
+  constructor
+  intro ρ η p v
+  cases p <;> simp [classDomain, ClassPred.rename, Ty.eval_rename]
+
+theorem classDomain_lawfulSupport (I : ClassEnv) :
+    LawfulSupport (classDomain I) := by
+  constructor
+  intro p v w ht he
+  cases p with
+  | eq τ =>
+      simp only [classDomain, ClassPred.fvTypes, ClassPred.fvEffects] at ht he
+      simp only [classDomain]
+      rw [Ty.eval_support τ v w ht he]
+  | «show» τ =>
+      simp only [classDomain, ClassPred.fvTypes, ClassPred.fvEffects] at ht he
+      simp only [classDomain]
+      rw [Ty.eval_support τ v w ht he]
+
+theorem classDomain_lawfulFVRename (I : ClassEnv) :
+    LawfulFVRename (classDomain I) := by
+  constructor
+  · intro ρ η p
+    cases p <;>
+      simp [classDomain, ClassPred.rename, ClassPred.fvTypes,
+        Ty.fvTypes_rename]
+  · intro ρ η p
+    cases p <;>
+      simp [classDomain, ClassPred.rename, ClassPred.fvEffects,
+        Ty.fvEffects_rename]
+
+def classDomain_lawfulSubst (I : ClassEnv) :
+    LawfulSubst (classDomain I) where
+  subst := ClassPred.subst
+  holds_subst := by
+    intro θ p v
+    cases p <;>
+      simp [classDomain, ClassPred.subst, Ty.eval_subst]
 
 instance (I : ClassEnv) : DecidableEq (classDomain I).Pred :=
   inferInstanceAs (DecidableEq ClassPred)

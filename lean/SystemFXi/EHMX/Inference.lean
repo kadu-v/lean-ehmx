@@ -2,6 +2,18 @@ import SystemFXi.EHMX.Constraints
 
 namespace SystemFXi.EHMX
 
+def Constraint.handler {X : Domain} (op : Op) (decl : OpDecl)
+    (Cin Cr Co : Constraint X) (τr τo a : Ty)
+    (εin εr εo δ χ : Effect) (localTypes localEffects : Finset Nat) :
+    Constraint X :=
+  .and (.and Cin Cr)
+    (.and (.typeEq τr a)
+      (.and (Constraint.close decl.typeVars decl.effectVars
+          (Constraint.project localTypes localEffects
+            (.and Co (.and (.typeEq τo a) (.effectLe εo χ)))))
+        (.and (Constraint.split op εin δ)
+          (.and (.effectLe δ χ) (.effectLe εr χ)))))
+
 /-- Qualified declarative typing. Constraint implication is semantic, relative to
 all valuations; it is not `Poly.Effect.Subset`, which quantifies independently. -/
 inductive Typing (sig : Signature) (X : Domain) :
@@ -9,6 +21,7 @@ inductive Typing (sig : Signature) (X : Domain) :
   | var {C Γ i σ ρ η} :
       Γ[i]? = some σ →
       σ.AdmissibleRename ρ η →
+      σ.SafeRename ρ η →
       C.Entails (σ.instantiate ρ η).2 →
       Typing sig X C Γ (.var i) (σ.instantiate ρ η).1 ∅
   | int {C Γ} (n : Int) : Typing sig X C Γ (.int n) (.base .int) ∅
@@ -30,24 +43,32 @@ inductive Typing (sig : Signature) (X : Domain) :
       Value v →
       Typing sig X C₁ Γ v τ₁ ∅ →
       Typing sig X C₂ (Scheme.generalize Γ C₁ τ₁ :: Γ) e τ₂ ε₂ →
-      Typing sig X C₂ Γ (.letE v e) τ₂ ε₂
+      Typing sig X (.and (Scheme.residual Γ C₁ τ₁) C₂)
+        Γ (.letE v e) τ₂ ε₂
   | letMono {C Γ e₁ e₂ τ₁ τ₂ ε₁ ε₂} :
       ¬ Value e₁ →
       Typing sig X C Γ e₁ τ₁ ε₁ →
       Typing sig X C (Scheme.mono τ₁ :: Γ) e₂ τ₂ ε₂ →
       Typing sig X C Γ (.letE e₁ e₂) τ₂ (ε₁ ∪ ε₂)
-  | handle {C Γ body op ret clause decl τin a εin εr εo δ χ} :
-      sig op = some decl →
+  | handle {C D Γ body op ret clause raw decl ρ η τin a τo εin εr εo δ χ
+      localTypes localEffects} :
+      sig op = some raw →
+      raw.AdmissibleRename ρ η →
+      raw.AlphaSafe ρ η →
+      decl = raw.alphaRename ρ η →
       decl.HandlerScope Γ τin a εin εr δ χ →
+      decl.ClauseScope Γ C τin a εin εr δ χ localTypes localEffects →
       Typing sig X C Γ body τin εin →
       Typing sig X C (Scheme.mono τin :: Γ) ret a εr →
-      Typing sig X C
+      Typing sig X D
         (Scheme.mono (.arr decl.output χ a) ::
-          Scheme.mono decl.input :: Γ) clause a εo →
+          Scheme.mono decl.input :: Γ) clause τo εo →
+      C.Entails (Constraint.close decl.typeVars decl.effectVars
+        (Constraint.project localTypes localEffects
+          (.and D (.and (.typeEq τo a) (.effectLe εo χ))))) →
       C.Entails (Constraint.split op εin δ) →
       C.Entails (.effectLe δ χ) →
       C.Entails (.effectLe εr χ) →
-      C.Entails (.effectLe εo χ) →
       Typing sig X C Γ (.handle body op ret clause) a χ
   | conv {C Γ e τ τ' ε} :
       Typing sig X C Γ e τ ε →
@@ -65,6 +86,7 @@ inductive Generate (sig : Signature) (X : Domain) :
   | var {Γ i σ ρ η} :
       Γ[i]? = some σ →
       σ.AdmissibleRename ρ η →
+      σ.SafeRename ρ η →
       Generate sig X Γ (.var i) (σ.instantiate ρ η).1 ∅
         (σ.instantiate ρ η).2
   | int {Γ} (n : Int) : Generate sig X Γ (.int n) (.base .int) ∅ .top
@@ -88,29 +110,32 @@ inductive Generate (sig : Signature) (X : Domain) :
       Value v →
       Generate sig X Γ v τ₁ ∅ C₁ →
       Generate sig X (Scheme.generalize Γ C₁ τ₁ :: Γ) e τ₂ ε₂ C₂ →
-      Generate sig X Γ (.letE v e) τ₂ ε₂ C₂
+      Generate sig X Γ (.letE v e) τ₂ ε₂
+        (.and (Scheme.residual Γ C₁ τ₁) C₂)
   | letMono {Γ e₁ e₂ τ₁ τ₂ ε₁ ε₂ C₁ C₂} :
       ¬ Value e₁ →
       Generate sig X Γ e₁ τ₁ ε₁ C₁ →
       Generate sig X (Scheme.mono τ₁ :: Γ) e₂ τ₂ ε₂ C₂ →
       Generate sig X Γ (.letE e₁ e₂) τ₂ (ε₁ ∪ ε₂) (.and C₁ C₂)
-  | handle {Γ body op ret clause decl τin a τr τo εin εr εo
-      δ χ Cin Cr Co} :
-      sig op = some decl →
+  | handle {Γ body op ret clause raw decl ρ η τin a τr τo εin εr εo
+      δ χ Cin Cr Co localTypes localEffects} :
+      sig op = some raw →
+      raw.AdmissibleRename ρ η →
+      raw.AlphaSafe ρ η →
+      decl = raw.alphaRename ρ η →
       decl.HandlerScope Γ τin a εin εr δ χ →
+      decl.ClauseScope Γ
+        (Constraint.handler op decl Cin Cr Co τr τo a εin εr εo δ χ
+          localTypes localEffects)
+        τin a εin εr δ χ localTypes localEffects →
       Generate sig X Γ body τin εin Cin →
       Generate sig X (Scheme.mono τin :: Γ) ret τr εr Cr →
       Generate sig X
         (Scheme.mono (.arr decl.output χ a) ::
           Scheme.mono decl.input :: Γ) clause τo εo Co →
       Generate sig X Γ (.handle body op ret clause) a χ
-        (.and (.and Cin Cr)
-          (.and (.typeEq τr a)
-            (.and (Constraint.close decl.typeVars decl.effectVars
-                (.and Co (.and (.typeEq τo a) (.effectLe εo χ))))
-              (.and (Constraint.split op εin δ)
-                (.and (.effectLe δ χ)
-                  (.effectLe εr χ))))))
+        (Constraint.handler op decl Cin Cr Co τr τo a εin εr εo δ χ
+          localTypes localEffects)
 
 theorem Generate.value_effect {sig : Signature} {X : Domain}
     {Γ : Context X} {v : Expr} {τ : Ty} {ε : Effect} {C : Constraint X}
@@ -125,8 +150,8 @@ theorem Generate.sound {sig : Signature} {X : Domain}
     {Γ : Context X} {e : Expr} {τ : Ty} {ε : Effect} {C : Constraint X}
     (h : Generate sig X Γ e τ ε C) : Typing sig X C Γ e τ ε := by
   induction h with
-  | var hlookup hadm =>
-      exact Typing.var hlookup hadm (Constraint.entails_refl _)
+  | var hlookup hadm hsafe =>
+      exact Typing.var hlookup hadm hsafe (Constraint.entails_refl _)
   | int n => exact Typing.int n
   | bool b => exact Typing.bool b
   | lam _ ih =>
@@ -150,27 +175,23 @@ theorem Generate.sound {sig : Signature} {X : Domain}
       apply Typing.letMono hnv
       · exact Typing.weaken ih₁ (by intro ρ h; exact h.1)
       · exact Typing.weaken ih₂ (by intro ρ h; exact h.2)
-  | handle hsig hscope _ _ _ ihb ihr ihc =>
-      apply Typing.handle hsig hscope
+  | handle hsig hadm hsafe hren hscope hclause _ _ _ ihb ihr ihc =>
+      unfold Constraint.handler
+      apply Typing.handle hsig hadm hsafe hren hscope hclause
       · exact Typing.weaken ihb (by intro ρ h; exact h.1.1)
       · apply Typing.conv
         · exact Typing.weaken ihr (by intro ρ h; exact h.1.2)
         · intro ρ h
           exact h.2.1
-      · apply Typing.conv
-        · apply Typing.weaken ihc
-          intro ρ h
-          exact (Constraint.close_current _ _ _ ρ h.2.2.1).1
-        · intro ρ h
-          exact (Constraint.close_current _ _ _ ρ h.2.2.1).2.1
+      · exact ihc
+      · intro ρ h
+        exact h.2.2.1
       · intro ρ h
         exact h.2.2.2.1
       · intro ρ h
         exact h.2.2.2.2.1
       · intro ρ h
         exact h.2.2.2.2.2
-      · intro ρ h
-        exact (Constraint.close_current _ _ _ ρ h.2.2.1).2.2
 
 /-- Any residual constraint that implies the generated one suffices for typing. -/
 theorem Generate.residual_sound {sig : Signature} {X : Domain}

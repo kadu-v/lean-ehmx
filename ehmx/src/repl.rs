@@ -32,15 +32,30 @@ impl Default for Session {
                 output: Ty::Var(0),
             },
         );
+        let a = Ty::Var(1);
+        let eq = Scheme {
+            type_vars: [1].into_iter().collect(),
+            effect_vars: Default::default(),
+            predicates: Constraint::Pred(ClassPred::Eq(a.clone())),
+            result: Ty::Arr(
+                Box::new(a.clone()),
+                Effect::default(),
+                Box::new(Ty::Arr(
+                    Box::new(a),
+                    Effect::default(),
+                    Box::new(Ty::Base(BaseTy::Bool)),
+                )),
+            ),
+        };
         Self {
             ops,
             op_names,
             sig,
-            bindings: vec![],
+            bindings: vec![("eq".into(), eq)],
             assumptions: vec![],
             free_types: BTreeMap::new(),
             free_effects: BTreeMap::new(),
-            next_ty: 1,
+            next_ty: 2,
             next_eff: 0,
             next_op: 1,
         }
@@ -260,7 +275,7 @@ impl Session {
         }
         match line {
             ":quit"|":q"=>return Ok("quit".into()),
-            ":help"=>return Ok("expr | :infer expr | :op name : forall a. a -> a | :bind name : forall a. Eq a => a -{}-> a | :assume Eq Int | :env | :reset | :quit\nBuilt-in operation: ping : forall a. a -> a\nEffect variables begin with ?, e.g. forall a ?e. a -{?e}-> a\n↑/↓: input history; Ctrl-C: clear input; Ctrl-D: exit".into()),
+            ":help"=>return Ok("expr | :infer expr | :op name : forall a. a -> a | :bind name : forall a. Eq a => a -{}-> a | :assume Eq Int | :env | :reset | :quit\nBuilt-ins: ping : forall a. a -> a; eq : forall a. Eq a => a -{}-> a -{}-> Bool\nEffect variables begin with ?, e.g. forall a ?e. a -{?e}-> a\n↑/↓: input history; Ctrl-C: clear input; Ctrl-D: exit".into()),
             ":reset"=>{*self=Self::new();return Ok("environment reset".into())},
             ":env"=>return Ok(self.environment()),
             _=>{}
@@ -344,7 +359,7 @@ impl Session {
             ));
         }
         for (n, s) in &self.bindings {
-            lines.push(format!("{n}: {}", self.show_ty(&s.result)));
+            lines.push(format!("{n}: {}", self.show_scheme(s)));
         }
         for p in &self.assumptions {
             lines.push(format!("assume {}", self.show_pred(p)));
@@ -354,6 +369,20 @@ impl Session {
         } else {
             lines.join("\n")
         }
+    }
+    fn show_scheme(&self, s: &Scheme<ClassPred>) -> String {
+        let mut vars: Vec<_> = s.type_vars.iter().map(|i| format!("α{i}")).collect();
+        vars.extend(s.effect_vars.iter().map(|i| format!("μ{i}")));
+        let quantifier = if vars.is_empty() {
+            String::new()
+        } else {
+            format!("∀{}. ", vars.join(" "))
+        };
+        let predicate = match &s.predicates {
+            Constraint::Top => String::new(),
+            c => format!("{} => ", self.show_constraint(c)),
+        };
+        format!("{quantifier}{predicate}{}", self.show_ty(&s.result))
     }
     fn show_ty(&self, t: &Ty) -> String {
         match t {
@@ -415,6 +444,8 @@ impl Session {
             C::Pred(p) => self.show_pred(p),
             C::AllTy(i, c) => format!("∀α{i}. {}", self.show_constraint(c)),
             C::AllEff(i, c) => format!("∀μ{i}. {}", self.show_constraint(c)),
+            C::ExTy(i, c) => format!("∃α{i}. {}", self.show_constraint(c)),
+            C::ExEff(i, c) => format!("∃μ{i}. {}", self.show_constraint(c)),
         }
     }
 }

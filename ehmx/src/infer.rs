@@ -15,6 +15,45 @@ impl Supply {
     }
 }
 
+fn seed_supply<P: Predicate>(
+    sig: &BTreeMap<Id, OpDecl>,
+    ctx: &[Scheme<P>],
+    ps: &[P],
+    mut s: Supply,
+) -> Supply {
+    let mut types = BTreeSet::new();
+    let mut effects = BTreeSet::new();
+    for scheme in ctx {
+        types.extend(&scheme.type_vars);
+        types.extend(scheme.result.fv_types());
+        types.extend(scheme.predicates.fv_types());
+        types.extend(scheme.predicates.bound_types());
+        effects.extend(&scheme.effect_vars);
+        effects.extend(scheme.result.fv_effects());
+        effects.extend(scheme.predicates.fv_effects());
+        effects.extend(scheme.predicates.bound_effects());
+    }
+    for decl in sig.values() {
+        types.extend(&decl.type_vars);
+        types.extend(decl.input.fv_types());
+        types.extend(decl.output.fv_types());
+        effects.extend(&decl.effect_vars);
+        effects.extend(decl.input.fv_effects());
+        effects.extend(decl.output.fv_effects());
+    }
+    for p in ps {
+        types.extend(p.fv_types());
+        effects.extend(p.fv_effects());
+    }
+    if let Some(i) = types.last() {
+        s.types = s.types.max(i + 1);
+    }
+    if let Some(i) = effects.last() {
+        s.effects = s.effects.max(i + 1);
+    }
+    s
+}
+
 #[derive(Clone, Debug)]
 pub struct Output<P: Predicate> {
     pub ty: Ty,
@@ -28,6 +67,7 @@ pub enum InferError {
     UnknownVariable(Id),
     UnknownOperation(Id),
     HandlerScope,
+    SchemeCapture,
     OccursCheck,
     TypeMismatch,
     EffectMismatch,
@@ -57,6 +97,37 @@ fn scope_ok<P: Predicate>(
     d.type_vars.is_disjoint(&ft) && d.effect_vars.is_disjoint(&fe)
 }
 
+fn clause_scope_ok<P: Predicate>(
+    d: &OpDecl,
+    ctx: &[Scheme<P>],
+    outer: &Constraint<P>,
+    ti: &Ty,
+    a: &Ty,
+    local_types: &BTreeSet<Id>,
+    local_effects: &BTreeSet<Id>,
+) -> bool {
+    let outer_t = outer.fv_types();
+    let outer_e = outer.fv_effects();
+    if !d.type_vars.is_disjoint(&outer_t) || !d.effect_vars.is_disjoint(&outer_e) {
+        return false;
+    }
+    let mut ft: BTreeSet<_> = ctx.iter().flat_map(|s| s.fv_types()).collect();
+    ft.extend(outer_t);
+    ft.extend(ti.fv_types());
+    ft.extend(a.fv_types());
+    ft.extend(&d.type_vars);
+    ft.extend(d.input.fv_types());
+    ft.extend(d.output.fv_types());
+    let mut fe: BTreeSet<_> = ctx.iter().flat_map(|s| s.fv_effects()).collect();
+    fe.extend(outer_e);
+    fe.extend(ti.fv_effects());
+    fe.extend(a.fv_effects());
+    fe.extend(&d.effect_vars);
+    fe.extend(d.input.fv_effects());
+    fe.extend(d.output.fv_effects());
+    local_types.is_disjoint(&ft) && local_effects.is_disjoint(&fe)
+}
+
 pub fn generate<P: Predicate>(
     sig: &BTreeMap<Id, OpDecl>,
     ctx: &[Scheme<P>],
@@ -67,6 +138,9 @@ pub fn generate<P: Predicate>(
     match e {
         Expr::Var(i) => {
             let scheme = ctx.get(*i).ok_or(InferError::UnknownVariable(*i))?;
+            if !scheme.safe_instantiate(s.types, s.effects) {
+                return Err(InferError::SchemeCapture);
+            }
             let (ty, constraints) = scheme.instantiate(s.types, s.effects);
             Ok(Output {
                 ty,
@@ -132,10 +206,14 @@ pub fn generate<P: Predicate>(
         Expr::Let(e1, e2) => {
             let r1 = generate(sig, ctx, e1, s)?;
             if e1.is_value() {
-                let scheme = Scheme::generalize(ctx, r1.constraints, r1.ty);
+                let scheme = Scheme::generalize(ctx, r1.constraints.clone(), r1.ty);
+                let residual =
+                    C::project(&scheme.type_vars, &scheme.effect_vars, r1.constraints);
                 let mut inner = vec![scheme];
                 inner.extend_from_slice(ctx);
-                generate(sig, &inner, e2, r1.next)
+                let mut r2 = generate(sig, &inner, e2, r1.next)?;
+                r2.constraints = C::and(residual, r2.constraints);
+                Ok(r2)
             } else {
                 let mut inner = vec![Scheme::mono(r1.ty)];
                 inner.extend_from_slice(ctx);
@@ -173,14 +251,33 @@ pub fn generate<P: Predicate>(
             })
         }
         Expr::Handle(body, op, ret, clause) => {
-            let d = sig.get(op).ok_or(InferError::UnknownOperation(*op))?;
+            let raw = sig.get(op).ok_or(InferError::UnknownOperation(*op))?;
             let rb = generate(sig, ctx, body, s)?;
-            let a = Ty::Var(rb.next.types);
-            let delta = Effect::var(rb.next.effects);
-            let chi = Effect::var(rb.next.effects + 1);
+            let tf = |i| {
+                if raw.type_vars.contains(&i) {
+                    rb.next.types + i + 1
+                } else {
+                    i
+                }
+            };
+            let ef = |i| {
+                if raw.effect_vars.contains(&i) {
+                    rb.next.effects + i + 1
+                } else {
+                    i
+                }
+            };
+            let d = raw.alpha_rename(&tf, &ef);
+            if !raw.alpha_safe(&d) {
+                return Err(InferError::HandlerScope);
+            }
+            let sb = rb.next.advance(&raw.type_vars, &raw.effect_vars);
+            let a = Ty::Var(sb.types);
+            let delta = Effect::var(sb.effects);
+            let chi = Effect::var(sb.effects + 1);
             let sr = Supply {
-                types: rb.next.types + 1,
-                effects: rb.next.effects + 2,
+                types: sb.types + 1,
+                effects: sb.effects + 2,
             };
             let mut ret_ctx = vec![Scheme::mono(rb.ty.clone())];
             ret_ctx.extend_from_slice(ctx);
@@ -195,17 +292,23 @@ pub fn generate<P: Predicate>(
             ];
             clause_ctx.extend_from_slice(ctx);
             let rc = generate(sig, &clause_ctx, clause, rr.next)?;
-            if !scope_ok(d, ctx, &rb.ty, &a, &rb.effect, &rr.effect, &delta, &chi) {
+            let local_types: BTreeSet<_> = (rr.next.types..rc.next.types).collect();
+            let local_effects: BTreeSet<_> = (rr.next.effects..rc.next.effects).collect();
+            if !scope_ok(&d, ctx, &rb.ty, &a, &rb.effect, &rr.effect, &delta, &chi) {
                 return Err(InferError::HandlerScope);
             }
             let clause_c = C::close(
                 &d.type_vars,
                 &d.effect_vars,
-                C::and(
-                    rc.constraints,
+                C::project(
+                    &local_types,
+                    &local_effects,
                     C::and(
-                        C::TypeEq(rc.ty, a.clone()),
-                        C::EffectLe(rc.effect, chi.clone()),
+                        rc.constraints,
+                        C::and(
+                            C::TypeEq(rc.ty, a.clone()),
+                            C::EffectLe(rc.effect, chi.clone()),
+                        ),
                     ),
                 ),
             );
@@ -225,6 +328,17 @@ pub fn generate<P: Predicate>(
                     ),
                 ),
             );
+            if !clause_scope_ok(
+                &d,
+                ctx,
+                &constraints,
+                &rb.ty,
+                &a,
+                &local_types,
+                &local_effects,
+            ) {
+                return Err(InferError::HandlerScope);
+            }
             Ok(Output {
                 ty: a,
                 effect: chi,
@@ -289,7 +403,7 @@ pub fn simplify_atom<P: Predicate>(c: Constraint<P>) -> Result<Constraint<P>, In
     }
 }
 pub fn simplify<P: Predicate>(c: Constraint<P>) -> Result<Constraint<P>, InferError> {
-    if rigid_var_equality(&c, &BTreeSet::new()) {
+    if rigid_var_equality(&c, &BTreeSet::new(), &BTreeMap::new()) {
         return Err(InferError::RigidTypeMismatch);
     }
     match c {
@@ -298,19 +412,35 @@ pub fn simplify<P: Predicate>(c: Constraint<P>) -> Result<Constraint<P>, InferEr
     }
 }
 
-fn rigid_var_equality<P: Predicate>(c: &Constraint<P>, bound: &BTreeSet<Id>) -> bool {
+fn rigid_var_equality<P: Predicate>(
+    c: &Constraint<P>,
+    bound: &BTreeSet<Id>,
+    witnesses: &BTreeMap<Id, BTreeSet<Id>>,
+) -> bool {
     // A universally quantified type variable cannot equal a distinct fixed
     // variable for every instantiation.
     match c {
-        Constraint::And(a, b) => rigid_var_equality(a, bound) || rigid_var_equality(b, bound),
+        Constraint::And(a, b) => {
+            rigid_var_equality(a, bound, witnesses) || rigid_var_equality(b, bound, witnesses)
+        }
         Constraint::AllTy(i, inner) => {
             let mut bound = bound.clone();
             bound.insert(*i);
-            rigid_var_equality(inner, &bound)
+            rigid_var_equality(inner, &bound, witnesses)
         }
-        Constraint::AllEff(_, inner) => rigid_var_equality(inner, bound),
+        Constraint::AllEff(_, inner) | Constraint::ExEff(_, inner) => {
+            rigid_var_equality(inner, bound, witnesses)
+        }
+        Constraint::ExTy(i, inner) => {
+            let mut witnesses = witnesses.clone();
+            witnesses.insert(*i, bound.clone());
+            rigid_var_equality(inner, bound, &witnesses)
+        }
         Constraint::TypeEq(Ty::Var(a), Ty::Var(b)) => {
-            a != b && (bound.contains(a) || bound.contains(b))
+            a != b
+                && ((bound.contains(a) && !witnesses.get(b).is_some_and(|deps| deps.contains(a)))
+                    || (bound.contains(b)
+                        && !witnesses.get(a).is_some_and(|deps| deps.contains(b))))
         }
         _ => false,
     }
@@ -334,8 +464,22 @@ pub fn infer_qualified<P: Predicate>(
     s: Supply,
     ps: &[P],
 ) -> Result<Output<P>, InferError> {
-    let mut r = generate(sig, ctx, e, s)?;
+    let mut r = generate(sig, ctx, e, seed_supply(sig, ctx, ps, s))?;
     let c = simplify(r.constraints)?;
     r.constraints = Constraint::and(assumptions(ps), resolve_x(ps, c));
+    Ok(r)
+}
+
+/// Preserve the complete qualified constraint, including contradictions.
+/// The REPL-facing `infer_qualified` may report an obvious contradiction early.
+pub fn infer_symbolic<P: Predicate>(
+    sig: &BTreeMap<Id, OpDecl>,
+    ctx: &[Scheme<P>],
+    e: &Expr,
+    s: Supply,
+    ps: &[P],
+) -> Result<Output<P>, InferError> {
+    let mut r = generate(sig, ctx, e, seed_supply(sig, ctx, ps, s))?;
+    r.constraints = Constraint::and(assumptions(ps), resolve_x(ps, r.constraints));
     Ok(r)
 }

@@ -2,6 +2,7 @@ import SystemFXi.Safety
 import SystemFXi.EffectPolySafety
 import SystemFXi.EffectPolyExamples
 import SystemFXi.EHMX.Examples
+import SystemFXi.EHMX.Completeness
 
 /-!
 # System Fξ
@@ -13,5 +14,5 @@ import SystemFXi.EHMX.Examples
 * `SystemFXi.Subtyping`, `TypeLemmas`, `TermLemmas` — 基本補題
 * `SystemFXi.Progress`, `Preservation`, `Safety` — 型安全性と効果安全性
 * `SystemFXi.EffectPoly*` — kind `T` と `E` の同時置換、効果多相な型安全性
-* `SystemFXi.EHMX.*` — 集合効果 handler と静的述語を持つ表層言語の制約生成・健全性
+* `SystemFXi.EHMX.*` — 集合効果 handler と静的述語を持つ表層言語の制約生成・健全性、基本部分の逆向き
 -/
