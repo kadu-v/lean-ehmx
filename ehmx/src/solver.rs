@@ -488,31 +488,42 @@ pub fn solve_with_fixed(
     fixed_types: &BTreeSet<Id>,
     fixed_effects: &BTreeSet<Id>,
 ) -> Result<Output<ClassPred>, SolveError> {
-    let mut equations = Vec::new();
-    let mut atoms = Vec::new();
-    collect_top(output.constraints, &mut equations, &mut atoms);
     let mut solver = Solver {
         fixed_types: fixed_types.clone(),
         fixed_effects: fixed_effects.clone(),
         ..Solver::default()
     };
-    solver.unify(&mut equations, &mut atoms)?;
+    let mut constraints = output.constraints;
     loop {
-        let emptied = solver.bind_empty_effects(&atoms)?;
-        let equated = solver.bind_equal_effects(&atoms);
-        if !emptied && !equated {
+        let previous = constraints.clone();
+        let mut equations = Vec::new();
+        let mut atoms = Vec::new();
+        collect_top(
+            reduce_quantified(constraints, assumptions)?,
+            &mut equations,
+            &mut atoms,
+        );
+        solver.unify(&mut equations, &mut atoms)?;
+        loop {
+            let emptied = solver.bind_empty_effects(&atoms)?;
+            let equated = solver.bind_equal_effects(&atoms);
+            if !emptied && !equated {
+                break;
+            }
+        }
+        constraints = reduce_quantified(
+            conjunction(
+                atoms
+                    .into_iter()
+                    .map(|atom| solver.atom(atom, assumptions))
+                    .collect::<Result<Vec<_>, _>>()?,
+            ),
+            assumptions,
+        )?;
+        if constraints == previous {
             break;
         }
     }
-    let constraints = reduce_quantified(
-        conjunction(
-            atoms
-                .into_iter()
-                .map(|atom| solver.atom(atom, assumptions))
-                .collect::<Result<Vec<_>, _>>()?,
-        ),
-        assumptions,
-    )?;
     Ok(Output {
         ty: solver.ty(&output.ty),
         effect: solver.effect(&output.effect),

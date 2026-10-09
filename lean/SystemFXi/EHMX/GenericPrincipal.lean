@@ -1,271 +1,8 @@
-import SystemFXi.EHMX.GenericInference
+import SystemFXi.EHMX.GenericLogicalInstantiation
 
 namespace SystemFXi.EHMX.Generic
 
 open SystemFXi.EHMX
-
-def Scheme.GroundInstance {X : ConstraintSystem} (σ : Scheme X)
-    (ρ : Valuation) (t : GroundTy) : Prop :=
-  ∃ ft : Nat → GroundTy, ∃ fe : Nat → Finset Op,
-    (∀ i, i ∉ σ.typeVars → ft i = ρ.types i) ∧
-    (∀ i, i ∉ σ.effectVars → fe i = ρ.effects i) ∧
-    X.holds σ.condition ⟨ft, fe⟩ ∧ σ.result.eval ⟨ft, fe⟩ = t
-
-def Scheme.MoreGeneralAt {X : ConstraintSystem} (σg σd : Scheme X)
-    (ρg ρd : Valuation) : Prop :=
-  ∀ t, σd.GroundInstance ρd t → σg.GroundInstance ρg t
-
-def Context.MoreGeneralAt {X : ConstraintSystem} (Γg Γd : Context X)
-    (ρg ρd : Valuation) : Prop :=
-  List.Forall₂ (fun σg σd => σg.MoreGeneralAt σd ρg ρd) Γg Γd
-
-theorem Scheme.renameSafe_condition {X : ConstraintSystem}
-    (σ : Scheme X) (ft fe : Nat → Nat)
-    (hadm : σ.AdmissibleRename ft fe)
-    (hsafe : σ.SafeRename ft fe) :
-    X.RenameSafe σ.condition ft fe := by
-  constructor
-  · intro i hi j hj hij
-    let A := σ.typeVars
-    have hinj : Set.InjOn ft A := Finset.injOn_of_card_image_eq hsafe.1
-    have hno : ∀ z, z ∈ A.image ft →
-        z ∈ σ.freeTypes ∪ X.boundTypes σ.condition → False := by
-      intro z hz hu
-      exact (Finset.disjoint_left.mp hsafe.2.2.1 hz hu).elim
-    have hused (k : Nat) (hk : k ∈ X.UsedTypes σ.condition)
-        (hkA : k ∉ A) :
-        k ∈ σ.freeTypes ∪ X.boundTypes σ.condition := by
-      rcases Finset.mem_union.mp hk with hf | hb
-      · change k ∉ σ.typeVars at hkA
-        exact Finset.mem_union_left _ (by
-          simp [Scheme.freeTypes, hf, hkA])
-      · exact Finset.mem_union_right _ hb
-    by_cases hiA : i ∈ A
-    · by_cases hjA : j ∈ A
-      · exact fun heq => hij (hinj hiA hjA heq)
-      · intro heq
-        have hz : ft i ∈ A.image ft := Finset.mem_image.mpr ⟨i, hiA, rfl⟩
-        have hjfix := hadm.1 j hjA
-        apply hno (ft i) hz
-        rw [heq, hjfix]
-        exact hused j hj hjA
-    · by_cases hjA : j ∈ A
-      · intro heq
-        have hz : ft j ∈ A.image ft := Finset.mem_image.mpr ⟨j, hjA, rfl⟩
-        apply hno (ft j) hz
-        rw [← heq, hadm.1 i hiA]
-        exact Finset.mem_union_right _ hi
-      · simpa [hadm.1 i hiA, hadm.1 j hjA] using hij
-  · intro i hi j hj hij
-    let A := σ.effectVars
-    have hinj : Set.InjOn fe A := Finset.injOn_of_card_image_eq hsafe.2.1
-    have hno : ∀ z, z ∈ A.image fe →
-        z ∈ σ.freeEffects ∪ X.boundEffects σ.condition → False := by
-      intro z hz hu
-      exact (Finset.disjoint_left.mp hsafe.2.2.2 hz hu).elim
-    have hused (k : Nat) (hk : k ∈ X.UsedEffects σ.condition)
-        (hkA : k ∉ A) :
-        k ∈ σ.freeEffects ∪ X.boundEffects σ.condition := by
-      rcases Finset.mem_union.mp hk with hf | hb
-      · change k ∉ σ.effectVars at hkA
-        exact Finset.mem_union_left _ (by
-          simp [Scheme.freeEffects, hf, hkA])
-      · exact Finset.mem_union_right _ hb
-    by_cases hiA : i ∈ A
-    · by_cases hjA : j ∈ A
-      · exact fun heq => hij (hinj hiA hjA heq)
-      · intro heq
-        have hz : fe i ∈ A.image fe := Finset.mem_image.mpr ⟨i, hiA, rfl⟩
-        have hjfix := hadm.2 j hjA
-        apply hno (fe i) hz
-        rw [heq, hjfix]
-        exact hused j hj hjA
-    · by_cases hjA : j ∈ A
-      · intro heq
-        have hz : fe j ∈ A.image fe := Finset.mem_image.mpr ⟨j, hjA, rfl⟩
-        apply hno (fe j) hz
-        rw [← heq, hadm.2 i hiA]
-        exact Finset.mem_union_right _ hi
-      · simpa [hadm.2 i hiA, hadm.2 j hjA] using hij
-
-/-- The generator's concrete fresh-name map is capture safe above the names
-already present in a qualified scheme. -/
-theorem Scheme.renameBound_safe {X : ConstraintSystem} (σ : Scheme X)
-    (typeBase effectBase : Nat)
-    (ht : ∀ i ∈ σ.freeTypes ∪ X.boundTypes σ.condition,
-      i ≤ typeBase)
-    (he : ∀ i ∈ σ.freeEffects ∪ X.boundEffects σ.condition,
-      i ≤ effectBase) :
-    σ.SafeRename (renameBound σ.typeVars typeBase)
-      (renameBound σ.effectVars effectBase) := by
-  refine ⟨Finset.card_image_of_injOn (renameBound_injOn _ _),
-    Finset.card_image_of_injOn (renameBound_injOn _ _), ?_, ?_⟩
-  · apply Finset.disjoint_left.mpr
-    intro j hj hused
-    rcases Finset.mem_image.mp hj with ⟨i, hi, rfl⟩
-    have hle := ht _ hused
-    simp [renameBound, hi] at hle
-    omega
-  · apply Finset.disjoint_left.mpr
-    intro j hj hused
-    rcases Finset.mem_image.mp hj with ⟨i, hi, rfl⟩
-    have hle := he _ hused
-    simp [renameBound, hi] at hle
-    omega
-
-theorem Scheme.instantiate_groundInstance {X : ConstraintSystem}
-    (hRename : X.LawfulSafeRename)
-    (σ : Scheme X) (ft fe : Nat → Nat)
-    (hadm : σ.AdmissibleRename ft fe)
-    (hsafe : σ.SafeRename ft fe) (v : Valuation)
-    (hC : X.holds (σ.instantiate ft fe).2 v) :
-    σ.GroundInstance v ((σ.instantiate ft fe).1.eval v) := by
-  let wt : Nat → GroundTy := fun i =>
-    if i ∈ σ.typeVars then v.types (ft i) else v.types i
-  let we : Nat → Finset Op := fun i =>
-    if i ∈ σ.effectVars then v.effects (fe i) else v.effects i
-  have hwt : wt = v.types ∘ ft := by
-    funext i
-    by_cases hi : i ∈ σ.typeVars
-    · simp [wt, hi]
-    · simp [wt, hi, hadm.1 i hi]
-  have hwe : we = v.effects ∘ fe := by
-    funext i
-    by_cases hi : i ∈ σ.effectVars
-    · simp [we, hi]
-    · simp [we, hi, hadm.2 i hi]
-  refine ⟨wt, we, ?_, ?_, ?_, ?_⟩
-  · intro i hi
-    simp [wt, hi]
-  · intro i hi
-    simp [we, hi]
-  · have hp := (hRename.holds_rename σ.condition ft fe v
-        (σ.renameSafe_condition ft fe hadm hsafe)).mp hC
-    simpa [hwt, hwe, Valuation.pullback] using hp
-  · simp [hwt, hwe, Scheme.instantiate, Ty.eval_rename,
-      Valuation.pullback]
-
-private noncomputable def assignImage {α : Type}
-    (bound : Finset Nat) (rename : Nat → Nat)
-    (values original : Nat → α) (j : Nat) : α :=
-  if h : ∃ i, i ∈ bound ∧ rename i = j then
-    values (Classical.choose h)
-  else original j
-
-private theorem assignImage_mem {α : Type}
-    (bound : Finset Nat) (rename : Nat → Nat)
-    (hinj : Set.InjOn rename bound)
-    (values original : Nat → α) (i : Nat) (hi : i ∈ bound) :
-    assignImage bound rename values original (rename i) = values i := by
-  let h : ∃ k, k ∈ bound ∧ rename k = rename i := ⟨i, hi, rfl⟩
-  have hc := Classical.choose_spec h
-  have hki : Classical.choose h = i := hinj hc.1 hi hc.2
-  simp [assignImage, h, hki]
-
-private theorem assignImage_not_mem {α : Type}
-    (bound : Finset Nat) (rename : Nat → Nat)
-    (values original : Nat → α) (j : Nat)
-    (hj : j ∉ bound.image rename) :
-    assignImage bound rename values original j = original j := by
-  have hnone : ¬ ∃ i, i ∈ bound ∧ rename i = j := by
-    rintro ⟨i, hi, rfl⟩
-    exact hj (Finset.mem_image.mpr ⟨i, hi, rfl⟩)
-  simp [assignImage, hnone]
-
-/-- Realize any ground instance at a safe fresh instantiation while keeping
-previously allocated names fixed. -/
-theorem Scheme.groundInstance_realizable_fixed {X : ConstraintSystem}
-    (hRename : X.LawfulSafeRename)
-    (σ : Scheme X) (ρ η : Nat → Nat)
-    (hadm : σ.AdmissibleRename ρ η)
-    (hsafe : σ.SafeRename ρ η)
-    (fixedTypes fixedEffects : Finset Nat)
-    (hdisjT : (σ.typeVars.image ρ) ∩ fixedTypes = ∅)
-    (hdisjE : (σ.effectVars.image η) ∩ fixedEffects = ∅)
-    (v : Valuation) (t : GroundTy)
-    (hinst : σ.GroundInstance v t) :
-    ∃ w : Valuation,
-      (∀ i ∈ σ.freeTypes, w.types i = v.types i) ∧
-      (∀ i ∈ σ.freeEffects, w.effects i = v.effects i) ∧
-      (∀ i ∈ fixedTypes, w.types i = v.types i) ∧
-      (∀ i ∈ fixedEffects, w.effects i = v.effects i) ∧
-      X.holds (σ.instantiate ρ η).2 w ∧
-      (σ.instantiate ρ η).1.eval w = t := by
-  classical
-  rcases hinst with ⟨ft, fe, hft, hfe, hc, ht⟩
-  let w : Valuation :=
-    ⟨assignImage σ.typeVars ρ ft v.types,
-      assignImage σ.effectVars η fe v.effects⟩
-  have hinjT : Set.InjOn ρ σ.typeVars :=
-    Finset.injOn_of_card_image_eq hsafe.1
-  have hinjE : Set.InjOn η σ.effectVars :=
-    Finset.injOn_of_card_image_eq hsafe.2.1
-  have hfixedT : ∀ i ∈ σ.freeTypes, w.types i = v.types i := by
-    intro i hi
-    apply assignImage_not_mem
-    intro himg
-    exact (Finset.disjoint_left.mp hsafe.2.2.1 himg)
-      (Finset.mem_union_left _ hi)
-  have hfixedE : ∀ i ∈ σ.freeEffects, w.effects i = v.effects i := by
-    intro i hi
-    apply assignImage_not_mem
-    intro himg
-    exact (Finset.disjoint_left.mp hsafe.2.2.2 himg)
-      (Finset.mem_union_left _ hi)
-  have hagreeT : ∀ i ∈ σ.result.fvTypes ∪ X.freeTypes σ.condition,
-      ft i = (w.pullback ρ η).types i := by
-    intro i hi
-    by_cases hiA : i ∈ σ.typeVars
-    · simp [Valuation.pullback, w,
-        assignImage_mem σ.typeVars ρ hinjT ft v.types i hiA]
-    · have hfree : i ∈ σ.freeTypes :=
-        Finset.mem_sdiff.mpr ⟨hi, hiA⟩
-      have hfix := hfixedT i hfree
-      have hbase := hft i hiA
-      simp [Valuation.pullback, hadm.1 i hiA, hfix, hbase]
-  have hagreeE : ∀ i ∈ σ.result.fvEffects ∪ X.freeEffects σ.condition,
-      fe i = (w.pullback ρ η).effects i := by
-    intro i hi
-    by_cases hiA : i ∈ σ.effectVars
-    · simp [Valuation.pullback, w,
-        assignImage_mem σ.effectVars η hinjE fe v.effects i hiA]
-    · have hfree : i ∈ σ.freeEffects :=
-        Finset.mem_sdiff.mpr ⟨hi, hiA⟩
-      have hfix := hfixedE i hfree
-      have hbase := hfe i hiA
-      simp [Valuation.pullback, hadm.2 i hiA, hfix, hbase]
-  have hconditionPullback :
-      X.holds σ.condition (w.pullback ρ η) :=
-    (X.free_support σ.condition ⟨ft, fe⟩
-      (w.pullback ρ η)
-      (fun i hi => hagreeT i (Finset.mem_union_right _ hi))
-      (fun i hi => hagreeE i (Finset.mem_union_right _ hi))).mp hc
-  have hresultPullback : σ.result.eval (w.pullback ρ η) = t := by
-    have heq := Ty.eval_support σ.result ⟨ft, fe⟩
-      (w.pullback ρ η)
-      (fun i hi => hagreeT i (Finset.mem_union_left _ hi))
-      (fun i hi => hagreeE i (Finset.mem_union_left _ hi))
-    exact heq.symm.trans ht
-  have hpreserveT : ∀ i ∈ fixedTypes, w.types i = v.types i := by
-    intro i hi
-    apply assignImage_not_mem
-    intro himg
-    have hm : i ∈ (σ.typeVars.image ρ) ∩ fixedTypes :=
-      Finset.mem_inter.mpr ⟨himg, hi⟩
-    rw [hdisjT] at hm
-    simp at hm
-  have hpreserveE : ∀ i ∈ fixedEffects, w.effects i = v.effects i := by
-    intro i hi
-    apply assignImage_not_mem
-    intro himg
-    have hm : i ∈ (σ.effectVars.image η) ∩ fixedEffects :=
-      Finset.mem_inter.mpr ⟨himg, hi⟩
-    rw [hdisjE] at hm
-    simp at hm
-  refine ⟨w, hfixedT, hfixedE, hpreserveT, hpreserveE, ?_, ?_⟩
-  · exact (hRename.holds_rename σ.condition ρ η w
-      (σ.renameSafe_condition ρ η hadm hsafe)).mpr hconditionPullback
-  · simpa [Scheme.instantiate, Ty.eval_rename] using hresultPullback
 
 theorem Scheme.mono_groundInstance_iff {X : ConstraintSystem}
     (τ : Ty) (ρ : Valuation) (t : GroundTy) :
@@ -299,6 +36,24 @@ theorem Context.moreGeneralAt_refl {X : ConstraintSystem}
   | cons σ rest ih =>
       exact List.Forall₂.cons (by intro t h; exact h) ih
 
+theorem Context.lookup_of_length_eq {X : ConstraintSystem}
+    (Γg Γd : Context X) (i : Nat)
+    (hlen : Γg.length = Γd.length)
+    (σd : Scheme X) (hd : Γd[i]? = some σd) :
+    ∃ σg, Γg[i]? = some σg := by
+  cases hg : Γg[i]? with
+  | some σg => exact ⟨σg, rfl⟩
+  | none =>
+      have hgi : Γg.length ≤ i :=
+        (List.getElem?_eq_none_iff).mp hg
+      have hdi : i < Γd.length := by
+        by_contra h
+        have : Γd[i]? = none :=
+          (List.getElem?_eq_none_iff).mpr (by omega)
+        rw [hd] at this
+        cases this
+      omega
+
 theorem Context.moreGeneralAt_lookup {X : ConstraintSystem}
     {Γg Γd : Context X} {ρg ρd : Valuation}
     (h : Γg.MoreGeneralAt Γd ρg ρd)
@@ -317,39 +72,42 @@ theorem Context.moreGeneralAt_lookup {X : ConstraintSystem}
       | succ j =>
           exact ih (by simpa using hg) (by simpa using hd)
 
-/-- Variable case of semantic completeness across different qualified
-contexts: a declared instance is realized by the generated fresh names. -/
-theorem Context.variable_complete_at {X : ConstraintSystem}
-    (hRename : X.LawfulSafeRename)
+/-- Variable completeness for diagonal-equality instantiation. The proof
+needs no renaming law or bound-name metadata for the opaque X formula. -/
+theorem Context.variable_complete_projected {X : ConstraintSystem}
     {Γg Γd : Context X} {σg σd : Scheme X} {i : Nat}
     (hg : Γg[i]? = some σg) (hd : Γd[i]? = some σd)
     (ρd ηd ρg ηg : Nat → Nat)
     (hadmD : σd.AdmissibleRename ρd ηd)
-    (hsafeD : σd.SafeRename ρd ηd)
+    (hfreshD : σd.FreshRename ρd ηd)
     (hadmG : σg.AdmissibleRename ρg ηg)
-    (hsafeG : σg.SafeRename ρg ηg)
+    (hinjT : Set.InjOn ρg σg.typeVars)
+    (hinjE : Set.InjOn ηg σg.effectVars)
+    (hfreshG : σg.FreshRename ρg ηg)
     (fixedTypes fixedEffects : Finset Nat)
+    (hfreeT : σg.freeTypes ⊆ fixedTypes)
+    (hfreeE : σg.freeEffects ⊆ fixedEffects)
     (hdisjT : (σg.typeVars.image ρg) ∩ fixedTypes = ∅)
     (hdisjE : (σg.effectVars.image ηg) ∩ fixedEffects = ∅)
     (vg vd : Valuation)
     (hctx : Γg.MoreGeneralAt Γd vg vd)
-    (hp : X.holds (σd.instantiate ρd ηd).2 vd) :
+    (hp : X.holds (σd.instantiateProjected ρd ηd).2 vd) :
     ∃ w : Valuation,
       (∀ j ∈ fixedTypes, w.types j = vg.types j) ∧
       (∀ j ∈ fixedEffects, w.effects j = vg.effects j) ∧
-      X.holds (σg.instantiate ρg ηg).2 w ∧
-      (σg.instantiate ρg ηg).1.eval w =
-        (σd.instantiate ρd ηd).1.eval vd := by
+      X.holds (σg.instantiateProjected ρg ηg).2 w ∧
+      (σg.instantiateProjected ρg ηg).1.eval w =
+        (σd.instantiateProjected ρd ηd).1.eval vd := by
   have hdinst : σd.GroundInstance vd
-      ((σd.instantiate ρd ηd).1.eval vd) :=
-    σd.instantiate_groundInstance hRename ρd ηd
-      hadmD hsafeD vd hp
-  have hginst := (Context.moreGeneralAt_lookup hctx hg hd)
-    _ hdinst
-  rcases σg.groundInstance_realizable_fixed hRename ρg ηg
-      hadmG hsafeG fixedTypes fixedEffects hdisjT hdisjE vg _ hginst with
-    ⟨w, _, _, hfixedT, hfixedE, hpred, hresult⟩
-  exact ⟨w, hfixedT, hfixedE, hpred, hresult⟩
+      ((σd.instantiateProjected ρd ηd).1.eval vd) :=
+    σd.instantiateProjected_groundInstance ρd ηd hadmD
+      hfreshD.1 hfreshD.2 vd hp
+  have hginst := (Context.moreGeneralAt_lookup hctx hg hd) _ hdinst
+  rcases σg.groundInstance_realizable_projected ρg ηg hadmG
+      (hinjT) (hinjE) hfreshG.1 hfreshG.2
+      fixedTypes fixedEffects hfreeT hfreeE hdisjT hdisjE
+      vg _ hginst with ⟨w, hT, hE, hC, ht⟩
+  exact ⟨w, hT, hE, hC, ht⟩
 
 theorem Scheme.groundInstance_support {X : ConstraintSystem}
     (σ : Scheme X) (v w : Valuation)
@@ -497,25 +255,6 @@ theorem Supply.seed_above_lookup {X : ConstraintSystem}
     dsimp [Supply.seed]
     omega
 
-theorem Supply.seed_lookup_safe {X : ConstraintSystem}
-    (s : Supply) (sig : Signature) (Γ : Context X) (e : Expr)
-    (i : Nat) (σ : Scheme X) (hlookup : Γ[i]? = some σ) :
-    σ.SafeRename
-      (renameBound σ.typeVars (Supply.seed s sig Γ e).types)
-      (renameBound σ.effectVars (Supply.seed s sig Γ e).effects) := by
-  have hb := Generic.Supply.seed_above_lookup s sig Γ e i σ hlookup
-  apply σ.renameBound_safe
-  · intro j hj
-    have hused : j ∈ σ.usedTypes := by
-      simp [Scheme.usedTypes, Scheme.freeTypes] at hj ⊢
-      aesop
-    exact Nat.le_of_lt (hb.1 j hused)
-  · intro j hj
-    have hused : j ∈ σ.usedEffects := by
-      simp [Scheme.usedEffects, Scheme.freeEffects] at hj ⊢
-      aesop
-    exact Nat.le_of_lt (hb.2 j hused)
-
 theorem generateFresh_var_success {X : ConstraintSystem}
     (sig : Signature) (Γ : Context X) (s : Supply)
     (i : Nat) (σ : Scheme X) (hlookup : Γ[i]? = some σ) :
@@ -524,11 +263,15 @@ theorem generateFresh_var_success {X : ConstraintSystem}
   let seed := Supply.seed s sig Γ (.var i)
   let ρ := renameBound σ.typeVars seed.types
   let η := renameBound σ.effectVars seed.effects
-  have hsafe : σ.SafeRename ρ η :=
-    Generic.Supply.seed_lookup_safe s sig Γ (.var i) i σ hlookup
-  refine ⟨⟨(σ.instantiate ρ η).1, ∅,
-    (σ.instantiate ρ η).2, seed.advance σ.typeVars σ.effectVars⟩, ?_⟩
-  simp [generateFresh, generate, seed, hlookup, ρ, η, hsafe]
+  have hb := Generic.Supply.seed_above_lookup s sig Γ (.var i) i σ hlookup
+  have hfresh : σ.FreshRename ρ η :=
+    σ.renameBound_fresh seed.types seed.effects
+      (fun j hj => hb.1 j (by simp [Scheme.usedTypes, hj]))
+      (fun j hj => hb.2 j (by simp [Scheme.usedEffects, hj]))
+  refine ⟨⟨(σ.instantiateProjected ρ η).1, ∅,
+    (σ.instantiateProjected ρ η).2,
+      seed.advance σ.typeVars σ.effectVars⟩, ?_⟩
+  simp [generateFresh, generate, seed, hlookup, ρ, η, hfresh]
 
 theorem Scheme.freeTypes_subset_usedTypes {X : ConstraintSystem}
     (σ : Scheme X) : σ.freeTypes ⊆ σ.usedTypes := by
@@ -588,39 +331,52 @@ private theorem renameBound_image_disjoint_below
 /-- The executable fresh-variable branch is principal among declarative
 variable uses, including qualified schemes in the context. -/
 theorem generateFresh_var_principal {X : ConstraintSystem}
-    (hRename : X.LawfulSafeRename)
     (sig : Signature) (Γ : Context X) (s : Supply)
     (C : X.Formula) (i : Nat) (σ : Scheme X)
     (hlookup : Γ[i]? = some σ)
     (ft fe : Nat → Nat)
     (hadm : σ.AdmissibleRename ft fe)
-    (hsafe : σ.SafeRename ft fe)
-    (hent : X.Entails C (σ.instantiate ft fe).2) :
+    (hfreshD : σ.FreshRename ft fe)
+    (hent : X.Entails C (σ.instantiateProjected ft fe).2) :
     ∃ r : Output X,
       generateFresh sig X Γ (.var i) s = some r ∧
-      r.MoreGeneralThan Γ C (σ.instantiate ft fe).1 ∅ := by
+      r.MoreGeneralThan Γ C (σ.instantiateProjected ft fe).1 ∅ := by
   let seed := Supply.seed s sig Γ (.var i)
   let ρ := renameBound σ.typeVars seed.types
   let η := renameBound σ.effectVars seed.effects
-  have hsafeG : σ.SafeRename ρ η :=
-    Generic.Supply.seed_lookup_safe s sig Γ (.var i) i σ hlookup
+  have hb := Generic.Supply.seed_above_lookup s sig Γ (.var i) i σ hlookup
+  have hfreshG : σ.FreshRename ρ η :=
+    σ.renameBound_fresh seed.types seed.effects
+      (fun j hj => hb.1 j (by simp [Scheme.usedTypes, hj]))
+      (fun j hj => hb.2 j (by simp [Scheme.usedEffects, hj]))
   have hbelow := Generic.Supply.seed_context_free_below
     s sig Γ (.var i)
+  have hmem : σ ∈ Γ := List.mem_of_getElem? hlookup
+  have hfreeT : σ.freeTypes ⊆ Γ.freeTypes := by
+    intro j hj
+    exact (foldl_union_mem Scheme.freeTypes Γ ∅ j).mpr
+      (Or.inr ⟨σ, hmem, hj⟩)
+  have hfreeE : σ.freeEffects ⊆ Γ.freeEffects := by
+    intro j hj
+    exact (foldl_union_mem Scheme.freeEffects Γ ∅ j).mpr
+      (Or.inr ⟨σ, hmem, hj⟩)
   have hdisjT : (σ.typeVars.image ρ) ∩ Γ.freeTypes = ∅ :=
     renameBound_image_disjoint_below σ.typeVars Γ.freeTypes
       seed.types hbelow.1
   have hdisjE : (σ.effectVars.image η) ∩ Γ.freeEffects = ∅ :=
     renameBound_image_disjoint_below σ.effectVars Γ.freeEffects
       seed.effects hbelow.2
-  refine ⟨⟨(σ.instantiate ρ η).1, ∅,
-    (σ.instantiate ρ η).2, seed.advance σ.typeVars σ.effectVars⟩,
+  refine ⟨⟨(σ.instantiateProjected ρ η).1, ∅,
+    (σ.instantiateProjected ρ η).2,
+      seed.advance σ.typeVars σ.effectVars⟩,
     ?_, ?_⟩
-  · simp [generateFresh, generate, seed, hlookup, ρ, η, hsafeG]
+  · simp [generateFresh, generate, seed, hlookup, ρ, η, hfreshG]
   · intro v hv
-    rcases Context.variable_complete_at hRename
-      hlookup hlookup ft fe ρ η hadm hsafe
-      ⟨renameBound_fixed _ _, renameBound_fixed _ _⟩ hsafeG
-      Γ.freeTypes Γ.freeEffects hdisjT hdisjE v v
+    rcases Context.variable_complete_projected
+      hlookup hlookup ft fe ρ η hadm hfreshD
+      ⟨renameBound_fixed _ _, renameBound_fixed _ _⟩
+      (renameBound_injOn _ _) (renameBound_injOn _ _) hfreshG
+      Γ.freeTypes Γ.freeEffects hfreeT hfreeE hdisjT hdisjE v v
       (Context.moreGeneralAt_refl Γ v) (hent v hv) with
       ⟨w, hT, hE, hC, ht⟩
     exact ⟨w, hT, hE, hC, ht, rfl⟩

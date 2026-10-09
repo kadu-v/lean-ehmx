@@ -18,11 +18,9 @@ fn seed_supply<P: Predicate>(
         types.extend(&scheme.type_vars);
         types.extend(scheme.result.fv_types());
         types.extend(scheme.predicates.fv_types());
-        types.extend(scheme.predicates.bound_types());
         effects.extend(&scheme.effect_vars);
         effects.extend(scheme.result.fv_effects());
         effects.extend(scheme.predicates.fv_effects());
-        effects.extend(scheme.predicates.bound_effects());
     }
     for decl in sig.values() {
         types.extend(&decl.type_vars);

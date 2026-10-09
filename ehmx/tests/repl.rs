@@ -1,5 +1,5 @@
 use ehmx::core::{ClassPred, Constraint, Effect, Expr, OpDecl, Scheme, Ty};
-use ehmx::infer::{InferError, Supply, generate, infer_qualified, infer_symbolic};
+use ehmx::infer::{Supply, generate, infer_qualified, infer_symbolic};
 use ehmx::repl::Session;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -218,7 +218,7 @@ fn handler_alpha_renames_operation_binder_away_from_context() {
 }
 
 #[test]
-fn scheme_instantiation_avoids_free_and_inner_bound_names() {
+fn scheme_instantiation_projects_quantified_names() {
     let sig = BTreeMap::new();
     let free: Scheme<ClassPred> = Scheme {
         type_vars: BTreeSet::from([0]),
@@ -232,30 +232,30 @@ fn scheme_instantiation_avoids_free_and_inner_bound_names() {
         predicates: Constraint::AllTy(1, Box::new(Constraint::TypeEq(Ty::Var(0), Ty::Var(1)))),
         result: Ty::Var(0),
     };
-    for scheme in [free, inner] {
-        assert!(matches!(
-            generate(
-                &sig,
-                &[scheme.clone()],
-                &Expr::Var(0),
-                Supply {
-                    types: 0,
-                    effects: 0
-                }
-            ),
-            Err(InferError::SchemeCapture)
-        ));
-        assert!(
-            generate(
-                &sig,
-                &[scheme],
-                &Expr::Var(0),
-                Supply {
-                    types: 2,
-                    effects: 0
-                }
-            )
-            .is_ok()
-        );
+    for scheme in [free, inner.clone()] {
+        let r = generate(
+            &sig,
+            &[scheme],
+            &Expr::Var(0),
+            Supply {
+                types: 2,
+                effects: 0,
+            },
+        )
+        .unwrap();
+        assert!(format!("{:?}", r.constraints).contains("ExTy(0"));
     }
+    // The fresh name may equal a name bound *inside* the opaque formula.
+    // The formula is projected with an external equality, never renamed.
+    let r = generate(
+        &sig,
+        &[inner],
+        &Expr::Var(0),
+        Supply {
+            types: 0,
+            effects: 0,
+        },
+    )
+    .unwrap();
+    assert!(format!("{:?}", r.constraints).contains("AllTy(1"));
 }

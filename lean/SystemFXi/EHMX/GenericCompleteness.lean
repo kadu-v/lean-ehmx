@@ -119,6 +119,58 @@ theorem BoundedInputs.context_free_below
     · exact hb.contextEffects σ hσ i
         (σ.freeEffects_subset_usedEffects hfv)
 
+theorem BoundedInputs.consMono
+    {sig : Signature} {X : ConstraintSystem}
+    (hAtom : X.LawfulGeneratedFV)
+    {Γ : Context X} {ops : Finset Op} {s : Supply}
+    (hb : BoundedInputs sig X Γ ops s) (τ : Ty)
+    (ht : ∀ i ∈ τ.fvTypes, i < s.types)
+    (he : ∀ i ∈ τ.fvEffects, i < s.effects) :
+    BoundedInputs sig X (Scheme.mono τ :: Γ) ops s := by
+  constructor
+  · intro σ hσ i hi
+    rcases List.mem_cons.mp hσ with rfl | hΓ
+    · simp [Scheme.usedTypes, Scheme.mono,
+        hAtom.trivial_types] at hi
+      exact ht i hi
+    · exact hb.contextTypes σ hΓ i hi
+  · intro σ hσ i hi
+    rcases List.mem_cons.mp hσ with rfl | hΓ
+    · simp [Scheme.usedEffects, Scheme.mono,
+        hAtom.trivial_effects] at hi
+      exact he i hi
+    · exact hb.contextEffects σ hΓ i hi
+  · exact hb.signatureTypes
+  · exact hb.signatureEffects
+
+theorem BoundedInputs.consGeneralize
+    {sig : Signature} {X : ConstraintSystem}
+    {Γ : Context X} {ops : Finset Op} {s : Supply}
+    (hb : BoundedInputs sig X Γ ops s)
+    (c : X.Formula) (τ : Ty)
+    (ht : ∀ i ∈ τ.fvTypes ∪ X.freeTypes c, i < s.types)
+    (he : ∀ i ∈ τ.fvEffects ∪ X.freeEffects c,
+      i < s.effects) :
+    BoundedInputs sig X
+      (Scheme.generalize Γ c τ :: Γ) ops s := by
+  constructor
+  · intro σ hσ i hi
+    rcases List.mem_cons.mp hσ with rfl | hΓ
+    · have h : i ∈ τ.fvTypes ∪ X.freeTypes c := by
+        simp [Scheme.usedTypes, Scheme.generalize] at hi ⊢
+        aesop
+      exact ht i h
+    · exact hb.contextTypes σ hΓ i hi
+  · intro σ hσ i hi
+    rcases List.mem_cons.mp hσ with rfl | hΓ
+    · have h : i ∈ τ.fvEffects ∪ X.freeEffects c := by
+        simp [Scheme.usedEffects, Scheme.generalize] at hi ⊢
+        aesop
+      exact he i h
+    · exact hb.contextEffects σ hΓ i hi
+  · exact hb.signatureTypes
+  · exact hb.signatureEffects
+
 theorem Context.moreGeneralAt_below
     {sig : Signature} {X : ConstraintSystem}
     (Γg Γd : Context X) (ops : Finset Op) (s : Supply)
@@ -254,6 +306,123 @@ theorem Output.semantic_frame_of_below {X : ConstraintSystem}
     (fun i hi => hfixedT i (hboundT i hi))
     (fun i hi => hfixedE i (hboundE i hi))
 
+/-- Restrict a clause solution to the names allocated after the clause
+started, preserving the ground result and effect. -/
+theorem Output.localize_solution {X : ConstraintSystem}
+    (r : Output X) (s : Supply) (base w : Valuation)
+    (hboundT : ∀ i ∈ r.supportTypes, i < r.next.types)
+    (hboundE : ∀ i ∈ r.supportEffects, i < r.next.effects)
+    (hbelowT : ∀ i, i < s.types → base.types i = w.types i)
+    (hbelowE : ∀ i, i < s.effects → base.effects i = w.effects i)
+    (hC : X.holds r.condition w) :
+    let localTypes := Finset.range r.next.types \ Finset.range s.types
+    let localEffects := Finset.range r.next.effects \ Finset.range s.effects
+    ∃ v : Valuation,
+      (∀ i, i ∉ localTypes → v.types i = base.types i) ∧
+      (∀ i, i ∉ localEffects → v.effects i = base.effects i) ∧
+      X.holds r.condition v ∧
+      r.ty.eval v = r.ty.eval w ∧
+      r.effect.eval v.effects = r.effect.eval w.effects := by
+  dsimp
+  let localTypes := Finset.range r.next.types \ Finset.range s.types
+  let localEffects := Finset.range r.next.effects \ Finset.range s.effects
+  let v : Valuation :=
+    ⟨fun i => if i ∈ localTypes then w.types i else base.types i,
+      fun i => if i ∈ localEffects then w.effects i else base.effects i⟩
+  have hAgreeT : ∀ i, i < r.next.types →
+      v.types i = w.types i := by
+    intro i hi
+    by_cases hlow : i < s.types
+    · have hnot : i ∉ localTypes := by
+        simp [localTypes, hlow]
+      simpa [v, hnot] using hbelowT i hlow
+    · have hmem : i ∈ localTypes := by
+        simp [localTypes, hi]
+        omega
+      simp [v, hmem]
+  have hAgreeE : ∀ i, i < r.next.effects →
+      v.effects i = w.effects i := by
+    intro i hi
+    by_cases hlow : i < s.effects
+    · have hnot : i ∉ localEffects := by
+        simp [localEffects, hlow]
+      simpa [v, hnot] using hbelowE i hlow
+    · have hmem : i ∈ localEffects := by
+        simp [localEffects, hi]
+        omega
+      simp [v, hmem]
+  have hframe := r.semantic_frame_of_below w v
+    hboundT hboundE
+    (fun i hi => (hAgreeT i hi).symm)
+    (fun i hi => (hAgreeE i hi).symm)
+  refine ⟨v, ?_, ?_, hframe.1.mp hC,
+    hframe.2.1.symm, hframe.2.2.symm⟩
+  · intro i hi
+    change i ∉ localTypes at hi
+    simp [v, hi]
+  · intro i hi
+    change i ∉ localEffects at hi
+    simp [v, hi]
+
+/-- One declarative operation-clause instance yields the projected generated
+clause constraint. Only names allocated within the clause may vary. -/
+theorem Output.CoversAt.project_clause {X : ConstraintSystem}
+    (Γg Γd : Context X) (D : X.Formula)
+    (s : Supply) (r : Output X) (τ a : Ty) (ε χ : Effect)
+    (hboundT : ∀ i ∈ r.supportTypes, i < r.next.types)
+    (hboundE : ∀ i ∈ r.supportEffects, i < r.next.effects)
+    (haT : ∀ i ∈ a.fvTypes, i < s.types)
+    (haE : ∀ i ∈ a.fvEffects, i < s.effects)
+    (hχ : ∀ i ∈ χ.vars, i < s.effects)
+    (hcov : r.CoversAt Γg Γd D s τ ε)
+    (vg vd : Valuation)
+    (hctx : Γg.MoreGeneralAt Γd vg vd)
+    (hD : X.holds D vd)
+    (htarget : τ.eval vd = a.eval vg)
+    (heffect : ε.eval vd.effects ⊆ χ.eval vg.effects) :
+    X.holds
+      (X.project
+        (Finset.range r.next.types \ Finset.range s.types)
+        (Finset.range r.next.effects \ Finset.range s.effects)
+        (X.combine r.condition
+          (X.combine (X.equalType r.ty a)
+            (X.includedEffect r.effect χ)))) vg := by
+  rcases hcov vg vd hctx hD with
+    ⟨w, hbelowT, hbelowE, hC, hTy, hEff⟩
+  rcases r.localize_solution s vg w
+      hboundT hboundE hbelowT hbelowE hC with
+    ⟨v, hlocalT, hlocalE, hCv, hTyV, hEffV⟩
+  have ha : a.eval v = a.eval vg :=
+    Ty.eval_support a v vg
+      (by
+        intro i hi
+        apply hlocalT i
+        have hs := haT i hi
+        simp only [Finset.mem_sdiff, Finset.mem_range]
+        omega)
+      (by
+        intro i hi
+        apply hlocalE i
+        have hs := haE i hi
+        simp only [Finset.mem_sdiff, Finset.mem_range]
+        omega)
+  have hχV : χ.eval v.effects = χ.eval vg.effects :=
+    Effect.eval_support χ v vg (by
+      intro i hi
+      apply hlocalE i
+      have hs := hχ i hi
+      simp only [Finset.mem_sdiff, Finset.mem_range]
+      omega)
+  apply (X.projection_iff _ _ _ vg).mpr
+  refine ⟨v.types, v.effects, hlocalT, hlocalE,
+    (X.combine_iff _ _ _).2 ⟨hCv,
+      (X.combine_iff _ _ _).2 ⟨?_, ?_⟩⟩⟩
+  · apply (X.equalType_iff _ _ _).2
+    exact hTyV.trans (hTy.trans (htarget.trans ha.symm))
+  · apply (X.includedEffect_iff _ _ _).2
+    rw [hEffV, hEff, hχV]
+    exact heffect
+
 def Valuation.assignAt (v : Valuation) (s : Supply)
     (t : GroundTy) (ε : Finset Op) : Valuation :=
   ⟨Function.update v.types s.types t,
@@ -338,6 +507,584 @@ theorem Output.app_solution_extend {X : ConstraintSystem}
         rf.effect.eval v.effects ∪ rx.effect.eval w.effects ∪ η
     simp only [Effect.eval_union, hnewE]
     rw [← hrfWU.2.2, ← hrfVW.2.2, ← hrxWU.2.2]
+
+/-- The application constructor preserves the support bound whenever the
+two subresults do. -/
+theorem Output.app_support_below {X : ConstraintSystem}
+    (hFV : X.LawfulFV) (hAtom : X.LawfulGeneratedFV)
+    (rf rx : Output X)
+    (hfT : ∀ i ∈ rf.supportTypes, i < rf.next.types)
+    (hfE : ∀ i ∈ rf.supportEffects, i < rf.next.effects)
+    (hxT : ∀ i ∈ rx.supportTypes, i < rx.next.types)
+    (hxE : ∀ i ∈ rx.supportEffects, i < rx.next.effects)
+    (hnext : rf.next.types ≤ rx.next.types ∧
+      rf.next.effects ≤ rx.next.effects) :
+    let b := Ty.var rx.next.types
+    let η := Poly.Effect.var rx.next.effects
+    let r : Output X :=
+      ⟨b, rf.effect ∪ rx.effect ∪ η,
+        X.combine (X.combine rf.condition rx.condition)
+          (X.equalType rf.ty (.arr rx.ty η b)),
+        ⟨rx.next.types + 1, rx.next.effects + 1⟩⟩
+    (∀ i ∈ r.supportTypes, i < r.next.types) ∧
+      (∀ i ∈ r.supportEffects, i < r.next.effects) := by
+  dsimp
+  constructor
+  · intro i hi
+    have hsub : i ∈ insert rx.next.types
+        (rf.supportTypes ∪ rx.supportTypes) := by
+      simp only [Output.supportTypes, Ty.fvTypes, Finset.mem_union,
+        Finset.mem_insert, Finset.mem_singleton] at hi ⊢
+      rcases hi with rfl | hcon
+      · exact Or.inl rfl
+      · have hsplit := hFV.combine_types _ _ hcon
+        rcases Finset.mem_union.mp hsplit with hleft | heq
+        · rcases Finset.mem_union.mp (hFV.combine_types _ _ hleft) with
+            hf | hx
+          · exact Or.inr (Or.inl (Or.inr hf))
+          · exact Or.inr (Or.inr (Or.inr hx))
+        · have hty := hAtom.equalType_types _ _ heq
+          simp [Ty.fvTypes] at hty
+          rcases hty with hnew | hf | hx
+          · exact Or.inl hnew
+          · exact Or.inr (Or.inl (Or.inl hf))
+          · exact Or.inr (Or.inr (Or.inl hx))
+    rcases Finset.mem_insert.mp hsub with hnew | hprev
+    · omega
+    · rcases Finset.mem_union.mp hprev with hf | hx
+      · have := hfT i hf
+        omega
+      · have := hxT i hx
+        omega
+  · intro i hi
+    have hsub : i ∈ insert rx.next.effects
+        (rf.supportEffects ∪ rx.supportEffects) := by
+      have hbase := hFV.combine_effects
+        (X.combine rf.condition rx.condition)
+        (X.equalType rf.ty
+          (.arr rx.ty (Poly.Effect.var rx.next.effects)
+            (.var rx.next.types)))
+      have hinner := hFV.combine_effects rf.condition rx.condition
+      have heq := hAtom.equalType_effects rf.ty
+        (.arr rx.ty (Poly.Effect.var rx.next.effects)
+          (.var rx.next.types))
+      simp [Output.supportEffects, Ty.fvEffects,
+        Poly.Effect.vars_union, Poly.Effect.var] at hi ⊢
+      rcases hi with hnew | hf | hx | hc
+      · exact Or.inl hnew
+      · exact Or.inr (Or.inr (Or.inl hf))
+      · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inl hx)))))
+      · rcases Finset.mem_union.mp (hbase hc) with hinnerM | heqM
+        · rcases Finset.mem_union.mp (hinner hinnerM) with hfC | hxC
+          · exact Or.inr (Or.inr (Or.inr (Or.inl hfC)))
+          · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr hxC)))))
+        · have ht := heq heqM
+          simp [Ty.fvEffects] at ht
+          rcases ht with hfTy | hxTy | hnew
+          · exact Or.inr (Or.inl hfTy)
+          · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inl hxTy))))
+          · exact Or.inl (by simpa [Poly.Effect.var] using hnew)
+    rcases Finset.mem_insert.mp hsub with hnew | hprev
+    · omega
+    · rcases Finset.mem_union.mp hprev with hf | hx
+      · have := hfE i hf
+        omega
+      · have := hxE i hx
+        omega
+
+/-- Projection-based variable instantiation remains within the allocated
+supply and does not inspect binders inside X formulas. -/
+theorem Output.variable_support_below {X : ConstraintSystem}
+    (hFV : X.LawfulFV) (hAtom : X.LawfulGeneratedFV)
+    (σ : Scheme X) (s : Supply)
+    (husedT : ∀ i ∈ σ.usedTypes, i < s.types)
+    (husedE : ∀ i ∈ σ.usedEffects, i < s.effects) :
+    let ft := renameBound σ.typeVars s.types
+    let fe := renameBound σ.effectVars s.effects
+    let r : Output X :=
+      ⟨(σ.instantiateProjected ft fe).1, ∅,
+        (σ.instantiateProjected ft fe).2,
+        s.advance σ.typeVars σ.effectVars⟩
+    (∀ i ∈ r.supportTypes, i < r.next.types) ∧
+      (∀ i ∈ r.supportEffects, i < r.next.effects) := by
+  dsimp
+  let ft := renameBound σ.typeVars s.types
+  let fe := renameBound σ.effectVars s.effects
+  have hadm : σ.AdmissibleRename ft fe :=
+    ⟨renameBound_fixed _ _, renameBound_fixed _ _⟩
+  constructor
+  · intro i hi
+    have hs := σ.instantiateProjected_supportTypes hFV hAtom
+      ft fe hadm
+    have h : i ∈ σ.freeTypes ∪ σ.typeVars.image ft :=
+      hs (by simpa [Output.supportTypes, ft, fe] using hi)
+    rcases Finset.mem_union.mp h with hfree | hnew
+    · exact lt_of_lt_of_le
+        (husedT i (σ.freeTypes_subset_usedTypes hfree))
+        (Nat.le_of_lt (s.advance_mono
+          σ.typeVars σ.effectVars).1)
+    · rcases Finset.mem_image.mp hnew with ⟨j, hj, rfl⟩
+      exact (s.advance_above_renamed σ.typeVars σ.effectVars).1 j hj
+  · intro i hi
+    have hs := σ.instantiateProjected_supportEffects hFV hAtom
+      ft fe hadm
+    have h : i ∈ σ.freeEffects ∪ σ.effectVars.image fe :=
+      hs (by simpa [Output.supportEffects, ft, fe] using hi)
+    rcases Finset.mem_union.mp h with hfree | hnew
+    · exact lt_of_lt_of_le
+        (husedE i (σ.freeEffects_subset_usedEffects hfree))
+        (Nat.le_of_lt (s.advance_mono
+          σ.typeVars σ.effectVars).2)
+    · rcases Finset.mem_image.mp hnew with ⟨j, hj, rfl⟩
+      exact (s.advance_above_renamed σ.typeVars σ.effectVars).2 j hj
+
+theorem Output.lam_support_below {X : ConstraintSystem}
+    (s : Supply) (rb : Output X)
+    (hbT : ∀ i ∈ rb.supportTypes, i < rb.next.types)
+    (hbE : ∀ i ∈ rb.supportEffects, i < rb.next.effects)
+    (hnext : s.types < rb.next.types) :
+    let r : Output X :=
+      ⟨.arr (.var s.types) rb.effect rb.ty, ∅,
+        rb.condition, rb.next⟩
+    (∀ i ∈ r.supportTypes, i < r.next.types) ∧
+      (∀ i ∈ r.supportEffects, i < r.next.effects) := by
+  dsimp
+  constructor
+  · intro i hi
+    have hsub : i = s.types ∨ i ∈ rb.supportTypes := by
+      simp [Output.supportTypes, Ty.fvTypes] at hi ⊢
+      aesop
+    rcases hsub with rfl | h
+    · exact hnext
+    · exact hbT i h
+  · intro i hi
+    have hsub : i ∈ rb.supportEffects := by
+      simp [Output.supportEffects, Ty.fvEffects] at hi ⊢
+      aesop
+    exact hbE i hsub
+
+theorem Output.letMono_support_below {X : ConstraintSystem}
+    (hFV : X.LawfulFV) (r₁ r₂ : Output X)
+    (h₁T : ∀ i ∈ r₁.supportTypes, i < r₁.next.types)
+    (h₁E : ∀ i ∈ r₁.supportEffects, i < r₁.next.effects)
+    (h₂T : ∀ i ∈ r₂.supportTypes, i < r₂.next.types)
+    (h₂E : ∀ i ∈ r₂.supportEffects, i < r₂.next.effects)
+    (hnext : r₁.next.types ≤ r₂.next.types ∧
+      r₁.next.effects ≤ r₂.next.effects) :
+    let r : Output X :=
+      ⟨r₂.ty, r₁.effect ∪ r₂.effect,
+        X.combine r₁.condition r₂.condition, r₂.next⟩
+    (∀ i ∈ r.supportTypes, i < r.next.types) ∧
+      (∀ i ∈ r.supportEffects, i < r.next.effects) := by
+  dsimp
+  constructor
+  · intro i hi
+    have hsub : i ∈ r₁.supportTypes ∪ r₂.supportTypes := by
+      simp only [Output.supportTypes, Finset.mem_union] at hi ⊢
+      rcases hi with hty | hc
+      · exact Or.inr (Or.inl hty)
+      · rcases Finset.mem_union.mp (hFV.combine_types _ _ hc) with
+            h₁ | h₂
+        · exact Or.inl (Or.inr h₁)
+        · exact Or.inr (Or.inr h₂)
+    rcases Finset.mem_union.mp hsub with h₁ | h₂
+    · exact lt_of_lt_of_le (h₁T i h₁) hnext.1
+    · exact h₂T i h₂
+  · intro i hi
+    have hsub : i ∈ r₁.supportEffects ∪ r₂.supportEffects := by
+      have hsplit := hFV.combine_effects r₁.condition r₂.condition
+      simp [Output.supportEffects, Poly.Effect.vars_union] at hi ⊢
+      rcases hi with hty | heff₁ | heff₂ | hc
+      · aesop
+      · aesop
+      · aesop
+      · rcases Finset.mem_union.mp (hsplit hc) with hc₁ | hc₂
+        · aesop
+        · aesop
+    rcases Finset.mem_union.mp hsub with h₁ | h₂
+    · exact lt_of_lt_of_le (h₁E i h₁) hnext.2
+    · exact h₂E i h₂
+
+theorem Output.letVal_support_below {X : ConstraintSystem}
+    (hFV : X.LawfulFV) (Γ : Context X) (r₁ r₂ : Output X)
+    (h₁T : ∀ i ∈ r₁.supportTypes, i < r₁.next.types)
+    (h₁E : ∀ i ∈ r₁.supportEffects, i < r₁.next.effects)
+    (h₂T : ∀ i ∈ r₂.supportTypes, i < r₂.next.types)
+    (h₂E : ∀ i ∈ r₂.supportEffects, i < r₂.next.effects)
+    (hnext : r₁.next.types ≤ r₂.next.types ∧
+      r₁.next.effects ≤ r₂.next.effects) :
+    let r : Output X :=
+      ⟨r₂.ty, r₂.effect,
+        X.combine (Scheme.residual Γ r₁.condition r₁.ty)
+          r₂.condition, r₂.next⟩
+    (∀ i ∈ r.supportTypes, i < r.next.types) ∧
+      (∀ i ∈ r.supportEffects, i < r.next.effects) := by
+  dsimp
+  have hresT : X.freeTypes
+      (Scheme.residual Γ r₁.condition r₁.ty) ⊆
+      X.freeTypes r₁.condition := by
+    intro i hi
+    have hp := hFV.project_types
+      (Scheme.generalize Γ r₁.condition r₁.ty).typeVars
+      (Scheme.generalize Γ r₁.condition r₁.ty).effectVars
+      r₁.condition
+    exact (Finset.mem_sdiff.mp (hp (by
+      simpa [Scheme.residual] using hi))).1
+  have hresE : X.freeEffects
+      (Scheme.residual Γ r₁.condition r₁.ty) ⊆
+      X.freeEffects r₁.condition := by
+    intro i hi
+    have hp := hFV.project_effects
+      (Scheme.generalize Γ r₁.condition r₁.ty).typeVars
+      (Scheme.generalize Γ r₁.condition r₁.ty).effectVars
+      r₁.condition
+    exact (Finset.mem_sdiff.mp (hp (by
+      simpa [Scheme.residual] using hi))).1
+  constructor
+  · intro i hi
+    have hsplit : i ∈ r₁.supportTypes ∪ r₂.supportTypes := by
+      have hc := hFV.combine_types
+        (Scheme.residual Γ r₁.condition r₁.ty) r₂.condition
+      simp [Output.supportTypes] at hi ⊢
+      rcases hi with hty | hcond
+      · aesop
+      · rcases Finset.mem_union.mp (hc hcond) with hr | h₂
+        · have h₁ := hresT hr
+          aesop
+        · aesop
+    rcases Finset.mem_union.mp hsplit with h₁ | h₂
+    · exact lt_of_lt_of_le (h₁T i h₁) hnext.1
+    · exact h₂T i h₂
+  · intro i hi
+    have hsplit : i ∈ r₁.supportEffects ∪ r₂.supportEffects := by
+      have hc := hFV.combine_effects
+        (Scheme.residual Γ r₁.condition r₁.ty) r₂.condition
+      simp [Output.supportEffects] at hi ⊢
+      rcases hi with hty | heff | hcond
+      · aesop
+      · aesop
+      · rcases Finset.mem_union.mp (hc hcond) with hr | h₂
+        · have h₁ := hresE hr
+          aesop
+        · aesop
+    rcases Finset.mem_union.mp hsplit with h₁ | h₂
+    · exact lt_of_lt_of_le (h₁E i h₁) hnext.2
+    · exact h₂E i h₂
+
+theorem Output.perform_support_below {X : ConstraintSystem}
+    (hFV : X.LawfulFV) (hAtom : X.LawfulGeneratedFV)
+    (s : Supply) (decl : OpDecl) (op : Op) (re : Output X)
+    (hdeclT : ∀ i ∈ decl.usedTypes, i < s.types)
+    (hdeclE : ∀ i ∈ decl.usedEffects, i < s.effects)
+    (heT : ∀ i ∈ re.supportTypes, i < re.next.types)
+    (heE : ∀ i ∈ re.supportEffects, i < re.next.effects)
+    (hnext : (s.advance decl.typeVars decl.effectVars).types ≤
+        re.next.types ∧
+      (s.advance decl.typeVars decl.effectVars).effects ≤
+        re.next.effects) :
+    let ρ := renameBound decl.typeVars s.types
+    let η := renameBound decl.effectVars s.effects
+    let r : Output X :=
+      ⟨decl.output.rename ρ η,
+        Poly.Effect.singleton op ∪ re.effect,
+        X.combine re.condition
+          (X.equalType re.ty (decl.input.rename ρ η)), re.next⟩
+    (∀ i ∈ r.supportTypes, i < r.next.types) ∧
+      (∀ i ∈ r.supportEffects, i < r.next.effects) := by
+  dsimp
+  let ρ := renameBound decl.typeVars s.types
+  let η := renameBound decl.effectVars s.effects
+  constructor
+  · intro i hi
+    have hsub : i ∈ re.supportTypes ∪ decl.usedTypes.image ρ := by
+      have hc := hFV.combine_types re.condition
+        (X.equalType re.ty (decl.input.rename ρ η))
+      have heq := hAtom.equalType_types re.ty
+        (decl.input.rename ρ η)
+      simp [Output.supportTypes, Ty.fvTypes_rename,
+        OpDecl.usedTypes, ρ] at hi ⊢
+      rcases hi with hout | hcond
+      · aesop
+      · rcases Finset.mem_union.mp (hc hcond) with hr | hEq
+        · aesop
+        · rcases Finset.mem_union.mp (heq hEq) with ht | hin
+          · aesop
+          · rw [Ty.fvTypes_rename] at hin
+            aesop
+    rcases Finset.mem_union.mp hsub with he | hd
+    · exact heT i he
+    · rcases Finset.mem_image.mp hd with ⟨j, hj, rfl⟩
+      have hlt := s.renameBound_types_below_advance
+        decl.typeVars decl.effectVars decl.usedTypes hdeclT j hj
+      exact lt_of_lt_of_le (by simpa [ρ] using hlt) hnext.1
+  · intro i hi
+    have hsub : i ∈ re.supportEffects ∪ decl.usedEffects.image η := by
+      have hc := hFV.combine_effects re.condition
+        (X.equalType re.ty (decl.input.rename ρ η))
+      have heq := hAtom.equalType_effects re.ty
+        (decl.input.rename ρ η)
+      simp [Output.supportEffects, Ty.fvEffects_rename,
+        OpDecl.usedEffects, Poly.Effect.vars_union,
+        η] at hi ⊢
+      rcases hi with hout | heff | hcond
+      · aesop
+      · aesop
+      · rcases Finset.mem_union.mp (hc hcond) with hr | hEq
+        · aesop
+        · rcases Finset.mem_union.mp (heq hEq) with ht | hin
+          · aesop
+          · rw [Ty.fvEffects_rename] at hin
+            aesop
+    rcases Finset.mem_union.mp hsub with he | hd
+    · exact heE i he
+    · rcases Finset.mem_image.mp hd with ⟨j, hj, rfl⟩
+      have hlt := s.renameBound_effects_below_advance
+        decl.typeVars decl.effectVars decl.usedEffects hdeclE j hj
+      exact lt_of_lt_of_le (by simpa [η] using hlt) hnext.2
+
+theorem ConstraintSystem.split_freeTypes {X : ConstraintSystem}
+    (hFV : X.LawfulFV) (hAtom : X.LawfulGeneratedFV)
+    (op : Op) (input rest : Effect) :
+    X.freeTypes (X.split op input rest) = ∅ := by
+  apply Finset.eq_empty_iff_forall_notMem.mpr
+  intro i hi
+  have h₁ := hFV.combine_types _ _ hi
+  rcases Finset.mem_union.mp h₁ with ha | h₂
+  · rw [hAtom.includedEffect_types] at ha
+    simp at ha
+  · have h₃ := hFV.combine_types _ _ h₂
+    rcases Finset.mem_union.mp h₃ with hb | hl
+    · rw [hAtom.includedEffect_types] at hb
+      simp at hb
+    · rw [hAtom.excludes_types] at hl
+      simp at hl
+
+theorem ConstraintSystem.split_freeEffects {X : ConstraintSystem}
+    (hFV : X.LawfulFV) (hAtom : X.LawfulGeneratedFV)
+    (op : Op) (input rest : Effect) :
+    X.freeEffects (X.split op input rest) ⊆
+      input.vars ∪ rest.vars := by
+  intro i hi
+  have h₁ := hFV.combine_effects _ _ hi
+  rcases Finset.mem_union.mp h₁ with ha | h₂
+  · have h := hAtom.includedEffect_effects _ _ ha
+    simp at h ⊢
+    aesop
+  · have h₃ := hFV.combine_effects _ _ h₂
+    rcases Finset.mem_union.mp h₃ with hb | hl
+    · have h := hAtom.includedEffect_effects _ _ hb
+      simp at h ⊢
+      aesop
+    · have h := hAtom.excludes_effects _ _ hl
+      exact Finset.mem_union_right _ h
+
+theorem handlerCondition_freeTypes {X : ConstraintSystem}
+    (hFV : X.LawfulFV) (hAtom : X.LawfulGeneratedFV)
+    (op : Op) (decl : OpDecl)
+    (Cin Cr Co : X.Formula) (τr τo a : Ty)
+    (εin εr εo δ χ : Effect)
+    (localTypes localEffects : Finset Nat) :
+    X.freeTypes (handlerCondition X op decl Cin Cr Co τr τo a
+      εin εr εo δ χ localTypes localEffects) ⊆
+      X.freeTypes Cin ∪ X.freeTypes Cr ∪ X.freeTypes Co ∪
+        τr.fvTypes ∪ τo.fvTypes ∪ a.fvTypes := by
+  intro i hi
+  unfold handlerCondition at hi
+  have h₀ := hFV.combine_types _ _ hi
+  rcases Finset.mem_union.mp h₀ with hstart | hrest
+  · have h₁ := hFV.combine_types _ _ hstart
+    rcases Finset.mem_union.mp h₁ with hc | hr
+    · simp [hc]
+    · simp [hr]
+  · have h₁ := hFV.combine_types _ _ hrest
+    rcases Finset.mem_union.mp h₁ with hret | htail
+    · have heq := hAtom.equalType_types τr a hret
+      simp [Finset.mem_union] at heq ⊢
+      aesop
+    · have h₂ := hFV.combine_types _ _ htail
+      rcases Finset.mem_union.mp h₂ with hclause | heffects
+      · have hclause' := hFV.handler_types decl.typeVars
+          decl.effectVars localTypes localEffects
+          (X.combine Co
+            (X.combine (X.equalType τo a)
+              (X.includedEffect εo χ))) hclause
+        have hinner := (Finset.mem_sdiff.mp hclause').1
+        have h₃ := hFV.combine_types _ _ hinner
+        rcases Finset.mem_union.mp h₃ with hco | hresult
+        · simp [hco]
+        · have h₄ := hFV.combine_types _ _ hresult
+          rcases Finset.mem_union.mp h₄ with hty | heff
+          · have heq := hAtom.equalType_types τo a hty
+            simp [Finset.mem_union] at heq ⊢
+            aesop
+          · rw [hAtom.includedEffect_types] at heff
+            simp at heff
+      · have h₃ := hFV.combine_types _ _ heffects
+        rcases Finset.mem_union.mp h₃ with hsplit | hmore
+        · rw [ConstraintSystem.split_freeTypes hFV hAtom op εin δ] at hsplit
+          simp at hsplit
+        · have h₄ := hFV.combine_types _ _ hmore
+          rcases Finset.mem_union.mp h₄ with hδ | hε
+          · rw [hAtom.includedEffect_types] at hδ
+            simp at hδ
+          · rw [hAtom.includedEffect_types] at hε
+            simp at hε
+
+theorem handlerCondition_freeEffects {X : ConstraintSystem}
+    (hFV : X.LawfulFV) (hAtom : X.LawfulGeneratedFV)
+    (op : Op) (decl : OpDecl)
+    (Cin Cr Co : X.Formula) (τr τo a : Ty)
+    (εin εr εo δ χ : Effect)
+    (localTypes localEffects : Finset Nat) :
+    X.freeEffects (handlerCondition X op decl Cin Cr Co τr τo a
+      εin εr εo δ χ localTypes localEffects) ⊆
+      X.freeEffects Cin ∪ X.freeEffects Cr ∪ X.freeEffects Co ∪
+        τr.fvEffects ∪ τo.fvEffects ∪ a.fvEffects ∪
+        εin.vars ∪ εr.vars ∪ εo.vars ∪ δ.vars ∪ χ.vars := by
+  intro i hi
+  unfold handlerCondition at hi
+  have h₀ := hFV.combine_effects _ _ hi
+  rcases Finset.mem_union.mp h₀ with hstart | hrest
+  · have h₁ := hFV.combine_effects _ _ hstart
+    rcases Finset.mem_union.mp h₁ with hc | hr
+    · simp [hc]
+    · simp [hr]
+  · have h₁ := hFV.combine_effects _ _ hrest
+    rcases Finset.mem_union.mp h₁ with hret | htail
+    · have heq := hAtom.equalType_effects τr a hret
+      simp [Finset.mem_union] at heq ⊢
+      aesop
+    · have h₂ := hFV.combine_effects _ _ htail
+      rcases Finset.mem_union.mp h₂ with hclause | heffects
+      · have hclause' := hFV.handler_effects decl.typeVars
+          decl.effectVars localTypes localEffects
+          (X.combine Co
+            (X.combine (X.equalType τo a)
+              (X.includedEffect εo χ))) hclause
+        have hinner := (Finset.mem_sdiff.mp hclause').1
+        have h₃ := hFV.combine_effects _ _ hinner
+        rcases Finset.mem_union.mp h₃ with hco | hresult
+        · simp [hco]
+        · have h₄ := hFV.combine_effects _ _ hresult
+          rcases Finset.mem_union.mp h₄ with hty | heff
+          · have heq := hAtom.equalType_effects τo a hty
+            simp [Finset.mem_union] at heq ⊢
+            aesop
+          · have h := hAtom.includedEffect_effects εo χ heff
+            simp [Finset.mem_union] at h ⊢
+            aesop
+      · have h₃ := hFV.combine_effects _ _ heffects
+        rcases Finset.mem_union.mp h₃ with hsplit | hmore
+        · have h := ConstraintSystem.split_freeEffects hFV hAtom
+            op εin δ hsplit
+          simp [Finset.mem_union] at h ⊢
+          aesop
+        · have h₄ := hFV.combine_effects _ _ hmore
+          rcases Finset.mem_union.mp h₄ with hδ | hε
+          · have h := hAtom.includedEffect_effects δ χ hδ
+            simp [Finset.mem_union] at h ⊢
+            aesop
+          · have h := hAtom.includedEffect_effects εr χ hε
+            simp [Finset.mem_union] at h ⊢
+            aesop
+
+theorem Output.handler_support_below {X : ConstraintSystem}
+    (hFV : X.LawfulFV) (hAtom : X.LawfulGeneratedFV)
+    (op : Op) (decl : OpDecl) (sb : Supply)
+    (rb rr rc : Output X) (localTypes localEffects : Finset Nat)
+    (hbT : ∀ i ∈ rb.supportTypes, i < rb.next.types)
+    (hbE : ∀ i ∈ rb.supportEffects, i < rb.next.effects)
+    (hrT : ∀ i ∈ rr.supportTypes, i < rr.next.types)
+    (hrE : ∀ i ∈ rr.supportEffects, i < rr.next.effects)
+    (hcT : ∀ i ∈ rc.supportTypes, i < rc.next.types)
+    (hcE : ∀ i ∈ rc.supportEffects, i < rc.next.effects)
+    (hnextB : rb.next.types ≤ rc.next.types ∧
+      rb.next.effects ≤ rc.next.effects)
+    (hnextR : rr.next.types ≤ rc.next.types ∧
+      rr.next.effects ≤ rc.next.effects)
+    (ha : sb.types < rc.next.types)
+    (hδ : sb.effects < rc.next.effects)
+    (hχ : sb.effects + 1 < rc.next.effects) :
+    let a := Ty.var sb.types
+    let δ := Poly.Effect.var sb.effects
+    let χ := Poly.Effect.var (sb.effects + 1)
+    let C := handlerCondition X op decl rb.condition rr.condition
+      rc.condition rr.ty rc.ty a rb.effect rr.effect rc.effect
+      δ χ localTypes localEffects
+    let r : Output X := ⟨a, χ, C, rc.next⟩
+    (∀ i ∈ r.supportTypes, i < r.next.types) ∧
+      (∀ i ∈ r.supportEffects, i < r.next.effects) := by
+  dsimp
+  constructor
+  · intro i hi
+    simp only [Output.supportTypes, Ty.fvTypes,
+      Finset.mem_union, Finset.mem_singleton] at hi
+    rcases hi with hnew | hC
+    · omega
+    have h := handlerCondition_freeTypes hFV hAtom op decl
+      rb.condition rr.condition rc.condition rr.ty rc.ty
+      (.var sb.types) rb.effect rr.effect rc.effect
+      (Poly.Effect.var sb.effects)
+      (Poly.Effect.var (sb.effects + 1))
+      localTypes localEffects hC
+    simp only [Finset.mem_union, Ty.fvTypes,
+      Finset.mem_singleton] at h
+    have hbC : i ∈ X.freeTypes rb.condition → i < rc.next.types :=
+      fun hm => lt_of_lt_of_le
+        (hbT i (Finset.mem_union_right _ hm)) hnextB.1
+    have hrC : i ∈ X.freeTypes rr.condition → i < rc.next.types :=
+      fun hm => lt_of_lt_of_le
+        (hrT i (Finset.mem_union_right _ hm)) hnextR.1
+    have hcC : i ∈ X.freeTypes rc.condition → i < rc.next.types :=
+      fun hm => hcT i (Finset.mem_union_right _ hm)
+    have hrTy : i ∈ rr.ty.fvTypes → i < rc.next.types :=
+      fun hm => lt_of_lt_of_le
+        (hrT i (Finset.mem_union_left _ hm)) hnextR.1
+    have hcTy : i ∈ rc.ty.fvTypes → i < rc.next.types :=
+      fun hm => hcT i (Finset.mem_union_left _ hm)
+    aesop
+  · intro i hi
+    have hmem : i = sb.effects + 1 ∨
+        i ∈ X.freeEffects (handlerCondition X op decl
+          rb.condition rr.condition rc.condition rr.ty rc.ty
+          (.var sb.types) rb.effect rr.effect rc.effect
+          (Poly.Effect.var sb.effects)
+          (Poly.Effect.var (sb.effects + 1))
+          localTypes localEffects) := by
+      simpa [Output.supportEffects, Ty.fvEffects,
+        Poly.Effect.var] using hi
+    rcases hmem with hnew | hC
+    · omega
+    have h := handlerCondition_freeEffects hFV hAtom op decl
+      rb.condition rr.condition rc.condition rr.ty rc.ty
+      (.var sb.types) rb.effect rr.effect rc.effect
+      (Poly.Effect.var sb.effects)
+      (Poly.Effect.var (sb.effects + 1))
+      localTypes localEffects hC
+    simp only [Finset.mem_union, Ty.fvEffects,
+      Poly.Effect.var, Finset.mem_singleton] at h
+    have hbC : i ∈ X.freeEffects rb.condition → i < rc.next.effects :=
+      fun hm => lt_of_lt_of_le
+        (hbE i (by simp [Output.supportEffects, hm])) hnextB.2
+    have hrC : i ∈ X.freeEffects rr.condition → i < rc.next.effects :=
+      fun hm => lt_of_lt_of_le
+        (hrE i (by simp [Output.supportEffects, hm])) hnextR.2
+    have hcC : i ∈ X.freeEffects rc.condition → i < rc.next.effects :=
+      fun hm => hcE i (by simp [Output.supportEffects, hm])
+    have hrTy : i ∈ rr.ty.fvEffects → i < rc.next.effects :=
+      fun hm => lt_of_lt_of_le
+        (hrE i (by simp [Output.supportEffects, hm])) hnextR.2
+    have hcTy : i ∈ rc.ty.fvEffects → i < rc.next.effects :=
+      fun hm => hcE i (by simp [Output.supportEffects, hm])
+    have hbEff : i ∈ rb.effect.vars → i < rc.next.effects :=
+      fun hm => lt_of_lt_of_le
+        (hbE i (by simp [Output.supportEffects, hm])) hnextB.2
+    have hrEff : i ∈ rr.effect.vars → i < rc.next.effects :=
+      fun hm => lt_of_lt_of_le
+        (hrE i (by simp [Output.supportEffects, hm])) hnextR.2
+    have hcEff : i ∈ rc.effect.vars → i < rc.next.effects :=
+      fun hm => hcE i (by simp [Output.supportEffects, hm])
+    aesop
 
 /-- Application branch of generic supply-indexed completeness. -/
 theorem Output.CoversAt.app {sig : Signature} {X : ConstraintSystem}
@@ -586,15 +1333,15 @@ theorem generate_next_mono {sig : Signature} {X : ConstraintSystem}
       cases hσ : Γ[i]? with
       | none => simp [hσ] at h
       | some σ =>
-          by_cases hsafe : σ.SafeRename
+          by_cases hfresh : σ.FreshRename
               (renameBound σ.typeVars s.types)
               (renameBound σ.effectVars s.effects)
-          · simp [hσ, hsafe] at h
+          · simp [hσ, hfresh] at h
             cases h
             have hadvance := s.advance_mono σ.typeVars σ.effectVars
             exact ⟨Nat.le_of_lt hadvance.1,
               Nat.le_of_lt hadvance.2⟩
-          · simp [hσ, hsafe] at h
+          · simp [hσ, hfresh] at h
   | case2 Γ n s => cases h; exact ⟨Nat.le_refl _, Nat.le_refl _⟩
   | case3 Γ b s => cases h; exact ⟨Nat.le_refl _, Nat.le_refl _⟩
   | case4 Γ body s a ih =>
@@ -739,33 +1486,36 @@ private theorem renameBound_image_disjoint_below
 
 /-- Variable branch of the full generic completeness induction. -/
 theorem generate_var_coversAt {sig : Signature} {X : ConstraintSystem}
-    (hRename : X.LawfulSafeRename)
     {Γg Γd : Context X} {σg σd : Scheme X} {i : Nat}
     (hg : Γg[i]? = some σg) (hd : Γd[i]? = some σd)
     (ft fe : Nat → Nat)
     (hadmD : σd.AdmissibleRename ft fe)
-    (hsafeD : σd.SafeRename ft fe)
-    (C : X.Formula) (hent : X.Entails C (σd.instantiate ft fe).2)
+    (hfreshD : σd.FreshRename ft fe)
+    (C : X.Formula)
+    (hent : X.Entails C (σd.instantiateProjected ft fe).2)
     (ops : Finset Op) (s : Supply)
     (hb : BoundedInputs sig X Γg ops s) :
     ∃ r : Output X,
       generate sig X Γg (.var i) s = some r ∧
-      r.CoversAt Γg Γd C s (σd.instantiate ft fe).1 ∅ := by
+      r.CoversAt Γg Γd C s
+        (σd.instantiateProjected ft fe).1 ∅ := by
   let ρ := renameBound σg.typeVars s.types
   let η := renameBound σg.effectVars s.effects
   have hmem : σg ∈ Γg := List.mem_of_getElem? hg
-  have hsafeG : σg.SafeRename ρ η := by
-    apply σg.renameBound_safe
-    · intro j hj
-      have hused : j ∈ σg.usedTypes := by
-        simp [Scheme.usedTypes, Scheme.freeTypes] at hj ⊢
-        aesop
-      exact Nat.le_of_lt (hb.contextTypes σg hmem j hused)
-    · intro j hj
-      have hused : j ∈ σg.usedEffects := by
-        simp [Scheme.usedEffects, Scheme.freeEffects] at hj ⊢
-        aesop
-      exact Nat.le_of_lt (hb.contextEffects σg hmem j hused)
+  have hfreshG : σg.FreshRename ρ η :=
+    σg.renameBound_fresh s.types s.effects
+      (fun j hj => hb.contextTypes σg hmem j
+        (by simp [Scheme.usedTypes, hj]))
+      (fun j hj => hb.contextEffects σg hmem j
+        (by simp [Scheme.usedEffects, hj]))
+  have hfreeT : σg.freeTypes ⊆ Finset.range s.types := by
+    intro j hj
+    exact Finset.mem_range.mpr (hb.contextTypes σg hmem j
+      (σg.freeTypes_subset_usedTypes hj))
+  have hfreeE : σg.freeEffects ⊆ Finset.range s.effects := by
+    intro j hj
+    exact Finset.mem_range.mpr (hb.contextEffects σg hmem j
+      (σg.freeEffects_subset_usedEffects hj))
   have hdisjT : (σg.typeVars.image ρ) ∩ Finset.range s.types = ∅ :=
     renameBound_image_disjoint_below σg.typeVars
       (Finset.range s.types) s.types
@@ -774,16 +1524,18 @@ theorem generate_var_coversAt {sig : Signature} {X : ConstraintSystem}
     renameBound_image_disjoint_below σg.effectVars
       (Finset.range s.effects) s.effects
       (fun j hj => Finset.mem_range.mp hj)
-  refine ⟨⟨(σg.instantiate ρ η).1, ∅,
-    (σg.instantiate ρ η).2, s.advance σg.typeVars σg.effectVars⟩,
+  refine ⟨⟨(σg.instantiateProjected ρ η).1, ∅,
+    (σg.instantiateProjected ρ η).2,
+      s.advance σg.typeVars σg.effectVars⟩,
     ?_, ?_⟩
-  · simp [generate, hg, ρ, η, hsafeG]
+  · simp [generate, hg, ρ, η, hfreshG]
   · intro vg vd hctx hC
-    rcases Context.variable_complete_at hRename
-      hg hd ft fe ρ η hadmD hsafeD
-      ⟨renameBound_fixed _ _, renameBound_fixed _ _⟩ hsafeG
+    rcases Context.variable_complete_projected
+      hg hd ft fe ρ η hadmD hfreshD
+      ⟨renameBound_fixed _ _, renameBound_fixed _ _⟩
+      (renameBound_injOn _ _) (renameBound_injOn _ _) hfreshG
       (Finset.range s.types) (Finset.range s.effects)
-      hdisjT hdisjE vg vd hctx (hent vd hC) with
+      hfreeT hfreeE hdisjT hdisjE vg vd hctx (hent vd hC) with
       ⟨wg, hT, hE, hCg, ht⟩
     exact ⟨wg,
       (fun j hj => (hT j (Finset.mem_range.mpr hj)).symm),

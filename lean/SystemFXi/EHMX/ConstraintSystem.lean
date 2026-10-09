@@ -19,11 +19,8 @@ structure ConstraintSystem where
   excludes : Op → Effect → Formula
   handlerClause : Finset Nat → Finset Nat → Finset Nat →
     Finset Nat → Formula → Formula
-  rename : (Nat → Nat) → (Nat → Nat) → Formula → Formula
   freeTypes : Formula → Finset Nat
   freeEffects : Formula → Finset Nat
-  boundTypes : Formula → Finset Nat
-  boundEffects : Formula → Finset Nat
   trivial_iff : ∀ v, holds trivial v ↔ True
   combine_iff : ∀ c d v, holds (combine c d) v ↔ holds c v ∧ holds d v
   hideType_iff : ∀ i c v,
@@ -59,34 +56,6 @@ structure ConstraintSystem where
     (holds c v ↔ holds c w)
 
 namespace ConstraintSystem
-
-/-- The analogue of HM(X)'s substitution law for injective renamings. -/
-structure LawfulRename (X : ConstraintSystem) : Prop where
-  holds_rename : ∀ (ft fe : Nat → Nat), Function.Injective ft →
-    Function.Injective fe → ∀ c v,
-      X.holds (X.rename ft fe c) v ↔
-        X.holds c (v.pullback ft fe)
-
-def UsedTypes (X : ConstraintSystem) (c : X.Formula) : Finset Nat :=
-  X.freeTypes c ∪ X.boundTypes c
-
-def UsedEffects (X : ConstraintSystem) (c : X.Formula) : Finset Nat :=
-  X.freeEffects c ∪ X.boundEffects c
-
-/-- The finite capture condition for a renaming that may merge free names.
-Only collisions with names bound inside the formula are prohibited. -/
-def RenameSafe (X : ConstraintSystem) (c : X.Formula)
-    (ft fe : Nat → Nat) : Prop :=
-  (∀ i ∈ X.boundTypes c, ∀ j ∈ X.UsedTypes c,
-    i ≠ j → ft i ≠ ft j) ∧
-  (∀ i ∈ X.boundEffects c, ∀ j ∈ X.UsedEffects c,
-    i ≠ j → fe i ≠ fe j)
-
-structure LawfulSafeRename (X : ConstraintSystem) : Prop where
-  holds_rename : ∀ (c : X.Formula) (ft fe : Nat → Nat)
-    (v : Valuation), X.RenameSafe c ft fe →
-    (X.holds (X.rename ft fe c) v ↔
-      X.holds c (v.pullback ft fe))
 
 def Entails (X : ConstraintSystem) (c d : X.Formula) : Prop :=
   ∀ v, X.holds c v → X.holds d v
@@ -265,12 +234,6 @@ structure LawfulGeneratedFV (X : ConstraintSystem) : Prop where
     X.freeTypes (X.excludes op ε) = ∅
   excludes_effects : ∀ op ε,
     X.freeEffects (X.excludes op ε) ⊆ ε.vars
-  rename_types : ∀ c ft fe,
-    X.freeTypes (X.rename ft fe c) ⊆
-      (X.UsedTypes c).image ft
-  rename_effects : ∀ c ft fe,
-    X.freeEffects (X.rename ft fe c) ⊆
-      (X.UsedEffects c).image fe
 
 theorem LawfulFV.handlerClause_rigid_free {X : ConstraintSystem}
     (h : X.LawfulFV) (bt be lt le : Finset Nat) (c : X.Formula) :
@@ -466,11 +429,8 @@ def syntaxConstraintSystem (D : Domain) (h : LawfulSupport D) :
   excludes := .lacks
   handlerClause := fun bt be lt le c =>
     Constraint.close bt be (Constraint.project lt le c)
-  rename := Constraint.rename
   freeTypes := Constraint.fvTypes
   freeEffects := Constraint.fvEffects
-  boundTypes := Constraint.boundTypes
-  boundEffects := Constraint.boundEffects
   trivial_iff := by intro v; rfl
   combine_iff := by intro c d v; rfl
   hideType_iff := by intro i c v; rfl
@@ -487,20 +447,6 @@ def syntaxConstraintSystem (D : Domain) (h : LawfulSupport D) :
   free_support := by
     intro c v w ht he
     exact Constraint.holds_support h c v w ht he
-
-theorem syntaxSystem_lawfulRename (D : Domain) (h : LawfulSupport D)
-    (hr : SystemFXi.EHMX.LawfulRename D) :
-    ConstraintSystem.LawfulRename (syntaxConstraintSystem D h) := by
-  constructor
-  intro ft fe hft hfe c v
-  exact Constraint.holds_rename_injective hr c ft fe hft hfe v
-
-theorem syntaxSystem_lawfulSafeRename (D : Domain)
-    (h : LawfulSupport D) (hr : SystemFXi.EHMX.LawfulRename D) :
-    ConstraintSystem.LawfulSafeRename (syntaxConstraintSystem D h) := by
-  constructor
-  intro c ft fe v hs
-  exact Constraint.holds_rename_safe hr h c ft fe v hs
 
 theorem syntaxSystem_lawfulFV (D : Domain) (h : LawfulSupport D) :
     ConstraintSystem.LawfulFV (syntaxConstraintSystem D h) := by
@@ -539,7 +485,7 @@ theorem syntaxSystem_lawfulFV (D : Domain) (h : LawfulSupport D) :
     exact ⟨hi.1.1, fun h => h.elim hi.2 hi.1.2⟩
 
 theorem syntaxSystem_lawfulGeneratedFV (D : Domain)
-    (h : LawfulSupport D) (hr : LawfulFVRename D) :
+    (h : LawfulSupport D) :
     ConstraintSystem.LawfulGeneratedFV
       (syntaxConstraintSystem D h) := by
   constructor
@@ -557,14 +503,6 @@ theorem syntaxSystem_lawfulGeneratedFV (D : Domain)
     simp [syntaxConstraintSystem, Constraint.fvTypes]
   · intro op ε
     simp [syntaxConstraintSystem, Constraint.fvEffects]
-  · intro c ft fe
-    simpa [syntaxConstraintSystem, ConstraintSystem.UsedTypes,
-      Constraint.usedTypes] using
-      (Constraint.fvTypes_rename_subset hr c ft fe)
-  · intro c ft fe
-    simpa [syntaxConstraintSystem, ConstraintSystem.UsedEffects,
-      Constraint.usedEffects] using
-      (Constraint.fvEffects_rename_subset hr c ft fe)
 
 def classConstraintSystem (I : ClassEnv) : ConstraintSystem :=
   syntaxConstraintSystem (classDomain I) (classDomain_lawfulSupport I)

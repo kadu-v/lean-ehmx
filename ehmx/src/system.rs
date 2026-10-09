@@ -17,16 +17,8 @@ pub trait ConstraintSystem {
     fn lacks(&self, op: Id, effect: Effect) -> Self::Formula;
     fn hide_type(&self, name: Id, formula: Self::Formula) -> Self::Formula;
     fn hide_effect(&self, name: Id, formula: Self::Formula) -> Self::Formula;
-    fn rename(
-        &self,
-        formula: &Self::Formula,
-        types: &impl Fn(Id) -> Id,
-        effects: &impl Fn(Id) -> Id,
-    ) -> Self::Formula;
     fn free_types(&self, formula: &Self::Formula) -> BTreeSet<Id>;
     fn free_effects(&self, formula: &Self::Formula) -> BTreeSet<Id>;
-    fn bound_types(&self, formula: &Self::Formula) -> BTreeSet<Id>;
-    fn bound_effects(&self, formula: &Self::Formula) -> BTreeSet<Id>;
 
     fn project(
         &self,
@@ -101,25 +93,11 @@ impl<P: Predicate> ConstraintSystem for PredicateSystem<P> {
     fn hide_effect(&self, i: Id, c: Self::Formula) -> Self::Formula {
         Constraint::ExEff(i, Box::new(c))
     }
-    fn rename(
-        &self,
-        c: &Self::Formula,
-        tf: &impl Fn(Id) -> Id,
-        ef: &impl Fn(Id) -> Id,
-    ) -> Self::Formula {
-        c.rename(tf, ef)
-    }
     fn free_types(&self, c: &Self::Formula) -> BTreeSet<Id> {
         c.fv_types()
     }
     fn free_effects(&self, c: &Self::Formula) -> BTreeSet<Id> {
         c.fv_effects()
-    }
-    fn bound_types(&self, c: &Self::Formula) -> BTreeSet<Id> {
-        c.bound_types()
-    }
-    fn bound_effects(&self, c: &Self::Formula) -> BTreeSet<Id> {
-        c.bound_effects()
     }
     fn handler_clause(
         &self,
@@ -210,22 +188,32 @@ impl<F: Clone> QualifiedScheme<F> {
                 i
             }
         };
-        let new_t: BTreeSet<_> = self.type_vars.iter().map(|i| tf(*i)).collect();
-        let new_e: BTreeSet<_> = self.effect_vars.iter().map(|i| ef(*i)).collect();
-        let mut used_t = self.fv_types(x);
-        used_t.extend(x.bound_types(&self.condition));
-        let mut used_e = self.fv_effects(x);
-        used_e.extend(x.bound_effects(&self.condition));
-        if new_t.len() != self.type_vars.len()
-            || new_e.len() != self.effect_vars.len()
-            || !new_t.is_disjoint(&used_t)
-            || !new_e.is_disjoint(&used_e)
+        if self.type_vars.iter().any(|i| self.type_vars.contains(&tf(*i)))
+            || self.effect_vars.iter().any(|i| self.effect_vars.contains(&ef(*i)))
         {
             return Err(InferError::SchemeCapture);
         }
+        let mut type_links = x.top();
+        for i in self.type_vars.iter().rev() {
+            type_links = x.meet(x.type_eq(Ty::Var(*i), Ty::Var(tf(*i))), type_links);
+        }
+        let mut effect_links = x.top();
+        for i in self.effect_vars.iter().rev() {
+            let left = Effect::var(*i);
+            let right = Effect::var(ef(*i));
+            let eq = x.meet(
+                x.effect_le(left.clone(), right.clone()),
+                x.effect_le(right, left),
+            );
+            effect_links = x.meet(eq, effect_links);
+        }
+        let condition = x.meet(
+            self.condition.clone(),
+            x.meet(type_links, effect_links),
+        );
         Ok((
             self.result.rename(&tf, &ef),
-            x.rename(&self.condition, &tf, &ef),
+            x.project(&self.type_vars, &self.effect_vars, condition),
         ))
     }
 }

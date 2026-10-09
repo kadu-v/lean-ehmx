@@ -72,6 +72,9 @@ equality, effect inclusion, exclusion, and existential projection. The
 `handler_clause` method represents the rigid-operation-parameter check with
 local existential witnesses. `system::generate` uses only this interface and
 returns a `QualifiedOutput<X::Formula>`.
+Scheme instantiation uses existential projection and type/effect equalities.
+It leaves the formula stored by `X` intact, so implementations do not expose
+its internal bound names or a formula-renaming operation.
 This follows the constraint-system parameter of
 [HM(X)](https://publikationen.bibliothek.kit.edu/26696/1987); the handler
 operation and effect names are the EHM(X) extensions.
@@ -90,18 +93,29 @@ variable instantiation, and quantified handler clauses over abstract X.
 variables, lambdas, applications, both forms of `let`, and `perform`, using a
 supply-indexed relation that preserves previously allocated names. It also
 proves executable variable inference is principal over arbitrary X.
+`GenericLogicalInstantiation.lean` proves that projection with diagonal
+equalities has exactly the qualified-scheme instances and bounds its free
+names without inspecting binders inside X formulas. The executable Rust
+generator uses the same construction. Solver mode repeats simplification
+after projection exposes new equalities.
 It also proves that full monotype principality, once established,
 lifts through HM(X) normalization to a principal computation scheme for any
-valid `ConstraintSystem`. Full monotype completeness over arbitrary X remains
-open because these steps have not yet been connected to the full executable
-generator induction or the handler branch. The current X laws also do not
-establish that a generated result's free names are below its next supply;
-they do not require `trivial` to have an empty free-name set. The existing
-full theorem applies to the predicate-backed syntax instance.
+valid `ConstraintSystem`. `GenericHandlerFree.lean` completes the executable
+induction for every expression without a handler, including polymorphic
+`let`, and proves principality against all declarative typings of the same
+expression. With a principal HM(X) normalizer it also proves existence of a
+solved principal computation scheme for this fragment. The handler branch
+of completeness over arbitrary X remains open. The existing full theorem
+applies to the predicate-backed syntax instance.
 `LawfulGeneratedFV` states the basic free-name laws implied by HM(X)'s
 projection-based free-variable definition, and the syntax instance satisfies
-them. The generic generator's next supply is proved monotone. A full support
-bound still needs a representation-independent treatment of internal binders.
+them. The generic generator's next supply is proved monotone.
+`GenericSupport.lean` proves that every successful run, including handlers,
+keeps all result free names below its final supply.
+`GenericEffectFresh.lean` proves that immediate effect names are allocated
+after the starting supply and that fresh operation binders satisfy the
+handler's outer scope check. The complete handler induction still needs the
+clause scope and quantified witness construction.
 `GenericEmbedding.lean` verifies the renaming, free-name, and semantic laws
 needed to embed abstract X formulas into that existing proof, but the typing
 and generator transfer is not yet proved.

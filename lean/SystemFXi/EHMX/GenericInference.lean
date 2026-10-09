@@ -79,18 +79,76 @@ def Scheme.AdmissibleRename {X : ConstraintSystem} (σ : Scheme X)
   (∀ i ∉ σ.typeVars, ft i = i) ∧
   (∀ i ∉ σ.effectVars, fe i = i)
 
-def Scheme.SafeRename {X : ConstraintSystem} (σ : Scheme X)
+def Scheme.FreshRename {X : ConstraintSystem} (σ : Scheme X)
     (ft fe : Nat → Nat) : Prop :=
-  (σ.typeVars.image ft).card = σ.typeVars.card ∧
-  (σ.effectVars.image fe).card = σ.effectVars.card ∧
-  Disjoint (σ.typeVars.image ft)
-    (σ.freeTypes ∪ X.boundTypes σ.condition) ∧
-  Disjoint (σ.effectVars.image fe)
-    (σ.freeEffects ∪ X.boundEffects σ.condition)
+  (∀ i ∈ σ.typeVars, ft i ∉ σ.typeVars) ∧
+  (∀ i ∈ σ.effectVars, fe i ∉ σ.effectVars)
 
-def Scheme.instantiate {X : ConstraintSystem} (σ : Scheme X)
+/-- Link each quantified type name to its fresh instance name.  The
+constraint carried by the scheme is left untouched. -/
+def typeLinks (X : ConstraintSystem) (names : List Nat)
+    (fresh : Nat → Nat) : X.Formula :=
+  names.foldr (fun i c =>
+    X.combine (X.equalType (.var i) (.var (fresh i))) c) X.trivial
+
+def effectLinks (X : ConstraintSystem) (names : List Nat)
+    (fresh : Nat → Nat) : X.Formula :=
+  names.foldr (fun i c =>
+    X.combine (X.equalEffect (Poly.Effect.var i)
+      (Poly.Effect.var (fresh i))) c) X.trivial
+
+/-- HM(X)-style instantiation: diagonal equalities followed by projection.
+No renaming is applied inside the opaque formula supplied by X. -/
+def Scheme.instantiateProjected {X : ConstraintSystem} (σ : Scheme X)
     (ft fe : Nat → Nat) : Ty × X.Formula :=
-  (σ.result.rename ft fe, X.rename ft fe σ.condition)
+  (σ.result.rename ft fe,
+    X.project σ.typeVars σ.effectVars
+      (X.combine σ.condition
+        (X.combine
+          (typeLinks X (σ.typeVars.sort (· ≤ ·)) ft)
+          (effectLinks X (σ.effectVars.sort (· ≤ ·)) fe))))
+
+def Scheme.GroundInstance {X : ConstraintSystem} (σ : Scheme X)
+    (ρ : Valuation) (t : GroundTy) : Prop :=
+  ∃ ft : Nat → GroundTy, ∃ fe : Nat → Finset Op,
+    (∀ i, i ∉ σ.typeVars → ft i = ρ.types i) ∧
+    (∀ i, i ∉ σ.effectVars → fe i = ρ.effects i) ∧
+    X.holds σ.condition ⟨ft, fe⟩ ∧ σ.result.eval ⟨ft, fe⟩ = t
+
+def Scheme.MoreGeneralAt {X : ConstraintSystem} (σg σd : Scheme X)
+    (ρg ρd : Valuation) : Prop :=
+  ∀ t, σd.GroundInstance ρd t → σg.GroundInstance ρg t
+
+def Context.MoreGeneralAt {X : ConstraintSystem} (Γg Γd : Context X)
+    (ρg ρd : Valuation) : Prop :=
+  List.Forall₂ (fun σg σd => σg.MoreGeneralAt σd ρg ρd) Γg Γd
+
+noncomputable def assignImage {α : Type}
+    (bound : Finset Nat) (rename : Nat → Nat)
+    (values original : Nat → α) (j : Nat) : α :=
+  if h : ∃ i, i ∈ bound ∧ rename i = j then
+    values (Classical.choose h)
+  else original j
+
+theorem assignImage_mem {α : Type}
+    (bound : Finset Nat) (rename : Nat → Nat)
+    (hinj : Set.InjOn rename bound)
+    (values original : Nat → α) (i : Nat) (hi : i ∈ bound) :
+    assignImage bound rename values original (rename i) = values i := by
+  let h : ∃ k, k ∈ bound ∧ rename k = rename i := ⟨i, hi, rfl⟩
+  have hc := Classical.choose_spec h
+  have hki : Classical.choose h = i := hinj hc.1 hi hc.2
+  simp [assignImage, h, hki]
+
+theorem assignImage_not_mem {α : Type}
+    (bound : Finset Nat) (rename : Nat → Nat)
+    (values original : Nat → α) (j : Nat)
+    (hj : j ∉ bound.image rename) :
+    assignImage bound rename values original j = original j := by
+  have hnone : ¬ ∃ i, i ∈ bound ∧ rename i = j := by
+    rintro ⟨i, hi, rfl⟩
+    exact hj (Finset.mem_image.mpr ⟨i, hi, rfl⟩)
+  simp [assignImage, hnone]
 
 def OpDecl.HandlerScope {X : ConstraintSystem} (decl : OpDecl)
     (Γ : Context X) (τin a : Ty) (εin εr δ χ : Effect) : Prop :=
@@ -132,9 +190,9 @@ inductive Typing (sig : Signature) (X : ConstraintSystem) :
   | var {C Γ i σ ft fe} :
       Γ[i]? = some σ →
       σ.AdmissibleRename ft fe →
-      σ.SafeRename ft fe →
-      X.Entails C (σ.instantiate ft fe).2 →
-      Typing sig X C Γ (.var i) (σ.instantiate ft fe).1 ∅
+      σ.FreshRename ft fe →
+      X.Entails C (σ.instantiateProjected ft fe).2 →
+      Typing sig X C Γ (.var i) (σ.instantiateProjected ft fe).1 ∅
   | int {C Γ} (n : Int) : Typing sig X C Γ (.int n) (.base .int) ∅
   | bool {C Γ} (b : Bool) : Typing sig X C Γ (.bool b) (.base .bool) ∅
   | lam {C Γ e a b ε} :
@@ -198,9 +256,9 @@ inductive Generate (sig : Signature) (X : ConstraintSystem) :
   | var {Γ i σ ft fe} :
       Γ[i]? = some σ →
       σ.AdmissibleRename ft fe →
-      σ.SafeRename ft fe →
-      Generate sig X Γ (.var i) (σ.instantiate ft fe).1 ∅
-        (σ.instantiate ft fe).2
+      σ.FreshRename ft fe →
+      Generate sig X Γ (.var i) (σ.instantiateProjected ft fe).1 ∅
+        (σ.instantiateProjected ft fe).2
   | int {Γ} (n : Int) :
       Generate sig X Γ (.int n) (.base .int) ∅ X.trivial
   | bool {Γ} (b : Bool) :
@@ -257,8 +315,8 @@ theorem Generate.sound {sig : Signature} {X : ConstraintSystem}
     {Γ : Context X} {e : Expr} {τ : Ty} {ε : Effect} {C : X.Formula}
     (h : Generate sig X Γ e τ ε C) : Typing sig X C Γ e τ ε := by
   induction h with
-  | var hlookup hadm hsafe =>
-      exact Typing.var hlookup hadm hsafe (X.entails_refl _)
+  | var hlookup hadm hfresh =>
+      exact Typing.var hlookup hadm hfresh (X.entails_refl _)
   | int n => exact Typing.int n
   | bool b => exact Typing.bool b
   | lam _ ih => exact Typing.lam ih
@@ -344,12 +402,10 @@ structure Output (X : ConstraintSystem) where
   next : Supply
 
 def Scheme.usedTypes {X : ConstraintSystem} (σ : Scheme X) : Finset Nat :=
-  σ.typeVars ∪ σ.result.fvTypes ∪ X.freeTypes σ.condition ∪
-    X.boundTypes σ.condition
+  σ.typeVars ∪ σ.result.fvTypes ∪ X.freeTypes σ.condition
 
 def Scheme.usedEffects {X : ConstraintSystem} (σ : Scheme X) : Finset Nat :=
-  σ.effectVars ∪ σ.result.fvEffects ∪ X.freeEffects σ.condition ∪
-    X.boundEffects σ.condition
+  σ.effectVars ∪ σ.result.fvEffects ∪ X.freeEffects σ.condition
 
 def Supply.seed {X : ConstraintSystem} (s : Supply) (sig : Signature)
     (Γ : Context X) (e : Expr) : Supply :=
@@ -370,11 +426,11 @@ def generate (sig : Signature) (X : ConstraintSystem) (Γ : Context X) :
       let σ ← Γ[i]?
       let ft := renameBound σ.typeVars s.types
       let fe := renameBound σ.effectVars s.effects
-      letI : Decidable (σ.SafeRename ft fe) := by
-        dsimp [Scheme.SafeRename]
+      letI : Decidable (σ.FreshRename ft fe) := by
+        dsimp [Scheme.FreshRename]
         infer_instance
-      if σ.SafeRename ft fe then
-        let (τ, C) := σ.instantiate ft fe
+      if σ.FreshRename ft fe then
+        let (τ, C) := σ.instantiateProjected ft fe
         some ⟨τ, ∅, C, s.advance σ.typeVars σ.effectVars⟩
       else none
   | .int _, s => some ⟨.base .int, ∅, X.trivial, s⟩
@@ -469,14 +525,14 @@ theorem generate_sound {sig : Signature} {X : ConstraintSystem} {Γ : Context X}
       cases hσ : Γ[i]? with
       | none => simp [hσ] at h
       | some σ =>
-          by_cases hsafe : σ.SafeRename
+          by_cases hfresh : σ.FreshRename
               (renameBound σ.typeVars s.types)
               (renameBound σ.effectVars s.effects)
-          · simp [hσ, hsafe] at h
+          · simp [hσ, hfresh] at h
             cases h
             exact Generate.var hσ
-              ⟨renameBound_fixed _ _, renameBound_fixed _ _⟩ hsafe
-          · simp [hσ, hsafe] at h
+              ⟨renameBound_fixed _ _, renameBound_fixed _ _⟩ hfresh
+          · simp [hσ, hfresh] at h
   | case2 Γ n s =>
       cases h
       exact Generate.int n
@@ -607,8 +663,8 @@ theorem Typing.core_generate_complete {sig : Signature}
     ∃ τg εg Cg, Generate sig X Γ e τg εg Cg ∧
       GeneratedCovers C Cg τg τ εg ε := by
   induction h with
-  | var hlookup hadm hsafe hent =>
-      refine ⟨_, _, _, Generate.var hlookup hadm hsafe, ?_⟩
+  | var hlookup hadm hfresh hent =>
+      refine ⟨_, _, _, Generate.var hlookup hadm hfresh, ?_⟩
       intro v hv
       exact ⟨hent v hv, rfl, rfl⟩
   | int n =>

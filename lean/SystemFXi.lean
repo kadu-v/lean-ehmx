@@ -9,6 +9,9 @@ import SystemFXi.EHMX.ConstraintSystem
 import SystemFXi.EHMX.GenericInference
 import SystemFXi.EHMX.GenericPrincipal
 import SystemFXi.EHMX.GenericCompleteness
+import SystemFXi.EHMX.GenericSupport
+import SystemFXi.EHMX.GenericEffectFresh
+import SystemFXi.EHMX.GenericHandlerFree
 import SystemFXi.EHMX.GenericEmbedding
 
 /-!

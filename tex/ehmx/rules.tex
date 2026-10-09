@@ -80,7 +80,6 @@ I_\rho(\arr{a}{\epsilon}{b})
 \]
 \figfoot
 
-\vspace{4mm}
 \fighead{図 2. 値呼びの簡約規則}
 \[
 (\lambda x.e)\,v\longrightarrow e[x\mapsto v]
@@ -104,10 +103,11 @@ k_E=\lambda y.\mathbf{handle}\ E[y]\ \mathbf{with}\ h.
 \[
 \frac{\begin{gathered}
 \Gamma(x)=\sigma=\forall\bar\beta.C_x\Rightarrow\tau\\
-\operatorname{SafeRename}(\sigma,\theta)\\
-C\models_X C_x[\bar\theta/\bar\beta]
+\theta\beta\notin B\ (\beta\in B),\quad
+\theta\gamma=\gamma\ (\gamma\notin B)\\
+C\models_X\operatorname{Inst}_X(\sigma,\theta)
 \end{gathered}}
-{\jd{x}{\tau[\bar\theta/\bar\beta]}{\varnothing}}
+{\jd{x}{\theta\tau}{\varnothing}}
 \rulelabel{Var}
 \]
 }{
@@ -143,10 +143,12 @@ C\models_X C_x[\bar\theta/\bar\beta]
 \rulelabel{Bool}
 \]
 \[
-\operatorname{SafeRename}(\sigma,\theta):\quad
-|\theta B|=|B|,\qquad
-\theta B\cap(\operatorname{FV}(\sigma)\cup\operatorname{Bound}(P))=\varnothing
-\quad\text{（型・効果の各変数ごと）}.
+\boxed{\begin{aligned}
+\operatorname{Inst}_X(\forall B.P\Rightarrow\tau,\theta)
+&=\exists B.\bigl(P\land E_\theta(B)\bigr),\\
+E_\theta(B)&=\bigwedge_{\alpha\in B_T}(\alpha=\theta\alpha)
+\land\bigwedge_{\mu\in B_E}(\mu\equiv\theta\mu).
+\end{aligned}}
 \]
 \figfoot
 
@@ -226,10 +228,10 @@ U_E&\cap\operatorname{FV}_E(\Gamma,C,\tau_{in},\tau_{out},
 \]
 \[
 \begin{aligned}
-\Gamma(x)=\sigma=\forall\bar\beta.C_x\Rightarrow\tau_x,
-\quad\theta\text{ は }\bar\beta\text{ の許容される改名}
+\Gamma(x)=\sigma=\forall B.C_x\Rightarrow\tau_x,
+\quad\theta B\text{ は新しい名前}
 &\Longrightarrow\operatorname{Gen}_\Gamma(x)
-  =(\theta\tau_x,\varnothing,\theta C_x),\\
+  =(\theta\tau_x,\varnothing,\operatorname{Inst}_X(\sigma,\theta)),\\
 \operatorname{Gen}_{\Gamma,x:a}(e)=(b,\eta,C)
 &\Longrightarrow\operatorname{Gen}_\Gamma(\lambda x.e)
   =(\arr{a}{\eta}{b},\varnothing,C).
@@ -381,8 +383,10 @@ $C\equiv_XD\iff(C\models_XD\land D\models_XC)$ とする．
 $\operatorname{FV}(\exists U.C)\subseteq\operatorname{FV}(C)\setminus U$ と
 $\operatorname{FV}(H_X(B;U;C))\subseteq
 \operatorname{FV}(C)\setminus(B\cup U)$ を要求する．
-束縛名を捕獲しない改名は充足を保存する．Lean ではそれぞれ
-\texttt{LawfulFV} と \texttt{LawfulSafeRename} で表す．
+基本制約の自由変数が式の自由変数に含まれることも要求する．
+Lean では \texttt{LawfulFV} と \texttt{LawfulGeneratedFV} で表す．
+スキームの具体化は上の射影と等式で定義するため，$X$ に
+構文的改名や内部束縛名の列挙を要求しない．
 
 操作宣言 $\Sigma(\op)=\forall B_T,B_E.\tau_a\to\tau_b$ は閉じている：
 $\operatorname{FV}_T(\tau_a,\tau_b)\subseteq B_T$ かつ
@@ -400,38 +404,20 @@ Lean の \texttt{ConstraintSystem} は $X$ 全体を表し，
 \texttt{clauseValid\_iff\_handlerClause} がこの同値を
 抽象 $X$ について証明する．
 
-以下の完全性と主要性の既存 Lean 定理は
-$X_{\mathrm{syn}}(P)$，すなわち型等式・効果制約・追加述語 $P$ の
-自由構文を制約全体とするインスタンスについて証明済みである．
-抽象 $X$ 上の型付け・実行可能な生成器と生成の健全性は
-別に定義・証明した．
-let と handler を含まない式については，抽象 $X$ 上で
-宣言的導出から生成制約への完全性も証明した．
-値 let の帰納段階に必要な一般化スキームの包含と残余制約の保存，
-および handler の操作節で全称・存在束縛を通して制約の包含を
-保存する補題も抽象 $X$ 上で証明した．変数の帰納段階では，
-スキームの具体例を新しい変数名に実現する補題を証明した．
-任意の抽象 $X$ に対する完全性・主要性は未証明である．
-実行可能な生成器については，変数参照の完全性を
-\texttt{Generic.generateFresh\_var\_principal} で証明した．
-推論途中の変数名を保持する関係に対して，変数参照，ラムダ，
-関数適用，二種類の let，perform，型変換と弱化の各段階も
-抽象 $X$ 上で証明した．全体を結ぶ帰納法では，生成結果の
-自由変数が次の未使用番号より小さいことを別途示す必要がある．
-現在の $X$ の法則だけでは，例えば真制約の自由変数が空とは
-指定されていないため，その補題はまだ得られていない．
-HM($X$) における射影から定まる自由変数に対応する基本制約の
-変数法則を \texttt{LawfulGeneratedFV} として分離し，
-構文インスタンスで成立することを証明した．また，生成器の
-\texttt{next} が入力より小さくならないことは抽象 $X$ 上で証明した．
-内部束縛名の管理を含む生成結果全体の範囲補題は残る．
-生成結果がすべての宣言的型付けより一般的なら，
-その一般化した計算型スキームも各宣言的計算型スキームより
-一般的になることは，抽象 $X$ 上で証明済みである．
-さらに主要正規形を経た計算型スキームの主要性も，
-この生成結果の主要性を前提に抽象 $X$ 上で証明した．
-既存証明への抽象 $X$ の原子的な埋め込みは改名・自由変数・充足を保存する．
-型付け規則と生成器の結果をこの埋め込みで対応させる証明は残る．
+Lean で証明した範囲を次に示す．
+\begin{center}
+\begin{tabular}{p{.28\linewidth}p{.60\linewidth}}
+対象 & 結果 \\\hline
+$X_{\mathrm{syn}}(P)$ & handler を含む生成の完全性・主要性．\\
+抽象 $X$，handler なし & 多相 let を含む生成の完全性・主要性．
+主要正規化器があれば解決済み主要計算型スキームも存在する．\\
+抽象 $X$，handler あり & 生成の健全性，変数名の上界，
+操作節の意味的補題と剛性変数のスコープ補題まで証明した．
+完全性の handler 段階は未証明．
+\end{tabular}
+\end{center}
+変数の具体化は射影と等式で表し，$X$ の内部束縛名を改名しない．
+自由変数法則 \texttt{LawfulGeneratedFV} は構文インスタンスで成立する．
 
 \section{補題と生成の健全性}
 \begin{lemma}[効果の除去]
@@ -484,6 +470,10 @@ $\operatorname{Assume}(A)=\bigwedge_{p\in A}p$ とする．
 \end{proposition}
 
 \section{完全性と制約付き型の主要性}
+この節の無条件の定理は，現時点では自由構文インスタンス
+$X_{\mathrm{syn}}(P)$ について Lean で証明済みである．
+抽象 $X$ への拡張は，handler の操作節を含む完全性の
+全体帰納法が残る．
 制約付き型を $Q=(C,\tau,\epsilon)$ と書く．
 $Q_g\succeq_\Gamma Q_d$ は，$Q_d$ の各解に対して，
 環境 $\Gamma$ の自由変数の値を変えずに $Q_g$ の解を選べ，
@@ -512,6 +502,9 @@ Q_g\succeq_\Gamma(C,\tau,\epsilon)
 $C;\Gamma\vdash e:\tau\mid\epsilon$ について成り立つ．
 $e$ には値 $\mathbf{let}$ と handler を含めてよい．
 \end{theorem}
+
+$e$ に handler が現れない場合は，この定理を任意の抽象 $X$ に対して
+Lean で証明した．この場合も値 $\mathbf{let}$ と追加述語を許す．
 
 \begin{theorem}[推論結果の主要性]
 上の定理と同じ前提で，追加の仮定 $A$ を渡した推論器は
@@ -624,6 +617,9 @@ $Q_N=(R,\tau_N,\epsilon_N)$ を一般化すると，
 同じ項に付けられる全スキームより一般的である．
 \end{theorem}
 
+handler のない $e$ については，抽象 $X$ とその主要正規化器の下でも
+同じ結論を Lean で証明した．
+
 \noindent\textbf{解釈上の注意．}
 $\operatorname{Split}(ping,\{ping\},\delta)$ なら
 $\delta=\varnothing$ だが，handler の結果効果 $\chi$ は
@@ -647,16 +643,26 @@ $\delta=\varnothing$ だが，handler の結果効果 $\chi$ は
 抽象 $X$ の核となる式の完全性 &
 \texttt{Generic.Typing.core\_generate\_complete}\\
 抽象 $X$ の実行可能な変数参照の主要性 &
-\texttt{Generic.generateFresh\_var\_principal}\\
+\texttt{Generic.generateFresh\_var\_principal},
+\texttt{Generic.Scheme.instantiateProjected\_groundInstance}\\
 基本制約の自由変数法則と生成器の番号の単調性 &
 \texttt{syntaxSystem\_lawfulGeneratedFV},
-\texttt{Generic.generate\_next\_mono}\\
+\texttt{Generic.generate\_next\_mono},
+\texttt{Generic.generateFresh\_support\_below}\\
 抽象 $X$ の式構成段階 &
 \texttt{Generic.generate\_var\_coversAt},
 \texttt{Generic.Output.CoversAt.lam/app/letMono/letVal/perform}\\
+抽象 $X$ の handler なしの完全性・主要性 &
+\texttt{Generic.Typing.generate\_complete\_handlerFree},
+\texttt{Generic.Typing.generateFresh\_principal\_handlerFree}\\
+抽象 $X$ の handler なしの主要スキーム &
+\texttt{Generic.Typing.infer\_principal\_scheme\_handlerFree}\\
+handler のスコープに使う補題 &
+\texttt{Generic.generate\_effect\_fresh},
+\texttt{Generic.generated\_handlerScope\_of\_runs}\\
 抽象 $X$ の値 let・変数・操作節の意味的補題 &
 \texttt{Generic.GeneratedCoversAcross.letVal},
-\texttt{Generic.Context.variable\_complete\_at},
+\texttt{Generic.Context.variable\_complete\_projected},
 \texttt{Generic.GeneratedCovers.handlerClause}\\
 抽象 $X$ の正規化後の主要性（生成結果の主要性を前提） &
 \texttt{Generic.ComputationSchemeTyping.}\par

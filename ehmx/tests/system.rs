@@ -53,5 +53,8 @@ fn class_formulas_are_whole_conditions_in_generic_scheme() {
     )
     .unwrap();
     assert_eq!(r.ty, Ty::Var(3));
-    assert!(format!("{:?}", r.condition).contains("Eq(Var(3))"));
+    let condition = format!("{:?}", r.condition);
+    assert!(condition.contains("ExTy(0"));
+    assert!(condition.contains("Eq(Var(0))"));
+    assert!(condition.contains("TypeEq(Var(0), Var(3))"));
 }
