@@ -45,7 +45,9 @@ h &::=\{\mathbf{return}\ r\mapsto e_r;\ \op(x;k)\mapsto e_o\},
 \tau &::=\alpha\mid Int\mid Bool\mid b_n\ (n\in\mathbb N)
  \mid\arr{\tau}{\epsilon}{\tau},
 \qquad \epsilon::=\varnothing\mid\{\op\}\mid\mu\mid\epsilon\cup\epsilon,\\
-\sigma &::=\forall\bar\alpha,\bar\mu.\ P\Rightarrow\tau,\\
+\sigma &::=\forall\bar\alpha,\bar\mu.\ P\Rightarrow\tau,
+\qquad
+\sigma_c::=\forall\bar\alpha,\bar\mu.\ P\Rightarrow(\tau!\epsilon),\\
 C &::=\top\mid C\land C\mid\tau=\tau\mid
  \epsilon\subseteq\epsilon\mid\op\notin\epsilon\mid p_X
  \mid\forall\alpha.C\mid\forall\mu.C
@@ -455,7 +457,7 @@ scheme 具体例と有限範囲の改名 & 双方向の意味保存，既存の�
 handler の scope 判定 & 生成した body・return・操作節から \texttt{HandlerScope} と \texttt{ClauseScope} の成立を Lean で証明済み\\
 文脈全体・handler を含む完全性と主要型 & \texttt{Typing.generate\_complete}，\texttt{Typing.generateFresh\_principal}，\texttt{Typing.inferQualifiedTotal\_principal} を Lean で証明済み
 \\
-閉じた充足可能な判断の正規化後の主要型 & 結果名を含む制約 $D_q$ を principal normal form にし，再構成型の全宣言的型付けに対する主要性を Lean で証明済み
+閉じた充足可能な判断の主要計算型スキーム & $D_q$ の正規化後に型と効果を一般化し，全宣言的計算型スキームに対する主要性を Lean で証明済み
 \end{tabular}
 \end{center}
 
@@ -761,6 +763,62 @@ Lean:\par
 \texttt{NormalForm.reconstruct\_canonical\_principal}.\par}
 \end{theorem}
 
+\fighead{Figure 13. 計算型スキームの一般化と具体例}
+\[
+\begin{gathered}
+B_T=\operatorname{FV}_T(C,\tau)\setminus\operatorname{FV}_T(\Gamma),\qquad
+B_E=\operatorname{FV}_E(C,\tau,\epsilon)
+       \setminus\operatorname{FV}_E(\Gamma),\\
+\operatorname{Gen}^{c}_{\Gamma}(C,\tau,\epsilon)
+=\forall B_T,B_E.\ C\Rightarrow(\tau!\epsilon),\\
+\operatorname{Inst}_{\rho}(\sigma_c)
+=\{(I_{\omega}(\tau),I_{\omega}(\epsilon))\mid
+\omega\models C,\ \omega|_{\overline B}=\rho|_{\overline B}\},\\
+\sigma_g\succeq\sigma_d
+\Longleftrightarrow
+\forall\rho.\ \operatorname{Inst}_{\rho}(\sigma_d)
+\subseteq\operatorname{Inst}_{\rho}(\sigma_g).
+\end{gathered}
+\]
+\[
+\frac{C;\Gamma\vdash e:\tau\mid\epsilon\qquad
+\forall\rho.\exists\omega.\
+\omega|_{\operatorname{FV}(\Gamma)}
+=\rho|_{\operatorname{FV}(\Gamma)}\land\omega\models C}
+{\Gamma\vdash_c e:\operatorname{Gen}^{c}_{\Gamma}(C,\tau,\epsilon)}
+\qquad
+\frac{\Gamma\vdash_c e:\sigma_g\quad
+\sigma_g\succeq\sigma_d\quad
+\exists\rho.\operatorname{Inst}_{\rho}(\sigma_d)\ne\varnothing}
+{\Gamma\vdash_c e:\sigma_d}.
+\]
+後者の包含規則はスキームの具体化も含む．効果が空のときの具体例は
+値用スキームの具体例と一致する．Lean:
+\texttt{Scheme.groundInstance\_asComputation\_iff}．\par
+\figfoot
+
+\begin{theorem}[HM($X$) 型の主要計算型スキーム]
+$\operatorname{FV}(\Gamma)=\varnothing$，$\operatorname{Closed}(\Sigma)$，
+$\Gamma\vdash_c e:\sigma$ とする．上の正規化器の条件と生成完全性の
+仮定の下で，$A=[]$ として得た $q$ と
+$N=\operatorname{normalize}_{X}(D_q)=(R,\theta)$ が存在する．
+$\sigma_o=\operatorname{Gen}^{c}_{\Gamma}
+(R,\theta_T(a_o),\theta_E(\mu_o))$ と置くと，
+\[
+\boxed{\begin{gathered}
+R\in S,\qquad
+\operatorname{FV}(\sigma_o)=\varnothing,\qquad
+\Gamma\vdash_c e:\sigma_o,\\
+\forall\sigma'.\ \Gamma\vdash_c e:\sigma'
+\Longrightarrow\sigma_o\succeq\sigma',\qquad
+\exists\rho.\operatorname{Inst}_{\rho}(\sigma_o)\ne\varnothing.
+\end{gathered}}
+\]
+成り立つ．型・効果の主要性を一般化へ持ち上げ，正規化結果の
+健全性から $\sigma_o$ 自身の型付けを導く．Lean:
+\texttt{ComputationSchemeTyping.infer\_principal\_scheme}．
+\end{theorem}
+
 \begin{proposition}[制約だけを正規化する場合の限界]
 \[
 D=\top,\quad S=\{\alpha=Int\},\quad
@@ -776,7 +834,6 @@ Lean: \texttt{NormalForm.projectionExample\_principal},
 \texttt{NormalForm.projectionExample\_not\_covers}．
 \end{proposition}
 
-\clearpage
 \begin{proposition}[実行可能な型等式の例]
 有限列 $E=[\alpha_i=t_i]$ で各右辺 $t_i$ が閉じた純粋型のとき，
 \texttt{PureEquation.unify} は同じ変数に異なる $t_i$ が
