@@ -409,14 +409,10 @@ Lean で証明した範囲を次に示す．
 \begin{tabular}{p{.28\linewidth}p{.60\linewidth}}
 対象 & 結果 \\\hline
 $X_{\mathrm{syn}}(P)$ & handler を含む生成の完全性・主要性．\\
-抽象 $X$，handler なし & 多相 let を含む生成の完全性・主要性．
-主要正規化器があれば解決済み主要計算型スキームも存在する．\\
-抽象 $X$，handler あり & 生成の健全性，変数名の上界，
-操作節の意味的補題，剛性変数のスコープ補題，
-変数参照・return 節・handler の古い自由変数の出所に関する
-補題まで証明した．操作節の整合が与えられたときの
-全称・存在制約の証人構成も証明した．
-完全性の handler 段階は未証明．
+抽象 $X$ & 閉じた操作宣言，\texttt{LawfulFV} と
+\texttt{LawfulGeneratedFV} の下で，handler と多相 let を含む
+生成の完全性・主要性．主要正規化器があれば，閉じた環境で
+充足可能な主要計算型スキームも得られる．\\
 \end{tabular}
 \end{center}
 変数の具体化は射影と等式で表し，$X$ の内部束縛名を改名しない．
@@ -473,10 +469,8 @@ $\operatorname{Assume}(A)=\bigwedge_{p\in A}p$ とする．
 \end{proposition}
 
 \section{完全性と制約付き型の主要性}
-この節の無条件の定理は，現時点では自由構文インスタンス
-$X_{\mathrm{syn}}(P)$ について Lean で証明済みである．
-抽象 $X$ への拡張は，handler の操作節を含む完全性の
-全体帰納法が残る．
+この節の定理は，閉じた操作宣言と上記の自由変数法則を満たす
+抽象 $X$ について Lean で証明した．
 制約付き型を $Q=(C,\tau,\epsilon)$ と書く．
 $Q_g\succeq_\Gamma Q_d$ は，$Q_d$ の各解に対して，
 環境 $\Gamma$ の自由変数の値を変えずに $Q_g$ の解を選べ，
@@ -506,8 +500,6 @@ $C;\Gamma\vdash e:\tau\mid\epsilon$ について成り立つ．
 $e$ には値 $\mathbf{let}$ と handler を含めてよい．
 \end{theorem}
 
-$e$ に handler が現れない場合は，この定理を任意の抽象 $X$ に対して
-Lean で証明した．この場合も値 $\mathbf{let}$ と追加述語を許す．
 
 \begin{theorem}[推論結果の主要性]
 上の定理と同じ前提で，追加の仮定 $A$ を渡した推論器は
@@ -620,8 +612,7 @@ $Q_N=(R,\tau_N,\epsilon_N)$ を一般化すると，
 同じ項に付けられる全スキームより一般的である．
 \end{theorem}
 
-handler のない $e$ については，抽象 $X$ とその主要正規化器の下でも
-同じ結論を Lean で証明した．
+この結論は handler を含む $e$ について Lean で証明した．
 
 \noindent\textbf{解釈上の注意．}
 $\operatorname{Split}(ping,\{ping\},\delta)$ なら
@@ -655,18 +646,20 @@ $\delta=\varnothing$ だが，handler の結果効果 $\chi$ は
 抽象 $X$ の式構成段階 &
 \texttt{Generic.generate\_var\_coversAt},
 \texttt{Generic.Output.CoversAt.lam/app/letMono/letVal/perform}\\
-抽象 $X$ の handler なしの完全性・主要性 &
-\texttt{Generic.Typing.generate\_complete\_handlerFree},
-\texttt{Generic.Typing.generateFresh\_principal\_handlerFree}\\
-抽象 $X$ の handler なしの主要スキーム &
-\texttt{Generic.Typing.infer\_principal\_scheme\_handlerFree}\\
+抽象 $X$ の handler を含む完全性・主要性 &
+\texttt{Generic.Typing.generate\_complete},
+\texttt{Generic.Typing.generateFresh\_principal}\\
+抽象 $X$ の handler を含む主要スキーム &
+\texttt{Generic.Typing.infer\_principal\_scheme}\\
 handler のスコープに使う補題 &
 \texttt{Generic.generate\_effect\_fresh},
-\texttt{Generic.generated\_handlerScope\_of\_runs}\\
+\texttt{Generic.generated\_handlerScope\_of\_runs},
+\texttt{Generic.generated\_clauseScope\_of\_bounds}\\
 古い自由変数の出所 &
 \texttt{Generic.generate\_variable\_old\_support},
 \texttt{Generic.Output.return\_old\_below\_body},
-\texttt{Generic.Output.handler\_old\_support}\\
+\texttt{Generic.Output.handler\_old\_support},
+\texttt{Generic.generate\_support\_origin}\\
 操作節の量化された証人 &
 \texttt{Generic.Output.CoversAt.handlerClause\_of\_aligned}\\
 抽象 $X$ の値 let・変数・操作節の意味的補題 &
