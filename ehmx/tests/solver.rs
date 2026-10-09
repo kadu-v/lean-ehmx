@@ -60,14 +60,74 @@ fn solver_keeps_quantified_handler_constraints_and_mode_after_reset() {
     let output = session
         .process("handle (perform ping 1) with { return r -> r; ping(x;k) -> k x }")
         .unwrap();
-    assert!(output.contains("type: Int"));
-    assert!(output.contains("effect: {μ"));
-    assert!(output.contains("∀α"));
-    assert!(!output.contains("ping ∉"));
+    assert_eq!(
+        output,
+        "type: Int\neffect: {μ6}\nconstraints: true\nscheme: ∀μ6. (Int !{μ6})"
+    );
     session.process(":reset").unwrap();
     assert_eq!(
         session.process("eq true false").unwrap(),
         "type: Bool\neffect: {}\nconstraints: true\nscheme: (Bool !{})"
+    );
+}
+
+#[test]
+fn existential_witness_must_respect_quantifier_order() {
+    let output = |constraints| Output {
+        ty: Ty::Base(ehmx::core::BaseTy::Int),
+        effect: Effect::default(),
+        constraints,
+        next: Supply::default(),
+    };
+    let inner_existential = Constraint::AllTy(
+        0,
+        Box::new(Constraint::ExTy(
+            1,
+            Box::new(Constraint::TypeEq(Ty::Var(1), Ty::Var(0))),
+        )),
+    );
+    assert_eq!(
+        solve(output(inner_existential), &[] as &[ClassPred])
+            .unwrap()
+            .constraints,
+        Constraint::Top
+    );
+
+    let outer_existential = Constraint::ExTy(
+        1,
+        Box::new(Constraint::AllTy(
+            0,
+            Box::new(Constraint::TypeEq(Ty::Var(1), Ty::Var(0))),
+        )),
+    );
+    assert_eq!(
+        solve(output(outer_existential.clone()), &[] as &[ClassPred])
+            .unwrap()
+            .constraints,
+        outer_existential
+    );
+
+    let same_effects = Constraint::and(
+        Constraint::EffectLe(Effect::var(1), Effect::var(0)),
+        Constraint::EffectLe(Effect::var(0), Effect::var(1)),
+    );
+    let inner_existential = Constraint::AllEff(
+        0,
+        Box::new(Constraint::ExEff(1, Box::new(same_effects.clone()))),
+    );
+    assert_eq!(
+        solve(output(inner_existential), &[] as &[ClassPred])
+            .unwrap()
+            .constraints,
+        Constraint::Top
+    );
+    let outer_existential =
+        Constraint::ExEff(1, Box::new(Constraint::AllEff(0, Box::new(same_effects))));
+    assert_eq!(
+        solve(output(outer_existential.clone()), &[] as &[ClassPred])
+            .unwrap()
+            .constraints,
+        outer_existential
     );
 }
 

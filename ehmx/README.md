@@ -46,10 +46,14 @@ form.
 An explicitly declared `:assume` can discharge another exact predicate. A
 class predicate on a still-unknown type stays in the residual constraints.
 The solver also unifies free type equalities and simplifies forced-empty effect
-variables. Handler constraints beneath `forall`/`exists` stay symbolic when
-they need quantified solving; a remaining effect variable is not silently set
-to the empty set.
+variables. It eliminates local existential witnesses from quantified handler
+constraints when a type equality or both directions of an effect inclusion
+determine the witness. Other quantified constraints remain symbolic. For
+`handle (perform ping 1) with { return r -> r; ping(x;k) -> k x }`, the
+constraint simplifies to `true`, while the scheme is `∀μ. (Int !{μ})`.
+The handler rule permits additional output effects, so `μ` is not forced to
+the empty set.
 
-In a handler clause, the type variables freshly introduced for calls such as `id x` are projected inside the operation's universal quantifier. The remaining constraint therefore contains `∀α. ∃α. ...`. The REPL retains these symbolic constraints; its simplifier is not a complete decision procedure for them.
+In a handler clause, the type variables freshly introduced for calls such as `id x` are projected inside the operation's universal quantifier. A constraint of the form `∀α. ∃β. ...` can remain when the witness is not determined by an equality. The solver is not a complete decision procedure for these constraints.
 
 Use ↑/↓ to navigate commands entered in the current session. Ctrl-C clears the current input; Ctrl-D exits.
