@@ -1,938 +1,651 @@
-\documentclass[a4paper,10pt]{ltjsarticle}
-\usepackage[margin=16mm]{geometry}
-\usepackage{amsmath,amssymb,mathtools}
-\usepackage{array}
-\usepackage{amsthm}
-\usepackage{bussproofs}
-\pagestyle{plain}
+\documentclass[a4paper,11pt]{ltjsarticle}
+\usepackage[margin=20mm]{geometry}
+\usepackage{fix-cm,amsmath,amssymb,mathtools,amsthm,booktabs,longtable,array}
+\usepackage[hidelinks]{hyperref}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{3pt}
-\allowdisplaybreaks[0]
-
-\newcommand{\op}{\mathit{op}}
-\newcommand{\llbracket}{\mathopen{[\![}}
-\newcommand{\rrbracket}{\mathclose{]\!]}}
+\setlength{\emergencystretch}{2em}
+\allowdisplaybreaks[1]
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\FV}{\operatorname{FV}}
+\newcommand{\Sat}{\operatorname{Sat}}
+\newcommand{\eval}[1]{\langle #1\rangle}
 \newcommand{\arr}[3]{#1\xrightarrow{#2}#3}
-\newcommand{\jd}[3]{C;\Gamma\vdash #1:#2\mid #3}
-\newcommand{\J}[3]{\mathcal J_{\Gamma}\llbracket #1:#2\mid #3\rrbracket}
-\newcommand{\Jx}[4]{\mathcal J_{#1}\llbracket #2:#3\mid #4\rrbracket}
-\newcommand{\rulelabel}[1]{\quad\textsc{(#1)}}
-\newcommand{\fighead}[1]{\noindent\rule{\linewidth}{0.8pt}\par\textbf{#1}\par\vspace{-2mm}}
-\newcommand{\figfoot}{\par\vspace{-2mm}\noindent\rule{\linewidth}{0.8pt}}
-\newcommand{\pair}[2]{%
-\begin{minipage}[t]{0.49\linewidth}\centering #1\end{minipage}\hfill%
-\begin{minipage}[t]{0.49\linewidth}\centering #2\end{minipage}\par}
-\newtheorem{proposition}{命題}[section]
-\newtheorem{lemma}[proposition]{補題}
-\newtheorem{theorem}[proposition]{定理}
-
+\newcommand{\dom}{\operatorname{dom}}
+\newcommand{\Gen}{\mathcal A}
+\newcommand{\Proj}{\mathcal P}
+\newcommand{\Chk}{\operatorname{Check}}
+\newcommand{\Real}{\operatorname{Real}}
+\newcommand{\Adm}{\operatorname{Adm}}
+\newcommand{\GReal}{\operatorname{GReal}}
+\newcommand{\ground}[1]{\lfloor #1\rfloor}
+\newcommand{\Sol}{\operatorname{Sol}}
+\newcommand{\Scope}{\operatorname{Scope}}
+\newcommand{\Inst}{\operatorname{Inst}}
+\newcommand{\Closed}{\operatorname{Closed}}
+\newcommand{\Solved}{\operatorname{SolvedSubst}}
+\newcommand{\Fin}{\operatorname{FinInst}}
+\newcommand{\Inf}{\mathcal I}
+\newcommand{\key}[1]{\texttt{#1}}
+\newtheorem{theorem}{定理}[section]
+\newtheorem{lemma}[theorem]{補題}
+\renewcommand{\proofname}{証明}
 \begin{document}
 \begin{center}
-{\Large\bfseries EHM(X): 形式規則と主要定理}\\[2mm]
-{\small System F$^{\xi}$ に集合効果 handler と HM($X$) の制約体系を加える rank-1 表層}
+{\Large\bfseries EHM(X): 制約生成と solver の合成}\\[2mm]
+型付け・算法・健全性・主要性・条件付き完全性
 \end{center}
 
-\fighead{図 1. 構文と意味論}
+\section{構文とパラメータ}
 \[
 \begin{aligned}
-e &::= x\mid n\mid\mathbf{true}\mid\mathbf{false}
- \mid\lambda x.e\mid e_1\,e_2\mid
- \mathbf{let}\ x=e_1\ \mathbf{in}\ e_2
- \mid\mathbf{perform}\ \op\ e
- \mid\mathbf{handle}\ e\ \mathbf{with}\ h,\\
-h &::=\{\mathbf{return}\ r\mapsto e_r;\ \op(x;k)\mapsto e_o\},
-\qquad v::=x\mid n\mid\mathbf{true}\mid\mathbf{false}\mid\lambda x.e,\\
-\tau &::=\alpha\mid\iota
- \mid\arr{\tau}{\epsilon}{\tau},
-\qquad \epsilon::=\varnothing\mid\{\op\}\mid\mu\mid\epsilon\cup\epsilon,\\
-\sigma &::=\forall\bar\alpha,\bar\mu.\ C\Rightarrow\tau,\\
-\sigma_c&::=\forall\bar\alpha,\bar\mu.\ C\Rightarrow(\tau!\epsilon),
-\qquad C\in\mathcal C_X.
+e&::=i\mid n\mid b\mid\lambda.e\mid e\,e\\
+ &\quad\mid\mathbf{let}\ e\ \mathbf{in}\ e
+ \mid\mathbf{perform}\ o\ e\mid\mathbf{handle}_o(e,e_r,e_o),\\
+v&::=i\mid n\mid b\mid\lambda.e,\qquad i,o\in\mathbb N,\\
+\epsilon&=(L,M)\in\mathcal P_f(\mathbb N)^2,
+ \quad\eval\epsilon_\rho=L\cup\bigcup_{\mu\in M}\rho_E(\mu),\\
+A&=(A_T,A_E)\in\mathcal P_f(\mathbb N)^2,
+\\ \rho&=(\rho_T:\mathbb N\to V,\rho_E:\mathbb N\to\mathcal P_f(\mathbb N)).
 \end{aligned}
 \]
-$\iota$ は閉じた基本型を表し，$Int,Bool$ を含む．
-$\mathcal C_X$ は制約体系 $X$ の制約全体であり，
-型等式・効果制約・クラス制約を同じ集合に含む．
-\[
-\epsilon\equiv\epsilon'
-\quad\stackrel{\mathrm{def}}{\Longleftrightarrow}\quad
-(\epsilon\subseteq\epsilon')\land(\epsilon'\subseteq\epsilon).
-\]
-\[
-I_\rho(\varnothing)=\varnothing,\quad
-I_\rho(\{\op\})=\{\op\},\quad
-I_\rho(\mu)=\rho_E(\mu),\quad
-I_\rho(\epsilon_1\cup\epsilon_2)
-=I_\rho(\epsilon_1)\cup I_\rho(\epsilon_2).
-\]
-\[
-I_\rho(\alpha)=\rho_T(\alpha),\quad
-I_\rho(\iota)=\iota,\quad
-I_\rho(\arr{a}{\epsilon}{b})
-=\arr{I_\rho(a)}{I_\rho(\epsilon)}{I_\rho(b)}.
-\]
-\[
-\boxed{\operatorname{Split}(\op,\epsilon,\delta)
-\ \stackrel{\mathrm{def}}{=}\
-(\delta\subseteq\epsilon)\land
-(\epsilon\subseteq\{\op\}\cup\delta)\land
-(\op\notin\delta)}
-\]
-\figfoot
-
-\fighead{図 2. 値呼びの簡約規則}
-\[
-(\lambda x.e)\,v\longrightarrow e[x\mapsto v]
-\qquad
-\mathbf{handle}\ v\ \mathbf{with}\ h\longrightarrow e_r[r\mapsto v].
-\]
+項変数は de Bruijn 添字．操作節：$0=k,\ 1=x$．
 \[
 \begin{gathered}
-\mathbf{handle}\ E[\mathbf{perform}\ \op\ v]\ \mathbf{with}\ h
-\longrightarrow
-e_o[x\mapsto v][k\mapsto k_E],\\
-\op\notin\operatorname{handled}(E),\qquad
-k_E=\lambda y.\mathbf{handle}\ E[y]\ \mathbf{with}\ h.
+T:\text{型式},\quad V\ne\varnothing,\quad
+\alpha_i,\ \mathrm{Int},\ \mathrm{Bool},\ \arr t\epsilon u\in T,\quad
+\leq\ \subseteq V^2,\\
+ a\leq a,\qquad (a\leq b\land b\leq c)\Rightarrow a\leq c,\qquad
+ (a\leq b\land b\leq a)\Rightarrow a=b,\\
+ a'\leq a\land b\leq b'\Rightarrow
+ \arr aE b\leq\arr{a'}E{b'}.
 \end{gathered}
 \]
-\figfoot
-
-\section*{宣言的型付け \quad $C;\Gamma\vdash e:\tau\mid\epsilon$}
-\fighead{図 3. 基本的な型付け規則}
-\pair{
-\[
-\frac{\begin{gathered}
-\Gamma(x)=\sigma=\forall\bar\beta.C_x\Rightarrow\tau\\
-\theta\beta\notin B\ (\beta\in B),\quad
-\theta\gamma=\gamma\ (\gamma\notin B)\\
-C\models_X\operatorname{Inst}_X(\sigma,\theta)
-\end{gathered}}
-{\jd{x}{\theta\tau}{\varnothing}}
-\rulelabel{Var}
-\]
-}{
-\[
-\frac{C;\Gamma,x:a\vdash e:b\mid\eta}
-{\jd{\lambda x.e}{\arr{a}{\eta}{b}}{\varnothing}}
-\rulelabel{Abs}
-\]
-}
-\pair{
-\[
-\frac{\jd{e_1}{\arr{a}{\eta}{b}}{\epsilon_1}
-\quad\jd{e_2}{a}{\epsilon_2}}
-{\jd{e_1\,e_2}{b}{\epsilon_1\cup\epsilon_2\cup\eta}}
-\rulelabel{App}
-\]
-}{
-\[
-\frac{\begin{gathered}
-\Sigma(\op)=\forall\bar\beta.\tau_a\to\tau_b\\
-\jd{e}{\tau_a[\bar\theta/\bar\beta]}{\eta}
-\end{gathered}}
-{\jd{\mathbf{perform}\ \op\ e}{\tau_b[\bar\theta/\bar\beta]}{\eta\cup\{\op\}}}
-\rulelabel{Perform}
-\]
-}
-\[
-\frac{n\in\mathbb Z}{\jd{n}{Int}{\varnothing}}
-\rulelabel{Int}
-\qquad
-\frac{b\in\{\mathbf{true},\mathbf{false}\}}
-{\jd{b}{Bool}{\varnothing}}
-\rulelabel{Bool}
-\]
-\[
-\boxed{\begin{aligned}
-\operatorname{Inst}_X(\forall B.P\Rightarrow\tau,\theta)
-&=\exists B.\bigl(P\land E_\theta(B)\bigr),\\
-E_\theta(B)&=\bigwedge_{\alpha\in B_T}(\alpha=\theta\alpha)
-\land\bigwedge_{\mu\in B_E}(\mu\equiv\theta\mu).
-\end{aligned}}
-\]
-\figfoot
-
-\vspace{4mm}
-\fighead{図 4. 値制限付き let}
-\[
-\frac{
-\begin{gathered}
-C_1;\Gamma\vdash v:\tau_1\mid\varnothing
-\quad A=\operatorname{FV}(C_1,\tau_1)\setminus\operatorname{FV}(\Gamma)\\
-\sigma=\forall A.C_1\Rightarrow\tau_1,
-\quad R_1=\exists A.C_1,
-\quad C_2;\Gamma,x:\sigma\vdash e_2:\tau_2\mid\epsilon_2
-\end{gathered}
-}{
-R_1\land C_2;\Gamma\vdash\mathbf{let}\ x=v\ \mathbf{in}\ e_2:\tau_2\mid\epsilon_2
-}\rulelabel{LetVal}
-\]
-\[
-\frac{
-\neg\operatorname{Value}(e_1)
-\quad\jd{e_1}{\tau_1}{\epsilon_1}
-\quad C;\Gamma,x:\tau_1\vdash e_2:\tau_2\mid\epsilon_2
-}{
-\jd{\mathbf{let}\ x=e_1\ \mathbf{in}\ e_2}
-{\tau_2}{\epsilon_1\cup\epsilon_2}
-}\rulelabel{LetMono}
-\]
-\figfoot
-
-\vspace{4mm}
-\fighead{図 5. 深い handler の型付け}
-\[
-\frac{
-\begin{gathered}
-\Sigma(\op)=\forall\overline{\beta::\kappa}.\tau_a\to\tau_b
-\qquad \jd{e}{\tau_{in}}{\epsilon_{in}}\\
-C;\Gamma,r:\tau_{in}\vdash e_r:\tau_{out}\mid\epsilon_r\\
-D;\Gamma,x:\tau_a,
- k:\arr{\tau_b}{\chi}{\tau_{out}}
- \vdash e_o:\tau_o\mid\epsilon_o\\
-C\models_X\exists U_T,U_E.
- (D\land\tau_o=\tau_{out}\land\epsilon_o\subseteq\chi)
- \quad(\bar\beta\text{ は剛性名})\\
-C\models\operatorname{Split}(\op,\epsilon_{in},\delta)
-\quad C\models\delta\subseteq\chi
-\quad C\models\epsilon_r\subseteq\chi\\
-\operatorname{ClauseScope}(C,\Gamma,\tau_{in},\tau_{out},
- \epsilon_{in},\epsilon_r,\delta,\chi,U_T,U_E)
-\end{gathered}
-}{
-\jd{\mathbf{handle}\ e\ \mathbf{with}\
-\{\mathbf{return}\ r\mapsto e_r;\ \op(x;k)\mapsto e_o\}}
-{\tau_{out}}{\chi}
-}\rulelabel{Handle}
-\]
-\[
-\bar\beta\ \text{は操作節で全称的に検査する},\qquad
-\bar\beta\cap\operatorname{FV}(\Gamma,\tau_{in},\tau_{out},\epsilon_{in},\epsilon_r,\chi,\delta)=\varnothing.
-\]
-\[\begin{aligned}
-U_T&\cap\operatorname{FV}_T(\Gamma,C,\tau_{in},\tau_{out},\tau_a,\tau_b,\bar\beta)=\varnothing,\\
-U_E&\cap\operatorname{FV}_E(\Gamma,C,\tau_{in},\tau_{out},
-\epsilon_{in},\epsilon_r,\delta,\chi,\tau_a,\tau_b,\bar\beta)=\varnothing,\\
-\bar\beta&\cap\operatorname{FV}(C)=\varnothing.
-\end{aligned}\]
-操作宣言の束縛名は，必要なら捕獲を避けて $\alpha$ 改名する．
-\figfoot
-
-\section*{制約生成 \quad $\operatorname{Gen}_\Gamma(e)=(\tau,\epsilon,C)$}
-\fighead{図 6. 基本的な制約生成}
-\[
-\operatorname{Gen}_\Gamma(n)=(Int,\varnothing,\top),
-\qquad
-\operatorname{Gen}_\Gamma(b)=(Bool,\varnothing,\top)
-\quad(b\in\{\mathbf{true},\mathbf{false}\}).
-\]
+$T$ の構成子の網羅性・単射性は仮定しない．
 \[
 \begin{aligned}
-\Gamma(x)=\sigma=\forall B.C_x\Rightarrow\tau_x,
-\quad\theta B\text{ は新しい名前}
-&\Longrightarrow\operatorname{Gen}_\Gamma(x)
-  =(\theta\tau_x,\varnothing,\operatorname{Inst}_X(\sigma,\theta)),\\
-\operatorname{Gen}_{\Gamma,x:a}(e)=(b,\eta,C)
-&\Longrightarrow\operatorname{Gen}_\Gamma(\lambda x.e)
-  =(\arr{a}{\eta}{b},\varnothing,C).
+\eval{\alpha_i}_\rho&=\rho_T(i),&\eval{\mathrm{lit}(b)}_\rho&=\mathrm{groundLit}(b),\\
+\eval{\arr a\epsilon b}_\rho&=\operatorname{groundArrow}(\eval a_\rho,\eval\epsilon_\rho,\eval b_\rho),\\
+\eval{\operatorname{rename}(f,g,t)}_\rho&=\eval t_{(\rho_T\circ f,\rho_E\circ g)},&\theta\alpha_i&=\theta_T(i).
+\end{aligned}
+\]
+\[
+\frac{\forall i.\ A\cap\supp(\theta_T(i))=\varnothing\quad
+      \forall j.\ A_E\cap\FV_E(\theta_E(j))=\varnothing}
+ {A\cap\supp(\theta t)=\varnothing}
+\]
+
+\[
+\begin{aligned}
+\theta^*\rho&=(i\mapsto\eval{\theta_T(i)}_\rho,
+                     j\mapsto\eval{\theta_E(j)}_\rho),&\dom\theta&\text{：有限},\\
+\eval{\theta t}_\rho&=\eval t_{\theta^*\rho},&
+\rho\models\theta C&\iff\theta^*\rho\models C,\\
+\rho=_{\supp t}\nu&\Rightarrow\eval t_\rho=\eval t_\nu,&
+\rho=_{\supp C}\nu&\Rightarrow(\rho\models C\iff\nu\models C),\\
+\theta|_{\supp t}=\mathrm{id}&\Rightarrow\theta t=t,&
+\supp(\alpha_i)&=(\{i\},\varnothing).
 \end{aligned}
 \]
 \[
 \begin{aligned}
-\operatorname{Gen}_\Gamma(e_1)=(\tau_1,\epsilon_1,C_1),\quad
-\operatorname{Gen}_\Gamma(e_2)=(\tau_2,\epsilon_2,C_2)
-&\Longrightarrow\operatorname{Gen}_\Gamma(e_1\,e_2)\\
-&\quad=(b,\epsilon_1\cup\epsilon_2\cup\eta,
- C_1\land C_2\land(\tau_1=\arr{\tau_2}{\eta}{b})).
+\rho\models\exists A.C&\iff\exists\nu.\ \nu=_{\overline A}\rho\land\nu\models C,\\
+\rho\models\forall B.\exists J.C&\iff
+ \forall\nu=_{\overline B}\rho.\ \exists\omega=_{\overline J}\nu.\ \omega\models C,\\
+C\models_X D&\iff\forall\rho.\ (\rho\models C\Rightarrow\rho\models D),\\
+C\equiv_X D&\iff C\models_X D\land D\models_X C,
+&\Sat(C)&\iff\exists\rho.\ \rho\models C,\\
+i\in\FV_T(C)&\iff\exists\{i\}_T.C\not\equiv_X C,
+&\FV(C)&\subseteq\supp C.
 \end{aligned}
 \]
-\[
-\begin{aligned}
-\Sigma(\op)=\forall\bar\beta.\tau_a\to\tau_b,\quad
-\operatorname{Gen}_\Gamma(e)=(\tau,\eta,C)
-&\Longrightarrow\operatorname{Gen}_\Gamma(\mathbf{perform}\ \op\ e)\\
-&\quad=(\theta\tau_b,\{\op\}\cup\eta,
-  C\land(\tau=\theta\tau_a)).
-\end{aligned}
-\]
-\[a,b,\eta,\theta\text{ は使用時に新たに選ぶ。}\]
-\figfoot
-
-\newpage
-\fighead{図 7. let の制約生成}
-\[
-\begin{gathered}
-\operatorname{Gen}_{\Gamma}(v)=(\tau_1,\varnothing,C_1),\qquad
-A=\operatorname{FV}(\tau_1,C_1)\setminus\operatorname{FV}(\Gamma),\\
-\sigma=\forall A.C_1\Rightarrow\tau_1,
-\qquad R_1=\exists A.C_1,\\
-\operatorname{Gen}_{\Gamma,x:\sigma}(e_2)=(\tau_2,\epsilon_2,C_2).
-\end{gathered}
-\]
-\[
-\begin{aligned}
-\operatorname{Gen}_\Gamma(\mathbf{let}\ x=v\ \mathbf{in}\ e_2)
-&=(\tau_2,\epsilon_2,R_1\land C_2),\\[2mm]
-\operatorname{Gen}_\Gamma(e_1)=(\tau_1,\epsilon_1,C_1),\quad
-\operatorname{Gen}_{\Gamma,x:\tau_1}(e_2)=(\tau_2,\epsilon_2,C_2)
-&\Longrightarrow\operatorname{Gen}_\Gamma(\mathbf{let}\ x=e_1\ \mathbf{in}\ e_2)\\
-&\quad=(\tau_2,\epsilon_1\cup\epsilon_2,C_1\land C_2),
-\quad\neg\operatorname{Value}(e_1).
-\end{aligned}
-\]
-\[
-\rho\models R_1
-\quad\Longleftrightarrow\quad
-\exists\rho'.\ \rho'\models C_1\ \land\
-\rho'|_{\overline A}=\rho|_{\overline A},
-\qquad \operatorname{FV}(R_1)\subseteq\operatorname{FV}(\Gamma).
-\]
-\figfoot
-
-\section*{handler の制約生成}
-\fighead{図 8. handler の制約生成}
-\[
-\begin{gathered}
-\Sigma(\op)=\forall\overline{\beta::\kappa}.\tau_a\to\tau_b,
-\qquad a,\delta,\chi\ \text{fresh},\\[1mm]
-\operatorname{Gen}_\Gamma(e)=(\tau_{in},\epsilon_{in},C_{in}),\\
-\operatorname{Gen}_{\Gamma,r:\tau_{in}}(e_r)
- =(\tau_r,\epsilon_r,C_r),\\
-\operatorname{Gen}_{\Gamma,x:\tau_a,k:\arr{\tau_b}{\chi}{a}}(e_o)
- =(\tau_o,\epsilon_o,C_o).
-\end{gathered}
-\]
-\[U_T,U_E=\text{操作節の生成中に導入した新しい型・効果変数}.\]
-\[
-\boxed{\begin{aligned}
-\operatorname{Gen}_\Gamma(\mathbf{handle}\ e\ \mathbf{with}\ h)
-&=(a,\chi,C),\\
-C&=C_{in}\land C_r\land(\tau_r=a)\\
- &\quad\land H_X(\bar\beta;U_T,U_E;
-   C_o\land\tau_o=a\land\epsilon_o\subseteq\chi)\\
- &\quad\land\operatorname{Split}(\op,\epsilon_{in},\delta)
-   \land\delta\subseteq\chi\land\epsilon_r\subseteq\chi.
-\end{aligned}}
-\]
-\[
-\bar\beta\ \text{は剛性変数};\qquad
-\bar\beta\cap\operatorname{FV}(\Gamma,\tau_{in},a,\delta,\chi,\epsilon_{in},\epsilon_r)=\varnothing.
-\]
-\[
-\rho\models_X H_X(\bar\beta;U;D)
-\quad\Longleftrightarrow\quad
-\forall\bar b\,\exists\bar u.\
-\rho[\bar\beta\mapsto\bar b,U\mapsto\bar u]\models_X D.
-\]
-$H_X$ は handler にだけ必要な操作であり，任意の制約に対する
-全称演算を $X$ に要求しない．
-\[\operatorname{ClauseScope}(C,\Gamma,\tau_{in},a,
- \epsilon_{in},\epsilon_r,\delta,\chi,U_T,U_E).\]
-\figfoot
-
-\vspace{4mm}
-\fighead{図 9. $ping$ の例}
-\[
-\begin{gathered}
-\Sigma(ping)=\forall\beta.\beta\to\beta,
-\qquad
-f:\forall\alpha.\ Eq\,\alpha\Rightarrow\arr{\alpha}{\varnothing}{\alpha},\\
-g=\lambda x.\mathbf{perform}\ ping\,(f\,x),
-\qquad
-g:\forall\alpha.\ Eq\,\alpha\Rightarrow\arr{\alpha}{\{ping\}}{\alpha},\\
-e=\mathbf{handle}\ (g\,y)\ \mathbf{with}\
-\{\mathbf{return}\ r\mapsto r;\ ping(x;k)\mapsto k\,x\},\\
-\operatorname{Split}(ping,\{ping\},\delta)\Longrightarrow\delta=\varnothing,
-\qquad \epsilon_r=\varnothing,
-\qquad\epsilon_o=\chi,\\
-C_{e}=Eq\,\alpha\land(\varnothing\subseteq\chi)
-\land(\chi\subseteq\chi),
-\qquad \chi=\varnothing\ \text{は一つの解}.
-\end{gathered}
-\]
-\figfoot
+$C,D\in\mathcal C_X$．$\top,\land,=,\leq,\subseteq,o\notin\epsilon$ は各意味値で解釈する．
 
 \clearpage
-\section{HM($X$) の制約体系}
-$\rho$ は型変数と効果変数への評価であり，$\rho\models_X C$
-は $C\in\mathcal C_X$ の充足を表す．$X$ は述語の集合だけではなく
+\section{宣言的型付け}
 \[
-X=(\mathcal C_X,\models_X,\top,\land,
-  \exists\alpha,\exists\mu,=,\subseteq,\notin,H_X)
+\sigma::=t\mid\forall A.D\Rightarrow t,\qquad
+\Gamma::=[]\mid\sigma::\Gamma,\qquad
+\supp(\forall A.D\Rightarrow t)=(\supp D\cup\supp t)\setminus A.
 \]
-という制約体系である．型等式・効果制約・$H_X$ は
-EHM($X$) が必要とする演算である．基本演算の意味は次の表で固定する．
+$C$ が共通の前提では省略する．
 \[
-\begin{array}{c|l}
-\text{制約}&\text{充足条件}\\\hline
-\top&\text{常に真}\\
-C\land D&\rho\models_X C\ \text{かつ}\ \rho\models_X D\\
-\exists\alpha.C&\rho[\alpha\mapsto t]\models_X C\ \text{となる }t\text{ が存在}\\
-\exists\mu.C&\rho[\mu\mapsto E]\models_X C\ \text{となる }E\text{ が存在}\\
-\tau=\tau'&I_\rho(\tau)=I_\rho(\tau')\\
-\epsilon\subseteq\eta&I_\rho(\epsilon)\subseteq I_\rho(\eta)\\
-\op\notin\epsilon&\op\notin I_\rho(\epsilon)
-\end{array}
+\frac{\Gamma[i]=\sigma}{\Gamma\vdash i:\sigma!\varnothing}
+\qquad
+\frac{}{\Gamma\vdash n:\mathrm{Int}!\varnothing}
+\qquad
+\frac{}{\Gamma\vdash b:\mathrm{Bool}!\varnothing}
 \]
-含意は $C\models_X D$，同値は
-$C\equiv_XD\iff(C\models_XD\land D\models_XC)$ とする．
-これらの意味から結合と存在射影の cylindric laws が従う．
-制約の自由変数については，そこ以外で等しい二つの評価が
-制約の真偽を変えないことを要求する．
-一般化と操作節のため，さらに
-$\operatorname{FV}(\exists U.C)\subseteq\operatorname{FV}(C)\setminus U$ と
-$\operatorname{FV}(H_X(B;U;C))\subseteq
-\operatorname{FV}(C)\setminus(B\cup U)$ を要求する．
-基本制約の自由変数が式の自由変数に含まれることも要求する．
-Lean では \texttt{LawfulFV} と \texttt{LawfulGeneratedFV} で表す．
-スキームの具体化は上の射影と等式で定義するため，$X$ に
-構文的改名や内部束縛名の列挙を要求しない．
+\[
+\frac{a::\Gamma\vdash e:b!\eta}{\Gamma\vdash\lambda.e:(\arr a\eta b)!\varnothing}
+\qquad
+\frac{\Gamma\vdash f:(\arr a\eta b)!\epsilon_f\quad\Gamma\vdash x:a!\epsilon_x}
+ {\Gamma\vdash f\,x:b!(\epsilon_f\cup\epsilon_x\cup\eta)}
+\]
+\[
+\frac{\operatorname{Value}(v)\quad\Gamma\vdash v:\sigma!\varnothing\quad
+ \sigma::\Gamma\vdash e:t!\epsilon}
+ {\Gamma\vdash\mathbf{let}\ v\ \mathbf{in}\ e:t!\epsilon}
+\]
+\[
+\frac{\neg\operatorname{Value}(u)\quad\Gamma\vdash u:a!\eta\quad a::\Gamma\vdash e:t!\epsilon}
+ {\Gamma\vdash\mathbf{let}\ u\ \mathbf{in}\ e:t!(\eta\cup\epsilon)}
+\]
+\[
+\frac{C;\Gamma\vdash e:a!\epsilon\quad C\models_X a\leq b}{C;\Gamma\vdash e:b!\epsilon}
+\qquad
+\frac{C;\Gamma\vdash e:\sigma!\epsilon\quad C\models_X\epsilon=\eta}
+ {C;\Gamma\vdash e:\sigma!\eta}
+\]
+\[
+\frac{\operatorname{Value}(v)\quad A\cap\FV(C,\Gamma)=\varnothing\quad
+ C\land D;\Gamma\vdash v:t!\varnothing}
+ {C\land\exists A.D;\Gamma\vdash v:(\forall A.D\Rightarrow t)!\varnothing}
+\]
+\[
+\frac{C;\Gamma\vdash e:(\forall A.D\Rightarrow t)!\epsilon\quad
+ \dom\theta\subseteq A\quad C\models_X\theta D}
+ {C;\Gamma\vdash e:\theta t!\epsilon}
+\]
+\[
+\frac{C;\Gamma\vdash e:\sigma!\epsilon\quad A\cap\FV(\Gamma,\sigma,\epsilon)=\varnothing}
+ {\exists A.C;\Gamma\vdash e:\sigma!\epsilon}
+\qquad
+\frac{C;\Gamma\vdash e:\sigma!\epsilon\quad D\models_X C}{D;\Gamma\vdash e:\sigma!\epsilon}
+\]
+\[
+\frac{C;\Gamma\vdash e:\sigma!\epsilon\quad\sigma\equiv_\alpha\sigma'}
+ {C;\Gamma\vdash e:\sigma'!\epsilon}
+\]
+\[
+\begin{aligned}
+\Adm_S(C)&\iff\exists R.\ S(R)\land C\equiv_X R,\\
+\Adm_S(t)&\iff\top,&\Adm_S(\forall A.D\Rightarrow t)&\iff\Adm_S(D),\\
+\Adm_S(\Gamma)&\iff\forall\sigma\in\Gamma.\ \Adm_S(\sigma),\\
+\operatorname{Typing}_S(C,\Gamma,e,\sigma,\epsilon)
+ &\iff\exists\mathcal D:(C;\Gamma\vdash e:\sigma!\epsilon).\ \operatorname{Valid}_S(\mathcal D).
+\end{aligned}
+\]
+$\operatorname{Valid}_S$ は導出の全節点を検査する．以下 $S=\Sat$．
+\[
+\frac{\mathcal D:(C;\Gamma\vdash e:\sigma!\epsilon)\quad\Sat(C)\quad\Adm_{\Sat}(\Gamma)}
+ {\operatorname{Valid}_{\Sat}(\mathcal D)}
+\]
 
-操作宣言 $\Sigma(\op)=\forall B_T,B_E.\tau_a\to\tau_b$ は閉じている：
-$\operatorname{FV}_T(\tau_a,\tau_b)\subseteq B_T$ かつ
-$\operatorname{FV}_E(\tau_a,\tau_b)\subseteq B_E$．
-操作節の検査は $X$ の一般的な全称演算を必要としない．
-新しい剛性名 $\bar\beta$ を取り，外側の $C$ が
-$\bar\beta$ に依存しないとき，
+\clearpage
+\section{操作・handler・環境}
 \[
-C\models_X\exists U.C_o(\bar\beta)
-\quad\Longleftrightarrow\quad
-C\models\forall\bar\beta.\exists U.C_o(\bar\beta).
+\Sigma(o)=(B,a,b),\qquad \Closed(\Sigma)\iff
+ \forall o,(B,a,b)=\Sigma(o).\ \supp(a,b)\subseteq B.
 \]
-右辺の $\forall$ は操作節の検査を説明するメタ論理の記号である．
-Lean の \texttt{ConstraintSystem} は $X$ 全体を表し，
-\texttt{clauseValid\_iff\_handlerClause} がこの同値を
-抽象 $X$ について証明する．
-
-Lean で証明した範囲を次に示す．
-\begin{center}
-\begin{tabular}{p{.28\linewidth}p{.60\linewidth}}
-対象 & 結果 \\\hline
-$X_{\mathrm{syn}}(P)$ & handler を含む生成の完全性・主要性．\\
-抽象 $X$ & 閉じた操作宣言，\texttt{LawfulFV} と
-\texttt{LawfulGeneratedFV} の下で，handler と多相 let を含む
-生成の完全性・主要性．主要正規化器があれば，閉じた環境で
-充足可能な主要計算型スキームも得られる．\\
-\end{tabular}
-\end{center}
-変数の具体化は射影と等式で表し，$X$ の内部束縛名を改名しない．
-自由変数法則 \texttt{LawfulGeneratedFV} は構文インスタンスで成立する．
-
-\section{補題と生成の健全性}
-\begin{lemma}[効果の除去]
 \[
-\rho\models\operatorname{Split}(\op,\epsilon,\delta)
-\quad\Longleftrightarrow\quad
-I_\rho(\delta)=I_\rho(\epsilon)\setminus\{\op\}.
+\frac{\Sigma(o)=(B,a,b)\quad\Closed(B,a,b)\quad\dom\theta\subseteq B\quad
+ C;\Gamma\vdash u:\theta a!\eta}
+ {C;\Gamma\vdash\mathbf{perform}\ o\ u:\theta b!(\{o\}\cup\eta)}
 \]
-したがって $\operatorname{Split}$ は $\op$ を除いた残りの効果を表す．
+\[
+\operatorname{Split}_o(\eta,\delta)
+ =\delta\subseteq\eta\land\eta\subseteq\{o\}\cup\delta\land o\notin\delta.
+\]
+操作宣言の新鮮な改名を $(B,a,b)$ とする．
+\[
+\frac{\begin{gathered}
+ C;\Gamma\vdash e:t_i!\epsilon_i\qquad
+ C;t_i::\Gamma\vdash e_r:t!\epsilon_r\\
+ D;(\arr b\chi t)::a::\Gamma\vdash e_o:t_o!\epsilon_o\\
+ C\models_X\forall B.\exists J.(D\land t_o\leq t\land\epsilon_o\subseteq\chi)\\
+ C\models_X\operatorname{Split}_o(\epsilon_i,\delta)
+       \land\delta\subseteq\chi\land\epsilon_r\subseteq\chi\\
+ \Scope(B,J;C,\Gamma,t_i,t,a,b,\epsilon_i,\epsilon_r,\delta,\chi)
+\end{gathered}}
+ {C;\Gamma\vdash\mathbf{handle}_o(e,e_r,e_o):t!\chi}
+\]
+\[
+\Scope\iff
+\begin{cases}
+ B\cap\FV(\Gamma)=\varnothing,\\
+ B\cap\supp(t_i,t)=\varnothing,\\
+ B_E\cap\FV_E(\epsilon_i,\epsilon_r,\delta,\chi)=\varnothing,\\
+ J\cap\bigl(\supp\Gamma\cup\supp(t_i,t,a,b)\cup B\bigr)=\varnothing,\\
+ J\cap\FV(C)=\varnothing,\\
+ J_E\cap\FV_E(\epsilon_i,\epsilon_r,\delta,\chi)=\varnothing.
+\end{cases}
+\]
+\[
+\frac{C\models_X a\leq b}{C\vdash a\preceq b}
+\qquad
+\frac{\dom\theta\subseteq A\quad C\models_X\theta D\quad C\vdash\theta t\preceq\sigma}
+ {C\vdash(\forall A.D\Rightarrow t)\preceq\sigma}
+\]
+\[
+\frac{A\cap\FV(C,\sigma)=\varnothing\quad C\land D\vdash\sigma\preceq t}
+ {C\land\exists A.D\vdash\sigma\preceq(\forall A.D\Rightarrow t)}
+\quad
+\frac{C\equiv_X D\quad C\vdash\sigma\preceq\tau}{D\vdash\sigma\preceq\tau}
+\]
+$\preceq$ は左右の $\alpha$ 同値で閉じる．
+\[
+\begin{aligned}
+\Inst_\rho(t)&=\{u\mid\eval t_\rho\leq u\},\\
+\Inst_\rho(\forall A.D\Rightarrow t)&=
+ \{u\mid\exists\nu=_{\overline A}\rho.\ \nu\models D\land\eval t_\nu\leq u\},\\
+\ground\Gamma_\rho&=\operatorname{map}(\Inst_\rho,\Gamma),\\
+\GReal(\Gamma,\rho)&\iff\forall\sigma\in\Gamma.\ \Inst_\rho(\sigma)\ne\varnothing,\\
+\Real_C(\Gamma)&\iff\forall\sigma\in\Gamma.\ \exists t.\ C\vdash\sigma\preceq t.
+\end{aligned}
+\]
+\[
+\frac{\Real_C(\Gamma)\quad\rho\models C}{\GReal(\Gamma,\rho)}
+\qquad
+\frac{C;\Gamma\vdash e:t!\epsilon\quad\rho\models C\quad\GReal(\Gamma,\rho)}
+ {\ground\Gamma_\rho\vdash_g e:\eval t_\rho!\eval\epsilon_\rho}
+\]
+\[
+\Gamma'=\theta\Gamma\quad\text{（意味的環境代入）}\quad\iff\quad
+ \forall\rho.\ \ground{\Gamma'}_\rho=\ground\Gamma_{\theta^*\rho}.
+\]
+
+\clearpage
+\section{固定した制約生成算法}
+$N$ は簡約器：$N(D)\equiv_X D$．$\Gen(e,\Gamma,t,\epsilon;F)$ は部分関数．
+\[
+\begin{aligned}
+f_T^F(i)&=1+\max(F_T\cup\{0\})+i,&
+f_E^F(i)&=1+\max(F_E\cup\{0\})+i,\\
+P(\Gamma,t,\epsilon)&=\supp\Gamma\cup\supp t\cup(\varnothing,\FV_E\epsilon),\\
+\Chk(D,a,t,\eta,\epsilon)&=\top\land D\land(a\leq t)\land(\eta=\epsilon),\\
+\operatorname{gen}_\Gamma(D,a)&=\forall A.D\Rightarrow a,
+&A&=(\supp D\cup\supp a)\setminus\supp\Gamma.
+\end{aligned}
+\]
+各再帰呼出しが成功したとき，以下の制約を返す．未定義な変数・操作では $\mathsf{missing}$．
+\[
+\begin{aligned}
+\Gen(i,\Gamma,t,\epsilon;F)&=
+\begin{cases}
+ \Chk(\top,a,t,\varnothing,\epsilon)&\Gamma[i]=a,\\
+ \Chk(\theta D,\theta a,t,\varnothing,\epsilon)&\Gamma[i]=\forall A.D\Rightarrow a,
+\end{cases}\\
+&\quad\theta=[A\mapsto f^{F\cup\supp\top}(A)],\\
+\Gen(n,\Gamma,t,\epsilon;F)&=\Chk(\top,\mathrm{Int},t,\varnothing,\epsilon),\\
+\Gen(b,\Gamma,t,\epsilon;F)&=\Chk(\top,\mathrm{Bool},t,\varnothing,\epsilon).
+\end{aligned}
+\]
+\[
+\begin{gathered}
+a=\alpha_{f_T^F(0)},\quad b=\alpha_{f_T^F(1)},\quad\eta=\mu_{f_E^F(0)},\\
+F'=F\cup P(a::\Gamma,b,\eta)\cup(\{f_T^F(0),f_T^F(1)\},\{f_E^F(0)\}),\\
+D=\Gen(e,a::\Gamma,b,\eta;F'),\\
+\boxed{\Gen(\lambda.e,\Gamma,t,\epsilon;F)=\Chk(D,\arr a\eta b,t,\varnothing,\epsilon)}.
+\end{gathered}
+\]
+\[
+\begin{gathered}
+a=\alpha_{f_T^F(0)},\quad b=\alpha_{f_T^F(1)},\quad
+(\eta_f,\eta_x,\eta)=(\mu_{f_E^F(0)},\mu_{f_E^F(1)},\mu_{f_E^F(2)}),\\
+K=F\cup P(\Gamma,a,\eta_f)\cup P(\Gamma,b,\eta_x)\cup(\varnothing,\FV_E\eta),\\
+D_f=\Gen(f,\Gamma,a,\eta_f;K),\quad
+D_x=\Gen(x,\Gamma,b,\eta_x;K\cup\supp D_f),\\
+\boxed{\Gen(f\,x,\Gamma,t,\epsilon;F)=
+ \top\land D_f\land D_x\land a\leq\arr b\eta t\land\eta_f\cup\eta_x\cup\eta=\epsilon}.
+\end{gathered}
+\]
+\[
+\begin{gathered}
+\operatorname{Value}(v),\quad a=\alpha_{f_T^F(0)},\quad
+D_v=\Gen(v,\Gamma,a,\varnothing;F\cup P(\Gamma,a,\varnothing)),\\
+\sigma=\operatorname{gen}_\Gamma(N(D_v),a),\quad
+A=(\supp N(D_v)\cup\supp a)\setminus\supp\Gamma,\quad Q=\exists A.N(D_v),\\
+D_b=\Gen(e,\sigma::\Gamma,t,\epsilon;F\cup P(\sigma::\Gamma,t,\epsilon)\cup\supp Q),\\
+\boxed{\Gen(\mathbf{let}\ v\ \mathbf{in}\ e,\Gamma,t,\epsilon;F)=\top\land Q\land D_b}.
+\end{gathered}
+\]
+\[
+\begin{gathered}
+\neg\operatorname{Value}(v),\quad a=\alpha_{f_T^F(0)},\quad
+(\eta_v,\eta_b)=(\mu_{f_E^F(0)},\mu_{f_E^F(1)}),\\
+K=F\cup P(\Gamma,a,\eta_v)\cup P(a::\Gamma,t,\eta_b),\\
+D_v=\Gen(v,\Gamma,a,\eta_v;K),\quad D_b=\Gen(e,a::\Gamma,t,\eta_b;K\cup\supp D_v),\\
+\boxed{\Gen(\mathbf{let}\ v\ \mathbf{in}\ e,\Gamma,t,\epsilon;F)=
+ \top\land D_v\land D_b\land(\eta_v\cup\eta_b=\epsilon)}.
+\end{gathered}
+\]
+
+\clearpage
+\section{操作の生成と射影}
+\[
+\begin{gathered}
+\Sigma(o)=(B,a,b),\quad\theta=[B\mapsto f^F(B)],\quad
+K=F\cup\supp(\theta a,\theta b),\quad\eta=\mu_{f_E^K(0)},\\
+D=\Gen(u,\Gamma,\theta a,\eta;K\cup P(\Gamma,\theta a,\eta)),\\
+\boxed{\Gen(\mathbf{perform}\ o\ u,\Gamma,t,\epsilon;F)=
+ \Chk(D\land\theta a\leq\theta a,\theta b,t,\{o\}\cup\eta,\epsilon)}.
+\end{gathered}
+\]
+\textbf{Handler}
+\[
+\begin{aligned}
+t_i&=\alpha_{f_T^F(0)},&t_r&=\alpha_{f_T^F(1)},\\
+(\epsilon_i,\epsilon_r,\delta)&=(\mu_{f_E^F(0)},\mu_{f_E^F(1)},\mu_{f_E^F(2)}),\\
+K&=F\cup\supp(t_i,t_r)\cup(\varnothing,\FV_E(\epsilon_i,\epsilon_r,\delta)),\\
+D_i&=\Gen(e,\Gamma,t_i,\epsilon_i;K),\\
+K_r&=K\cup\supp D_i,&D_r&=\Gen(e_r,t_i::\Gamma,t_r,\epsilon_r;K_r),\\
+K_o&=K_r\cup\supp D_r,&(B,a,b)&=\operatorname{rename}_{f^{K_o}}(\Sigma(o)),\\
+\Gamma_o&=(\arr b\chi{t_r})::a::\Gamma,\\
+F_o&=K_o\cup P(\Gamma_o,t_r,\chi)\cup\supp(a,b)\cup B,\\
+\epsilon_o&=\mu_{f_E^{F_o}(0)},&D_o&=\Gen(e_o,\Gamma_o,t_r,\epsilon_o;F_o\cup P(\Gamma_o,t_r,\epsilon_o)),\\
+J&=(\supp D_o\cup(\varnothing,\FV_E\epsilon_o))\setminus F_o.
+\end{aligned}
+\]
+\[
+\begin{aligned}
+H={}&\top\land D_i\land D_r\land t_r\leq t_r\\
+ &\land\bigl(\forall B.\exists J.(D_o\land t_r\leq t_r\land\epsilon_o\subseteq\chi)\bigr)\\
+ &\land\operatorname{Split}_o(\epsilon_i,\delta)\land\delta\subseteq\chi\land\epsilon_r\subseteq\chi,\\
+\Gen(\mathbf{handle}_o(e,e_r,e_o),\Gamma,t,\chi;F)
+ ={}&\Chk(H,t_r,t,\chi,\chi).
+\end{aligned}
+\]
+\textbf{外側の射影と solver 呼出し}
+\[
+\begin{aligned}
+F&=P(\Gamma,t,\epsilon)\cup\supp\top,\quad D=\Gen(e,\Gamma,t,\epsilon;F),\\
+\Proj(\Gamma,e,t,\epsilon)&=\exists(\supp D\setminus F).D,\\
+\Inf^{\mathrm{at}}_{N,S}(\Gamma,e,t,\epsilon)&=S(\top,\Proj(\Gamma,e,t,\epsilon)),\\
+p&=f_T^{\supp\Gamma}(0),\quad q=f_E^{\supp\Gamma}(0),\\
+\Inf_{N,S}(\Gamma,e)&=\Inf^{\mathrm{at}}_{N,S}(\Gamma,e,\alpha_p,\mu_q).
+\end{aligned}
+\]
+$\mathsf{missing}$ は後続へ伝播する．$\mathsf{solved}(R,\theta)$ の結果は
+\[
+(R,\theta\Gamma,\theta\alpha_p,\theta\mu_q).
+\]
+閉環境では $\operatorname{generalize}(\Gamma,R,\theta\alpha_p,\theta\mu_q)$ を返す型スキームとする．
+
+\clearpage
+\section{solver の契約}
+\[
+\begin{gathered}
+S:\mathcal C_X\times\mathcal C_X\longrightarrow
+ \mathsf{solved}(R,\theta)\mid\mathsf{unresolved}(R)\mid\mathsf{inconsistent},\\
+[\theta]=\bigwedge_{i\in\dom_T\theta}(\alpha_i=\theta_T(i))
+ \land\bigwedge_{j\in\dom_E\theta}(\mu_j=\theta_E(j)),\\
+\Solved(\theta)\iff\begin{cases}
+\forall i\in\dom_T\theta.\ \dom\theta\cap\supp(\theta_T(i))=\varnothing,\\
+\forall j\in\dom_E\theta.\ \dom_E\theta\cap\FV_E(\theta_E(j))=\varnothing.
+\end{cases}
+\end{gathered}
+\]
+\textbf{部分 solver}（S1・S2・P1 型の契約 \cite{OutsideIn}）
+\[
+S(G,W)=\mathsf{solved}(R,\theta)\Longrightarrow
+\begin{cases}
+ \Solved(\theta),\\
+ \dom\theta\cap\FV(G,R)=\varnothing,\\
+ G\land R\models_X\theta W,\\
+ G\land W\models_X R\land[\theta],\\
+ \Sat(G\land R).
+\end{cases}
+\]
+\[
+\begin{aligned}
+S(G,W)=\mathsf{unresolved}(R)&\Rightarrow G\land R\equiv_X G\land W,\\
+S(G,W)=\mathsf{inconsistent}&\Rightarrow\neg\Sat(G\land W).
+\end{aligned}
+\]
+\textbf{完全性の追加契約}
+\[
+\boxed{\operatorname{Complete}(S)\iff
+ \forall G,W.\ \Sat(G\land W)\Rightarrow\exists R,\theta.\ S(G,W)=\mathsf{solved}(R,\theta)}.
+\]
+$W$ は handler の量化制約も含む．$R=\top$ は要求しない．
+\begin{lemma}[解集合の保存]
+\[
+ S(G,W)=\mathsf{solved}(R,\theta)
+ \Longrightarrow G\land W\equiv_X G\land R\land[\theta].
+\]
 \end{lemma}
-
-\begin{lemma}[局所変数の射影]
-$U$ が型変数と効果変数の有限集合なら，
+\begin{proof}
 \[
-\rho\models\exists U.C
-\quad\Longleftrightarrow\quad
-\exists\rho'.\ \rho'\models C\ \land\
-\rho'|_{\overline U}=\rho|_{\overline U}.
+\begin{aligned}
+\rho\models G\land W&\Rightarrow\rho\models R\land[\theta],\\
+\rho\models G\land R\land[\theta]
+ &\Rightarrow\theta^*\rho\models W\ \land\ \theta^*\rho=\rho
+ \Rightarrow\rho\models W.
+\end{aligned}
 \]
-値 $\mathbf{let}$ の残余制約 $R=\exists A.C_1$ と，操作節の
-$\forall\bar\beta.\exists U.C_o$ は同じ射影を使う．
-後者では操作の型引数 $\bar\beta$ を選んだ後で，
-その節だけの変数 $U$ を選ぶ．
-\end{lemma}
-
-\begin{proposition}[制約生成の健全性]
+\end{proof}
+\textbf{契約のモデル}
 \[
-\operatorname{Gen}_\Gamma(e)=(\tau,\epsilon,C)
+\begin{aligned}
+S_{?}(G,W)&=\mathsf{unresolved}(W),\\
+S_{\mathrm{sem}}(G,W)&=
+ \begin{cases}\mathsf{solved}(W,\mathrm{id})&\Sat(G\land W),\\
+ \mathsf{inconsistent}&\neg\Sat(G\land W).
+ \end{cases}
+\end{aligned}
+\]
+\[
+\operatorname{PartialSolver}(S_?)\qquad
+\operatorname{PartialSolver}(S_{\mathrm{sem}})\land\operatorname{Complete}(S_{\mathrm{sem}}).
+\]
+$S_{\mathrm{sem}}$ は非計算的なモデル．実行可能な判定手続きは別の実装義務．
+HM(X) の制約形式と型項再構成の区別は \cite[\S4.4]{Sulzmann2000}．
+
+\clearpage
+\section{生成と合成の定理}
+この節の健全性では $\Closed(\Sigma)$ を仮定する．
+\begin{theorem}[固定した生成算法]
+\[
+\begin{gathered}
+P(\Gamma,t,\epsilon)\subseteq F,\quad\Gen(e,\Gamma,t,\epsilon;F)=D\\
+\Longrightarrow\quad\top;\Gamma\vdash_N e:t!\epsilon\Rightarrow D,\\[1mm]
+\exists\rho.\ \ground\Gamma_\rho\vdash_g e:\eval t_\rho!\eval\epsilon_\rho\\
+\Longrightarrow\quad\exists D.\ \Gen(e,\Gamma,t,\epsilon;F)=D\ \land\\
+\forall\rho.\ \ground\Gamma_\rho\vdash_g e:\eval t_\rho!\eval\epsilon_\rho
+ \Rightarrow\exists\nu=_{F}\rho.\ \nu\models D.
+\end{gathered}
+\]
+\end{theorem}
+\begin{proof}
+$e$ に関する構造帰納法．
+\[
+\begin{aligned}
+\lambda,\mathrm{app},\mathrm{let},\mathrm{perform}:&\quad
+ \rho\xmapsto{\mathrm{fresh}(F)}\rho_0\xmapsto{\mathrm{IH}_1}\rho_1
+ \xmapsto{\mathrm{IH}_2}\rho_2,\\
+ &\rho_{i+1}=_{F\cup\supp D_1\cup\cdots\cup\supp D_i}\rho_i;\\
+\mathrm{handler}:&\quad
+ \forall\rho_B.\ \exists\rho_J.\ \rho_J\models D_o\land t_r\leq t_r\land\epsilon_o\subseteq\chi,\\
+ &J\cap F_o=\varnothing,\quad B\cap K_o=\varnothing,
+ \quad\Scope(B,J;H,\ldots).
+\end{aligned}
+\]
+\end{proof}
+\begin{theorem}[射影後の正確性]
+\[
+\Proj(\Gamma,e,t,\epsilon)=D\land\GReal(\Gamma,\rho)
+\Longrightarrow
+\bigl(\rho\models D\iff\ground\Gamma_\rho\vdash_g e:\eval t_\rho!\eval\epsilon_\rho\bigr).
+\]
+\end{theorem}
+\begin{proof}
+$(\Rightarrow)$：生成健全性と導出の意味解釈．
+$(\Leftarrow)$：$\nu=_{F}\rho$ を前定理で得て，
+$\omega=\rho[\supp D_{\mathrm{raw}}\setminus F\mapsto\nu]$ を存在証人とする．
+\end{proof}
+\begin{theorem}[成功時の健全性]
+\[
+\begin{gathered}
+\Inf^{\mathrm{at}}_{N,S}(\Gamma,e,t,\epsilon)=\mathsf{solved}(R,\theta),\quad
+\rho\models R,\quad\GReal(\Gamma,\theta^*\rho)\\
+\Longrightarrow\quad
+\ground\Gamma_{\theta^*\rho}\vdash_g e:\eval{\theta t}_\rho!\eval{\theta\epsilon}_\rho.
+\end{gathered}
+\]
+\[
+\Gamma'=\theta\Gamma,\quad\Real_\top(\Gamma),\quad\Adm_{\Sat}(\Gamma')
 \quad\Longrightarrow\quad
-C;\Gamma\vdash e:\tau\mid\epsilon.
+\operatorname{Typing}_{\Sat}(R,\Gamma',e,\theta t,\theta\epsilon).
 \]
-実行可能な生成器が返す結果にもこの命題を適用できる．
-抽象 $X$ 上の規則については，次の Lean 定理を使う：
-\begin{center}\texttt{Generic.generateFresh\_sound}\end{center}
-\end{proposition}
+\end{theorem}
+\begin{proof}
+$\rho\models R\Rightarrow\theta^*\rho\models D\Rightarrow
+\ground\Gamma_{\theta^*\rho}\vdash_g e:\eval t_{\theta^*\rho}!\eval\epsilon_{\theta^*\rho}$．
+$\Sat(R)$ と \key{Typing.of\_ground} により再構成する．
+\end{proof}
+\begin{theorem}[solver の契約を仮定した完全性]
+\[
+\boxed{\operatorname{Complete}(S)\land\Real_C(\Gamma)\land
+ \operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\epsilon)
+ \Rightarrow\exists R,\theta.\ \Inf_{N,S}(\Gamma,e)=\mathsf{solved}(R,\theta)}.
+\]
+\end{theorem}
+\begin{proof}
+$\rho\models C\Rightarrow\ground\Gamma_\rho\vdash_g e:u!E$．
+新鮮な結果名に $(u,E)$ を割り当てる．生成完全性より $\Sat(D)$，
+$\operatorname{Complete}(S)$ より $S(\top,D)=\mathsf{solved}(R,\theta)$．
+\end{proof}
 
-\begin{proposition}[制約簡約による解の保存]
-$\operatorname{Sol}(C)=\{\rho\mid\rho\models C\}$，
-$\operatorname{Assume}(A)=\bigwedge_{p\in A}p$ とする．
+\clearpage
+\section{実際の出力の主要性}
+\[
+\frac{A\cap\FV(\Gamma)=\varnothing\quad\Adm_{\Sat}(\exists A.C)\quad
+ \operatorname{Typing}_{\Sat}(C,\Gamma,e,t,\epsilon)}
+ {\operatorname{ComputationTyping}_{\Sat}(\exists A.C,\Gamma,e,\forall A.C\Rightarrow(t!\epsilon))}
+\]
+$\operatorname{ComputationTyping}$ は許容される制約への強化で閉じる．
+
 \[
 \begin{aligned}
-\operatorname{simplify}(C)=\operatorname{some}(R)
-&\Longrightarrow
- \operatorname{Sol}(R)=\operatorname{Sol}(C),\\
-\operatorname{Sol}(\operatorname{Assume}(A)\land
- \operatorname{resolve}_X(A,C))
-&=\operatorname{Sol}(\operatorname{Assume}(A)\land C).
+\operatorname{generalize}(\Gamma,R,t,\epsilon)&=\forall A.R\Rightarrow(t!\epsilon),\\
+A&=(\supp R\cup\supp t\cup(\varnothing,\FV_E\epsilon))\setminus\supp\Gamma,\\
+s&=\forall A.R\Rightarrow(t!\epsilon),\\
+\Fin(s;C,u,\eta)&\iff\exists\phi\text{（有限）}.\ \dom\phi\subseteq A\ \land\\
+ &\qquad\forall\rho\models C.\ \phi^*\rho\models R\land
+ \eval t_{\phi^*\rho}\leq\eval u_\rho\land\eval\epsilon_{\phi^*\rho}=\eval\eta_\rho.
 \end{aligned}
 \]
-\end{proposition}
-
-\section{完全性と制約付き型の主要性}
-この節の定理は，閉じた操作宣言と上記の自由変数法則を満たす
-抽象 $X$ について Lean で証明した．
-制約付き型を $Q=(C,\tau,\epsilon)$ と書く．
-$Q_g\succeq_\Gamma Q_d$ は，$Q_d$ の各解に対して，
-環境 $\Gamma$ の自由変数の値を変えずに $Q_g$ の解を選べ，
-型と効果の評価が一致することを表す：
+\begin{theorem}[開環境の有限因子]
+\[
+\begin{gathered}
+\Inf^{\mathrm{at}}_{N,S}(\Gamma,e,t,\epsilon)=\mathsf{solved}(R,\theta),\qquad
+\Gamma'=\sigma\Gamma,\quad\Real_C(\Gamma'),\\
+\operatorname{Typing}_{\Sat}(C,\Gamma',e,\sigma t,\sigma\epsilon)\\
+\Longrightarrow\quad
+\exists\phi\text{（有限）}.\ \forall\rho\models C.\
+ \phi^*\rho\models R\land\theta^*(\phi^*\rho)=\sigma^*\rho.
+\end{gathered}
+\]
+\end{theorem}
+\begin{proof}
+$\phi=\sigma$ とする．
+\[
+\rho\models C\Rightarrow\sigma^*\rho\models D
+ \Rightarrow\sigma^*\rho\models R\land[\theta]
+ \Rightarrow\theta^*(\sigma^*\rho)=\sigma^*\rho.
+\]
+\end{proof}
+\begin{theorem}[閉環境の主要計算型・主要値型]
+\[
+\begin{gathered}
+\Closed(\Sigma),\quad\supp\Gamma=\varnothing,\quad
+\Real_\top(\Gamma),\quad\Adm_{\Sat}(\Gamma),\\
+\Inf_{N,S}(\Gamma,e)=\mathsf{solved}(R,\theta),\quad
+p=f_T^{\supp\Gamma}(0),\quad q=f_E^{\supp\Gamma}(0),\\
+s=\operatorname{generalize}(\Gamma,R,\theta\alpha_p,\theta\mu_q)\\
+\Longrightarrow\quad
+\operatorname{ComputationTyping}_{\Sat}(\top,\Gamma,e,s)\ \land\\
+\forall C,t,\epsilon.\ \operatorname{Typing}_{\Sat}(C,\Gamma,e,t,\epsilon)
+ \Rightarrow\Fin(s;C,t,\epsilon).
+\end{gathered}
+\]
+$s=\forall A.R\Rightarrow(u!\eta)$ と書く．値なら $(\top,\forall A.R\Rightarrow u)$ は主要対で，即時効果は空．
+\end{theorem}
+\begin{proof}
+生成制約を $D$ とする．$\Sat(R)\land R\models\theta D\Rightarrow\Sat(D)$．
+生成の主要性と実行結果の一意性から，実際の $D$ の有限被覆を得る．
 \[
 \begin{aligned}
-Q_g\succeq_\Gamma Q_d\quad\Longleftrightarrow\quad
-\forall\rho_d\models C_d.\ \exists\rho_g\models C_g.\quad
-&\rho_g|_{\operatorname{FV}(\Gamma)}
- =\rho_d|_{\operatorname{FV}(\Gamma)}\\
-&{}\land I_{\rho_g}(\tau_g)=I_{\rho_d}(\tau_d)
- \land I_{\rho_g}(\epsilon_g)=I_{\rho_d}(\epsilon_d).
+\rho\models C&\Rightarrow\sigma^*\rho\models D
+ \land\eval{\alpha_p}_{\sigma^*\rho}\leq\eval t_\rho
+ \land\eval{\mu_q}_{\sigma^*\rho}=\eval\epsilon_\rho,\\
+D\equiv_X R\land[\theta]&\Rightarrow
+ \sigma^*\rho\models R\land\theta^*(\sigma^*\rho)=\sigma^*\rho.
+\end{aligned}
+\]
+$\sigma$ を $s$ の束縛名へ制限し，同じ有限因子を全ての $\rho\models C$ に用いる．
+値の場合は \key{ComputationTyping.}\allowbreak\key{principal\_value} を適用する．
+\end{proof}
+\[
+\begin{aligned}
+\Inf^{\mathrm{at}}_{N,S}(\Gamma,e,t,\epsilon)=\mathsf{inconsistent}
+ &\Rightarrow\neg\exists\rho.\ \ground\Gamma_\rho\vdash_g e:\eval t_\rho!\eval\epsilon_\rho,\\
+\Inf^{\mathrm{at}}_{N,S}(\Gamma,e,t,\epsilon)=\mathsf{unresolved}(R)
+ &\Rightarrow\exists D.\ \Proj(\Gamma,e,t,\epsilon)=D\land R\equiv_X D.
 \end{aligned}
 \]
 
-\begin{theorem}[生成の完全性と主要性]
-$C_0;\Gamma\vdash e:\tau_0\mid\epsilon_0$ が導出できるとする．
-実行可能な生成器は $e$ に対して
-$Q_g=(C_g,\tau_g,\epsilon_g)$ を返し，
-\[
-C_g;\Gamma\vdash e:\tau_g\mid\epsilon_g,
-\qquad
-Q_g\succeq_\Gamma(C,\tau,\epsilon)
-\]
-が，$e$ の\emph{任意の}宣言的導出
-$C;\Gamma\vdash e:\tau\mid\epsilon$ について成り立つ．
-$e$ には値 $\mathbf{let}$ と handler を含めてよい．
-\end{theorem}
-
-
-\begin{theorem}[推論結果の主要性]
-上の定理と同じ前提で，追加の仮定 $A$ を渡した推論器は
-$Q=(C_q,\tau_q,\epsilon_q)$ を返す．この結果自身に型がつき，
-任意の $C;\Gamma\vdash e:\tau\mid\epsilon$ について
-\[
-Q\succeq_\Gamma
-\bigl(\operatorname{Assume}(A)\land C,\tau,\epsilon\bigr).
-\]
-右辺の制約に解があれば $C_q$ にも解がある．
-\end{theorem}
-
-\section{正規化と主要計算型スキーム}
-ここからは $\operatorname{FV}(\Gamma)=\varnothing$ とする．
-また $X$ に，充足可能な制約から\emph{主要正規形}を返す
-正規化器 $N_X$ を仮定する．解決済み制約には $\top$ と同値なものが
-含まれるとし，$\operatorname{Solved}(R)$ なら
-$\exists\rho.\rho\models_XR$ とする．これは抽象正規化器への仮定であり，
-特定の Rust solver に対する証明ではない．
-Lean では \texttt{ConstraintSystem.PrincipalConstraintProperty} と
-\texttt{ConstraintSystem.PrincipalNormalizer} がこの条件を表す．
-既存の主要計算型スキーム定理は構文的インスタンスの正規化器に適用する．
-
-推論結果 $Q=(C_q,\tau_q,\epsilon_q)$ に新しい出力名
-$a_o,\mu_o$ を付けて，型と効果も正規化の入力に含める：
-\[
-D_Q=C_q\land(a_o=\tau_q)\land(\mu_o\equiv\epsilon_q),
-\qquad N_X(D_Q)=(R,\theta_T,\theta_E).
-\]
-正規形 $(R,\theta)$ が表す評価を
-$\operatorname{Rep}(R,\theta)
-=\{\theta^*\omega\mid\omega\models R\}$ とする．
-$\theta^*\omega$ は，型・効果の代入 $\theta$ を評価 $\omega$ に
-作用させた結果である．
-$F_D$ を，その値を変えると $D$ の真偽が変わり得る
-型・効果変数の集合とする．正規形の一般性は
-\[
-N\succeq_D N'
-\quad\Longleftrightarrow\quad
-\operatorname{Rep}(N')|_{F_D}
-\subseteq\operatorname{Rep}(N)|_{F_D}
-\]
-で比べる．$N$ が主要正規形であるとは，残余制約が解決済みで，
-$\operatorname{Rep}(N)\subseteq\operatorname{Sol}(D)$ を満たし，
-同じ条件を満たす任意の $N'$ に対して $N\succeq_D N'$ となることをいう．
-正規化器は成功時にこの形を返すと仮定する．
-
-\begin{theorem}[正規化後の主要性]
-$C_0;\Gamma\vdash e:\tau_0\mid\epsilon_0$ が導出でき，
-$\operatorname{Assume}(A)\land C_0$ が充足可能なら，
-推論と $D_Q$ の正規化は成功する．結果
-\[
-Q_N=\bigl(R,\theta_T(a_o),\theta_E(\mu_o)\bigr)
-\]
-は任意の宣言的導出に対して
-\[
-Q_N\succeq_\Gamma
-\bigl(\operatorname{Assume}(A)\land C,\tau,\epsilon\bigr)
-\qquad(C;\Gamma\vdash e:\tau\mid\epsilon)
-\]
-を満たす．$N_X(D_Q)$ 自身も $D_Q$ の主要正規形である．
-\end{theorem}
-
-計算型スキームとその具体例を次のように定める．
-$B$ は型変数と効果変数の組である．
+\clearpage
+\section{具体例と Lean 対応}
+\textbf{存在射影}
 \[
 \begin{gathered}
-B=\operatorname{FV}(C,\tau,\epsilon)
-  \setminus\operatorname{FV}(\Gamma),\qquad
-\operatorname{Gen}^{c}_{\Gamma}(C,\tau,\epsilon)
- =\forall B.\ C\Rightarrow(\tau!\epsilon),\\
-\operatorname{Inst}_{\rho}(\forall B.C\Rightarrow(\tau!\epsilon))
- =\{(I_{\omega}(\tau),I_{\omega}(\epsilon))\mid
- \omega\models C,\ \omega|_{\overline B}=\rho|_{\overline B}\},\\
-\sigma_g\succeq\sigma_d\quad\Longleftrightarrow\quad
-\forall\rho.\ \operatorname{Inst}_{\rho}(\sigma_d)
- \subseteq\operatorname{Inst}_{\rho}(\sigma_g).
+eq:\forall\alpha.\operatorname{Eq}(\alpha)\Rightarrow\alpha\to\alpha\to\mathrm{Bool},\\
+\top\models\operatorname{Eq}(\mathrm{Int})\models\exists\alpha.\operatorname{Eq}(\alpha),\\
+\alpha\notin\FV(Q)\Rightarrow
+ \exists\alpha.(Q\land\operatorname{Eq}(\alpha))\equiv_X Q,\\
+\top;[eq]\vdash\mathbf{let}\ 0\ \mathbf{in}\ 0_{\mathrm{int}}:\mathrm{Int}!\varnothing.
 \end{gathered}
 \]
-$\Gamma\vdash_c e:\sigma$ は次の二規則で定める．
-ここでは $\Gamma$ が閉じているため，制約の充足可能性だけで
-一般化の前提を表せる．
+最後の項の最初の $0$ は変数，$0_{\mathrm{int}}$ は整数．
 \[
-\frac{C;\Gamma\vdash e:\tau\mid\epsilon\qquad
-      \operatorname{Sol}(C)\ne\varnothing}
-{\Gamma\vdash_c e:\operatorname{Gen}^{c}_{\Gamma}(C,\tau,\epsilon)}
-\qquad
-\frac{\Gamma\vdash_c e:\sigma_g\qquad
-      \sigma_g\succeq\sigma_d\qquad
-      \exists\rho.\ \operatorname{Inst}_{\rho}(\sigma_d)\ne\varnothing}
-{\Gamma\vdash_c e:\sigma_d}.
+\operatorname{Eq}(\mathrm{Int}),\operatorname{Eq}(\mathrm{Bool}),\quad\mathrm{Int}\ne\mathrm{Bool}
+\quad\Longrightarrow\quad
+\operatorname{Eq}(\alpha)\not\models\alpha=\mathrm{Int}.
 \]
-
-\begin{theorem}[主要計算型スキーム]
-$\Gamma\vdash_c e:\sigma$ とする．追加仮定なし
-($A=\varnothing$) で推論し，$D_Q$ を正規化して得た
-$Q_N=(R,\tau_N,\epsilon_N)$ を一般化すると，
-\[
-\sigma_o=\operatorname{Gen}^{c}_{\Gamma}
-(R,\tau_N,\epsilon_N)
-\]
-は閉じた，充足可能な計算型スキームであり，
-\[
-\Gamma\vdash_c e:\sigma_o,
-\qquad
-\forall\sigma'.\ \Gamma\vdash_c e:\sigma'
-  \Longrightarrow\sigma_o\succeq\sigma'.
-\]
-すなわち，推論された $\sigma_o$ 自身に型がつき，
-同じ項に付けられる全スキームより一般的である．
-\end{theorem}
-
-この結論は handler を含む $e$ について Lean で証明した．
-
-\section{逐次的な制約簡約と一般化}
-値 \textbf{let} の右辺を推論した直後に制約を簡約する．
-簡約器 $S_X$ は正規形を制約として書き戻し，次を満たす：
-\[
-\forall C,\rho.\quad
- \rho\models_X S_X(C)\ \Longleftrightarrow\ \rho\models_X C.
-\tag{$\mathrm{Eq}$}
-\]
-特に $C\models_X\alpha=Int$ なら
-$S_X(C)\models_X\alpha=Int$ である．したがって環境の
-$y:\alpha$ に関する等式は，簡約で消えても残余制約に保持される．
-恒等簡約 $S_X(C)=C$ もこの条件を満たす．具体的な solver が
-等式を除去するときは，その代入を残余制約に書き戻して
-$(\mathrm{Eq})$ を満たす必要がある．
-構文制約の具体例では，Lean の \texttt{simplifyTotal} がこの等価性を
-満たすため，$Eq$・$Show$ を含むクラス制約体系にも適用できる．
-
-逐次生成器 $W_{S_X}$ は値 \textbf{let} で次の順序を使う：
+\textbf{量化と handler}（$T=\key{equalityTypes},\ {\leq}={=},\ X=\key{semantic},\ N=\mathrm{id}$）
 \[
 \begin{gathered}
- W_{S_X}(\Gamma,e_1)=(C_1,\tau_1,\varnothing),\qquad
- C_1'=S_X(C_1),\\
- B_1=\operatorname{FV}(C_1,\tau_1)\setminus\operatorname{FV}(\Gamma),
- \qquad\sigma_1=\forall B_1.\ C_1'\Rightarrow\tau_1,\\
- W_{S_X}(\Gamma,x:\sigma_1,e_2)=(C_2,\tau_2,\epsilon_2).
+\Sigma(o)=\forall\alpha.\alpha\to\alpha,\\
+e_h=\mathbf{handle}_o(\mathbf{perform}\ o\ 0_{\mathrm{int}},\;0,\;0\ 1),\\
+[]\vdash_g e_h:\mathrm{Int}!\varnothing,\\
+\Proj([],e_h,\mathrm{Int},\varnothing)=D_h,\quad\Sat(D_h),\\
+\operatorname{Complete}(S)\Rightarrow
+ \exists R,\theta.\ \Inf^{\mathrm{at}}_{N,S}([],e_h,\mathrm{Int},\varnothing)=\mathsf{solved}(R,\theta),\\
+\Inf^{\mathrm{at}}_{N,S_?}([],e_h,\mathrm{Int},\varnothing)=\mathsf{unresolved}(D_h).
 \end{gathered}
 \]
-実装では一般化する変数の集合を元の生成器から受け継ぎ，
-束縛変数の条件だけを $C_1'$ に置き換える．
-handler の操作節では同じ局所変数の範囲を使う．
-
-\begin{theorem}[逐次推論の健全性・完全性・主要性]
-上の $(\mathrm{Eq})$，操作宣言の閉性，自由変数法則の下で，
-$C_0;\Gamma\vdash e:\tau_0\mid\epsilon_0$ なら
-$W_{S_X}(\Gamma,e)=Q_s=(C_s,\tau_s,\epsilon_s)$ が成功し，
-\[
- C_s;\Gamma\vdash e:\tau_s\mid\epsilon_s,
- \qquad
- \forall C,\tau,\epsilon.\quad
- C;\Gamma\vdash e:\tau\mid\epsilon
- \Longrightarrow Q_s\succeq_\Gamma(C,\tau,\epsilon).
-\]
-また，逐次生成器と元の生成器は成功・失敗が一致する．
-\end{theorem}
-
-\begin{theorem}[逐次結果から得る主要計算型スキーム]
-さらに $X$ の主要正規化器 $N_X$ があり，$\Gamma$ が閉じ，
-$C_0$ が充足可能なら，$Q_s$ の型・効果を出力名に結んだ制約
-$D_{Q_s}$ に $N_X$ を適用して得る計算型スキームは，
-同じ項に付けられるすべての計算型スキームを包含する．
-\end{theorem}
-
-$S_X$ は途中の\emph{等価な制約簡約}，$N_X$ は最後の
-\emph{主要正規形の計算}である．逐次定理は $S_X$ の等価性を
-抽象的に仮定しており，Rust の具体的 solver に対する等価性証明ではない．
-
-\noindent\textbf{解釈上の注意．}
-$\operatorname{Split}(ping,\{ping\},\delta)$ なら
-$\delta=\varnothing$ だが，handler の結果効果 $\chi$ は
-別の変数である．$\chi=\varnothing$ は解の一つであり，
-包含制約だけから一意には決まらない．
-
-\section*{Lean との対応}
-\begin{center}
+\textbf{対応表}（名前空間 \key{EHMX.HMX}）
 \small
-\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.31\linewidth}|>{\raggedright\arraybackslash}p{0.58\linewidth}}
-本文の結果 & Lean の定理 \\\hline
-制約体系と剛性操作節 &
-\texttt{ConstraintSystem.clauseValid\_iff\_handlerClause}\\
-効果の除去・局所変数の射影 &
-\texttt{Constraint.split\_iff}, \texttt{Constraint.project\_holds\_iff},
-\texttt{Generic.Scheme.generalize\_instance\_iff\_residual}\\
-生成と簡約の健全性 &
-\texttt{Generic.generateFresh\_sound}, \texttt{Generate.sound},
-\texttt{simplify\_equiv}, \texttt{resolveX\_equiv}\\
-抽象 $X$ の核となる式の完全性 &
-\texttt{Generic.Typing.core\_generate\_complete}\\
-抽象 $X$ の実行可能な変数参照の主要性 &
-\texttt{Generic.generateFresh\_var\_principal},
-\texttt{Generic.Scheme.instantiateProjected\_groundInstance}\\
-基本制約の自由変数法則と生成器の番号の単調性 &
-\texttt{syntaxSystem\_lawfulGeneratedFV},
-\texttt{Generic.generate\_next\_mono},
-\texttt{Generic.generateFresh\_support\_below}\\
-抽象 $X$ の式構成段階 &
-\texttt{Generic.generate\_var\_coversAt},
-\texttt{Generic.Output.CoversAt.lam/app/letMono/letVal/perform}\\
-抽象 $X$ の handler を含む完全性・主要性 &
-\texttt{Generic.Typing.generate\_complete},
-\texttt{Generic.Typing.generateFresh\_principal}\\
-抽象 $X$ の handler を含む主要スキーム &
-\texttt{Generic.Typing.infer\_principal\_scheme}\\
-逐次生成と主要計算型スキーム &
-\texttt{Generic.generateSequentialFresh\_correct},
-\texttt{Generic.Typing.generateSequentialFresh\_principal},
-\texttt{Generic.Typing.inferSequential\_principal\_scheme},
-\texttt{Generic.Typing.classSequentialFresh\_principal}\\
-handler のスコープに使う補題 &
-\texttt{Generic.generate\_effect\_fresh},
-\texttt{Generic.generated\_handlerScope\_of\_runs},
-\texttt{Generic.generated\_clauseScope\_of\_bounds}\\
-古い自由変数の出所 &
-\texttt{Generic.generate\_variable\_old\_support},
-\texttt{Generic.Output.return\_old\_below\_body},
-\texttt{Generic.Output.handler\_old\_support},
-\texttt{Generic.generate\_support\_origin}\\
-操作節の量化された証人 &
-\texttt{Generic.Output.CoversAt.handlerClause\_of\_aligned}\\
-抽象 $X$ の値 let・変数・操作節の意味的補題 &
-\texttt{Generic.GeneratedCoversAcross.letVal},
-\texttt{Generic.Context.variable\_complete\_projected},
-\texttt{Generic.GeneratedCovers.handlerClause}\\
-抽象 $X$ の正規化後の主要性（生成結果の主要性を前提） &
-\texttt{Generic.ComputationSchemeTyping.}\par
-\texttt{infer\_principal\_scheme\_}\par
-\texttt{exists\_of\_mono}\\
-生成の完全性と主要性 &
-\texttt{Typing.generate\_complete}, \texttt{Typing.generateFresh\_principal}\\
-推論結果の主要性 &
-\texttt{Typing.inferQualifiedTotal\_principal},
-\texttt{Typing.inferQualifiedTotal\_realizable}\\
-正規化後の主要性 &
-\texttt{Typing.inferQualifiedTotal\_normalized\_exists}\\
-主要計算型スキーム &
-\texttt{ComputationSchemeTyping.infer\_principal\_scheme}
-\end{tabular}
-\end{center}
-
-\appendix
-\section{操作節の局所変数の例}
-
-\[
-\begin{gathered}
-\Sigma(ping)=\forall\beta.\beta\to\beta,\qquad
-id:\forall\gamma.\arr{\gamma}{\varnothing}{\gamma},\\
-H_{id}=\lambda y.\mathbf{handle}\ (\mathbf{perform}\ ping\ y)\ \mathbf{with}\
-\{\mathbf{return}\ r\mapsto r;\ ping(x;k)\mapsto k\,(id\ x)\}.
-\end{gathered}
-\]
-操作節で $id$ を具体化するときに生成する $u$ は，各 $\beta$ に依存してよい．
-主要な制約は次の形になる．
-\[
-\forall\beta.\exists u.\ (u=\beta).
-\]
-$u:=\beta$ を選べるので，この部分は充足可能である．
-ここで射影するのは操作節の生成中に導入した名前だけである．
-handler の結果型 $a$ や操作の剛性変数 $\beta$ は射影しない．
-
-$ping(x;k)\mapsto x$ では節に新しい名前がない．従って
-$\forall\beta.\exists\varnothing.(\beta=a)$ は
-$\forall\beta.(\beta=a)$ と同じであり，依然として充足不能である．
-
-\clearpage
-\section{導出木：$ping(x;k)\mapsto x$ の制約}
-\[
-\begin{gathered}
-\Sigma(ping)=\forall\alpha.\alpha\to\alpha,\qquad
-\sigma_{id}=\forall\gamma.\arr{\gamma}{\varnothing}{\gamma},\qquad
-T=\arr{\theta}{\varnothing}{\theta},\\
-B=\mathbf{let}\ id=\lambda z.z\ \mathbf{in}\
-  \mathbf{perform}\ ping\ id,\\
-H=\mathbf{handle}\ B\ \mathbf{with}\
-\{\mathbf{return}\ r\mapsto r;\ ping(x;k)\mapsto x\}.
-\end{gathered}
-\]
-
-\noindent\textbf{本体の導出．}
-$id$ は $\sigma_{id}$ から $T$ に具体化し，
-$\mathbf{perform}$ でも操作型引数を $\alpha:=T$ とする．
-\begin{prooftree}
-\AxiomC{$z:\theta\vdash z:\theta\mid\varnothing$}
-\RightLabel{\scriptsize(Abs)}
-\UnaryInfC{$\vdash\lambda z.z:T\mid\varnothing$}
-\AxiomC{$id:\sigma_{id}\vdash id:T\mid\varnothing$}
-\RightLabel{\scriptsize(Perform $\alpha:=T$)}
-\UnaryInfC{$id:\sigma_{id}\vdash\mathbf{perform}\ ping\ id:T\mid\{ping\}$}
-\RightLabel{\scriptsize(LetVal)}
-\BinaryInfC{$\vdash B:T\mid\{ping\}$}
-\end{prooftree}
-
-\noindent\textbf{宣言的な Handle 規則の適用．}
-本体の前提は上で得た．規則全体には return 節と操作節の前提も要る．
-\begin{prooftree}
-\AxiomC{$C;\varnothing\vdash B:T\mid\{ping\}$}
-\AxiomC{$C;r:T\vdash r:a\mid\varnothing$}
-\AxiomC{$D;x:\beta,\,k:\arr{\beta}{\chi}{a}
-  \vdash x:\beta\mid\varnothing$}
-\RightLabel{\scriptsize(Handle)}
-\TrinaryInfC{$C;\varnothing\vdash H:a\mid\chi$}
-\end{prooftree}
-第2前提は $C\models T=a$．操作節では $x:\beta$ が得られ，
-Handle 規則は
-$C\models\forall\beta.(D\land\beta=a\land\varnothing\subseteq\chi)$
-を要求する．
-さらに Split と効果包含が必要である．
-従って $B$ の型だけでは結論を得られない．
-
-\noindent\textbf{Handler の制約生成．}
-操作節では別の剛性変数 $\beta$ を導入する．
-$a$ は handler の結果型で，$\beta\notin\operatorname{FV}(a)$ である．
-\begin{prooftree}
-\AxiomC{$\operatorname{Gen}_{\varnothing}(B)=(T,\{ping\},C_B)$}
-\AxiomC{$\operatorname{Gen}_{r:T}(r)=(T,\varnothing,\top)$}
-\AxiomC{$\operatorname{Gen}_{x:\beta,\,k:\arr{\beta}{\chi}{a}}(x)
-  =(\beta,\varnothing,\top)$}
-\RightLabel{\scriptsize(Handle)}
-\TrinaryInfC{$\operatorname{Gen}_{\varnothing}(H)=(a,\chi,C_H)$}
-\end{prooftree}
-\[
-\begin{aligned}
-C_H={}&C_B\land(T=a)
-\land\underbrace{H_X(\beta;\varnothing;\beta=a\land\varnothing\subseteq\chi)}
-  _{\text{操作節の結果型 }\tau_o=a}\\
-&\land\operatorname{Split}(ping,\{ping\},\delta)
-\land\delta\subseteq\chi\land\varnothing\subseteq\chi.
-\end{aligned}
-\]
-\[
-\operatorname{Split}(ping,\{ping\},\delta)\Longrightarrow\delta=\varnothing,
-\qquad
-\boxed{\forall\beta.\beta=a\quad\text{は充足不能}}.
-\]
-$\beta=Int$ と $\beta=Bool$ を選ぶと，同じ固定型 $a$ が
-$Int$ と $Bool$ の両方に等しくなって矛盾する．
-$C=\top$ では Handle 規則の全称閉包の前提を証明できない．
-$C=C_H$ とすれば形式上は規則を適用できるが，
-$C_H$ を満たす評価は存在しない．
-本体の導出木では，型等式を解いた後の型 $T$ を使った．
-
-\noindent
-$ping(x;k)\mapsto k\,x$ なら，$x:\beta$ と
-$k:\arr{\beta}{\chi}{a}$ から節の結果型は $a$ となり，
-$\forall\beta.\beta=a$ は生成されない．
-
-\clearpage
-\section{元の System F$^{\xi}$ で止まる導出木}
-元の構文には \textbf{let} と暗黙の型適用がないため，前頁の式を
-次の明示的な核の式に直す．
-\[
-\begin{gathered}
-\Sigma(ping)=\forall\beta::\mathbf T.\beta\to\beta,
-\qquad \Delta=\gamma::\mathbf T,\\
-B^\star=\mathbf{perform}\ ping[\arr{\gamma}{\varnothing}{\gamma}]
-  \, (\lambda z:\gamma.z),\\
-H^\star=\mathbf{handle}\ B^\star\ \mathbf{with}\
-\{\mathbf{return}\ r\mapsto r;\ ping(x;k)\mapsto x\}.
-\end{gathered}
-\]
-
-\noindent\textbf{本体は導出できる．}
-\begin{prooftree}
-\AxiomC{$z:\gamma\in(z:\gamma)$}
-\RightLabel{\scriptsize\textsc{TVar}}
-\UnaryInfC{$\Delta\mid z:\gamma\vdash z:\gamma\mid\varnothing$}
-\RightLabel{\scriptsize\textsc{TAbs}}
-\UnaryInfC{$\Delta\mid\varnothing\vdash\lambda z:\gamma.z:
-  \arr{\gamma}{\varnothing}{\gamma}\mid\varnothing$}
-\RightLabel{\scriptsize\textsc{TPerform}
-  $\beta:=\arr{\gamma}{\varnothing}{\gamma}$}
-\UnaryInfC{$\Delta\mid\varnothing\vdash B^\star:
-  \arr{\gamma}{\varnothing}{\gamma}\mid\{ping\}$}
-\end{prooftree}
-
-\noindent\textbf{Handler の導出は操作節で止まる．}
-結果型 $\arr{\gamma}{\varnothing}{\gamma}$，
-結果効果 $\varnothing$ に具体化すると，
-\textsc{THandler} の効果条件は
-$\{ping\}\subseteq\{ping\}\cup\varnothing=\{ping\}$ となり成立する．
-return 節も \textsc{TVar} から
-$\Delta\mid r:\arr{\gamma}{\varnothing}{\gamma}
-\vdash r:\arr{\gamma}{\varnothing}{\gamma}\mid\varnothing$ と導ける．
-残る前提だけを枠で示す．
-\[
-\Gamma_{op}=x:\beta,\quad
-k:\arr{\beta}{\varnothing}{(\arr{\gamma}{\varnothing}{\gamma})}.
-\]
-\begin{prooftree}
-\AxiomC{$\Delta\mid\varnothing\vdash B^\star:
-  \arr{\gamma}{\varnothing}{\gamma}\mid\{ping\}$}
-\AxiomC{$\Delta\mid r:\arr{\gamma}{\varnothing}{\gamma}
-  \vdash r:\arr{\gamma}{\varnothing}{\gamma}\mid\varnothing$}
-\AxiomC{$\boxed{\Delta,\beta::\mathbf T\mid\Gamma_{op}
-  \overset{?}{\vdash}x:\arr{\gamma}{\varnothing}{\gamma}
-  \mid\varnothing}$}
-\RightLabel{\scriptsize\textsc{THandler}}
-\BinaryInfC{$\Delta\mid\varnothing\overset{?}{\vdash}
-  \left\{\begin{aligned}
-    \mathbf{return}\ r&\mapsto r;\\
-    ping(x;k)&\mapsto x
-  \end{aligned}\right\}
-  :\arr{\gamma}{\varnothing}{\gamma}\mid\{ping\}
-  \Rightarrow\arr{\gamma}{\varnothing}{\gamma}\mid\varnothing$}
-\RightLabel{\scriptsize\textsc{THandle}}
-\BinaryInfC{$\Delta\mid\varnothing\overset{?}{\vdash}
-  H^\star:\arr{\gamma}{\varnothing}{\gamma}\mid\varnothing$}
-\end{prooftree}
-枠は未証明の前提であり，これは完成した導出木ではない．
-操作節の $x$ に \textsc{TVar} を適用すると，
-\begin{prooftree}
-\AxiomC{$x:\beta\in\Gamma_{op}$}
-\RightLabel{\scriptsize\textsc{TVar}}
-\UnaryInfC{$\Delta,\beta::\mathbf T\mid\Gamma_{op}
-  \vdash x:\beta\mid\varnothing$}
-\end{prooftree}
-\noindent
-$x$ の型は $\beta$ であって
-$\arr{\gamma}{\varnothing}{\gamma}$ ではない．
-\textsc{TSub} で関数型に変えるには
-\[
-\boxed{\Delta,\beta::\mathbf T\vdash
-  \beta<:\arr{\gamma}{\varnothing}{\gamma}}
-\]
-が必要だが，元の部分型規則は型変数に対して反射律
-$\beta<:\beta$ しか与えず，外側で固定した関数型には導けない．
-結果型を別の外側の型 $R$ に変えても $\beta<:R$ が必要になる．
-効果 $\varnothing\subseteq\epsilon_o$ は障害ではない．
-したがって $H^\star$ には元の System F$^{\xi}$ の
-完成した型付け導出木がない．前頁の
-$\forall\beta.\beta=a$ は，同じ障害を EHM(X) の等式制約で表したもの．
-
+\begin{longtable}{@{}p{.38\linewidth}p{.59\linewidth}@{}}
+\toprule
+数式・保証 & Lean\\\midrule
+$\Gen,\Proj,\Inf^{\mathrm{at}},\Inf$ & \key{generate}, \key{generateProjected}, \key{inferAt}, \key{infer}\\
+部分・完全 solver & \key{PartialSolver}, \key{PartialSolver.Complete}\\
+契約の非計算的モデル & \key{PartialSolver.semantic\_complete}\\
+固定した生成の健全性 & \key{generate\_sound}\\
+固定した生成の完全性 & \key{Inference.groundComplete}\\
+射影後の正確性 & \key{generateProjected\_ground\_iff}\\
+開環境の成功時健全性 & \key{inferAt\_ground\_sound}, \key{inferAt\_sound}\\
+開環境の有限因子 & \key{infer\_principal\_open}\\
+実際の結果の主要性 & \key{infer\_principal\_closed}\\
+期待型なしの条件付き完全性 & \key{infer\_complete}\\
+不整合・未解決 & \key{inferAt\_inconsistent}, \key{inferAt\_unresolved}\\
+handler の具体例 & \key{AlgorithmExamples.resumeIdentity\_ground},\\
+ & \key{resumeIdentity\_generated}, \key{resumeIdentity\_complete}, \key{resumeIdentity\_deferred}\\
+\bottomrule
+\end{longtable}
+\normalsize
+\textbf{独立の課題：}具体的 solver の計算可能な構成と契約充足，環境代入の構文的実装，実行時安全性．
+\begin{thebibliography}{9}
+\bibitem{Sulzmann2000} M. Sulzmann.
+\emph{A General Framework for Hindley/Milner Type Systems with Constraints}.
+PhD thesis, 2000, \S\S4.2--4.4.
+\href{https://www.researchgate.net/publication/213884919_A_General_Framework_for_HindleyMilner_Type_Systems_with_Constraints}{原典}.
+\bibitem{OutsideIn} D. Vytiniotis, S. Peyton Jones, T. Schrijvers, M. Sulzmann.
+\emph{OutsideIn(X): Modular type inference with local assumptions}. JFP, 2011,
+\S\S3.6, 6.4.
+\href{https://simon.peytonjones.org/assets/pdfs/outsideinx.pdf}{原典}.
+\end{thebibliography}
 \end{document}

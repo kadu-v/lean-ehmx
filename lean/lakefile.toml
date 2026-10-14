@@ -1,6 +1,6 @@
-name = "lean-system-f-xi"
+name = "lean-ehmx"
 version = "0.1.0"
-defaultTargets = ["SystemFXi"]
+defaultTargets = ["EHMX"]
 
 [[require]]
 name = "mathlib"
@@ -8,4 +8,4 @@ scope = "leanprover-community"
 rev = "v4.34.1"
 
 [[lean_lib]]
-name = "SystemFXi"
+name = "EHMX"
