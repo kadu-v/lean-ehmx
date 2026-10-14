@@ -4,6 +4,7 @@ import EHMX.HMX.ContextApproximation
 import EHMX.HMX.DerivationTransformation
 import EHMX.HMX.FreshNormalForms
 import EHMX.HMX.AlgorithmCorrectness
+import EHMX.HMX.ReconstructionGeneralization
 
 namespace EHMX.HMX
 variable {T : TypeDomain} {O : TypeOrder T}
@@ -42,7 +43,7 @@ def inferTerm (sig : Signature T) (X : Constraints T O) (N : X.Simplifier)
     (Effect.var (g.support.shiftEffects 0))
 
 def reconstructedScheme (g : Context X) (n : X.NormalForm) : ComputationScheme X :=
-  ComputationScheme.generalize (g.subst n.substitution) n.residual
+  ComputationScheme.generalizeWithSupport (n.substitution.imageSupport g.support) n.residual
     (n.substitution.types (g.support.shiftTypes 0))
     (n.substitution.effects (g.support.shiftEffects 0))
 
@@ -287,17 +288,20 @@ private def Substitution.withOutputs (σ : Substitution T) (a b : Nat)
   effects_outside := by intro i hi; simp only [Names.union, Finset.mem_union,
     Finset.mem_singleton, not_or] at hi; simp [hi.2, σ.effects_outside i hi.1]
 
-/-- Acceptance for arbitrary qualified target judgments, including open
-environments and handlers. This theorem asserts existence of an output; the
-qualified comparison and validity of its derivation in S are separate. -/
-theorem inferTerm_complete_acceptance {sig : Signature T} {X : Constraints T O}
+/-- Completeness at the actual fresh output slots. A single factor preserves
+the original environment and the target type and immediate effect. -/
+theorem inferTerm_complete_mono {sig : Signature T} {X : Constraints T O}
     (N : X.Simplifier) (P : X.ScopedPrincipalNormalizer)
     (closure : X.SolvedClosure P.solved) {g : Context X} {e : Expr}
-    (σ : Substitution T) {c : X.Formula} {s : Scheme X} {eff : Effect}
-    (typed : Typing sig X P.solved c (g.subst σ) e s eff)
+    (σ : Substitution T) {c : X.Formula} {t : T.Term} {eff : Effect}
+    (typed : Typing sig X P.solved c (g.subst σ) e (.mono t) eff)
     (real : (g.subst σ).Realizable c) :
-    ∃ n, inferTerm sig X N P g e = some (.reconstructed n) := by
-  obtain ⟨c', t, _, mono, real'⟩ := typed.mono_strengthening P.solved_satisfiable closure real
+    ∃ n, inferTerm sig X N P g e = some (.reconstructed n) ∧
+      ∃ φ : Substitution T,
+        (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v) g.support) ∧
+        X.Entails c (X.subst φ n.residual) ∧
+        ∀ v, T.eval (φ.pullback v) (reconstructedScheme g n).result = T.eval v t ∧
+          (reconstructedScheme g n).effect.eval (φ.pullback v).effects = eff.eval v.effects := by
   let a := g.support.shiftTypes 0
   let b := g.support.shiftEffects 0
   let θ := σ.withOutputs a b t eff
@@ -310,20 +314,49 @@ theorem inferTerm_complete_acceptance {sig : Signature T} {X : Constraints T O}
     · intro i hi
       have hb : i ≠ b := by intro h; apply fresh.2; simpa only [h, b] using hi
       simp [θ, Substitution.withOutputs, Substitution.pullback, hb]
-  have ground (v : Valuation T.Value) (hv : X.holds c' v) :
+  have ground (v : Valuation T.Value) (hv : X.holds c v) :
       GroundTyping sig O (g.ground (θ.pullback v)) e
         (T.eval (θ.pullback v) (T.var a)) ((Effect.var b).eval (θ.pullback v).effects) := by
-    obtain ⟨tree, _⟩ := mono
-    have ht := tree.ground v hv (real'.ground hv) _ (O.refl _)
+    obtain ⟨tree, _⟩ := typed
+    have ht := tree.ground v hv (real.ground hv) _ (O.refl _)
     rw [Context.ground_subst, ← Context.ground_support (same v)] at ht
     simpa [θ, Substitution.pullback, Substitution.withOutputs, T.eval_var, Effect.eval, Effect.var] using ht
-  obtain ⟨v, hv⟩ := (X.admissible_satisfiable_iff c').mp (mono.to_satisfiable P.solved_satisfiable).root.1
+  obtain ⟨v, hv⟩ := (X.admissible_satisfiable_iff c).mp (typed.to_satisfiable P.solved_satisfiable).root.1
   obtain ⟨d, generated, _, cover⟩ := Inference.groundComplete_projected_run N g e (T.var a) (Effect.var b)
     ⟨_, ground v hv⟩
-  have entails : X.Entails c' (X.subst θ d) := fun v hv =>
+  have entails : X.Entails c (X.subst θ d) := fun v hv =>
     (X.holds_subst _ _ _).mpr (cover _ (ground v hv))
-  obtain ⟨n, run, _⟩ := P.complete_of_substitution closure.rename
-    (reconstructionScope_covers X g (T.var a) (Effect.var b) d) θ mono.root.1 entails
-  exact ⟨n, by simp [inferTerm, inferTermAt, a, b, generated, run]⟩
+  obtain ⟨n, run, φ, factor, residual⟩ := P.complete_of_substitution closure.rename
+    (reconstructionScope_covers X g (T.var a) (Effect.var b) d) θ typed.root.1 entails
+  refine ⟨n, by simp [inferTerm, inferTermAt, a, b, generated, run], φ, ?_, residual, ?_⟩
+  · intro v
+    exact ((factor v).mono
+      ((Inference.Protected.context g (T.var a) (Effect.var b)).trans
+        (Names.subset_union_left _ _))).trans (same v)
+  · intro v
+    have ha := (factor v).1 a
+      (Finset.mem_union_left _ ((Inference.Protected.type g (T.var a) (Effect.var b)).1
+        (by simp [T.support_var])))
+    have hb := (factor v).2 b
+      (Finset.mem_union_left _ (Inference.Protected.effect g (T.var a) (Effect.var b)
+        (by simp [Effect.var])))
+    exact ⟨by simpa [a, θ, Substitution.withOutputs, Substitution.pullback,
+        reconstructedScheme, ComputationScheme.generalizeWithSupport] using ha,
+      by simpa [b, θ, Substitution.withOutputs, Substitution.pullback,
+        reconstructedScheme, ComputationScheme.generalizeWithSupport] using hb⟩
+
+
+/-- Acceptance for arbitrary qualified target judgments, including open
+environments and handlers. The comparison is proved separately. -/
+theorem inferTerm_complete_acceptance {sig : Signature T} {X : Constraints T O}
+    (N : X.Simplifier) (P : X.ScopedPrincipalNormalizer)
+    (closure : X.SolvedClosure P.solved) {g : Context X} {e : Expr}
+    (σ : Substitution T) {c : X.Formula} {s : Scheme X} {eff : Effect}
+    (typed : Typing sig X P.solved c (g.subst σ) e s eff)
+    (real : (g.subst σ).Realizable c) :
+    ∃ n, inferTerm sig X N P g e = some (.reconstructed n) := by
+  obtain ⟨c', t, _, mono, real'⟩ := typed.mono_strengthening P.solved_satisfiable closure real
+  obtain ⟨n, run, _⟩ := inferTerm_complete_mono N P closure σ mono real'
+  exact ⟨n, run⟩
 
 end EHMX.HMX

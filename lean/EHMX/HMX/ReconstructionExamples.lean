@@ -1,5 +1,6 @@
 import EHMX.HMX.TermReconstruction
 import EHMX.HMX.ReconstructionSoundness
+import EHMX.HMX.ReconstructionCompleteness
 import EHMX.HMX.OpenExamples
 
 namespace EHMX.HMX.ReconstructionExamples
@@ -336,6 +337,26 @@ theorem mixed_reconstruction_sound {n : X.NormalForm}
     reconstruction_signature_closed run
   · rw [hsol]; exact mixed_admissible
   · exact mixed_realizable
+
+/-- Theorem 17 applied to the same-solved-set judgment of the mixed open
+program: two value lets, perform, and nested handlers. -/
+theorem mixed_reconstruction_complete {n : X.NormalForm}
+    (run : inferTermAt signature X (Constraints.Simplifier.identity X) P
+      mixedContext mixedReconstruction (.var 0) (Effect.var 0) = some (.reconstructed n)) :
+    ∃ m, inferTerm signature X (Constraints.Simplifier.identity X) P
+        mixedContext mixedReconstruction = some (.reconstructed m) ∧ ∃ φ,
+      (∀ v, (m.substitution.pullback (φ.pullback v)).AgreeOn
+        (n.substitution.pullback v) mixedContext.support) ∧
+      Instance X n.residual ((reconstructedScheme mixedContext m).valueScheme.subst φ)
+        (.mono (n.substitution.apply (.var 0))) ∧
+      X.Entails n.residual (X.subst φ (reconstructedScheme mixedContext m).outer) ∧
+      ∀ v, (reconstructedScheme mixedContext m).effect.eval (φ.pullback v).effects =
+        ((Effect.var 0).subst n.substitution.effects).eval v.effects := by
+  have typed := mixed_reconstruction_sound P hsol closure lift run
+  have real : (mixedContext.subst n.substitution).Realizable n.residual :=
+    (mixed_realizable.subst n.substitution).weaken (fun v _ =>
+      (X.holds_subst _ _ _).mpr ((X.holds_top _).mpr trivial))
+  exact inferTerm_complete_scheme _ P closure n.substitution typed real
 
 end ConditionalSoundness
 

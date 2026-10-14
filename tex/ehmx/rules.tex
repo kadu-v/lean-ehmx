@@ -1049,7 +1049,7 @@ C\vdash s\mapsto_S t
 今回の定理7の証明は \key{ScopedPrincipalNormalizer} と上記の追加条件を使う．
 生成される単相射影・操作・handler への拡張と定理16は以下で述べる．
 具体的制約系が全前提を満たす証明，任意の qualified 型への射影変換，
-定理17の qualified 比較および系7は未証明である．
+系7は未証明である．定理17の qualified 比較は以下の条件で証明した．
 
 \clearpage
 \textbf{再構成算法と証明範囲}
@@ -1170,7 +1170,8 @@ $\forall B.\exists W$ の条件と変数の非脱出をそろえて handler 規�
 型・効果の代入先と束縛名の衝突を検証する．
 任意の qualified 型への \key{existsIntro} は変換対象外であり，
 その除外も確認する．具体的制約系が正規化等の全追加条件を満たす証明は別途必要である．
-この結果は定理17の qualified 比較や系7の主要型を含まない．
+この定理16の結果とは別に，定理17の qualified 比較を以下で証明する．
+系7の主要型は未証明である．
 
 \clearpage
 \begin{theorem}[単相判断の完全性と有限因子]
@@ -1202,18 +1203,113 @@ $\operatorname{SolvedClosure}(S)$ の下で，
 \end{theorem}
 \key{inferTerm\_complete\_acceptance}．対象スキームの $\Real_C(s)$ は不要．
 
+\clearpage
+\textbf{再構成後の一般化：元の環境の変数の代入先を保持する}
+
+再構成結果を $n=(R,\psi,\tau,\epsilon_o)$ と書く．
+$\tau,\epsilon_o$ は代入済みの結果型・効果である．
+元の環境の support を $A=\supp\Gamma$ として，
+\[
+\begin{aligned}
+U_T&=\bigcup_{i\in A_T}\supp_T(\psi_T(i)),\\
+U_E&=\bigcup_{i\in A_T}\supp_E(\psi_T(i))
+       \ \cup\bigcup_{j\in A_E}\FV_E(\psi_E(j)),\\
+B&=(\supp R\cup\supp\tau\cup(\varnothing,\FV_E(\epsilon_o)))\setminus U,\\
+s_o&=\forall B.\ R\Rightarrow\tau,\qquad C_o=\exists B.R.
+\end{aligned}
+\]
+\key{Substitution.imageSupport} と
+\key{ComputationScheme.generalizeWithSupport} がこの構成を定義する．
+\key{reconstructedScheme} は $B,R,\tau,\epsilon_o$ を保持する計算スキームであり，
+その \key{valueScheme} が $s_o$，\key{outer} が $C_o$ である．
+
+制約の support は自由変数の上界であり，代入後に無関係な代入先を含む場合がある．
+そのため，$\supp(\Gamma[\psi])$ を一般化の禁止範囲として使うと，
+閉じた qualified 環境の下でも必要な量化を失うことがある．
+上の $U$ は元の環境で使う名前の代入先だけを集める．
+\[
+\Gamma[\psi]\text{ は }B\text{ を自由に含まない}.
+\]
+この性質により，\key{Typing.reconstructed\_computation} は
+$R;\Gamma[\psi]\vdash_S e:\tau!\epsilon_o$ を同じ $S$ の計算スキームへ一般化する．
+外側制約の許容性には \key{SolvedClosure.project} を使う．
+
+\textbf{比較時に量化変数が外へ出ないこと}
+型領域が \key{equalityTypes} の場合，
+\[
+\begin{gathered}
+\forall\rho.\ \psi^*(\phi^*\rho)=_{\supp\Gamma}\sigma^*\rho,\qquad
+D\cap(\supp\Gamma\cup\operatorname{range}\sigma)=\varnothing\\
+\Longrightarrow\quad s_o[\phi]\text{ は }D\text{ を自由に含まない}.
+\end{gathered}
+\]
+\key{ComputationScheme.generalizeWithSupport\_subst\_avoids}．
+全評価で型・効果の値が一致するときの support の包含を証明して使う．
+これは追加の公理ではなく，具体的な型項と有限集合の効果についての補題である．
+この箇所に任意の \key{TypeDomain} を使えることは未証明である．
+
+\clearpage
+\textbf{定理17相当：qualified 型までの再構成完全性}
+
+型領域を \key{equalityTypes} とし，型の順序と制約系 $X$ は抽象とする．
+
+主要正規化器 \key{ScopedPrincipalNormalizer} $P$ と
+\key{SolvedClosure}$(P.\mathrm{solved})$ を仮定し，$S=P.\mathrm{solved}$ と置く．
+
+\begin{theorem}[同じ代入による環境・型スキーム・外側制約の比較]
+\[
+\begin{gathered}
+\operatorname{Typing}_S(C,\Gamma[\sigma],e,s,\epsilon),\qquad
+\Real_C(\Gamma[\sigma])\\
+\Longrightarrow\quad\exists n,\phi.\quad
+\mathcal T(\Gamma,e)=\mathsf{reconstructed}(n),\\
+\forall\rho.\ \psi^*(\phi^*\rho)=_{\supp\Gamma}\sigma^*\rho,\\
+C\vdash_i s_o[\phi]\succeq s,\qquad C\models\phi C_o,\\
+\forall\rho.\ \eval{\epsilon_o}_{\phi^*\rho}=\eval\epsilon_\rho.
+\end{gathered}
+\]
+ここで $n=(R,\psi,\tau,\epsilon_o)$，$s_o,C_o$ は前頁の一般化による．
+\end{theorem}
+\key{inferTerm\_complete\_scheme}．
+環境の実現可能性は $C$ の下で要求する．$\Real_\top(\Gamma)$ や $\Real_C(s)$ は不要．
+定理16の lifting 条件，恒真な解決済み制約，効果等式の追加閉性も要求しない．
+
+\textbf{証明の構成}
+単相の場合，\key{inferTerm\_complete\_mono} が推論成功と一つの代入 $\phi$，
+残余制約の含意，環境・結果型・効果の一致を与える．
+\key{ComputationScheme.instance\_of\_factor} で型スキームの比較を得る．
+
+$s=\forall D.Q\Rightarrow t$ の場合，束縛名を $C,\Gamma,\sigma$ から離して改名する．
+対象導出と環境の実現可能性から $C\models\exists D.Q$ を得る．
+制約を $C\land Q$ に強めて単相の結果を適用し，前頁の非脱出の補題と
+\key{Instance.forallRight} により qualified 型へ戻す．
+最後に \key{ComputationScheme.outer\_of\_typing\_instance} が，
+型付けの ground 証人と得られた比較を使い，同じ $\phi$ で $C\models\phi C_o$ を導く．
+
+対象導出には qualified 型への \key{existsIntro}，多相 let，perform，handler を含む．
+任意の qualified 射影の\emph{導出変換}は未証明だが，この完全性の証明はその変換を使わない．
+
+\textbf{検証}
+閉じた qualified 環境の下の恒等関数について，実際の生成制約の局所主要正規形と
+一般化を確認した．対象スキームが実現可能でない例と，型・効果の名前衝突を伴う
+qualified 射影には，実在する $\Sat_X$ 正規化器で公開定理を適用した．
+多相 let・perform・入れ子 handler の条件付き健全性出力にも，同じ $S$ で適用した．
+
+\clearpage
+\textbf{定理7・16・17と残る課題}
 \begin{center}\small
 \begin{tabular}{@{}ll@{}}\toprule
 学位論文との対応 & 状態\\\midrule
 定理7：対象13規則の導出変換 & 明示した追加条件下で証明済み\\
 定理16：$\operatorname{Typing}_S$ での出力健全性 & 上記の追加条件・環境条件下で証明済み\\
 定理17：受理・単相判断の有限因子 & 上記の閉性条件下で証明済み\\
-定理17：同じ因子による qualified 型・外側条件の比較 & 未証明\\
+定理17：qualified 型・外側条件の同時比較 & 上記の型領域・閉性条件下で証明済み\\
 系7：同じ $S$ 内での主要型 & 未証明\\\bottomrule
 \end{tabular}\end{center}
-handler の $\forall B.\exists J$ を含む生成は，受理定理と条件付き出力健全性の対象．
+handler の $\forall B.\exists J$ を含む生成は，完全性と条件付き出力健全性の対象．
 生成導出について内部の変換と量化・非脱出を保存する．
-任意の qualified 型への射影変換は未証明．
+任意の qualified 型への射影変換と，具体的制約系が全条件を満たす証明は未完了．
+次は定理16・17から，同じ $S$ における閉環境の主要計算型と値の主要型（系7）を導く．
 
 \clearpage
 \section{具体化：正則な型クラス制約}
@@ -1420,6 +1516,10 @@ $\exists\beta.\forall\alpha.\alpha=\beta$ & $\mathsf{unresolved}$\\\bottomrule
 定理16：効果だけの残余 & \key{inferTermAt\_sound\_effectOnly},\\
  & \key{inferTerm\_sound\_effectOnly}\\
 代入後の環境の自己近似 & \key{EffectResiduals.output\_environment\_self}\\
+定理17：qualified 型までの完全性 & \key{inferTerm\_complete\_scheme}\\
+一般化で保持する名前 & \key{Substitution.imageSupport}\\
+同じ $S$ の計算スキームへの一般化 & \key{Typing.reconstructed\_computation}\\
+比較から外側条件の含意 & \key{ComputationScheme.outer\_of\_typing\_instance}\\
 $\Gen,\Proj,\Inf^{\mathrm{at}},\Inf$ & \key{generate}, \key{generateProjected}, \key{inferAt}, \key{infer}\\
 部分・完全 solver & \key{PartialSolver}, \key{PartialSolver.Complete}\\
 契約の非計算的モデル & \key{PartialSolver.semantic\_complete}\\

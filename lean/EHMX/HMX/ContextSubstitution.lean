@@ -593,16 +593,13 @@ theorem Instance.subst {X : Constraints T O} {c : X.Formula} {s t : Scheme X}
   · intro d u hd hu
     exact h.subst_trans_mono_under σ hd hu
 
-/-- A finite bound on the free names after substitution. This uses syntactic
-support only as an upper bound and makes no converse assumption. -/
-theorem Scheme.subst_avoids {X : Constraints T O} (s : Scheme X) (σ : Substitution T)
-    (a : Names) (fresh : a.Disjoint (s.support.union σ.range)) :
+/-- Only images of the scheme's free support matter. Assignments to unrelated
+names, including future quantified output parameters, do not affect freshness. -/
+theorem Scheme.subst_avoids_of_images {X : Constraints T O}
+    (s : Scheme X) (σ : Substitution T) (a : Names)
+    (typeImage : ∀ {i}, i ∈ s.support.types → a.Disjoint (T.support (σ.types i)))
+    (effectImage : ∀ {i}, i ∈ s.support.effects → Disjoint a.effects (σ.effects i).vars) :
     (s.subst σ).Avoids a := by
-  have typeImage {i : Nat} (hi : i ∈ s.support.types) :
-      a.Disjoint (T.support (σ.types i)) := fresh.mono_right (σ.type_support_subset _ hi)
-  have effectImage {i : Nat} (hi : i ∈ s.support.effects) :
-      Disjoint a.effects (σ.effects i).vars := by
-    exact fresh.2.mono_right (σ.effect_support_subset _ hi)
   cases s with
   | mono t =>
       have h := T.support_subst_avoids σ.types σ.effects t a
@@ -661,6 +658,14 @@ theorem Scheme.subst_avoids {X : Constraints T O} (s : Scheme X) (σ : Substitut
         rcases hfree.2 with h | h
         · exact hc.2 i hr h
         · exact Finset.disjoint_left.mp ht'.2 hr h
+
+/-- A finite bound on the free names after substitution. -/
+theorem Scheme.subst_avoids {X : Constraints T O} (s : Scheme X) (σ : Substitution T)
+    (a : Names) (fresh : a.Disjoint (s.support.union σ.range)) :
+    (s.subst σ).Avoids a :=
+  s.subst_avoids_of_images σ a
+    (fun hi => fresh.mono_right (σ.type_support_subset _ hi))
+    (fun hi => fresh.2.mono_right (σ.effect_support_subset _ hi))
 
 theorem Context.subst_avoids {X : Constraints T O} (g : Context X) (σ : Substitution T)
     (a : Names) (fresh : a.Disjoint (g.support.union σ.range)) :
