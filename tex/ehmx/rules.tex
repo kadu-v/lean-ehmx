@@ -973,6 +973,8 @@ C\vdash s\mapsto_S t\quad\iff\quad
 変数，整数，真偽値，関数，適用，値の let，単相 let，Sub，
 $\forall$ 導入，$\forall$ 除去，制約の強化，効果等式，$\alpha$ 改名の13規則からなることを表す．
 追加の \key{existsIntro}，\key{perform}，\key{handle} は含まない．
+原典の図3.1に独立した \key{existsIntro} はなく，これは EHM(X) で追加した
+外側制約の射影規則である．その変換の未完了部分を原典の規則の未証明と混同しない．
 値制限は現行のままであり，式に handler がないことだけではこの条件を満たさない．
 
 \begin{theorem}[定理7相当のスキーム・単相導出変換]
@@ -1048,8 +1050,8 @@ C\vdash s\mapsto_S t
 既存の強い \key{PrincipalNormalizer} を使う有限証人・環境近似の補題は保持するが，
 今回の定理7の証明は \key{ScopedPrincipalNormalizer} と上記の追加条件を使う．
 生成される単相射影・操作・handler への拡張と定理16は以下で述べる．
-具体的制約系が全前提を満たす証明，任意の qualified 型への射影変換，
-系7は未証明である．定理17の qualified 比較は以下の条件で証明した．
+具体的制約系が全前提を満たす証明と，EHM(X) で追加した任意の qualified 型への
+射影変換は未証明である．定理17の qualified 比較と系7は以下の条件で証明した．
 
 \clearpage
 \textbf{再構成算法と証明範囲}
@@ -1171,7 +1173,7 @@ $\forall B.\exists W$ の条件と変数の非脱出をそろえて handler 規�
 任意の qualified 型への \key{existsIntro} は変換対象外であり，
 その除外も確認する．具体的制約系が正規化等の全追加条件を満たす証明は別途必要である．
 この定理16の結果とは別に，定理17の qualified 比較を以下で証明する．
-系7の主要型は未証明である．
+この健全性と定理17の比較を用いた系7も以下で述べる．
 
 \clearpage
 \begin{theorem}[単相判断の完全性と有限因子]
@@ -1296,7 +1298,81 @@ qualified 射影には，実在する $\Sat_X$ 正規化器で公開定理を適
 多相 let・perform・入れ子 handler の条件付き健全性出力にも，同じ $S$ で適用した．
 
 \clearpage
-\textbf{定理7・16・17と残る課題}
+\textbf{系7相当：実際の再構成結果の主要型}
+
+型領域は \key{equalityTypes} とし，定理16で明示した主要正規化・閉性・
+効果等式の追加閉性・lifting・恒真な解決済み制約を仮定する．
+操作宣言は閉じており，$\supp\Gamma=\varnothing$，$\Real_\top(\Gamma)$ とする．
+原典の系7との比較では，この追加条件と値制限を明示する．
+
+\begin{theorem}[閉環境での再構成された主要計算型・値の主要型]
+上記の前提の下で，$\operatorname{Typing}_S(\top,\Gamma,e,s,\epsilon)$ ならば，
+実際の算法の結果 $n$ が存在し，$q=\key{reconstructedScheme}(\Gamma,n)$ として，
+\[
+\begin{gathered}
+\mathcal T(\Gamma,e)=\mathsf{reconstructed}(n),\qquad q.\mathrm{outer}=_e\top,\\
+\operatorname{PrincipalComputationScheme}_S(\Gamma,e,q),\\
+\forall C,t,\eta.\quad\operatorname{Typing}_S(C,\Gamma,e,t,\eta)
+ \Rightarrow \operatorname{FiniteInstance}(q,C,t,\eta),\\
+\forall C,s',\eta.\quad\operatorname{Typing}_S(C,\Gamma,e,s',\eta)
+ \Rightarrow C\vdash_i q.\mathrm{valueScheme}\succeq s',\\
+\operatorname{Value}(e)\Rightarrow
+ \operatorname{PrincipalPair}_S(\Gamma,e,\top,q.\mathrm{valueScheme}).
+\end{gathered}
+\]
+\end{theorem}
+\key{Typing.corollary7}．成功した出力を固定する形は
+\key{inferTerm\_principal\_closed} である．後者では入力環境の許容性を前提とし，
+前者では元の型付けからその許容性を取り出す．
+
+主要計算型は $\top;\Gamma$ で同じ $S$ の計算型付けを持ち，
+任意の対象単相型と効果を比較する．さらに \key{FiniteInstance} は，
+一つの有限代入で全評価について比較し，その代入の定義域を $q$ の量化変数に制限する．
+主要対は通常の型付けと任意の qualified 型への構文的比較を含む．
+非値の式を通常の多相型に一般化する規則は追加しない．
+
+比較対象には qualified な \key{existsIntro} を含む全導出を許す．
+対象型の実現可能性，代入後の環境の許容性，強い正規化器の契約は追加しない．
+環境の閉性を意味論的な自由変数だけで表す形や，任意の \key{TypeDomain} への拡張は
+ここでは主張しない．
+
+\clearpage
+\textbf{系7の証明と検証}
+
+\begin{enumerate}
+\item \key{Context.subst\_approximates\_closed} により
+$\Gamma[\psi]$ から元の $\Gamma$ への近似を構成する．
+捕獲回避代入で束縛名が変わるため，両環境の構文的な等号は仮定しない．
+定理16の証明を近似先の環境を指定できる形に分離し，出力の型付けを元の環境で得る．
+\item 定理17の単相比較の共通部分を
+\key{inferTerm\_complete\_mono\_of\_ground} として使う．
+\key{inferTerm\_finite\_closed} は，各対象判断から得られる推論結果を算法の
+一意性で同じ $n$ にそろえ，比較代入を一般化した変数に制限する．
+\item 閉環境では，残余制約・結果型・効果の support の全体が量化される．
+残余制約の充足可能性から $q.\mathrm{outer}=_e\top$ を導き，
+元の環境での計算型付けを $\top$ の下に戻す．
+\item 有限代入による単相比較を
+\key{Typing.instance\_of\_finite\_sameSolved} に渡し，任意の qualified 型との比較を得る．
+この補題の即時効果を任意に拡張した．
+
+値については
+\key{ComputationTyping.principal\_value\_sameSolved} が通常の主要対を与える．
+\end{enumerate}
+
+\textbf{実在するモデルでの確認}
+$S=\Sat_X$ の非計算的な主要正規化器について，上の前提をすべて満たして
+公開した系7を適用する．この場合，$\exists A.D$ が充足可能なら $D$ も充足可能なので，
+lifting の証人には恒等代入を使える．
+\begin{itemize}
+\item 空環境と空でない閉じた qualified 環境の恒等関数の主要型．
+\item 型・効果の代入先と束縛名の衝突，qualified 型への空でない存在射影．
+\item 実現可能でない対象型との比較．
+\item 多相 let・perform・入れ子 handler を一つに組み合わせた閉環境の主要計算型．
+\item 即時効果が空でない perform の有限代入による比較．
+\end{itemize}
+これは型等式を消去して効果専用の残余を返す具体的 solver の全条件の証明ではない．
+
+\textbf{HMXとの対応と残る課題}
 \begin{center}\small
 \begin{tabular}{@{}ll@{}}\toprule
 学位論文との対応 & 状態\\\midrule
@@ -1304,12 +1380,12 @@ qualified 射影には，実在する $\Sat_X$ 正規化器で公開定理を適
 定理16：$\operatorname{Typing}_S$ での出力健全性 & 上記の追加条件・環境条件下で証明済み\\
 定理17：受理・単相判断の有限因子 & 上記の閉性条件下で証明済み\\
 定理17：qualified 型・外側条件の同時比較 & 上記の型領域・閉性条件下で証明済み\\
-系7：同じ $S$ 内での主要型 & 未証明\\\bottomrule
+系7：同じ $S$ 内での主要型 & 上記の追加条件・閉環境で証明済み\\\bottomrule
 \end{tabular}\end{center}
 handler の $\forall B.\exists J$ を含む生成は，完全性と条件付き出力健全性の対象．
 生成導出について内部の変換と量化・非脱出を保存する．
 任意の qualified 型への射影変換と，具体的制約系が全条件を満たす証明は未完了．
-次は定理16・17から，同じ $S$ における閉環境の主要計算型と値の主要型（系7）を導く．
+次は具体的な型・効果の制約系について，主要正規化・閉性・lifting の前提を証明する．
 
 \clearpage
 \section{具体化：正則な型クラス制約}
@@ -1505,6 +1581,8 @@ $\exists\beta.\forall\alpha.\alpha=\beta$ & $\mathsf{unresolved}$\\\bottomrule
 \clearpage
 \section{抽象定理の Lean 対応}
 \textbf{対応表}（名前空間 \key{EHMX.HMX}）
+\begingroup
+\renewcommand{\arraystretch}{0.94}
 \footnotesize
 \begin{longtable}{@{}p{.38\linewidth}p{.59\linewidth}@{}}
 \toprule
@@ -1517,6 +1595,9 @@ $\exists\beta.\forall\alpha.\alpha=\beta$ & $\mathsf{unresolved}$\\\bottomrule
  & \key{inferTerm\_sound\_effectOnly}\\
 代入後の環境の自己近似 & \key{EffectResiduals.output\_environment\_self}\\
 定理17：qualified 型までの完全性 & \key{inferTerm\_complete\_scheme}\\
+系7：実際の出力の主要型 & \key{inferTerm\_principal\_closed}, \key{Typing.corollary7}\\
+閉環境での有限代入による比較 & \key{inferTerm\_finite\_closed}\\
+元の閉環境への近似 & \key{Context.subst\_approximates\_closed}\\
 一般化で保持する名前 & \key{Substitution.imageSupport}\\
 同じ $S$ の計算スキームへの一般化 & \key{Typing.reconstructed\_computation}\\
 比較から外側条件の含意 & \key{ComputationScheme.outer\_of\_typing\_instance}\\
@@ -1562,6 +1643,7 @@ handler の具体例 & \key{AlgorithmExamples.resumeIdentity\_ground},\\
 \bottomrule
 \end{longtable}
 \normalsize
+\endgroup
 \clearpage
 \begin{thebibliography}{9}
 \bibitem{Sulzmann2000} M. Sulzmann.

@@ -335,11 +335,12 @@ theorem Typing.instance_of_finite_sameSolved {sig : Signature T} {X : Constraint
     (hreal : g.Realizable X.top)
     (finite : ∀ c t eff, Typing sig X solved c g e (.mono t) eff →
       result.FiniteInstance c t eff)
-    {c' : X.Formula} {s' : Scheme X} (typed' : Typing sig X solved c' g e s' ∅) :
+    {c' : X.Formula} {s' : Scheme X} {eff' : Effect}
+    (typed' : Typing sig X solved c' g e s' eff') :
     Instance X c' (.qualified result.bound result.condition result.result) s' := by
   let s : Scheme X := .qualified result.bound result.condition result.result
   cases s' with
-  | mono t' => exact (finite c' t' ∅ typed').instance
+  | mono t' => exact (finite c' t' eff' typed').instance
   | qualified a q t' =>
     obtain ⟨b, q', u, alpha, fresh⟩ := Scheme.fresh_alpha a q t' ((X.support c').union s.support)
     have hc : X.Avoids c' b := by
@@ -370,7 +371,7 @@ theorem Typing.instance_of_finite_sameSolved {sig : Signature T} {X : Constraint
       obtain ⟨v, hv⟩ := (X.admissible_satisfiable_iff _).mp (typed'.to_satisfiable sound).root.1
       obtain ⟨w, hw, hq⟩ := (X.holds_exists _ _ v).mp (projected v hv)
       exact ⟨w, (X.holds_and _ _ w).mpr ⟨(X.holds_agreeOutside hc hw).mpr hv, hq⟩⟩
-    have mono : Typing sig X solved (X.and c' q') g e (.mono u) ∅ := by
+    have mono : Typing sig X solved (X.and c' q') g e (.mono u) eff' := by
       have inst := (renamed.weaken (conjoin c' q' root.1 renamed.root.2.2 joint)
         (X.entails_left c' q')).forallElim (Substitution.identity T)
         (by simp [Substitution.identity, Names.empty])
@@ -382,7 +383,7 @@ theorem Typing.instance_of_finite_sameSolved {sig : Signature T} {X : Constraint
       intro v _
       apply (X.holds_le _ _ v).mpr
       simpa only [Substitution.eval_apply, Substitution.identity_pullback] using O.refl (T.eval v u)
-    have cover := (finite (X.and c' q') u ∅ mono).instance
+    have cover := (finite (X.and c' q') u eff' mono).instance
     have quantified := Instance.forallRight hc hs cover
     have equivalent : X.Equivalent (X.and c' (X.existsNames b q')) c' :=
       ⟨X.entails_left _ _, fun v hv => (X.holds_and _ _ v).mpr ⟨hv, projected v hv⟩⟩

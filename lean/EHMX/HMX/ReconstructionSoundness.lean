@@ -86,6 +86,38 @@ end EHMX.HMX
 
 namespace EHMX.HMX
 variable {O : TypeOrder equalityTypes} {X : Constraints equalityTypes O}
+/-- Reconstruction soundness in any supplied approximation of the substituted
+input environment. This also permits returning to a closed original context. -/
+theorem inferTermAt_sound_of_approximation {sig : Signature equalityTypes}
+    (N : X.Simplifier) (P : X.ScopedPrincipalNormalizer)
+    (cl : X.SolvedClosure P.solved)
+    (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
+      X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
+      X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
+    (lift : ∀ (a : Names) (d : X.Formula),
+      X.Admissible P.solved (X.existsNames a d) →
+      ∃ θ : Substitution equalityTypes, θ.domain.Subset a ∧
+        X.Admissible P.solved (X.subst θ d))
+    {r : X.Formula} (hr : P.solved r) (truth : ∀ v, X.holds r v)
+    (hsig : sig.Closed)
+    {g g' : Context X} {e : Expr} {t : Ty} {eff : Effect} {n : X.NormalForm}
+    (run : inferTermAt sig X N P g e t eff = some (.reconstructed n))
+    (env : (g.subst n.substitution).Approximates P.solved n.residual g') :
+    Typing sig X P.solved n.residual g' e
+      (.mono (n.substitution.apply t)) (eff.subst n.substitution.effects) := by
+  obtain ⟨d, generated, normalized, _⟩ := inferTermAt_normal run
+  obtain ⟨solved, _, entails⟩ := P.sound (reconstructionScope_covers X g t eff d) normalized
+  obtain ⟨⟨tree, good⟩, _⟩ := Inference.sound_reconstruction (generateProjected_sound N hsig generated)
+  have adm : X.Admissible P.solved n.residual :=
+    ⟨n.residual, solved, X.entails_refl _, X.entails_refl _⟩
+  obtain ⟨s', typed, approx⟩ :=
+    Derivation.transform_to_solved_subst_reconstruction P cl allow lift hr truth tree good n.substitution n.residual
+      g' adm entails env
+  exact typed.instance_mono (approx.2.2 _ trivial
+    (Scheme.Approximates.refl_of_ground (S := P.solved) (c := n.residual)
+      (s := Scheme.mono (n.substitution.apply t)) trivial
+      (fun v _ => ⟨equalityTypes.eval v (n.substitution.apply t), O.refl _⟩)).2.1)
+
 /-- Conditional counterpart of HM(X) Theorem 16, extended to generated
 perform/handler derivations. For arbitrary S, admissibility of the actual
 substituted environment is an explicit premise. -/
@@ -107,22 +139,11 @@ theorem inferTermAt_sound {sig : Signature equalityTypes}
     (envAdm : (g.subst n.substitution).Admissible P.solved) :
     Typing sig X P.solved n.residual (g.subst n.substitution) e
       (.mono (n.substitution.apply t)) (eff.subst n.substitution.effects) := by
-  obtain ⟨d, generated, normalized, _⟩ := inferTermAt_normal run
-  obtain ⟨solved, sat, entails⟩ := P.sound (reconstructionScope_covers X g t eff d) normalized
-  obtain ⟨⟨tree, good⟩, _⟩ := Inference.sound_reconstruction (generateProjected_sound N hsig generated)
-  have adm : X.Admissible P.solved n.residual :=
-    ⟨n.residual, solved, X.entails_refl _, X.entails_refl _⟩
   have entTop : X.Entails n.residual (X.subst n.substitution X.top) := by
     intro v _
     exact (X.holds_subst _ _ _).mpr ((X.holds_top _).mpr trivial)
-  have env := Context.Approximates.refl envAdm ((real.subst n.substitution).weaken entTop)
-  obtain ⟨s', typed, approx⟩ :=
-    Derivation.transform_to_solved_subst_reconstruction P cl allow lift hr truth tree good n.substitution n.residual
-      (g.subst n.substitution) adm entails env
-  exact typed.instance_mono (approx.2.2 _ trivial
-    (Scheme.Approximates.refl_of_ground (S := P.solved) (c := n.residual)
-      (s := Scheme.mono (n.substitution.apply t)) trivial
-      (fun v _ => ⟨equalityTypes.eval v (n.substitution.apply t), O.refl _⟩)).2.1)
+  exact inferTermAt_sound_of_approximation N P cl allow lift hr truth hsig run
+    (Context.Approximates.refl envAdm ((real.subst n.substitution).weaken entTop))
 
 /-- Effect-only residuals preserve environment admissibility under substitution.
 The output uses exactly the capture-avoiding substituted input environment. -/

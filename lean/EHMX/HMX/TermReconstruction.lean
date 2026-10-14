@@ -288,14 +288,15 @@ private def Substitution.withOutputs (σ : Substitution T) (a b : Nat)
   effects_outside := by intro i hi; simp only [Names.union, Finset.mem_union,
     Finset.mem_singleton, not_or] at hi; simp [hi.2, σ.effects_outside i hi.1]
 
-/-- Completeness at the actual fresh output slots. A single factor preserves
-the original environment and the target type and immediate effect. -/
-theorem inferTerm_complete_mono {sig : Signature T} {X : Constraints T O}
+/-- Ground typings under an admissible constraint suffice for reconstruction.
+The factor is uniform over all valuations, including the environment names. -/
+theorem inferTerm_complete_mono_of_ground {sig : Signature T} {X : Constraints T O}
     (N : X.Simplifier) (P : X.ScopedPrincipalNormalizer)
     (closure : X.SolvedClosure P.solved) {g : Context X} {e : Expr}
     (σ : Substitution T) {c : X.Formula} {t : T.Term} {eff : Effect}
-    (typed : Typing sig X P.solved c (g.subst σ) e (.mono t) eff)
-    (real : (g.subst σ).Realizable c) :
+    (admitted : X.Admissible P.solved c)
+    (groundTarget : ∀ v, X.holds c v → GroundTyping sig O (g.ground (σ.pullback v)) e
+      (T.eval v t) (eff.eval v.effects)) :
     ∃ n, inferTerm sig X N P g e = some (.reconstructed n) ∧
       ∃ φ : Substitution T,
         (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v) g.support) ∧
@@ -317,17 +318,20 @@ theorem inferTerm_complete_mono {sig : Signature T} {X : Constraints T O}
   have ground (v : Valuation T.Value) (hv : X.holds c v) :
       GroundTyping sig O (g.ground (θ.pullback v)) e
         (T.eval (θ.pullback v) (T.var a)) ((Effect.var b).eval (θ.pullback v).effects) := by
-    obtain ⟨tree, _⟩ := typed
-    have ht := tree.ground v hv (real.ground hv) _ (O.refl _)
-    rw [Context.ground_subst, ← Context.ground_support (same v)] at ht
+    have ht := groundTarget v hv
+    rw [← Context.ground_support (same v)] at ht
     simpa [θ, Substitution.pullback, Substitution.withOutputs, T.eval_var, Effect.eval, Effect.var] using ht
-  obtain ⟨v, hv⟩ := (X.admissible_satisfiable_iff c).mp (typed.to_satisfiable P.solved_satisfiable).root.1
+  have sat : X.Satisfiable c := by
+    obtain ⟨r, hr, _, back⟩ := admitted
+    obtain ⟨v, hv⟩ := P.solved_satisfiable r hr
+    exact ⟨v, back v hv⟩
+  obtain ⟨v, hv⟩ := sat
   obtain ⟨d, generated, _, cover⟩ := Inference.groundComplete_projected_run N g e (T.var a) (Effect.var b)
     ⟨_, ground v hv⟩
   have entails : X.Entails c (X.subst θ d) := fun v hv =>
     (X.holds_subst _ _ _).mpr (cover _ (ground v hv))
   obtain ⟨n, run, φ, factor, residual⟩ := P.complete_of_substitution closure.rename
-    (reconstructionScope_covers X g (T.var a) (Effect.var b) d) θ typed.root.1 entails
+    (reconstructionScope_covers X g (T.var a) (Effect.var b) d) θ admitted entails
   refine ⟨n, by simp [inferTerm, inferTermAt, a, b, generated, run], φ, ?_, residual, ?_⟩
   · intro v
     exact ((factor v).mono
@@ -344,6 +348,25 @@ theorem inferTerm_complete_mono {sig : Signature T} {X : Constraints T O}
         reconstructedScheme, ComputationScheme.generalizeWithSupport] using ha,
       by simpa [b, θ, Substitution.withOutputs, Substitution.pullback,
         reconstructedScheme, ComputationScheme.generalizeWithSupport] using hb⟩
+
+/-- Completeness at the actual fresh output slots. A single factor preserves
+the original environment and the target type and immediate effect. -/
+theorem inferTerm_complete_mono {sig : Signature T} {X : Constraints T O}
+    (N : X.Simplifier) (P : X.ScopedPrincipalNormalizer)
+    (closure : X.SolvedClosure P.solved) {g : Context X} {e : Expr}
+    (σ : Substitution T) {c : X.Formula} {t : T.Term} {eff : Effect}
+    (typed : Typing sig X P.solved c (g.subst σ) e (.mono t) eff)
+    (real : (g.subst σ).Realizable c) :
+    ∃ n, inferTerm sig X N P g e = some (.reconstructed n) ∧
+      ∃ φ : Substitution T,
+        (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v) g.support) ∧
+        X.Entails c (X.subst φ n.residual) ∧
+        ∀ v, T.eval (φ.pullback v) (reconstructedScheme g n).result = T.eval v t ∧
+          (reconstructedScheme g n).effect.eval (φ.pullback v).effects = eff.eval v.effects := by
+  apply inferTerm_complete_mono_of_ground N P closure σ typed.root.1
+  intro v hv
+  obtain ⟨tree, _⟩ := typed
+  simpa only [Context.ground_subst] using tree.ground v hv (real.ground hv) _ (O.refl _)
 
 
 /-- Acceptance for arbitrary qualified target judgments, including open

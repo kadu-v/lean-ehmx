@@ -6,5 +6,7 @@ import EHMX.HMX.ReconstructionExamples
 import EHMX.HMX.ReconstructionSoundness
 import EHMX.HMX.ReconstructionCompleteness
 import EHMX.HMX.ReconstructionCompletenessExamples
+import EHMX.HMX.ReconstructionPrincipality
+import EHMX.HMX.ReconstructionPrincipalityExamples
 import EHMX.HMX.TransformationExamples
 import EHMX.TypeClasses.Examples
