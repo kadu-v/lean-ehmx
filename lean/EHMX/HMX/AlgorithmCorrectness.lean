@@ -1,4 +1,4 @@
-import EHMX.HMX.PrincipalCompleteness
+import EHMX.HMX.OpenCompleteness
 import EHMX.HMX.SolverContract
 
 namespace EHMX.HMX

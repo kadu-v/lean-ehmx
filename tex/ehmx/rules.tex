@@ -587,8 +587,10 @@ $\sigma$ を $s$ の束縛名へ制限し，同じ有限因子を全ての $\rho
 
 \clearpage
 \section{抽象 X の完全性：HM(X) との対応}
-比較対象：\cite[\S4.4.1, 定理15・系6]{Sulzmann2000}．
+比較対象：\cite[\S4.4.1, 定理14・15・系6]{Sulzmann2000}．
 現行の型付け・生成は値制限付き．型項再構成（\S4.4.2）は要求しない．
+実行時の型・効果安全性は未証明．
+
 \small
 \begin{tabular}{@{}p{.34\linewidth}p{.63\linewidth}@{}}\toprule
 前提 & 現行パラメータ・条件\\\midrule
@@ -638,7 +640,7 @@ s&=\forall A.R\Rightarrow(t!\eta),\quad
  \Rightarrow D\models C\land D\vdash_i\sigma\succeq\tau.
 \end{aligned}
 \]
-\begin{theorem}[判定器なしの生成主要性]
+\begin{theorem}[判定器なしの生成主要性：系6との対応]
 \[
 \begin{gathered}
 \supp\Gamma=\varnothing,\quad\Real_\top(\Gamma),\quad
@@ -652,7 +654,79 @@ s_D=\forall(\{\alpha_0\},\{\mu_0\}).D\Rightarrow(\alpha_0!\mu_0).
 \]
 \end{theorem}
 \key{Typing.principal\_computation\_run}．値の主要対は \key{Typing.principal\_value}．
-開環境は射影後の意味的被覆と有限因子の定理を用いる．
+閉環境の系は \key{Typing.principal\_closed\_from\_open} でも導く．
+
+\clearpage
+\textbf{開環境の出力と比較}
+\[
+\begin{aligned}
+s&=\operatorname{gen}(\Gamma,D,\alpha,\mu)=\forall A.D\Rightarrow(\alpha!\mu),\\
+A&=(\supp D\cup\supp\alpha\cup\supp\mu)\setminus\supp\Gamma,
+\qquad P_s=\exists A.D,\qquad V_s=\forall A.D\Rightarrow\alpha,\\
+\operatorname{Cover}(\Gamma,e,s)\iff{}&
+ \forall C,\sigma,\epsilon.\
+ \bigl(\operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\epsilon)
+ \land\Real_C(\Gamma)\bigr)\\
+ &\qquad\Rightarrow C\models P_s\ \land\ C\vdash_i V_s\succeq\sigma,\\
+\operatorname{FinCover}(\Gamma,e,s)\iff{}&
+ \forall C,u,\epsilon.\
+ \bigl(\operatorname{Typing}_{\Sat}(C,\Gamma,e,u,\epsilon)
+ \land\Real_C(\Gamma)\bigr)\\
+ &\qquad\Rightarrow\Fin(s;C,u,\epsilon).
+\end{aligned}
+\]
+\begin{theorem}[開環境の生成完全性・一般性：定理15との対応]
+\[
+\begin{gathered}
+\operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\epsilon),\quad\Real_C(\Gamma),\quad
+ \alpha,\mu\notin\supp\Gamma\\
+\Longrightarrow\exists D.\ \Proj(\Gamma,e,\alpha,\mu)=D\land\Sat_X(D)\ \land\\
+ \operatorname{Typing}_{\Sat}(D,\Gamma,e,\alpha,\mu)\ \land\\
+ \operatorname{ComputationTyping}_{\Sat}(P_s,\Gamma,e,s)\ \land
+ \operatorname{Cover}(\Gamma,e,s)\land\operatorname{FinCover}(\Gamma,e,s).
+\end{gathered}
+\]
+\[
+ C\models P_s,\qquad C\vdash_i V_s\succeq\sigma,\qquad
+ \sigma=u\Rightarrow\Fin(s;C,u,\epsilon).
+\]
+\end{theorem}
+\key{Typing.principal\_computation\_open\_at}, \key{Typing.inference\_complete\_scheme}．
+\begin{proof}
+\[
+\begin{aligned}
+\rho\models C&\Rightarrow\exists\nu=_{\overline{\{\alpha,\mu\}}}\rho.
+ \ \nu\models D\Rightarrow\rho\models P_s,\\
+\theta_{u,\eta}&=[\alpha\mapsto u,\mu\mapsto\eta],\qquad
+ \ground\Gamma_{\theta_{u,\eta}^*\rho}=\ground\Gamma_\rho,\\
+\Real_{C'}(\Gamma),\ C',\Gamma\vdash e:u!\eta&\Rightarrow
+ \forall\rho\models C'.\ \theta_{u,\eta}^*\rho\models D
+ \Rightarrow\Fin(s;C',u,\eta).
+\end{aligned}
+\]
+qualified 型：新鮮化・単相化・$\forall$ 右規則．
+\end{proof}
+\begin{theorem}[開環境の値の主要対]
+\[
+\begin{gathered}
+\operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\epsilon),\quad\Real_\top(\Gamma),\quad
+ \operatorname{Value}(e)\\
+\Longrightarrow\exists s.\ \operatorname{PrincipalPair}(\Gamma,e,P_s,V_s).
+\end{gathered}
+\]
+\end{theorem}
+\key{Typing.principal\_value\_open}．
+
+\textbf{外側条件の保持}
+\[
+\begin{gathered}
+C=(\alpha_0=\mathrm{Int}),\quad
+ \Gamma=[x:\forall(\{\alpha_1\},\{\mu_1\}).C\Rightarrow\alpha_1],\quad e=x,\\
+\Real_C(\Gamma),\quad\neg\Real_\top(\Gamma),\quad
+ P_s\equiv_X C,\quad\top\not\models P_s.
+\end{gathered}
+\]
+\key{OpenExamples.qualified\_outer\_condition}．
 
 \clearpage
 \textbf{抽象的な充足可能性判定器}
@@ -689,14 +763,16 @@ $d(G\land W)=\mathsf{true}\iff\Sat_X(G\land W)$ と恒等代入の契約によ�
 \begin{gathered}
 d\in\operatorname{SatDecider}(X),\quad\Real_C(\Gamma),\quad
 \operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\epsilon)\\
-\Longrightarrow\quad\exists R,\theta.\
- \Inf_{N,S_d}(\Gamma,e)=\mathsf{solved}(R,\theta).
+\Longrightarrow\quad\exists n.\
+ \Inf_{N,S_d}(\Gamma,e)=\mathsf{solved}(n)\ \land\\
+ \operatorname{ComputationTyping}_{\Sat}(P_s,\Gamma,e,s)\ \land
+ \operatorname{Cover}(\Gamma,e,s)\land\operatorname{FinCover}(\Gamma,e,s),\\
+ s=\operatorname{inferredScheme}(\Gamma,n).
 \end{gathered}
 \]
 \[
 \begin{gathered}
-\Closed(\Sigma),\quad\supp\Gamma=\varnothing,\quad\Real_\top(\Gamma),\quad
-s=\operatorname{generalize}(\Gamma,R,\theta\alpha_p,\theta\mu_q)\\
+\Closed(\Sigma),\quad\supp\Gamma=\varnothing,\quad\Real_\top(\Gamma)\\
 \Longrightarrow\quad\operatorname{PrincipalComp}(\Gamma,e,s)\ \land\\
 \bigl(\forall C',t',\eta'.\ \operatorname{Typing}_{\Sat}(C',\Gamma,e,t',\eta')
  \Rightarrow\Fin(s;C',t',\eta')\bigr)\ \land\\
@@ -705,16 +781,24 @@ s=\operatorname{generalize}(\Gamma,R,\theta\alpha_p,\theta\mu_q)\\
 \end{gathered}
 \]
 \end{theorem}
+\key{SatDecider.infer\_principal\_open}, \key{infer\_complete\_scheme}．
+\[
+\Real_\top(\Gamma)\land\operatorname{Value}(e)
+ \Rightarrow\operatorname{PrincipalPair}(\Gamma,e,P_s,V_s).
+\]
+\key{SatDecider.infer\_principal\_value\_open}．
 \[
 \operatorname{Typing}\xRightarrow{\text{生成完全性}}\Sat_X(D)
  \xRightarrow{d}\mathsf{solved}(D,\mathrm{id})
  \xRightarrow{\text{生成・solver の契約}}\text{健全性・主要性}.
 \]
-健全性：$\Closed(\Sigma),\Real_\top(\Gamma),\Adm_{\Sat}(\Gamma)$ の下で
+健全性（定理14との対応）：$\Closed(\Sigma),\Adm_{\Sat}(\Gamma)$ の下で
 \[
 \Inf^{\mathrm{at}}_{N,S_d}(\Gamma,e,t,\epsilon)=\mathsf{solved}(R,\theta)
  \Rightarrow\operatorname{Typing}_{\Sat}(R,\Gamma,e,t,\epsilon).
 \]
+\key{SatDecider.inferAt\_sound\_of\_admissible}．実現可能性は不要．
+
 \textbf{handler の条件}
 \[
 \rho\models\forall B.\exists J.D
@@ -918,7 +1002,7 @@ $\exists\beta.\forall\alpha.\alpha=\beta$ & $\mathsf{unresolved}$\\\bottomrule
 \clearpage
 \section{抽象定理の Lean 対応}
 \textbf{対応表}（名前空間 \key{EHMX.HMX}）
-\small
+\footnotesize
 \begin{longtable}{@{}p{.38\linewidth}p{.59\linewidth}@{}}
 \toprule
 数式・保証 & Lean\\\midrule
@@ -930,25 +1014,37 @@ $\Gen,\Proj,\Inf^{\mathrm{at}},\Inf$ & \key{generate}, \key{generateProjected}, 
 充足可能性と成功の同値 & \key{SatDecider.solver\_solved\_iff}\\
 不充足・未解決の排除 & \key{SatDecider.solver\_inconsistent\_iff},\\
  & \key{SatDecider.solver\_ne\_unresolved}\\
-射影閉性・主要正規形 & \key{Constraints.satisfiable\_exists\_iff}, \key{Constraints.PrincipalNormalizer.satisfiable}\\
+射影閉性・主要正規形 & \key{Constraints.satisfiable\_exists\_iff},\\
+ & \key{Constraints.PrincipalNormalizer.satisfiable}\\
 固定した生成の健全性 & \key{generate\_sound}\\
 固定した生成の完全性 & \key{Inference.groundComplete}\\
 判定器なしの主要型の存在 & \key{Typing.principal\_computation\_run},\\
  & \key{Typing.principal\_value}\\
 射影後の正確性 & \key{generateProjected\_ground\_iff}\\
 開環境の成功時健全性 & \key{inferAt\_ground\_sound}, \key{inferAt\_sound}\\
-開環境の有限因子 & \key{infer\_principal\_open}\\
+一般 solver の開環境有限因子 & \key{infer\_principal\_open}\\
 実際の結果の主要性 & \key{infer\_principal\_closed}\\
 期待型なしの条件付き完全性 & \key{infer\_complete}\\
 判定器からの合成完全性 & \key{SatDecider.infer\_complete}\\
-判定器からの合成健全性 & \key{SatDecider.inferAt\_sound}, \key{SatDecider.infer\_sound}\\
+判定器からの合成健全性 & \key{SatDecider.infer\_sound\_of\_admissible}\\
+開環境の生成完全性 & \key{Typing.inference\_complete\_scheme}\\
+開環境の生成主要性 & \key{Typing.principal\_computation\_open\_at}\\
+qualified 型への比較 & \key{Typing.instance\_of\_finite\_realizable}\\
+開環境の値の主要対 & \key{Typing.principal\_value\_open}\\
+閉環境への特殊化 & \key{Typing.principal\_closed\_from\_open}\\
+開環境の合成完全性 & \key{SatDecider.infer\_complete\_scheme}\\
+開環境の合成主要性 & \key{SatDecider.infer\_principal\_open}\\
+開環境の値の主要出力 & \key{SatDecider.infer\_principal\_value\_open}\\
+外側条件の保持 & \key{OpenExamples.qualified\_outer\_condition}\\
+開環境の handler & \key{OpenExamples.open\_nested\_handler\_complete}\\
 型付け可能なら主要出力 & \key{SatDecider.infer\_principal}\\
 推論での未解決の排除 & \key{SatDecider.infer\_ne\_unresolved}\\
 不整合・未解決 & \key{inferAt\_inconsistent}, \key{inferAt\_unresolved}\\
 handler の具体例 & \key{AlgorithmExamples.resumeIdentity\_ground},\\
  & \key{resumeIdentity\_generated}, \key{resumeIdentity\_complete}, \key{resumeIdentity\_deferred}\\
 判定器を仮定した適用例 & \key{AlgorithmExamples.polymorphicLet\_principal\_of\_decider},\\
- & \key{resumeIdentity\_principal\_of\_decider}, \key{nestedHandler\_principal\_of\_decider}\\
+ & \key{resumeIdentity\_principal\_of\_decider},\\
+ & \key{nestedHandler\_principal\_of\_decider}\\
 \bottomrule
 \end{longtable}
 \normalsize
