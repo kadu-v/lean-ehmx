@@ -871,11 +871,184 @@ $\Solved(\sigma)$，$\sigma C\equiv C$，ground 値の型項表現は不要．
  \eta(i)=\begin{cases}f(i)&i\in A,\\\sigma(i)&i\notin A,\end{cases}\\
  f(A)\cap(\supp C\cup\supp t\cup\dom\sigma\cup\operatorname{range}(\sigma)\cup A)=\varnothing,\\
  \ground{\Gamma[\sigma]}_\rho=\ground\Gamma_{\sigma^*\rho},\qquad
- C\vdash_i s\succeq t\Rightarrow\sigma C\vdash_i s[\sigma]\succeq\sigma t,\\
+ C\vdash_i s_1\succeq s_2\Rightarrow\sigma C\vdash_i s_1[\sigma]\succeq s_2[\sigma],\\
  \Real_C(\Gamma)\Rightarrow\Real_{\sigma C}(\Gamma[\sigma]).
 \end{gathered}
 \]
-比較の右辺 $t$ は単相型．任意の qualified 型への代入保存は未証明．
+\key{Instance.subst} は両辺が任意の qualified 型で成立し，solver や
+ground 値の型項表現を仮定しない．また
+$A\cap(\supp\Gamma\cup\operatorname{range}(\sigma))=\varnothing$ なら
+$\Gamma[\sigma]$ は $A$ を自由に含まない（\key{Context.subst\_avoids}）．
+
+\clearpage
+\textbf{近似と有限証人の基盤}
+\key{Context.Approximates} はスキーム近似のリスト上の持ち上げである．
+反射性は許容性と各評価での実例の存在から成立する．一つの代入をすべての評価で使えるという
+実現可能性までは必要ない（\key{refl\_of\_ground}）．
+推移性，lookup，qualified 対象を含む $S$ の変数規則も証明した．
+近似の構成と導出変換に使う追加条件・証明範囲を後の定理7の節に示す．
+
+\begin{lemma}[実現可能なスキームの解決済み有限証人]
+\[
+\begin{gathered}
+\Real_C(\forall A.D\Rightarrow t),\qquad A\cap\FV(C)=\varnothing\\
+\Longrightarrow\quad\exists\theta\text{（有限代入）}.\
+\Solved(\theta)\land\dom\theta\subseteq A\land C\models\theta D.
+\end{gathered}
+\]
+\end{lemma}
+\key{Scheme.Realizable.solved\_witness\_finite}．
+実現可能性が与える一様な代入の局所パラメータを，型については $A$ の外の
+新鮮な変数，効果については空効果で置き換える．
+ground 値を閉じた型項で表す \key{GroundRepresentation} は不要である．
+
+\begin{lemma}[実現可能性からの比較正規形]
+$P=C\land\exists A.D$ とおく．
+\[
+\begin{gathered}
+\Adm_S(P),\qquad A\cap\FV(C)=\varnothing,\qquad
+\Real_P(\forall A.D\Rightarrow t)\\
+\Longrightarrow\quad\exists m=(R,\theta).\
+\operatorname{Normal}_S(C\land D;m)\land
+\dom\theta\subseteq A\land R\equiv P.
+\end{gathered}
+\]
+\end{lemma}
+\key{NormalForm.exists\_of\_realizable\_finite}．
+この補題にも \key{GroundRepresentation} は不要であり，
+外側条件 $P$ の許容性とスキームの実現可能性は引き続き必要である．
+
+\key{PrincipalNormalizer.normalize\_realizable\_finite} は，
+同じ前提と主要正規化の契約から正規化の成功と出力スキームの実現可能性を導く．
+
+\textbf{導出変換との区別}
+スキームの実現可能性は，一般の型付け結果からは自動的に従わない．
+上記の補題だけで一般の多相 $\mathbf{let}$ や handler を含む導出全体の
+$\Sat_X\to S$ 変換は得られない．次節では追加条件を明示し，多相 let と一般化を含む13規則の導出変換を証明する．
+handler の量化・非脱出条件の保存は別の課題である．
+
+\clearpage
+\textbf{定理7相当：明示した条件の下での導出変換}
+
+型領域は \key{equalityTypes}，型の順序 $O$ と制約系 $X$ はその上の任意のものとする．
+
+\key{ScopedPrincipalNormalizer} $P$ の解決済み集合を $S$ とし，
+\key{SolvedClosure} と恒真な解決済み制約
+$S(R_\top),\ \forall\rho.\rho\models R_\top$ を仮定する．
+さらに次の二条件を明示する．$\operatorname{graph}(\theta)$ は有限代入の等式制約である．
+\[
+\begin{gathered}
+\dom_T(\theta)=\varnothing,\quad
+\Adm_S(R),\quad\Sat(R\land\operatorname{graph}(\theta))\\
+\Longrightarrow\quad\Adm_S(R\land\operatorname{graph}(\theta)),\\[1mm]
+\Adm_S(\exists A.D)\quad\Longrightarrow\quad
+\exists\theta.\ \dom(\theta)\subseteq A\ \land\ \Adm_S(\theta D).
+\end{gathered}
+\]
+第一の条件は，整合する効果等式を残余制約に加える閉性である．
+第二は原典の定義28の条件④に対応する，許容性で述べた有限代入の条件である．
+この $\theta$ の解決済み性は要求しない．定義28全体を仮定してはいない．
+これらの条件を主要正規化だけから導いたとはしない．
+
+$\mu\subseteq\{op\}$ のような効果制約は残余に保持できる．
+\key{TransformationExamples.EffectResiduals} では，充足可能で型変数の評価に依存しない
+残余の例について，この効果制約の主要正規形と効果等式の追加閉性を証明した．
+通常の型等式 $\alpha=\mathrm{Int}$ はこの残余集合に属さない．
+この局所的な例は，具体的 solver 全体が上の全前提を満たす証明ではない．
+
+\textbf{現行の型スキーム近似}
+\[
+\begin{aligned}
+C\vdash s\mapsto_S t\quad\iff\quad
+ &\Adm_S(t)\land(C\vdash_i s\succeq t)\\
+ &{}\land\forall u.\ \Adm_S(u)\land(C\vdash_i s\succeq u)
+       \Rightarrow(C\vdash_i t\succeq u).
+\end{aligned}
+\]
+両方の比較を外側制約 $C$ の下で行う現行の定義である．
+環境近似は，各位置でこの関係が成立することをいう．
+
+\textbf{対象とする導出}
+\key{Derivation.UsesHMXRules} は，導出の全節点が
+変数，整数，真偽値，関数，適用，値の let，単相 let，Sub，
+$\forall$ 導入，$\forall$ 除去，制約の強化，効果等式，$\alpha$ 改名の13規則からなることを表す．
+追加の \key{existsIntro}，\key{perform}，\key{handle} は含まない．
+値制限は現行のままであり，式に handler がないことだけではこの条件を満たさない．
+
+\begin{theorem}[定理7相当のスキーム・単相導出変換]
+上の全前提，$\Adm_S(C)$ と $C\vdash\Gamma\mapsto_S\Gamma'$ の下で，
+対象規則からなる導出 $C;\Gamma\vdash e:s!\epsilon$ があれば，
+\[
+\exists s'.\
+ \operatorname{Typing}_S(C,\Gamma',e,s',\epsilon)
+ \ \land\ C\vdash s\mapsto_S s'.
+\]
+特に $s$ が単相型 $t$ なら，
+\[
+\operatorname{Typing}_S(C,\Gamma',e,t,\epsilon).
+\]
+\end{theorem}
+\key{Derivation.theorem7\_core}，
+\key{Derivation.theorem7\_mono\_core}．
+Lean では規則に従う導出を直接引数に取り，元の導出の $\operatorname{Valid}_{\Sat}$ も要求しない．
+内部スキーム・環境の一様な実現可能性を追加前提にしない．
+
+\clearpage
+\textbf{定理7の証明：元の導出への帰納法}
+
+帰納仮定を，任意の有限代入 $\theta$，許容な外側制約 $D$ と環境 $\Gamma'$ に広げる．
+\[
+\begin{gathered}
+\Adm_S(D),\quad D\models\theta C,\quad
+D\vdash\Gamma[\theta]\mapsto_S\Gamma'\\
+\Longrightarrow\quad\exists s'.\
+ \operatorname{Typing}_S(D,\Gamma',e,s',\theta\epsilon)
+ \ \land\ D\vdash s[\theta]\mapsto_S s'.
+\end{gathered}
+\]
+\key{Derivation.transform\_to\_solved\_subst}．
+元の導出の子に，必要な代入を合成して帰納仮定を適用する．
+作り直した導出の長さが小さくなることは仮定しない．
+
+\textbf{一般化の場合}
+束縛変数を，外側制約・代入の値域・両環境に対して新鮮に選ぶ．
+射影から有限代入を得る条件を使って正規化の成功を導き，
+環境の自由変数を保護した主要正規形 $(R,\kappa)$ を構成する．
+効果への割当ては残余へ移し，$\kappa_E$ は恒等写像にする．
+新たな出力パラメータも含めて量化する名前 $B$ を選び，
+外側制約と $\exists B.R$ の同値性を得る．
+\key{SchemeApproximation.generalized\_approximation} は，
+元のスキームから $\forall B.R\Rightarrow\kappa t$ への近似を，
+任意の許容な qualified 対象について証明する．
+
+環境近似を外側制約から $R$ へ移す際には，
+外側制約と $\exists B.R$ の同値性と名前の新鮮さを使う．
+任意の強い制約への近似の保存を仮定しない．
+元の子導出へ合成した代入で帰納仮定を適用し，得られた本体を一般化する．
+\key{Derivation.forallIntro\_arbitrary\_substitution} がこの場合を閉じる．
+
+\textbf{多相 let の場合}
+値の子導出への帰納仮定から，許容なスキーム $s'$ と $s[\theta]\mapsto_S s'$ を得る．
+これで環境近似を $s[\theta]::\Gamma[\theta]$ と $s'::\Gamma'$ へ延長し，
+元の本体の子導出に帰納仮定を適用する．値であることは元の規則の証拠をそのまま使う．
+\[
+C\vdash s\mapsto_S t
+\quad\Longrightarrow\quad
+\bigl(\Real_C(s)\iff\Real_C(t)\bigr)
+\]
+という既存の結果とも整合し，近似によって実現可能性を得る方法は使わない．
+
+恒等代入では捕獲回避のため束縛名が変わるので，
+\key{Instance.subst\_identity\_iff} による構文的比較の対応を使って，
+上の帰納命題から元の制約・環境についての定理を取り出す．
+
+\textbf{検証と残る課題}
+公開定理の適用例として，入れ子の多相 let と特殊化，開環境と束縛名の衝突，
+空でない潜在効果の保存を検証する．
+既存の強い \key{PrincipalNormalizer} を使う有限証人・環境近似の補題は保持するが，
+今回の定理7の証明は \key{ScopedPrincipalNormalizer} と上記の追加条件を使う．
+具体的制約系が全前提を満たす証明，追加射影規則と操作・handler への導出変換，
+定理16・17および系7の残る結論は未証明である．
 
 \clearpage
 \textbf{再構成算法と証明範囲}
@@ -937,7 +1110,7 @@ $\operatorname{SolvedClosure}(S)$ の下で，
 \begin{center}\small
 \begin{tabular}{@{}ll@{}}\toprule
 学位論文との対応 & 状態\\\midrule
-定理7：内部導出の $\Sat_X\to S$ 変換 & 未証明\\
+定理7：対象13規則の導出変換 & 明示した追加条件下で証明済み\\
 定理16：$\operatorname{Typing}_S$ での出力健全性 & 未証明\\
 定理17：受理・単相判断の有限因子 & 上記の閉性条件下で証明済み\\
 定理17：同じ因子による qualified 型・外側条件の比較 & 未証明\\

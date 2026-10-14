@@ -237,24 +237,34 @@ theorem Substitution.groundOn_solved (Q : T.GroundRepresentation)
     change i ∈ a.effects at hi
     simp [Substitution.groundOn, hi]
 
-/-- The uniform realizer in the dissertation's forall-introduction case can
-be chosen solved. Grounding its bound parameters removes self-dependencies,
-while all free parameters remain symbolic. -/
-theorem Scheme.Realizable.solved_witness {X : Constraints T O}
-    (Q : T.GroundRepresentation) {c d : X.Formula} {a : Names} {t : T.Term}
+/-- A uniform realizer can be chosen solved by replacing its local type
+parameters with a fresh variable and local effects with the empty effect.
+No semantic value needs a closed term representative. -/
+theorem Scheme.Realizable.solved_witness_finite {X : Constraints T O}
+    {c d : X.Formula} {a : Names} {t : T.Term}
     (h : (Scheme.qualified a d t).Realizable c) (fresh : X.Avoids c a) :
     ∃ θ : Substitution T, θ.Solved ∧ θ.domain.Subset a ∧ X.Entails c (X.subst θ d) := by
   obtain ⟨u, hu⟩ := h
   obtain ⟨ρ, scope, hd, _⟩ := Instance.qualified_mono_iff.mp hu
-  obtain ⟨base⟩ := T.value_nonempty
-  let γ := Substitution.groundOn Q a ⟨fun _ => base, fun _ => ∅⟩
+  let freshType := a.shiftTypes 0
+  have freshType_not_mem : freshType ∉ a.types := by
+    intro hi
+    have := Finset.le_sup (f := id) hi
+    simp only [freshType, Names.shiftTypes, id_eq] at this
+    omega
+  let γ : Substitution T := {
+    domain := a
+    types := fun i => if i ∈ a.types then T.var freshType else T.var i
+    effects := fun i => if i ∈ a.effects then ∅ else Effect.var i
+    types_outside := by intro i hi; simp [hi]
+    effects_outside := by intro i hi; simp [hi] }
   have types (i : Nat) : a.Disjoint (T.support (γ.types i)) := by
     by_cases hi : i ∈ a.types
-    · simp [γ, Substitution.groundOn, hi, Q.support_quote, Names.Disjoint, Names.empty]
-    · simp [γ, Substitution.groundOn, hi, T.support_var, Names.Disjoint]
+    · simp [γ, hi, T.support_var, Names.Disjoint, freshType_not_mem]
+    · simp [γ, hi, T.support_var, Names.Disjoint]
   have effects (i : Nat) : Disjoint a.effects (γ.effects i).vars := by
     by_cases hi : i ∈ a.effects <;>
-      simp [γ, Substitution.groundOn, hi, Effect.var]
+      simp [γ, hi, Effect.var]
   have typeClosed (t : T.Term) : a.Disjoint (T.support (γ.apply t)) :=
     T.support_subst_avoids _ _ _ _ (fun i _ => types i) (fun i _ => effects i)
   have effectClosed (e : Effect) : Disjoint a.effects (e.subst γ.effects).vars := by
@@ -279,12 +289,12 @@ theorem Scheme.Realizable.solved_witness {X : Constraints T O}
     · funext i
       by_cases hi : i ∈ a.types
       · simp [Substitution.pullback, θ, hi, Substitution.eval_apply]
-      · simp [Substitution.pullback, θ, γ, Substitution.groundOn, hi,
+      · simp [Substitution.pullback, θ, γ, hi,
           ρ.types_outside i (fun hm => hi (scope.1 hm)), T.eval_var]
     · funext i
       by_cases hi : i ∈ a.effects
       · simp [Substitution.pullback, θ, hi, Effect.eval_subst]
-      · simp [Substitution.pullback, θ, γ, Substitution.groundOn, hi,
+      · simp [Substitution.pullback, θ, γ, hi,
           ρ.effects_outside i (fun hm => hi (scope.2 hm)), Effect.eval, Effect.var]
   refine ⟨θ, solved, Names.Subset.refl a, ?_⟩
   intro v hv
@@ -293,12 +303,20 @@ theorem Scheme.Realizable.solved_witness {X : Constraints T O}
   exact (X.holds_subst _ _ _).mp
     (hd _ ((X.holds_agreeOutside fresh (γ.pullback_outside v)).mpr hv))
 
+/-- Compatibility with the earlier interface; ground representation is no
+longer needed to construct the solved witness. -/
+theorem Scheme.Realizable.solved_witness {X : Constraints T O}
+    (_Q : T.GroundRepresentation) {c d : X.Formula} {a : Names} {t : T.Term}
+    (h : (Scheme.qualified a d t).Realizable c) (fresh : X.Avoids c a) :
+    ∃ θ : Substitution T, θ.Solved ∧ θ.domain.Subset a ∧ X.Entails c (X.subst θ d) :=
+  h.solved_witness_finite fresh
+
 namespace Constraints
 variable (X : Constraints T O)
 
 /-- The scoped competitor used in dissertation Theorem 7 is constructed
 from realizability and admissibility, rather than postulated by the solver. -/
-theorem NormalForm.exists_of_realizable (Q : T.GroundRepresentation)
+theorem NormalForm.exists_of_realizable_finite
     {solved : X.Formula → Prop} {c d : X.Formula} {a : Names} {t : T.Term}
     (hc : X.Admissible solved (X.and c (X.existsNames a d))) (fresh : X.Avoids c a)
     (hreal : (Scheme.qualified a d t).Realizable (X.and c (X.existsNames a d))) :
@@ -311,7 +329,7 @@ theorem NormalForm.exists_of_realizable (Q : T.GroundRepresentation)
     obtain ⟨hvC, hvD⟩ := (X.holds_and _ _ _).mp hv
     exact (X.holds_and _ _ _).mpr ⟨(X.holds_agreeOutside fresh hw).mp hvC,
       (X.holds_agreeOutside (X.exists_avoids a d) hw).mp hvD⟩
-  obtain ⟨θ, hθ, scope, hd⟩ := hreal.solved_witness Q freshOuter
+  obtain ⟨θ, hθ, scope, hd⟩ := hreal.solved_witness_finite freshOuter
   obtain ⟨r, hr, he⟩ := hc
   have outside (v : Valuation T.Value) : (θ.pullback v).AgreeOutside v a :=
     ⟨fun i hi => (θ.pullback_outside v).1 i (fun hm => hi (scope.1 hm)),
@@ -330,17 +348,27 @@ theorem NormalForm.exists_of_realizable (Q : T.GroundRepresentation)
     rw [X.substitutionConstraint_fixed θ v graph] at hdv
     exact (X.holds_and _ _ _).mpr ⟨((X.holds_and _ _ _).mp outer).1, hdv⟩
 
+/-- Compatibility wrapper for callers of the previous semantic interface. -/
+theorem NormalForm.exists_of_realizable (_Q : T.GroundRepresentation)
+    {solved : X.Formula → Prop} {c d : X.Formula} {a : Names} {t : T.Term}
+    (hc : X.Admissible solved (X.and c (X.existsNames a d))) (fresh : X.Avoids c a)
+    (hreal : (Scheme.qualified a d t).Realizable (X.and c (X.existsNames a d))) :
+    ∃ m : X.NormalForm, m.IsNormal solved (X.and c d) ∧
+      m.substitution.domain.Subset a ∧
+      X.Equivalent m.residual (X.and c (X.existsNames a d)) :=
+  NormalForm.exists_of_realizable_finite X hc fresh hreal
+
 /-- Realizability supplies a normal form, hence normalization succeeds without
 assuming a solved tautology. Principality supplies a uniform finite realization
 of the resulting qualifier using only the original bound names. -/
-theorem PrincipalNormalizer.normalize_realizable (P : X.PrincipalNormalizer)
-    (Q : T.GroundRepresentation) {c d : X.Formula} {a : Names} {t : T.Term}
+theorem PrincipalNormalizer.normalize_realizable_finite (P : X.PrincipalNormalizer)
+    {c d : X.Formula} {a : Names} {t : T.Term}
     (hc : X.Admissible P.solved (X.and c (X.existsNames a d))) (fresh : X.Avoids c a)
     (hreal : (Scheme.qualified a d t).Realizable (X.and c (X.existsNames a d))) :
     ∃ n, P.normalize (ConstraintProblem.initial X (X.and c d)) = some n ∧
       (Scheme.qualified a n.residual (n.substitution.apply t)).Realizable
         (X.and c (X.existsNames a d)) := by
-  obtain ⟨m, hm, scope, he⟩ := NormalForm.exists_of_realizable X Q hc fresh hreal
+  obtain ⟨m, hm, scope, he⟩ := NormalForm.exists_of_realizable_finite X hc fresh hreal
   cases hn : P.normalize (ConstraintProblem.initial X (X.and c d)) with
   | none =>
       exact False.elim ((P.failure _).mp hn
@@ -351,6 +379,16 @@ theorem PrincipalNormalizer.normalize_realizable (P : X.PrincipalNormalizer)
       refine ⟨n, rfl, m.substitution.apply (n.substitution.apply t), ?_⟩
       exact .forallLeft m.substitution scope.1 scope.2 (X.entails_trans he.2 hr)
         (.sub (fun v _ => (X.holds_le _ _ _).mpr (O.refl _)))
+
+/-- Compatibility wrapper; the proof no longer uses ground representation. -/
+theorem PrincipalNormalizer.normalize_realizable (P : X.PrincipalNormalizer)
+    (_Q : T.GroundRepresentation) {c d : X.Formula} {a : Names} {t : T.Term}
+    (hc : X.Admissible P.solved (X.and c (X.existsNames a d))) (fresh : X.Avoids c a)
+    (hreal : (Scheme.qualified a d t).Realizable (X.and c (X.existsNames a d))) :
+    ∃ n, P.normalize (ConstraintProblem.initial X (X.and c d)) = some n ∧
+      (Scheme.qualified a n.residual (n.substitution.apply t)).Realizable
+        (X.and c (X.existsNames a d)) :=
+  P.normalize_realizable_finite X hc fresh hreal
 
 /-- A solved substitution erases its domain, so an invariant residual cannot
 depend on those names. This uses the syntactic convention from Lemma 4. -/

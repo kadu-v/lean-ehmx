@@ -1,5 +1,7 @@
 import EHMX.HMX.ScopedNormalization
 import EHMX.HMX.ContextSubstitution
+import EHMX.HMX.ContextApproximation
+import EHMX.HMX.DerivationTransformation
 import EHMX.HMX.FreshNormalForms
 import EHMX.HMX.AlgorithmCorrectness
 

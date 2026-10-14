@@ -29,6 +29,109 @@ theorem capture_environment (v : Valuation T.Value) :
     (Context.subst capture [source]).ground v = Context.ground [source] (capture.pullback v) :=
   Context.ground_subst capture [source] v
 
+private def polyIdentity : Scheme X := .qualified ⟨{2}, ∅⟩ X.top
+  (.arr (.var 2) ∅ (.var 2))
+
+private def qualifiedIdentity : Scheme X := .qualified ⟨{1}, ∅⟩
+  (X.eq (.var 0) (.var 1)) (.arr (.var 1) ∅ (.var 1))
+
+private theorem identity_instance : Instance X X.top polyIdentity qualifiedIdentity := by
+  let a : Names := ⟨{1}, ∅⟩
+  let q := X.eq (T.var 0) (T.var 1)
+  let θ : Substitution T := {
+    domain := ⟨{2}, ∅⟩
+    types := fun i => if i = 2 then T.var 1 else T.var i
+    effects := Effect.var
+    types_outside := by intro i hi; simp at hi; simp [hi]
+    effects_outside := by intros; rfl }
+  have body : Instance X (X.and X.top q) polyIdentity
+      (.mono (.arr (.var 1) ∅ (.var 1))) := by
+    apply Instance.forallLeft θ (fun _ h => h) (fun _ h => h)
+    · intro v _
+      exact (X.holds_subst _ _ _).mpr ((X.holds_top _).mpr trivial)
+    · apply Instance.sub
+      intro v _
+      apply (X.holds_le _ _ _).mpr
+      rfl
+  have projected : X.Entails X.top (X.existsNames a q) := by
+    intro v _
+    let w : Valuation T.Value := ⟨Function.update v.types 1 (v.types 0), v.effects⟩
+    apply (X.holds_exists _ _ _).mpr
+    refine ⟨w, ⟨?_, fun _ _ => rfl⟩, ?_⟩
+    · intro i hi
+      have hn : i ≠ 1 := by simpa [a] using hi
+      simp [w, hn]
+    · change w.types 0 = w.types 1
+      simp [w]
+  have h : Instance X (X.and X.top (X.existsNames a q)) polyIdentity qualifiedIdentity :=
+    .forallRight (X.top_avoids a)
+      (by
+        simp only [polyIdentity, Scheme.Avoids, Scheme.FreeType, Scheme.FreeEffect,
+          a, Finset.mem_singleton, Finset.notMem_empty, forall_eq]
+        constructor
+        · rintro ⟨_, hf | hf⟩
+          · exact (X.top_avoids a).1 1 (by simp [a]) hf
+          · simp [Ty.fvTypes] at hf
+        · intro i hi; exact hi.elim) body
+  exact .equivalent ⟨X.entails_left _ _, fun v hv =>
+    (X.holds_and _ _ _).mpr ⟨hv, projected v hv⟩⟩ h
+
+/-- A genuinely qualified target retains its uniform instance when the free
+variable is substituted by the target's old bound name. -/
+theorem qualified_instance_capture :
+    Instance X (X.subst capture X.top)
+      (polyIdentity.subst capture) (qualifiedIdentity.subst capture) :=
+  identity_instance.subst capture
+
+theorem qualified_target_binder_fresh :
+    inspect (qualifiedIdentity.subst capture) =
+      (⟨{3}, ∅⟩, .arr (.var 3) ∅ (.var 3)) := by decide
+
+/-- The requested target binds 1, but the environment uses 1 freely.
+Qualified instance application must freshen that binder before generalizing. -/
+theorem qualified_instance_in_open_context :
+    Typing (fun _ => none) X X.Satisfiable X.top
+      [polyIdentity, .mono (.var 1)] (.var 0) qualifiedIdentity ∅ := by
+  have topSat : X.Satisfiable X.top :=
+    ⟨⟨fun _ => .atom 0, fun _ => ∅⟩, trivial⟩
+  have source : Typing (fun _ => none) X X.Satisfiable X.top
+      [polyIdentity, .mono (.var 1)] (.var 0) polyIdentity ∅ := by
+    refine ⟨.var rfl, Derivation.valid_of_satisfiable _ topSat ?_⟩
+    apply Context.admissible_cons
+    · apply Context.admissible_cons
+      · intro s hs; cases hs
+      · trivial
+    · exact (X.admissible_satisfiable_iff _).mpr topSat
+  apply source.instance_value (fun _ h => h) (Constraints.SolvedClosure.satisfiable X)
+    (.var 0) identity_instance
+  exact (X.admissible_satisfiable_iff _).mpr
+    ⟨⟨fun _ => .atom 0, fun _ => ∅⟩, rfl⟩
+
+/-- The existing non-realizable let example is nevertheless a legitimate
+self-approximation when its qualifier is admissible. Uniform realizability
+must not be imposed on this reflexivity argument. -/
+theorem admissible_unrealizable_scheme_approximation :
+    ∃ (Y : Constraints equalityTypes (TypeOrder.equality equalityTypes))
+      (P : Y.PrincipalNormalizer) (c : Y.Formula) (s : Scheme Y),
+      ¬ s.Realizable c ∧
+      (∀ t, s.Approximates P.solved c t → ¬ t.Realizable c) ∧
+      s.Approximates P.solved c s ∧
+      Context.Approximates P.solved c [s] [s] ∧
+      Typing (fun _ => none) Y P.solved c []
+        (.letE (.lam (.var 0)) (.int 0)) (.mono (.base .int)) ∅ := by
+  obtain ⟨Y, P, c, s, _, typed, notReal, letTyped⟩ :=
+    RealizabilityExample.valid_let_without_realizable_scheme
+  have approx := typed.result_approximates_self typed.root.2.2
+    (by intro v hv t ht; cases ht)
+  exact ⟨Y, P, c, s, notReal,
+    fun _ h ht => notReal (h.realizable_iff.mpr ht), approx, .cons approx .nil, letTyped⟩
+
+/-- The same finite name bound protects both type and effect generalization. -/
+theorem substituted_environment_fresh (a : Names)
+    (fresh : a.Disjoint ((Context.support [source]).union capture.range)) :
+    (Context.subst capture [source]).Avoids a :=
+  Context.subst_avoids [source] capture a fresh
+
 private def swap : Substitution T where
   domain := ⟨{0, 1}, ∅⟩
   types := fun i => if i = 0 then .var 1 else if i = 1 then .var 0 else .var i

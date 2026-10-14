@@ -458,7 +458,7 @@ private theorem Instance.trans_mono_under {X : Constraints T O} {c d : X.Formula
   | alphaLeft he _ ih => exact .alphaLeft he (ih hd k)
   | alphaRight he _ ih => exact ih hd (.alphaLeft he k)
 
-private theorem Instance.of_mono_targets {X : Constraints T O} {c : X.Formula}
+theorem Instance.of_mono_targets {X : Constraints T O} {c : X.Formula}
     {s u : Scheme X}
     (inhabited : ∀ v, X.holds c v → ∃ t, u.GroundInstance v t)
     (cover : ∀ d t, X.Entails d c → Instance X d u (.mono t) → Instance X d s (.mono t)) :

@@ -58,11 +58,18 @@
 - [x] 既存の制約形式の推論と PDF をコミットする（`1ef369d`）。
 - [x] 有限の入力変数を比較する正規化契約を定義し、主要正規形の存在と計算可能性を分離する（`ScopedPrincipalNormalizer`）。
 - [x] 計算可能な捕獲回避付き環境代入と `ground_subst`、単相対象への `Instance.subst_mono`、実現可能性の保存を証明する。
-- [ ] 任意の qualified 対象への `Instance` の代入保存と、一般化に使う環境の自由変数の管理を証明する。
+- [x] 任意の qualified 対象への `Instance.subst` と、環境の support・代入の range の外にある名前の保護（`Context.subst_avoids`）を証明する。
+- [x] 環境近似の関係・反射性・推移性・変数規則を証明する（`Context.Approximates`）。反射性は許容性と各評価での実例の存在で成立し、一様な実現可能性は不要（`refl_of_ground`）。
+- [x] `equalityTypes`、強い `PrincipalNormalizer`、恒真な解決済み制約、外側条件の許容性、実現可能性の下で環境近似を構成する（`Context.approximation_exists`）。抽象的な型領域と `ScopedPrincipalNormalizer` への一般化は未証明。
+- [x] 値の任意の qualified 型への `Instance` 比較を同じ `S` の型付けへ反映し、環境近似後の変数規則に適用する（`Typing.instance_value`、`Context.Approximates.variable_scheme`）。
+- [x] 一般化に使う主要正規形と代入後の `Typing_Sat` の本体を構成し、本体の `Typing_S` から一般化する補題を証明する（`forallIntro_normal_form`、`generalize_normal_form`）。本体を `S` へ変換する証明は含めない。
+- [x] 近似の前後で実現可能性が同値であることと、実現可能でない許容な型を持つ有効な `let` の自己近似を検証する（`Scheme.Approximates.realizable_iff`、`admissible_unrealizable_scheme_approximation`）。
+- [x] 実現可能なスキームから解決済みの有限証人と比較正規形を構成し、これらの補題から `GroundRepresentation` の仮定を除く（`solved_witness_finite`、`exists_of_realizable_finite`）。
 - [x] `S` の許容性の改名・整合する連言・射影に関する閉性を `SolvedClosure` として分離し、`Sat_X` のモデルを証明する。
 - [x] 新鮮化から比較正規形を構成する。対象代入の解決済み性・残余不変性を要求せず、一様な有限因子を証明する（`complete_of_substitution`）。
-- [ ] `S` の射影閉性・主要正規化から型スキームと環境の近似を構成する。束縛外変数の保護を証明する。
-- [ ] 変換定理7：handler-free な導出を、内部の制約・環境を含め `S` の体系へ変換する。
+- [x] `ScopedPrincipalNormalizer` と明示した閉性・lifting 条件から一般化に必要なスキーム近似を構成し、両環境の束縛外変数を保護する（`SchemeApproximation.generalized_approximation`）。
+- [x] 定理7相当：追加条件と `UsesHMXRules` の下で13規則の導出を、内部の制約・環境を含め `S` の体系へ変換する（`Derivation.theorem7_core`、`theorem7_mono_core`）。
+- [x] 定理7の多相 `let`：内部の多相型の実現可能性を仮定せず、値の近似で環境を延長し、元の本体へ帰納仮定を適用する。
 - [ ] 追加の `existsIntro` 規則の導出変換を証明する。
 - [ ] `perform`・handler の導出変換を証明する。剛体変数、`∀B.∃J`、依存関係・非脱出を保存する。
 - [x] 制約生成の最後に正規化する `inferTerm` を実装する。表現不能を不整合と区別する。
@@ -78,6 +85,26 @@
 - [x] 再構成基盤の全体ビルド・公理監査を通し、PDF の前提・定理・未証明箇所・表示を同期する。
 
 既存の `normalized_principal_computation` の導出は `S = Sat_X` に属し、定理16・17の代用にはならない。`GroundRepresentation` を使う意味論的補題と、原典の代数的な前提を区別する。`SolvedClosure` は有限範囲の主要正規化から導出していない。残る導出変換・一般化・qualified 比較を仮定で置き換えない。未証明であることは不完全性の根拠にならない。
+
+### 定理7の結論から逆算した証明（2026-10-14）
+
+**目標と成果**：現行の近似の定義と値制限の下で、明示した追加条件から定理7相当の導出変換を証明した。`Derivation.theorem7_core` は許容な外側制約と入力環境の近似から、同じ効果を持つ `Typing_S` と結果スキームの近似を構成する。`theorem7_mono_core` は元の単相型も保存する。
+
+**前提**：型領域は `equalityTypes`。有限入力変数について比較する `ScopedPrincipalNormalizer`、`SolvedClosure`、恒真な解決済み制約、整合する効果等式の追加閉性、射影から有限代入を得る条件を使う。最後の条件は `Adm_S(∃A.D) → ∃θ, dom θ ⊆ A ∧ Adm_S(θD)` であり、定義28④に対応する許容性で述べた条件である。`θ.Solved` および定義28全体は要求しない。これらを主要正規化だけから導いたとはしない。
+
+**対象規則**：`Derivation.UsesHMXRules` により、導出の全節点から `existsIntro`・`perform`・`handle` を除く13規則を対象にする。式に handler がないことだけでは足りない。内部のスキームや環境に一様な実現可能性を追加しない。
+
+1. `transform_to_solved_subst` で、任意の有限代入・許容な制約・近似する環境を量化した帰納命題を証明する。帰納法は元の導出に適用する。
+2. 一般化では、束縛名を両環境と外側制約に対して新鮮にし、環境を保護した主要正規形を構成する。効果への代入は残余へ移し、新しい出力パラメータを量化する。
+3. 外側制約と `∃B.R` の同値性から環境近似を `R` の下へ移す。任意の強い制約への近似保存は仮定しない。
+4. 合成した代入で元の子導出へ帰納仮定を適用し、一般化規則を閉じる。多相 let は値の近似で環境を延長し、元の本体の子へ帰納仮定を適用する。
+5. 恒等代入後の束縛名変更を構文的な `Instance` の同値性で取り除き、公開定理を得る。
+
+**検証済み**：入れ子の多相 let・特殊化、開環境の名前衝突、潜在効果の保存を公開定理で確認した。効果専用の残余の例では `μ ⊆ {op}` を保持し、通常の型等式を拒否する。既存の実現可能でないスキームの例も保持した。`lake build` と公開定理・適用例の公理監査が成功し、依存は `propext`・`Classical.choice`・`Quot.sound` のみ。PDF を再生成し、変更箇所と後続ページの表示を確認した。
+
+**残る課題と次の作業**：具体的制約系が追加条件をすべて満たす証明と、`existsIntro`・`perform`・handler の導出変換を進める。特に handler には `∀B.∃J` の依存関係と非脱出の保存が必要である。これらを終えて初めて、今回の定理を EHMX 全規則や実際の再構成出力の保証へ適用できる。定理16・17・系7の未完了項目は維持する。
+
+原典の対応箇所：[Sulzmann 学位論文 §3.6 定理7、付録 C.4](https://www.researchgate.net/publication/213884919_A_General_Framework_for_HindleyMilner_Type_Systems_with_Constraints)。現行定義と追加条件の下での形式化を、原典の全体系の証明と区別する。
 
 ## 1. 具体的 X が条件を満たすことの証明（後続）
 
