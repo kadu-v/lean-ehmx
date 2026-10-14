@@ -588,7 +588,7 @@ $\sigma$ を $s$ の束縛名へ制限し，同じ有限因子を全ての $\rho
 \clearpage
 \section{抽象 X の完全性：HM(X) との対応}
 比較対象：\cite[\S4.4.1, 定理14・15・系6]{Sulzmann2000}．
-現行の型付け・生成は値制限付き．型項再構成（\S4.4.2）は要求しない．
+現行の型付け・生成は値制限付き．型項再構成（\S4.4.2）は次節で区別する．
 実行時の型・効果安全性は未証明．
 
 \small
@@ -807,6 +807,144 @@ d\in\operatorname{SatDecider}(X),\quad\Real_C(\Gamma),\quad
 生成定理は handler を含む．$d$ の判定域もこの量化制約を含む．
 基底断片のみの判定器から全 $X$ の \key{SatDecider} は得られない．
 handler 固有の不完全性・判定不能性は主張しない．
+
+\clearpage
+\section{型項再構成：有限範囲の正規化}
+\[
+\begin{aligned}
+n&=(R,\psi),\qquad [n]=R\land[\psi],\\
+\operatorname{Normal}_S(D;n)
+ &\iff S(R)\land\Solved(\psi)\land\psi R\equiv R\land[n]\models D,\\
+n\preceq_U m
+ &\iff\exists\phi\text{（有限代入）}.\
+   \forall\rho.\ \psi^*(\phi^*\rho)=_U\theta^*\rho
+   \ \land\ Q\models\phi R,\quad m=(Q,\theta),\\
+\operatorname{Principal}_S^U(D;n)
+ &\iff\operatorname{Normal}_S(D;n)\land
+   \forall m.\ \operatorname{Normal}_S(D;m)\Rightarrow n\preceq_U m.
+\end{aligned}
+\]
+比較因子 $\phi$ の冪等性は要求しない．新しい出力パラメータは入力 $U$ と区別する．
+\[
+\begin{gathered}
+\FV(D)\subseteq U,\quad S\subseteq\Sat_X,\\
+\mathcal N(U,D)=\mathsf{some}(n)\Rightarrow
+ \operatorname{Principal}_S^U(D;n),\\
+\mathcal N(U,D)=\mathsf{none}\iff
+ \neg\exists n.\operatorname{Normal}_S(D;n).
+\end{gathered}
+\]
+\key{ScopedPrincipalNormalizer}．存在条件 \key{PrincipalNormalForms} と
+計算可能な $\mathcal N$ の実装を区別する．
+
+\textbf{解形式の閉性}（\key{SolvedClosure}）
+\[
+\begin{gathered}
+\Adm_S(C)\Rightarrow\Adm_S(pC)\quad(p:\text{有限置換}),\\
+\Adm_S(C)\land\Adm_S(D)\land\Sat(C\land D)\Rightarrow\Adm_S(C\land D),\\
+\Adm_S(C)\Rightarrow\Adm_S(\exists A.C).
+\end{gathered}
+\]
+主要正規形の契約からこれらの閉性は導出していない．$S=\Sat_X$ は全条件を満たす．
+
+\begin{theorem}[新鮮化した比較正規形]
+$\Adm_S$ の改名閉性，$\FV(D)\subseteq U$ の下で，
+\[
+\begin{gathered}
+\Adm_S(C),\quad C\models\sigma D\\
+\Longrightarrow\quad\exists n,\phi.\
+ \mathcal N(U,D)=\mathsf{some}(n)\ \land\\
+ \forall\rho.\ n_\theta^*(\phi^*\rho)=_U\sigma^*\rho,
+ \qquad C\models\phi n_R.
+\end{gathered}
+\]
+\end{theorem}
+\key{ScopedPrincipalNormalizer.complete\_of\_substitution}．
+$\Solved(\sigma)$，$\sigma C\equiv C$，ground 値の型項表現は不要．
+
+\textbf{捕獲回避代入}
+\[
+\begin{gathered}
+\sigma(\forall A.C\Rightarrow t)
+ =\forall f(A).\eta C\Rightarrow\eta t,
+ \qquad
+ \eta(i)=\begin{cases}f(i)&i\in A,\\\sigma(i)&i\notin A,\end{cases}\\
+ f(A)\cap(\supp C\cup\supp t\cup\dom\sigma\cup\operatorname{range}(\sigma)\cup A)=\varnothing,\\
+ \ground{\Gamma[\sigma]}_\rho=\ground\Gamma_{\sigma^*\rho},\qquad
+ C\vdash_i s\succeq t\Rightarrow\sigma C\vdash_i s[\sigma]\succeq\sigma t,\\
+ \Real_C(\Gamma)\Rightarrow\Real_{\sigma C}(\Gamma[\sigma]).
+\end{gathered}
+\]
+比較の右辺 $t$ は単相型．任意の qualified 型への代入保存は未証明．
+
+\clearpage
+\textbf{再構成算法と証明範囲}
+\[
+\begin{gathered}
+\mathcal T^{\rm at}_{N,\mathcal N}(\Gamma,e,t,\epsilon):\quad
+ D\leftarrow\Proj_N(\Gamma,e,t,\epsilon),\\
+ U=\operatorname{Protected}(\Gamma,t,\epsilon)\cup\supp D,\\
+ \mathcal T^{\rm at}_{N,\mathcal N}=\begin{cases}
+  \mathsf{reconstructed}(R,\psi)&\mathcal N(U,D)=\mathsf{some}(R,\psi),\\
+  \mathsf{unrepresented}(D)&\mathcal N(U,D)=\mathsf{none}.
+ \end{cases}
+\end{gathered}
+\]
+\key{inferTerm} は $\Gamma$ に新鮮な型・効果変数を期待値に使う．
+$\mathsf{unrepresented}$ は $\neg\Sat(D)$ を意味しない．
+
+\begin{theorem}[制約形式での再構成健全性]
+\[
+\begin{gathered}
+\Closed(\Sigma),\quad\Real_\top(\Gamma),\quad
+ \mathcal T^{\rm at}(\Gamma,e,t,\epsilon)=\mathsf{reconstructed}(R,\psi)\\
+\Longrightarrow\quad
+ \operatorname{Typing}_{\Sat}(R,\Gamma[\psi],e,\psi t,\psi\epsilon).
+\end{gathered}
+\]
+\end{theorem}
+\key{inferTermAt\_sound\_constraint}．結論は $\operatorname{Typing}_S$ ではない．
+
+\begin{theorem}[単相判断の完全性と有限因子]
+$\Adm_S$ の改名閉性の下で，
+\[
+\begin{gathered}
+\operatorname{Typing}_S(C,\Gamma[\sigma],e,\sigma t,\sigma\epsilon),
+ \quad\Real_C(\Gamma[\sigma])\\
+\Longrightarrow\quad\exists R,\psi,\phi.\
+ \mathcal T^{\rm at}(\Gamma,e,t,\epsilon)=\mathsf{reconstructed}(R,\psi)
+ \ \land\ C\models\phi R,\\
+\forall\rho.\quad
+ \ground{\Gamma[\psi]}_{\phi^*\rho}=\ground{\Gamma[\sigma]}_\rho,\quad
+ \eval{\psi t}_{\phi^*\rho}=\eval{\sigma t}_\rho,\quad
+ \eval{\psi\epsilon}_{\phi^*\rho}=\eval{\sigma\epsilon}_\rho.
+\end{gathered}
+\]
+\end{theorem}
+\key{inferTermAt\_complete\_mono}, \key{reconstruction\_factor}．
+
+\begin{theorem}[qualified 判断からの受理]
+$\operatorname{SolvedClosure}(S)$ の下で，
+\[
+\begin{gathered}
+\operatorname{Typing}_S(C,\Gamma[\sigma],e,s,\epsilon),\quad\Real_C(\Gamma[\sigma])\\
+\Longrightarrow\quad\exists n.\ \mathcal T(\Gamma,e)=\mathsf{reconstructed}(n).
+\end{gathered}
+\]
+\end{theorem}
+\key{inferTerm\_complete\_acceptance}．対象スキームの $\Real_C(s)$ は不要．
+
+\begin{center}\small
+\begin{tabular}{@{}ll@{}}\toprule
+学位論文との対応 & 状態\\\midrule
+定理7：内部導出の $\Sat_X\to S$ 変換 & 未証明\\
+定理16：$\operatorname{Typing}_S$ での出力健全性 & 未証明\\
+定理17：受理・単相判断の有限因子 & 上記の閉性条件下で証明済み\\
+定理17：同じ因子による qualified 型・外側条件の比較 & 未証明\\
+系7：同じ $S$ 内での主要型 & 未証明\\\bottomrule
+\end{tabular}\end{center}
+handler の $\forall B.\exists J$ を含む生成は上記の受理定理の対象．
+内部導出の変換と量化・非脱出の保存は未証明．
 
 \clearpage
 \section{具体化：正則な型クラス制約}
