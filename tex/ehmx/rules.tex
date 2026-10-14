@@ -587,35 +587,198 @@ $\sigma$ を $s$ の束縛名へ制限し，同じ有限因子を全ての $\rho
 \]
 
 \clearpage
-\section{具体例と Lean 対応}
-\textbf{存在射影}
+\section{具体化：正則な型クラス制約}
 \[
 \begin{gathered}
-eq:\forall\alpha.\operatorname{Eq}(\alpha)\Rightarrow\alpha\to\alpha\to\mathrm{Bool},\\
-\top\models\operatorname{Eq}(\mathrm{Int})\models\exists\alpha.\operatorname{Eq}(\alpha),\\
-\alpha\notin\FV(Q)\Rightarrow
- \exists\alpha.(Q\land\operatorname{Eq}(\alpha))\equiv_X Q,\\
-\top;[eq]\vdash\mathbf{let}\ 0\ \mathbf{in}\ 0_{\mathrm{int}}:\mathrm{Int}!\varnothing.
+K=\{k_1,\ldots,k_n\},\quad\operatorname{arity}:K\to\mathbb N,
+\qquad\mathcal C=\{C_1,\ldots,C_m\},\\
+t::=\alpha\mid b\mid\arr t\epsilon t\mid k(t_1,\ldots,t_{\operatorname{arity}(k)}),
+\qquad V=\{t\mid\FV(t)=\varnothing\},\quad {\leq}={=},\\
+D::=\top\mid\bot\mid D\land D\mid t=u\mid C(t)\mid\epsilon\subseteq\eta
+ \mid o\notin\epsilon\mid\exists A.D\mid\forall B.\exists J.D\mid\theta D.
 \end{gathered}
 \]
-最後の項の最初の $0$ は変数，$0_{\mathrm{int}}$ は整数．
+$\theta D$ は遅延代入：$\rho\models\theta D\iff\theta^*\rho\models D$．
 \[
-\operatorname{Eq}(\mathrm{Int}),\operatorname{Eq}(\mathrm{Bool}),\quad\mathrm{Int}\ne\mathrm{Bool}
+\begin{gathered}
+\mathcal I_b\subseteq\mathcal C\times\mathrm{Base},\qquad
+\mathcal I(C,k)\in\{\bot\}\cup\prod_{j<\operatorname{arity}(k)}\mathcal P(\mathcal C),\\
+\mathcal I(C,k)=(P_j)_j\quad\equiv\quad
+ \frac{\bigwedge_j\bigwedge_{D\in P_j}D(\alpha_j)}{C(k(\vec\alpha))}.
+\end{gathered}
+\]
+同一 head は一つ．前提は head の真部分型のみ．矢印型のインスタンスは置かない．
+\[
+\begin{aligned}
+\operatorname{covers}(P,Q)&\iff Q\subseteq\bigcup_{C\in P}(\{C\}\cup\operatorname{sup}(C)),\\
+\operatorname{WF}(\mathcal I)&\iff
+ \bigl(D\in\operatorname{sup}(C)\Rightarrow
+ D<C\land\operatorname{sup}(D)\subseteq\operatorname{sup}(C)\bigr)\ \land\\
+ &\quad\bigl((C,b)\in\mathcal I_b\Rightarrow
+ \forall D\in\operatorname{sup}(C).\ (D,b)\in\mathcal I_b\bigr)\ \land\\
+ &\quad\bigl(\mathcal I(C,k)=(P_j)_j\Rightarrow
+ \forall D\in\operatorname{sup}(C).\ \exists(Q_j)_j.\
+ \mathcal I(D,k)=(Q_j)_j\land\forall j.\operatorname{covers}(P_j,Q_j)\bigr).
+\end{aligned}
+\]
+\[
+\operatorname{check}(\Delta)=\mathsf{some}(\mathcal I,\pi)
+\iff\operatorname{NoDuplicateHeads}(\Delta)\land\operatorname{WF}(\mathcal I),
+\quad\mathcal I=\operatorname{environment}(\Delta).
+\]
+\textbf{有限状態による存在判定}
+\[
+\begin{aligned}
+q(b)&=\{C\mid(C,b)\in\mathcal I_b\},& q(\arr uE v)&=\varnothing,\\
+\delta_k(q_1,\ldots,q_r)&=\{C\mid\mathcal I(C,k)=(P_j)_j\land\forall j.\ P_j\subseteq q_j\},\\
+q(k(\vec u))&=\delta_k(q(u_1),\ldots,q(u_r)),\\
+R_0&=\{\varnothing\}\cup\{q(b)\mid(C,b)\in\mathcal I_b\},\\
+R_{i+1}&=R_i\cup\{\delta_k(\vec q)\mid k\in K,\ \vec q\in R_i^{\operatorname{arity}(k)}\}.
+\end{aligned}
+\]
+\begin{theorem}
+\[
+\begin{gathered}
+\operatorname{WF}(\mathcal I)\Rightarrow
+ (\mathcal I\vdash C(u)\iff C\in q(u)),\\
+R=\operatorname{lfp}(R_i),\qquad q\in R\iff\exists u\in V.\ q(u)=q,\\
+\operatorname{inhabited}(P)=\mathsf{true}
+\iff\exists q\in R.\ P\subseteq q
+\iff\exists u.\ \bigwedge_{C\in P}C\in q(u).
+\end{gathered}
+\]
+\end{theorem}
+\begin{proof}
+構造帰納法．飽和の測度は $2^m-|R_i|$．同一変数の述語は $P$ に集約する．
+\end{proof}
+
+\clearpage
+\section{効果判定・存在射影・実行結果}
+効果原子の連言を $F$，出現する名前・ラベルを $M,L$ とする．
+\[
+\begin{aligned}
+Q_0&=M\times L,& \rho_Q(\mu)&=\{o\mid(\mu,o)\in Q\},\\
+\operatorname{allow}_{\epsilon\subseteq\eta}(Q,\mu,o)
+ &\iff\mu\in\FV_E(\epsilon)\Rightarrow o\in\eval\eta_{\rho_Q},\\
+\operatorname{allow}_{p\notin\epsilon}(Q,\mu,o)
+ &\iff\mu\in\FV_E(\epsilon)\Rightarrow o\ne p,\\
+Q_{i+1}&=\{(\mu,o)\in Q_i\mid\forall f\in F.\operatorname{allow}_f(Q_i,\mu,o)\},\\
+Q_*&=\operatorname{gfp}(Q_i),&
+\operatorname{effectSat}(F)&=[\rho_{Q_*}\models F].
+\end{aligned}
+\]
+\begin{theorem}
+\[
+\operatorname{effectSat}(F)=\mathsf{true}\iff\exists\rho_E.\rho_E\models F.
+\]
+\end{theorem}
+\begin{proof}
+$\rho\models F\Rightarrow(\rho\cap L)\models F$．$Q_0$ 内の任意のモデルは各 $Q_i$ 以下．
+固定点では変数由来の包含・不在が成立し，残るリテラル条件はモデルの存在から従う．
+停止測度は $|Q_i|$．
+\end{proof}
+\textbf{射影}
+\[
+\begin{gathered}
+D\models\alpha=t,\quad\alpha\notin\FV_T(t),\quad\alpha\in A_T,\quad\theta=[\alpha\mapsto t]
 \quad\Longrightarrow\quad
-\operatorname{Eq}(\alpha)\not\models\alpha=\mathrm{Int}.
-\]
-\textbf{量化と handler}（$T=\key{equalityTypes},\ {\leq}={=},\ X=\key{semantic},\ N=\mathrm{id}$）
-\[
-\begin{gathered}
-\Sigma(o)=\forall\alpha.\alpha\to\alpha,\\
-e_h=\mathbf{handle}_o(\mathbf{perform}\ o\ 0_{\mathrm{int}},\;0,\;0\ 1),\\
-[]\vdash_g e_h:\mathrm{Int}!\varnothing,\\
-\Proj([],e_h,\mathrm{Int},\varnothing)=D_h,\quad\Sat(D_h),\\
-\operatorname{Complete}(S)\Rightarrow
- \exists R,\theta.\ \Inf^{\mathrm{at}}_{N,S}([],e_h,\mathrm{Int},\varnothing)=\mathsf{solved}(R,\theta),\\
-\Inf^{\mathrm{at}}_{N,S_?}([],e_h,\mathrm{Int},\varnothing)=\mathsf{unresolved}(D_h).
+ \exists A.D\equiv\exists(A\setminus\{\alpha\}).\theta D,\\
+D\models\mu=\epsilon,\quad\mu\notin\FV_E(\epsilon),\quad\mu\in A_E
+\quad\Longrightarrow\quad
+ \exists A.D\equiv\exists(A\setminus\{\mu\}).[\mu\mapsto\epsilon]D,\\
+\supp D\subseteq A\quad\Longrightarrow\quad
+ \rho\models\exists A.D\iff\Sat(D),\\
+N(\forall B.\exists J.D)=\operatorname{smartClause}(B,\varnothing,\operatorname{project}(J,N(D))),\\
+\boxed{N(D)\equiv D}.
 \end{gathered}
 \]
+型・効果の束縛をまたぐ未処理の代入は suspension として残す．
+\[
+\alpha\in\FV_T(t),\quad t\ne\alpha
+\ \Rightarrow\ |\rho_T(\alpha)|<|\eval t_\rho|
+\ \Rightarrow\ \neg\Sat(\alpha=t).
+\]
+\textbf{具体的 solver $S_{\rm tc}$}
+\[
+\begin{gathered}
+S_{\rm tc}(G,W)=\mathsf{solved}(R,\theta)\Rightarrow
+ \Solved(\theta)\land\theta G\equiv G\land\theta R\equiv R\land\Sat(G\land R),\\
+G\land R\models\theta W,\qquad
+G\land W\models R\land[\theta],\\
+S_{\rm tc}(G,W)=\mathsf{unresolved}(R)\Rightarrow G\land R\equiv G\land W,\\
+S_{\rm tc}(G,W)=\mathsf{inconsistent}\Rightarrow\neg\Sat(G\land W).
+\end{gathered}
+\]
+$S_{\rm tc}$ は有限探索・構造再帰・上記の停止測度で計算する．意味的な充足可能性 oracle は用いない．
+健全性・主要性は前節の定理を $X_{\rm tc},N,S_{\rm tc}$ に適用する（同じ環境・宣言の前提）．
+
+\clearpage
+\section{完全性の証明範囲と具体的検証}
+\[
+\begin{aligned}
+F&::=\top\mid F\land F\mid C(\alpha)\mid\epsilon\subseteq\eta\mid o\notin\epsilon,\\
+\mathcal D&::=F\mid\exists A.\mathcal D.
+\end{aligned}
+\]
+$\operatorname{simplify}$ は構造的簡約，$N$ は存在射影を含む正規化．
+\begin{theorem}[具体的 solver の部分体系での完全性]
+\[
+\operatorname{simplify}(G\land N(W))\in\mathcal D\land\Sat(G\land W)
+\quad\Longrightarrow\quad\exists R,\theta.\ S_{\rm tc}(G,W)=\mathsf{solved}(R,\theta).
+\]
+\end{theorem}
+型等式の逐次消去も実装するが，全ての handler-free 生成制約が判定域へ到達する証明は未完了．
+全体系の $\operatorname{Complete}(S_{\rm tc})$，handler 固有の不完全性は主張しない．
+\[
+\begin{gathered}
+\operatorname{Eq}(\mathrm{Int}),\ \operatorname{Eq}(\mathrm{Bool}),\ \operatorname{Ord}(\mathrm{Int}),
+\quad\operatorname{Ord}(\alpha)\Rightarrow\operatorname{Eq}(\alpha),\\
+C(\alpha)\Rightarrow C(\operatorname{List}\alpha),\qquad
+C(\alpha)\land C(\beta)\Rightarrow C(\operatorname{Pair}(\alpha,\beta)),
+\quad C\in\{\operatorname{Eq},\operatorname{Ord}\}.
+\end{gathered}
+\]
+\begin{center}\small
+\begin{tabular}{@{}ll@{}}\toprule
+入力（$G=\top$） & 実行結果\\\midrule
+$\operatorname{Eq}(\operatorname{List}\mathrm{Bool})$ & $\mathsf{solved}$\\
+$\operatorname{Ord}(\operatorname{List}\mathrm{Bool})$ & $\mathsf{inconsistent}$\\
+$\operatorname{Eq}(\alpha)$ & $\mathsf{solved}(\operatorname{Eq}(\alpha),\mathrm{id})$\\
+$\exists\alpha.\operatorname{Eq}(\alpha)$ & $\mathsf{solved}(\top,\mathrm{id})$\\
+$\alpha=\mathrm{Int}$ & $\mathsf{solved}(\top,[\alpha\mapsto\mathrm{Int}])$\\
+$\alpha=\operatorname{List}\alpha$ & $\mathsf{inconsistent}$\\
+$\forall\alpha.\exists\beta.\alpha=\beta$ & $\mathsf{solved}$\\
+$\exists\beta.\forall\alpha.\alpha=\beta$ & $\mathsf{unresolved}$\\\bottomrule
+\end{tabular}\end{center}
+最後の式は偽であり，未解決は検出能力の制限を表す．量化順序の交換は行わない．
+\[
+\begin{gathered}
+\Sigma(o)=\forall\alpha.\alpha\to\alpha,\qquad
+ e_h=\mathbf{handle}_o(\mathbf{perform}\ o\ 0_{\mathrm{int}},\;0,\;0\ 1),\\
+[]\vdash_g e_h:\mathrm{Int}!\varnothing,
+\qquad \Inf_{N,S_{\rm tc}}([],e_h)=\mathsf{solved}(R,\theta).
+\end{gathered}
+\]
+後者と多相 let・未使用の $\operatorname{Eq}$ 束縛・perform は実行検証．前者は Lean の型付け証明．
+\textbf{対応表}（名前空間 \key{EHMX.TypeClasses}）
+\small
+\begin{longtable}{@{}p{.40\linewidth}p{.57\linewidth}@{}}\toprule
+保証 & Lean\\\midrule
+宣言検査・クラス意味論 & \key{Declarations.check\_iff}, \key{holds\_iff}\\
+共同存在判定 & \key{reachable\_iff}, \key{inhabited\_iff}\\
+効果の完全な判定 & \key{propagationSat\_iff}\\
+平坦な制約の完全な判定 & \key{flatSat\_iff}\\
+型・効果の存在消去 & \key{eliminate\_bound}, \key{eliminate\_effect}\\
+同値正規化 & \key{normalize\_correct}\\
+具体的 solver の契約 & \key{solver}\\
+具体的推論の健全性・主要性 & \key{inferClasses\_sound}, \key{inferClasses\_principal}\\
+上記 $\mathcal D$ の完全性 & \key{solver\_complete\_fragment}\\
+具体的 handler の型付け & \key{Examples.resumeIdentity\_ground}\\
+実行検証 & \key{Examples.regressions}\\\bottomrule
+\end{longtable}\normalsize
+
+\clearpage
+\section{抽象定理の Lean 対応}
 \textbf{対応表}（名前空間 \key{EHMX.HMX}）
 \small
 \begin{longtable}{@{}p{.38\linewidth}p{.59\linewidth}@{}}
@@ -637,7 +800,6 @@ handler の具体例 & \key{AlgorithmExamples.resumeIdentity\_ground},\\
 \bottomrule
 \end{longtable}
 \normalsize
-\textbf{独立の課題：}具体的 solver の計算可能な構成と契約充足，環境代入の構文的実装，実行時安全性．
 \begin{thebibliography}{9}
 \bibitem{Sulzmann2000} M. Sulzmann.
 \emph{A General Framework for Hindley/Milner Type Systems with Constraints}.
