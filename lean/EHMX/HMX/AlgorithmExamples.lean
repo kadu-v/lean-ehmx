@@ -1,4 +1,4 @@
-import EHMX.HMX.AlgorithmCorrectness
+import EHMX.HMX.AbstractInference
 
 namespace EHMX.HMX.AlgorithmExamples
 
@@ -128,5 +128,40 @@ theorem nestedHandler_ground : GroundTyping signature O []
          upper O (T.eval w identityOp.input)] (.var 1) (T.eval w identityOp.output) ∅ := .var rfl rfl
     simpa using GroundTyping.app hk hx
   all_goals simp
+
+/-- Conditional regressions: no concrete constraint solver is chosen. A full
+satisfiability decider suffices for an actual principal inference result. -/
+private theorem principal_of_ground (D : SatDecider X) {e : Expr} {t : T.Term}
+    (ground : ∀ v : Valuation T.Value, GroundTyping signature O [] e (T.eval v t) ∅) :
+    ∃ n, infer signature X N D.solver [] e = some (.solved n) ∧
+      PrincipalComputationScheme signature X X.Satisfiable [] e (inferredScheme [] n) := by
+  have sat : X.Satisfiable X.top :=
+    ⟨⟨fun _ => T.groundLiteral .int, fun _ => ∅⟩, (X.holds_top _).mpr trivial⟩
+  have typed : Typing signature X X.Satisfiable X.top [] e (.mono t) ∅ :=
+    Typing.of_ground N (by intro s hs; cases hs) sat (by
+      intro v _
+      simpa [Context.ground, Effect.eval] using ground v)
+  obtain ⟨n, run, principal, _⟩ := D.infer_principal N signature_closed rfl
+    (by intro s hs; cases hs) typed
+  exact ⟨n, run, principal⟩
+
+theorem polymorphicLet_principal_of_decider (D : SatDecider X) :
+    ∃ n, infer signature X N D.solver [] polymorphicLet = some (.solved n) ∧
+      PrincipalComputationScheme signature X X.Satisfiable [] polymorphicLet
+        (inferredScheme [] n) :=
+  principal_of_ground D (t := T.literal .bool) (fun _ => polymorphicLet_ground)
+
+theorem resumeIdentity_principal_of_decider (D : SatDecider X) :
+    ∃ n, infer signature X N D.solver [] resumeIdentity = some (.solved n) ∧
+      PrincipalComputationScheme signature X X.Satisfiable [] resumeIdentity
+        (inferredScheme [] n) :=
+  principal_of_ground D (t := T.literal .int) (fun _ => resumeIdentity_ground)
+
+theorem nestedHandler_principal_of_decider (D : SatDecider X) :
+    ∃ n, infer signature X N D.solver []
+        (.handle resumeIdentity 0 (.var 0) (.app (.var 0) (.var 1))) = some (.solved n) ∧
+      PrincipalComputationScheme signature X X.Satisfiable []
+        (.handle resumeIdentity 0 (.var 0) (.app (.var 0) (.var 1))) (inferredScheme [] n) :=
+  principal_of_ground D (t := T.literal .int) (fun _ => nestedHandler_ground)
 
 end EHMX.HMX.AlgorithmExamples

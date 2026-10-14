@@ -429,8 +429,7 @@ S_{\mathrm{sem}}(G,W)&=
 \operatorname{PartialSolver}(S_?)\qquad
 \operatorname{PartialSolver}(S_{\mathrm{sem}})\land\operatorname{Complete}(S_{\mathrm{sem}}).
 \]
-$S_{\mathrm{sem}}$ は非計算的なモデル．実行可能な判定手続きは別の実装義務．
-HM(X) の制約形式と型項再構成の区別は \cite[\S4.4]{Sulzmann2000}．
+$S_{\mathrm{sem}}$ は非計算的なモデル．計算的構成は後述の $\operatorname{SatDecider}(X)$ を用いる．
 
 \clearpage
 \section{生成と合成の定理}
@@ -585,6 +584,145 @@ $\sigma$ を $s$ の束縛名へ制限し，同じ有限因子を全ての $\rho
  &\Rightarrow\exists D.\ \Proj(\Gamma,e,t,\epsilon)=D\land R\equiv_X D.
 \end{aligned}
 \]
+
+\clearpage
+\section{抽象 X の完全性：HM(X) との対応}
+比較対象：\cite[\S4.4.1, 定理15・系6]{Sulzmann2000}．
+現行の型付け・生成は値制限付き．型項再構成（\S4.4.2）は要求しない．
+\small
+\begin{tabular}{@{}p{.34\linewidth}p{.63\linewidth}@{}}\toprule
+前提 & 現行パラメータ・条件\\\midrule
+型代数・代入・有限台 & \key{TypeDomain}，\key{Constraints.holds\_subst}，\key{holds\_support}\\
+論理演算・射影 & \key{holds\_top}，\key{holds\_and}，\key{holds\_exists}\\
+比較・効果 & \key{TypeOrder}，\key{holds\_le}，\key{holds\_effectLe}，\key{holds\_lacks}\\
+同値簡約 & $N(C)\equiv_X C$（\key{Simplifier}）\\
+解決済み集合 & $\mathcal S=\{C\mid\Sat_X(C)\}$\\
+環境 & $\Real_C(\Gamma)$，$\Adm_{\Sat}(\Gamma)$\\
+操作宣言 & $\Closed(\Sigma)$（健全性）\\
+handler の拡張 & \key{holds\_clause}：$\forall B.\exists J.D$\\\bottomrule
+\end{tabular}\normalsize
+\[
+\begin{aligned}
+\Real_C(\Gamma)&\iff\forall\sigma\in\Gamma.\ \exists t.\ C\vdash_i\sigma\succeq t,\\
+\Adm_{\Sat}(C)&\iff\Sat_X(C),\\
+\Sat_X(\exists A.C)&\iff\Sat_X(C),\\
+\operatorname{Value}(v)&\Rightarrow\text{値 let の一般化},\qquad
+\neg\operatorname{Value}(e)\Rightarrow\text{単相 let}.
+\end{aligned}
+\]
+\textbf{制約を保持する主要正規形}
+\[
+\begin{gathered}
+p=(C,\theta)\in\operatorname{ConstraintProblem},\quad\Sat_X(C)\\
+\Longrightarrow\quad\operatorname{PrincipalNormal}_{\mathcal S}(p,p),\\
+\operatorname{PrincipalNormal}_{\mathcal S}(p,n)
+\iff\operatorname{Normal}_{\mathcal S}(p,n)\land
+ \forall m.\ \operatorname{Normal}_{\mathcal S}(p,m)\Rightarrow n\succeq m.
+\end{gathered}
+\]
+\key{NormalForm.MoreGeneral} の反射性と \key{IsNormalOf} の定義による．
+$\mathcal S$ の射影閉性・主要正規形の存在に判定器は不要．
+\[
+\begin{aligned}
+s&=\forall A.R\Rightarrow(t!\eta),\quad
+ \operatorname{valuePart}(s)=\forall A.R\Rightarrow t,\\
+\operatorname{CInst}_\rho(s)&=\{(u,E)\mid\exists\nu=_{\overline A}\rho.
+ \ \nu\models R\land\eval t_\nu\leq u\land\eval\eta_\nu=E\},\\
+\operatorname{PrincipalComp}(\Gamma,e,s)&\iff
+ \operatorname{ComputationTyping}_{\Sat}(\top,\Gamma,e,s)\ \land\\
+ &\quad\forall C,u,\epsilon.\ \operatorname{Typing}_{\Sat}(C,\Gamma,e,u,\epsilon)
+ \Rightarrow\forall\rho\models C.\ (\eval u_\rho,\eval\epsilon_\rho)\in\operatorname{CInst}_\rho(s),\\
+\operatorname{PrincipalPair}(\Gamma,e,C,\sigma)&\iff
+ \operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\varnothing)\ \land\\
+ &\quad\forall D,\tau.\ \operatorname{Typing}_{\Sat}(D,\Gamma,e,\tau,\varnothing)
+ \Rightarrow D\models C\land D\vdash_i\sigma\succeq\tau.
+\end{aligned}
+\]
+\begin{theorem}[判定器なしの生成主要性]
+\[
+\begin{gathered}
+\supp\Gamma=\varnothing,\quad\Real_\top(\Gamma),\quad
+\operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\epsilon)\\
+\Longrightarrow\quad\exists D.\ \Proj(\Gamma,e,\alpha_0,\mu_0)=D\land\Sat_X(D)\land\\
+\operatorname{PrincipalComp}(\Gamma,e,s_D)\land
+ \forall C',t',\eta'.\ \operatorname{Typing}_{\Sat}(C',\Gamma,e,t',\eta')
+ \Rightarrow\Fin(s_D;C',t',\eta'),\\
+s_D=\forall(\{\alpha_0\},\{\mu_0\}).D\Rightarrow(\alpha_0!\mu_0).
+\end{gathered}
+\]
+\end{theorem}
+\key{Typing.principal\_computation\_run}．値の主要対は \key{Typing.principal\_value}．
+開環境は射影後の意味的被覆と有限因子の定理を用いる．
+
+\clearpage
+\textbf{抽象的な充足可能性判定器}
+\[
+\boxed{\operatorname{SatDecider}(X)=
+ \left\{d:\mathcal C_X\to\mathbb B\ \middle|\
+ \forall C.\ d(C)=\mathsf{true}\iff\Sat_X(C)\right\}.}
+\]
+$d$ は停止する計算可能な実装を与える．型クラス・単一化方式は固定しない．
+\[
+S_d(G,W)=
+\begin{cases}
+\mathsf{solved}(W,\mathrm{id})&d(G\land W)=\mathsf{true},\\
+\mathsf{inconsistent}&d(G\land W)=\mathsf{false}.
+\end{cases}
+\]
+\begin{theorem}[判定器からの完全な solver]
+\[
+\begin{gathered}
+d\in\operatorname{SatDecider}(X)\Rightarrow
+ \operatorname{PartialSolver}(S_d)\land\operatorname{Complete}(S_d),\\
+S_d(G,W)=\mathsf{solved}(R,\theta)
+ \iff\Sat_X(G\land W)\land(R,\theta)=(W,\mathrm{id}),\\
+S_d(G,W)=\mathsf{inconsistent}\iff\neg\Sat_X(G\land W),\\
+\forall G,W,R.\ S_d(G,W)\ne\mathsf{unresolved}(R).
+\end{gathered}
+\]
+\end{theorem}
+\begin{proof}
+$d(G\land W)=\mathsf{true}\iff\Sat_X(G\land W)$ と恒等代入の契約による．
+\end{proof}
+\begin{theorem}[合成した完全性・主要性]
+\[
+\begin{gathered}
+d\in\operatorname{SatDecider}(X),\quad\Real_C(\Gamma),\quad
+\operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\epsilon)\\
+\Longrightarrow\quad\exists R,\theta.\
+ \Inf_{N,S_d}(\Gamma,e)=\mathsf{solved}(R,\theta).
+\end{gathered}
+\]
+\[
+\begin{gathered}
+\Closed(\Sigma),\quad\supp\Gamma=\varnothing,\quad\Real_\top(\Gamma),\quad
+s=\operatorname{generalize}(\Gamma,R,\theta\alpha_p,\theta\mu_q)\\
+\Longrightarrow\quad\operatorname{PrincipalComp}(\Gamma,e,s)\ \land\\
+\bigl(\forall C',t',\eta'.\ \operatorname{Typing}_{\Sat}(C',\Gamma,e,t',\eta')
+ \Rightarrow\Fin(s;C',t',\eta')\bigr)\ \land\\
+\bigl(\operatorname{Value}(e)\Rightarrow
+ \operatorname{PrincipalPair}(\Gamma,e,\top,\operatorname{valuePart}(s))\bigr).
+\end{gathered}
+\]
+\end{theorem}
+\[
+\operatorname{Typing}\xRightarrow{\text{生成完全性}}\Sat_X(D)
+ \xRightarrow{d}\mathsf{solved}(D,\mathrm{id})
+ \xRightarrow{\text{生成・solver の契約}}\text{健全性・主要性}.
+\]
+健全性：$\Closed(\Sigma),\Real_\top(\Gamma),\Adm_{\Sat}(\Gamma)$ の下で
+\[
+\Inf^{\mathrm{at}}_{N,S_d}(\Gamma,e,t,\epsilon)=\mathsf{solved}(R,\theta)
+ \Rightarrow\operatorname{Typing}_{\Sat}(R,\Gamma,e,t,\epsilon).
+\]
+\textbf{handler の条件}
+\[
+\rho\models\forall B.\exists J.D
+ \iff\forall\nu=_{\overline B}\rho.\ \exists\omega=_{\overline J}\nu.\ \omega\models D.
+\]
+生成定理は handler を含む．$d$ の判定域もこの量化制約を含む．
+基底断片のみの判定器から全 $X$ の \key{SatDecider} は得られない．
+handler 固有の不完全性・判定不能性は主張しない．
 
 \clearpage
 \section{具体化：正則な型クラス制約}
@@ -787,16 +925,30 @@ $\exists\beta.\forall\alpha.\alpha=\beta$ & $\mathsf{unresolved}$\\\bottomrule
 $\Gen,\Proj,\Inf^{\mathrm{at}},\Inf$ & \key{generate}, \key{generateProjected}, \key{inferAt}, \key{infer}\\
 部分・完全 solver & \key{PartialSolver}, \key{PartialSolver.Complete}\\
 契約の非計算的モデル & \key{PartialSolver.semantic\_complete}\\
+充足可能性判定器 & \key{SatDecider}\\
+判定器から完全な solver & \key{SatDecider.solver\_complete}\\
+充足可能性と成功の同値 & \key{SatDecider.solver\_solved\_iff}\\
+不充足・未解決の排除 & \key{SatDecider.solver\_inconsistent\_iff},\\
+ & \key{SatDecider.solver\_ne\_unresolved}\\
+射影閉性・主要正規形 & \key{Constraints.satisfiable\_exists\_iff}, \key{Constraints.PrincipalNormalizer.satisfiable}\\
 固定した生成の健全性 & \key{generate\_sound}\\
 固定した生成の完全性 & \key{Inference.groundComplete}\\
+判定器なしの主要型の存在 & \key{Typing.principal\_computation\_run},\\
+ & \key{Typing.principal\_value}\\
 射影後の正確性 & \key{generateProjected\_ground\_iff}\\
 開環境の成功時健全性 & \key{inferAt\_ground\_sound}, \key{inferAt\_sound}\\
 開環境の有限因子 & \key{infer\_principal\_open}\\
 実際の結果の主要性 & \key{infer\_principal\_closed}\\
 期待型なしの条件付き完全性 & \key{infer\_complete}\\
+判定器からの合成完全性 & \key{SatDecider.infer\_complete}\\
+判定器からの合成健全性 & \key{SatDecider.inferAt\_sound}, \key{SatDecider.infer\_sound}\\
+型付け可能なら主要出力 & \key{SatDecider.infer\_principal}\\
+推論での未解決の排除 & \key{SatDecider.infer\_ne\_unresolved}\\
 不整合・未解決 & \key{inferAt\_inconsistent}, \key{inferAt\_unresolved}\\
 handler の具体例 & \key{AlgorithmExamples.resumeIdentity\_ground},\\
  & \key{resumeIdentity\_generated}, \key{resumeIdentity\_complete}, \key{resumeIdentity\_deferred}\\
+判定器を仮定した適用例 & \key{AlgorithmExamples.polymorphicLet\_principal\_of\_decider},\\
+ & \key{resumeIdentity\_principal\_of\_decider}, \key{nestedHandler\_principal\_of\_decider}\\
 \bottomrule
 \end{longtable}
 \normalsize
