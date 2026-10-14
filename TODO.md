@@ -70,18 +70,21 @@
 - [x] `ScopedPrincipalNormalizer` と明示した閉性・lifting 条件から一般化に必要なスキーム近似を構成し、両環境の束縛外変数を保護する（`SchemeApproximation.generalized_approximation`）。
 - [x] 定理7相当：追加条件と `UsesHMXRules` の下で13規則の導出を、内部の制約・環境を含め `S` の体系へ変換する（`Derivation.theorem7_core`、`theorem7_mono_core`）。
 - [x] 定理7の多相 `let`：内部の多相型の実現可能性を仮定せず、値の近似で環境を延長し、元の本体へ帰納仮定を適用する。
-- [ ] 追加の `existsIntro` 規則の導出変換を証明する。
-- [ ] `perform`・handler の導出変換を証明する。剛体変数、`∀B.∃J`、依存関係・非脱出を保存する。
+- [x] 生成される単相 `existsIntro` の導出変換を証明する。
+- [ ] 任意の qualified 型への `existsIntro` の導出変換を証明する。定理16には不要。
+- [x] `perform`・handler の導出変換を証明する。剛体変数、`∀B.∃J`、依存関係・非脱出を保存する。
 - [x] 制約生成の最後に正規化する `inferTerm` を実装する。表現不能を不整合と区別する。
 - [x] 代入後の開環境で `Sat_X` の健全性を証明する（`inferTermAt_sound_constraint`、`Realizable top` が前提）。
 - [x] 改名閉性の下で、単相判断からの推論成功と環境・型・効果を同時に比較する有限因子を証明する（`inferTermAt_complete_mono`）。
 - [x] `SolvedClosure` の下で、任意の qualified 判断から実際の推論成功を導く（`inferTerm_complete_acceptance`）。型スキームの主要性比較は含めない。
-- [ ] 定理16：実際の再構成結果を、代入後の開環境と同じ `S` で型付けする。
+- [x] 定理16相当：追加条件下で実際の再構成結果を、代入後の開環境と同じ `S` で型付けする（`inferTermAt_sound`、`inferTerm_sound`）。一般の `S` では代入後の環境の許容性を明示する。
+- [x] 効果だけの残余制約の場合、入力環境の許容性と `Realizable top` から代入後の許容性・自己近似を導く（`inferTermAt_sound_effectOnly`、`inferTerm_sound_effectOnly`）。
 - [ ] 定理17：実現可能な `φΓ` での型付けから成功を導き、一つの有限因子で環境・任意の qualified 型・外側条件を比較する。
 - [ ] 系7：同じ `S` における閉環境の主要計算型・値の主要型を導く。
 - [x] 型・効果の変数捕獲、非冪等な対象代入、非恒真の制約、表現不能と不整合の区別を検証する。
 - [x] `SatDecider.normalizer` と実際の `inferTerm` を接続し、開環境の qualified 型・多相 let・再開 handler・入れ子 handler の受理を証明する。
-- [ ] 新しい出力パラメータ・一般化・射影の主要性と、同じ `S` における多相 let・入れ子 handler を検証する。
+- [x] 同じ `S` における多相 let・入れ子 handler・perform の条件付き出力健全性と、型・効果の名前衝突を検証する。
+- [ ] 新しい出力パラメータ・一般化・射影の主要性を検証する。
 - [x] 再構成基盤の全体ビルド・公理監査を通し、PDF の前提・定理・未証明箇所・表示を同期する。
 
 既存の `normalized_principal_computation` の導出は `S = Sat_X` に属し、定理16・17の代用にはならない。`GroundRepresentation` を使う意味論的補題と、原典の代数的な前提を区別する。`SolvedClosure` は有限範囲の主要正規化から導出していない。残る導出変換・一般化・qualified 比較を仮定で置き換えない。未証明であることは不完全性の根拠にならない。
@@ -102,9 +105,19 @@
 
 **検証済み**：入れ子の多相 let・特殊化、開環境の名前衝突、潜在効果の保存を公開定理で確認した。効果専用の残余の例では `μ ⊆ {op}` を保持し、通常の型等式を拒否する。既存の実現可能でないスキームの例も保持した。`lake build` と公開定理・適用例の公理監査が成功し、依存は `propext`・`Classical.choice`・`Quot.sound` のみ。PDF を再生成し、変更箇所と後続ページの表示を確認した。
 
-**残る課題と次の作業**：具体的制約系が追加条件をすべて満たす証明と、`existsIntro`・`perform`・handler の導出変換を進める。特に handler には `∀B.∃J` の依存関係と非脱出の保存が必要である。これらを終えて初めて、今回の定理を EHMX 全規則や実際の再構成出力の保証へ適用できる。定理16・17・系7の未完了項目は維持する。
+**後続の成果**：下記の定理16のために、生成される単相 `existsIntro`・`perform`・handler へ変換を拡張した。任意の qualified 型への射影変換、具体的制約系の全条件、定理17・系7は未完了である。
 
 原典の対応箇所：[Sulzmann 学位論文 §3.6 定理7、付録 C.4](https://www.researchgate.net/publication/213884919_A_General_Framework_for_HindleyMilner_Type_Systems_with_Constraints)。現行定義と追加条件の下での形式化を、原典の全体系の証明と区別する。
+
+### 定理16の出力健全性（2026-10-14）
+
+**目標と成果**：HM(X) §4.4.2 定理16に対応する、同じ `S` での出力健全性を本番へ移した。`Inference.sound_reconstruction` が生成導出の規則条件を保証し、`Derivation.transform_to_solved_subst_reconstruction` を正規化の結果へ適用する。`inferTermAt_sound`・`inferTerm_sound` は実際の環境 `Γ[θ]` と型・効果を結論に保持する。EHMX 固有の handler では束縛名変更・量化・非脱出まで証明した。
+
+**前提**：定理7と同じ `equalityTypes`、主要正規化・閉性・射影の追加条件と、操作宣言の閉性、入力環境の `Realizable top` を使う。一般の `S` では代入後の環境の許容性も前提。`S = EffectResiduals.Solved X` の場合は入力環境の許容性から導く。定義28全体や導出変換そのものを仮定には追加していない。
+
+**検証済み**：多相 let・perform・入れ子 handler を組み合わせた開いた式の生成と公開定理の適用、型・効果の名前衝突、qualified 射影の除外を確認。`lake build` は全877項目が成功。公開定理・適用例の依存公理は `propext`・`Classical.choice`・`Quot.sound` のみ。PDF も再生成し、前提・結論・対応表と変更ページの表示を確認した。
+
+**次の作業**：定理17のため、同じ有限因子で環境・一般化した qualified 型・外側条件を比較する証明を進める。具体的制約系が全追加条件を満たす証明と、一般の qualified 射影変換は別の未完了項目として維持する。
 
 ## 1. 具体的 X が条件を満たすことの証明（後続）
 

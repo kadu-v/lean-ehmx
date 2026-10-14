@@ -1,4 +1,5 @@
 import EHMX.HMX.TermReconstruction
+import EHMX.HMX.ReconstructionSoundness
 import EHMX.HMX.OpenExamples
 
 namespace EHMX.HMX.ReconstructionExamples
@@ -235,5 +236,107 @@ theorem representation_failure_is_not_inconsistency :
     (sig := fun _ => none) (Constraints.Simplifier.identity X) [] (.int 0) (T.literal .int) ∅
     ⟨v, GroundTyping.int 0⟩
   exact ⟨d, by simp [inferTermAt, run, emptyRepresentation], ⟨v, cover v (GroundTyping.int 0)⟩⟩
+
+
+/-- Two value lets, perform, and two nested handlers share an open environment. -/
+def mixedReconstruction : Expr :=
+  .letE (.lam (.var 0)) (.letE (.lam (.var 0))
+    (.handle
+      (.handle (.perform 0 (.app (.var 0) (.var 2))) 0
+        (.var 0) (.app (.var 0) (.var 1)))
+      0 (.var 0) (.app (.var 0) (.var 1))))
+
+private def mixedContext : Context X := [.mono (.var 0), source]
+
+private theorem reconstruction_signature_closed : signature.Closed := by
+  intro op d h
+  cases h
+  simp [Operation.Closed, Ty.fvTypes, Ty.fvEffects]
+
+private theorem top_effect_solved : EffectResiduals.Solved X X.top :=
+  ⟨⟨⟨fun _ => .atom 0, fun _ => ∅⟩, trivial⟩, fun _ _ _ => Iff.rfl⟩
+
+private theorem mixed_admissible : mixedContext.Admissible (EffectResiduals.Solved X) := by
+  intro s hs
+  rcases List.mem_cons.mp hs with rfl | hs
+  · trivial
+  · have hs : s = source := List.mem_singleton.mp hs
+    subst s
+    exact ⟨X.top, top_effect_solved, X.entails_refl _, X.entails_refl _⟩
+
+private theorem mixed_realizable : mixedContext.Realizable X.top := by
+  intro s hs
+  rcases List.mem_cons.mp hs with rfl | hs
+  · exact ⟨.var 0, .sub (fun _ _ => rfl)⟩
+  · have hs : s = source := List.mem_singleton.mp hs
+    subst s
+    refine ⟨_, .forallLeft (Substitution.identity T)
+      (by simp [Substitution.identity, Names.empty])
+      (by simp [Substitution.identity, Names.empty]) ?_ (.sub (fun _ _ => rfl))⟩
+    intro v _
+    exact (X.holds_subst _ _ _).mpr trivial
+
+/-- The real generator, including its existential projections, meets the
+transformation's rule condition for mixed lets and nested handlers. -/
+theorem mixed_generated_rules :
+    ∃ d, generateProjected signature X (Constraints.Simplifier.identity X)
+      mixedContext mixedReconstruction (.var 0) (Effect.var 0) = some d ∧
+      ∃ tree : Derivation signature X d mixedContext mixedReconstruction
+        (.mono (.var 0)) (Effect.var 0), tree.UsesReconstructionRules := by
+  have success : (generateProjected signature X (Constraints.Simplifier.identity X)
+      mixedContext mixedReconstruction (.var 0) (Effect.var 0)).isSome = true := by decide
+  cases run : generateProjected signature X (Constraints.Simplifier.identity X)
+      mixedContext mixedReconstruction (.var 0) (Effect.var 0) with
+  | none => simp [run] at success
+  | some d =>
+    exact ⟨d, rfl, (generateProjected_sound _ reconstruction_signature_closed run).sound_reconstruction.1⟩
+
+/-- Both substitution ranges collide with the qualifier's old bound name.
+Admissibility and self-approximation still hold in the actual substituted context. -/
+theorem effect_environment_capture :
+    (mixedContext.subst capture).Approximates (EffectResiduals.Solved X) X.top
+      (mixedContext.subst capture) :=
+  EffectResiduals.output_environment_self mixed_admissible mixed_realizable capture top_effect_solved.1
+
+/-- Qualified existential projection remains outside the proved transformation. -/
+theorem qualified_projection_excluded {c : X.Formula} {g : Context X} {e : Expr}
+    {A B : Names} {d : X.Formula} {t : Ty} {eff : Effect}
+    (tree : Derivation signature X c g e (.qualified B d t) eff)
+    (fg : g.Avoids A) (fs : (Scheme.qualified B d t).Avoids A)
+    (fe : Disjoint A.effects eff.vars) :
+    ¬ (Derivation.existsIntro fg fs fe tree).UsesReconstructionRules := by
+  rintro ⟨⟨u, h⟩, _⟩
+  cases h
+
+section ConditionalSoundness
+variable (P : X.ScopedPrincipalNormalizer)
+    (hsol : P.solved = EffectResiduals.Solved X)
+    (closure : X.SolvedClosure P.solved)
+    (lift : ∀ (a : Names) (d : X.Formula),
+      X.Admissible P.solved (X.existsNames a d) →
+      ∃ θ : Substitution T, θ.domain.Subset a ∧ X.Admissible P.solved (X.subst θ d))
+
+include hsol closure lift
+
+/-- The public Theorem 16 uses the generated program, exact substituted context,
+type and effect. Solver assumptions remain explicit; no complete solver is supplied. -/
+theorem mixed_reconstruction_sound {n : X.NormalForm}
+    (run : inferTermAt signature X (Constraints.Simplifier.identity X) P
+      mixedContext mixedReconstruction (.var 0) (Effect.var 0) = some (.reconstructed n)) :
+    Typing signature X P.solved n.residual (mixedContext.subst n.substitution)
+      mixedReconstruction (.mono (n.substitution.apply (.var 0)))
+      ((Effect.var 0).subst n.substitution.effects) := by
+  have allow : ∀ (r : X.Formula) (s : Substitution T), s.domain.types = ∅ →
+      X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
+      X.Admissible P.solved (X.and r (X.substitutionConstraint s)) := by
+    rw [hsol]
+    exact fun _ _ => EffectResiduals.effect_graph_allowed X
+  apply inferTermAt_sound_effectOnly _ P hsol closure allow lift
+    (r := X.top) (by rw [hsol]; exact top_effect_solved) (fun _ => trivial)
+    reconstruction_signature_closed run
+  · rw [hsol]; exact mixed_admissible
+  · exact mixed_realizable
+
+end ConditionalSoundness
 
 end EHMX.HMX.ReconstructionExamples

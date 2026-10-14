@@ -925,7 +925,7 @@ $P=C\land\exists A.D$ とおく．
 スキームの実現可能性は，一般の型付け結果からは自動的に従わない．
 上記の補題だけで一般の多相 $\mathbf{let}$ や handler を含む導出全体の
 $\Sat_X\to S$ 変換は得られない．次節では追加条件を明示し，多相 let と一般化を含む13規則の導出変換を証明する．
-handler の量化・非脱出条件の保存は別の課題である．
+後の定理16では，生成導出に必要な単相射影・操作・handler への変換も証明する．
 
 \clearpage
 \textbf{定理7相当：明示した条件の下での導出変換}
@@ -951,7 +951,7 @@ $S(R_\top),\ \forall\rho.\rho\models R_\top$ を仮定する．
 これらの条件を主要正規化だけから導いたとはしない．
 
 $\mu\subseteq\{op\}$ のような効果制約は残余に保持できる．
-\key{TransformationExamples.EffectResiduals} では，充足可能で型変数の評価に依存しない
+\key{EffectResiduals} に残余集合を定義し，\key{TransformationExamples} では，充足可能で型変数の評価に依存しない
 残余の例について，この効果制約の主要正規形と効果等式の追加閉性を証明した．
 通常の型等式 $\alpha=\mathrm{Int}$ はこの残余集合に属さない．
 この局所的な例は，具体的 solver 全体が上の全前提を満たす証明ではない．
@@ -1047,8 +1047,9 @@ C\vdash s\mapsto_S t
 空でない潜在効果の保存を検証する．
 既存の強い \key{PrincipalNormalizer} を使う有限証人・環境近似の補題は保持するが，
 今回の定理7の証明は \key{ScopedPrincipalNormalizer} と上記の追加条件を使う．
-具体的制約系が全前提を満たす証明，追加射影規則と操作・handler への導出変換，
-定理16・17および系7の残る結論は未証明である．
+生成される単相射影・操作・handler への拡張と定理16は以下で述べる．
+具体的制約系が全前提を満たす証明，任意の qualified 型への射影変換，
+定理17の qualified 比較および系7は未証明である．
 
 \clearpage
 \textbf{再構成算法と証明範囲}
@@ -1078,6 +1079,100 @@ $\mathsf{unrepresented}$ は $\neg\Sat(D)$ を意味しない．
 \end{theorem}
 \key{inferTermAt\_sound\_constraint}．結論は $\operatorname{Typing}_S$ ではない．
 
+
+\clearpage
+\textbf{定理16相当：同じ解決済み集合での出力健全性}
+
+型領域を \key{equalityTypes} とし，定理7の節と同じ主要正規化・閉性・
+恒真な解決済み制約・効果等式の追加閉性・射影から代入を得る条件を仮定する．
+定義28全体を仮定するものではない．
+
+\begin{theorem}[一般の解決済み集合での条件付き出力健全性]
+上記の全前提の下で，
+\[
+\begin{gathered}
+\Closed(\Sigma),\quad \Real_\top(\Gamma),\quad \Adm_S(\Gamma[\theta]),\\
+\mathcal T^{\rm at}(\Gamma,e,t,\epsilon)=\mathsf{reconstructed}(R,\theta)\\
+\Longrightarrow\quad
+\operatorname{Typing}_S(R,\Gamma[\theta],e,\theta t,\theta\epsilon).
+\end{gathered}
+\]
+\end{theorem}
+\key{inferTermAt\_sound}．一般の $S$ について，代入後の環境の許容性は明示的な前提である．
+
+\textbf{効果だけに依存する残余制約}
+\[
+\begin{aligned}
+\operatorname{EffectOnly}(D)
+&\iff \forall\rho,\rho'.\
+ \rho_E=\rho'_E\Rightarrow(\rho\models D\iff\rho'\models D),\\
+S_E(D)&\iff\Sat(D)\land\operatorname{EffectOnly}(D).
+\end{aligned}
+\]
+\key{EffectResiduals.Solved} はこの $S_E$ である．
+\[
+\Adm_{S_E}(\Gamma),\quad \Real_\top(\Gamma),\quad\Sat(R)
+\quad\Longrightarrow\quad
+R\vdash\Gamma[\theta]\mapsto_{S_E}\Gamma[\theta].
+\]
+\key{EffectResiduals.output\_environment\_self}．
+型・効果の名前の捕獲を避ける代入について，許容性と自己近似を構成する．
+
+\begin{theorem}[効果残余の場合の出力健全性]
+$P.\mathrm{solved}=S_E$ と上記の正規化等の前提の下で，
+\[
+\begin{gathered}
+\Closed(\Sigma),\quad\Adm_{S_E}(\Gamma),\quad\Real_\top(\Gamma),\\
+\mathcal T^{\rm at}(\Gamma,e,t,\epsilon)=\mathsf{reconstructed}(R,\theta)\\
+\Longrightarrow\quad
+\operatorname{Typing}_{S_E}(R,\Gamma[\theta],e,\theta t,\theta\epsilon).
+\end{gathered}
+\]
+\end{theorem}
+\key{inferTermAt\_sound\_effectOnly}．
+代入後の環境の許容性を入力環境の条件から導き，別の近似環境へ置き換えない．
+新鮮な出力変数を選ぶ \key{inferTerm} にも，
+\key{inferTerm\_sound} と \key{inferTerm\_sound\_effectOnly} が同じ保証を与える．
+
+\clearpage
+\textbf{定理16の証明：生成・導出変換・正規化の接続}
+
+\key{Derivation.UsesReconstructionRules} は全規則を許すが，
+\key{existsIntro} の結果を単相に限る．
+\key{Inference.sound\_reconstruction} は，任意の生成結果 $D$ について，
+この条件を満たす $D;\Gamma\vdash e:t!\epsilon$ の導出を構成する．
+多相 let の一般化は $\forall$ 導入で行うので，
+qualified 型への追加の存在射影は不要である．
+従って，公開した定理16には式に対する追加の規則制限はない．
+
+\key{Derivation.transform\_to\_solved\_subst\_reconstruction} は，
+任意の外側代入・許容な制約・近似環境について元の導出へ帰納法を適用する．
+既存の13規則の変換はこの拡張の系として維持する．
+
+\begin{itemize}
+\item 単相の存在射影：束縛名を外側代入の値域と環境から離して選び，
+子の制約を正規化する．合成した代入で元の子へ帰納仮定を適用し，
+外側の単相型・効果を保存して射影を戻す．
+\item 操作：外側代入と操作の実例の代入を合成し，閉じた操作宣言の
+束縛変数に制限する．入力型・出力型・効果の評価を保存して規則を再構成する．
+\item handler：剛体変数と証人を新鮮に改名し，節を正規化する．
+節の元の子導出へ帰納仮定を適用し，結果型・効果の比較，
+$\forall B.\exists W$ の条件と変数の非脱出をそろえて handler 規則を再構成する．
+\end{itemize}
+
+正規化の健全性から $S(R)$ と $R\models\theta D$ を得る．
+環境 $\Gamma[\theta]$ の自己近似を使って上の変換を適用し，
+結果の近似から正確な単相型 $\theta t$ の型付けを得る．
+効果は $\theta\epsilon$ のままであり，導出内部の制約・環境も同じ $S$ で妥当となる．
+
+\textbf{検証範囲と未完了部分}
+多相 let・perform・入れ子 handler を組み合わせた開いた式の生成と公開定理の適用，
+型・効果の代入先と束縛名の衝突を検証する．
+任意の qualified 型への \key{existsIntro} は変換対象外であり，
+その除外も確認する．具体的制約系が正規化等の全追加条件を満たす証明は別途必要である．
+この結果は定理17の qualified 比較や系7の主要型を含まない．
+
+\clearpage
 \begin{theorem}[単相判断の完全性と有限因子]
 $\Adm_S$ の改名閉性の下で，
 \[
@@ -1111,13 +1206,14 @@ $\operatorname{SolvedClosure}(S)$ の下で，
 \begin{tabular}{@{}ll@{}}\toprule
 学位論文との対応 & 状態\\\midrule
 定理7：対象13規則の導出変換 & 明示した追加条件下で証明済み\\
-定理16：$\operatorname{Typing}_S$ での出力健全性 & 未証明\\
+定理16：$\operatorname{Typing}_S$ での出力健全性 & 上記の追加条件・環境条件下で証明済み\\
 定理17：受理・単相判断の有限因子 & 上記の閉性条件下で証明済み\\
 定理17：同じ因子による qualified 型・外側条件の比較 & 未証明\\
 系7：同じ $S$ 内での主要型 & 未証明\\\bottomrule
 \end{tabular}\end{center}
-handler の $\forall B.\exists J$ を含む生成は上記の受理定理の対象．
-内部導出の変換と量化・非脱出の保存は未証明．
+handler の $\forall B.\exists J$ を含む生成は，受理定理と条件付き出力健全性の対象．
+生成導出について内部の変換と量化・非脱出を保存する．
+任意の qualified 型への射影変換は未証明．
 
 \clearpage
 \section{具体化：正則な型クラス制約}
@@ -1317,6 +1413,13 @@ $\exists\beta.\forall\alpha.\alpha=\beta$ & $\mathsf{unresolved}$\\\bottomrule
 \begin{longtable}{@{}p{.38\linewidth}p{.59\linewidth}@{}}
 \toprule
 数式・保証 & Lean\\\midrule
+再構成用の生成導出 & \key{Inference.sound\_reconstruction}\\
+生成導出の変換 & \key{Derivation.}\\
+ & \key{transform\_to\_solved\_subst\_reconstruction}\\
+定理16：一般の $S$ & \key{inferTermAt\_sound}, \key{inferTerm\_sound}\\
+定理16：効果だけの残余 & \key{inferTermAt\_sound\_effectOnly},\\
+ & \key{inferTerm\_sound\_effectOnly}\\
+代入後の環境の自己近似 & \key{EffectResiduals.output\_environment\_self}\\
 $\Gen,\Proj,\Inf^{\mathrm{at}},\Inf$ & \key{generate}, \key{generateProjected}, \key{inferAt}, \key{infer}\\
 部分・完全 solver & \key{PartialSolver}, \key{PartialSolver.Complete}\\
 契約の非計算的モデル & \key{PartialSolver.semantic\_complete}\\
@@ -1359,6 +1462,7 @@ handler の具体例 & \key{AlgorithmExamples.resumeIdentity\_ground},\\
 \bottomrule
 \end{longtable}
 \normalsize
+\clearpage
 \begin{thebibliography}{9}
 \bibitem{Sulzmann2000} M. Sulzmann.
 \emph{A General Framework for Hindley/Milner Type Systems with Constraints}.

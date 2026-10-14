@@ -1,4 +1,5 @@
 import EHMX.HMX.DerivationTransformation
+import EHMX.HMX.EffectResiduals
 
 /-! Applications of the public conditional transformation theorem.
 The normalizer assumptions remain explicit; these examples do not supply a
@@ -140,10 +141,9 @@ namespace EHMX.HMX
 namespace TransformationExamples.EffectResiduals
 variable {T : TypeDomain} {O : TypeOrder T} (X : Constraints T O)
 
-def EffectOnly (d : X.Formula) : Prop :=
-  ∀ v w : Valuation T.Value, v.effects = w.effects → (X.holds d v ↔ X.holds d w)
-
-def Solved (d : X.Formula) : Prop := X.Satisfiable d ∧ EffectOnly X d
+/-- Compatibility aliases for the residual model now used by reconstruction. -/
+abbrev EffectOnly := EHMX.HMX.EffectResiduals.EffectOnly X
+abbrev Solved := EHMX.HMX.EffectResiduals.Solved X
 
 theorem effect_bound_solved :
     Solved X (X.effectLe (Effect.var 0) (Effect.singleton 0)) := by
@@ -158,15 +158,8 @@ theorem effect_graph_allowed {r : X.Formula} {s : Substitution T}
     (typesEmpty : s.domain.types = ∅)
     (admitted : X.Admissible (Solved X) r)
     (sat : X.Satisfiable (X.and r (X.substitutionConstraint s))) :
-    X.Admissible (Solved X) (X.and r (X.substitutionConstraint s)) := by
-  obtain ⟨q, ⟨_, onlyEffects⟩, forward, backward⟩ := admitted
-  refine ⟨_, ⟨sat, ?_⟩, X.entails_refl _, X.entails_refl _⟩
-  intro v w same
-  have eqr : X.holds r v ↔ X.holds r w :=
-    (Iff.intro (forward v) (backward v)).trans
-      ((onlyEffects v w same).trans (Iff.intro (backward w) (forward w)))
-  simp only [X.holds_and, X.holds_substitutionConstraint, typesEmpty,
-    Finset.notMem_empty, false_implies, implies_true, true_and, eqr, same]
+    X.Admissible (Solved X) (X.and r (X.substitutionConstraint s)) :=
+  EHMX.HMX.EffectResiduals.effect_graph_allowed X typesEmpty admitted sat
 
 theorem identity_is_principal {S : X.Formula → Prop} {d : X.Formula}
     (solved : S d) (u : Names) :
