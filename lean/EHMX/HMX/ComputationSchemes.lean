@@ -96,15 +96,16 @@ theorem ComputationScheme.generalize_finite_of_moreGeneralOn {X : Constraints T 
     (ComputationScheme.generalize g n.residual
       (n.substitution.apply t) (eff.subst n.substitution.effects)).FiniteInstance
       m.residual (m.substitution.apply t) (eff.subst m.substitution.effects) := by
-  obtain ⟨φ, factor, residual⟩ := h
+  obtain ⟨φ, factor⟩ := h
   apply ComputationScheme.generalize_finite g _ _ _ hg φ
   intro v hv
-  refine ⟨(X.holds_subst _ _ v).mp (residual v hv), ?_, ?_⟩
+  obtain ⟨same, residual⟩ := factor v hv
+  refine ⟨residual, ?_, ?_⟩
   · rw [Substitution.eval_apply, Substitution.eval_apply,
-      T.eval_support _ _ t ((factor v).mono ht)]
+      T.eval_support _ _ t (same.mono ht)]
     exact O.refl _
   · rw [Effect.eval_subst, Effect.eval_subst]
-    exact Effect.eval_support eff _ _ (fun i hi => (factor v).2 i (he hi))
+    exact Effect.eval_support eff _ _ (fun i hi => same.2 i (he hi))
 
 /-- Finite-observation principality covers every competing normal form by a
 single finite substitution, without ground representatives or `canonical`. -/
@@ -134,10 +135,10 @@ theorem ComputationScheme.generalize_finite_of_admissible {X : Constraints T O}
   apply ComputationScheme.generalize_finite g _ _ _ hg φ
   intro v hv
   refine ⟨(X.holds_subst _ _ v).mp (residual v hv), ?_, ?_⟩
-  · rw [Substitution.eval_apply, T.eval_support _ _ t ((factor v).mono ht)]
+  · rw [Substitution.eval_apply, T.eval_support _ _ t ((factor v hv).mono ht)]
     exact O.refl _
   · rw [Effect.eval_subst]
-    exact Effect.eval_support eff _ _ (fun i hi => (factor v).2 i (he hi))
+    exact Effect.eval_support eff _ _ (fun i hi => (factor v hv).2 i (he hi))
 
 /-- Uniform target substitutions can be transferred through scoped
 normalization when they form a competing normal form. Neither their solvedness
@@ -159,10 +160,10 @@ theorem ComputationScheme.generalize_finite_of_admissible_substitution
   intro v hv
   refine ⟨(X.holds_subst _ _ v).mp (residual v hv), ?_, ?_⟩
   · rw [Substitution.eval_apply, Substitution.eval_apply,
-      T.eval_support _ _ t ((factor v).mono ht)]
+      T.eval_support _ _ t ((factor v hv).mono ht)]
     exact O.refl _
   · rw [Effect.eval_subst, Effect.eval_subst]
-    exact Effect.eval_support eff _ _ (fun i hi => (factor v).2 i (he hi))
+    exact Effect.eval_support eff _ _ (fun i hi => (factor v hv).2 i (he hi))
 
 /-- Fresh output slots turn a concrete target type and effect into a solved
 competitor. Constraint invariance follows from freshness, rather than being a

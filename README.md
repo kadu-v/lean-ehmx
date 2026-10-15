@@ -32,7 +32,7 @@ qualified 型とは `∀A. D ⇒ t` のように量化と制約を持つ型ス�
 | §4.2 | 正規形と主要正規化 | 契約と `Sat_X` のモデルを形式化。型項再構成には有限の入力変数上で比較する `ScopedPrincipalNormalizer` を使用。存在と計算可能性を区別 |
 | §3.6 定理7 | 制約形式から型項形式への導出変換 | 現行定義・追加条件・対象13規則の下で証明済み。`Derivation.theorem7_core`、`theorem7_mono_core`。生成導出について単相射影・perform・handler まで変換を拡張 |
 | §4.4.2 定理16 | 型項再構成の出力健全性 | 追加条件下で同じ `S` の健全性を証明。`inferTermAt_sound`、`inferTermAt_sound_effectOnly`。後者は入力環境の許容性と `Realizable top` から代入後の環境条件を導く |
-| §4.4.2 定理17 | 再構成の完全性と qualified 型までの一般性比較 | `equalityTypes`、主要正規化器・`SolvedClosure`・対象環境の実現可能性の下で証明済み。`inferTerm_complete_scheme` が実際の推論成功と同じ因子による環境・qualified 型・外側条件の比較、効果保存を返す |
+| §4.4.2 定理17 | 再構成の完全性と qualified 型までの一般性比較 | `equalityTypes`、新比較の主要正規化・閉性・変数等式の追加条件・効果等式の追加閉性・対象環境の実現可能性の下で証明済み。`inferTerm_complete_scheme` が実際の推論成功と同じ因子による環境・qualified 型・外側条件の比較、効果保存を返す |
 | §4.4.2 系7 | 再構成された主要型 | 定理16の追加条件と閉じた実現可能な環境の下で証明済み。`inferTerm_principal_closed`、`Typing.corollary7`。元の環境・同じ `S` で主要計算型と値の主要型を返す |
 
 原典の定理も無条件に任意の `S` を扱うものではありません。定理7・16には射影閉性と principal constraint property、定理17・系7には principal constraint property と環境の実現可能性などの前提があります。現行の `ScopedPrincipalNormalizer` と追加の閉性条件だけで原典の前提・結論をすべて再現したとは主張しません。
@@ -77,70 +77,42 @@ qualified 型とは `∀A. D ⇒ t` のように量化と制約を持つ型ス�
 
 参照：[PartialSolving.lean](lean/EHMX/HMX/PartialSolving.lean)、[SolverContract.lean](lean/EHMX/HMX/SolverContract.lean)、[AbstractInference.lean](lean/EHMX/HMX/AbstractInference.lean)。
 
-### 3.3 一般の `S` への型項再構成
+### 3.3 新比較による型項再構成
 
-生成後に一度正規化する `inferTermAt`・`inferTerm` と、出力から計算スキームを作る `reconstructedScheme` を実装しています。
+正式な比較は `NormalForm.MoreGeneralOn` です。一つの有限代入 `φ` を全評価に共通して使い、**比較対象の残余制約が成立する評価で**、入力変数上の代入の一致と出力残余の成立を要求します。旧比較・旧正規化器・互換補題は削除しました。`Scheme`・`Instance`・`FiniteInstance` の定義は変更していません。
 
-| 証明済みの項目 | 前提・保証範囲 | 主な定義・定理 |
+```text
+∃ φ. ∀ v. holds m.residual v →
+  AgreeOn (n.substitution.pullback (φ.pullback v)) (m.substitution.pullback v) U
+  ∧ holds n.residual (φ.pullback v)
+```
+
+`IsPrincipalOn` と `ScopedPrincipalNormalizer` はこの比較を使用します。`unrepresented D` は選んだ `S` に正規形がないことを表し、一般には不充足とは異なります。
+
+型領域は `equalityTypes`、型の順序・制約系 `X`・解決済み集合 `S` は抽象です。追加の十分条件 `VariableEqualityReflection` は「許容制約 `C` が `α = t` を含意するなら、型項 `t` は変数 `α` 自身である」です。効果の等式は禁止しません。効果専用の残余ではこの条件を証明していますが、一般の `S` に自動的に成立するとは仮定しません。
+
+| 対象 | 前提と結論 | 本番の定理 |
 | --- | --- | --- |
-| 主要正規化の契約 | 有限の入力変数上で比較。主要正規形の存在と計算可能な実装を分離 | `PrincipalNormalForms`、`ScopedPrincipalNormalizer` |
-| `S` の閉性 | 許容性の改名・整合する連言・射影による保存を別の条件として定義。`Sat_X` のモデルあり | `SolvedClosure`、`SolvedClosure.satisfiable` |
-| 捕獲回避代入 | 任意の qualified 対象への `Instance` の代入保存、環境の ground 解釈との対応、実現可能性と新鮮な名前の保護 | `Instance.subst`、`Context.ground_subst`、`Context.Realizable.subst`、`Context.subst_avoids` |
-| 環境近似と変数規則 | 各評価で型の実例が存在すれば、許容な環境は自分自身を近似する。推移性・lookup・同じ `S` での qualified 対象への変数規則を証明 | `Context.Approximates.refl_of_ground`、`Context.Approximates.variable_scheme` |
-| 条件付きの近似の存在 | `equalityTypes`、全変数で比較する `PrincipalNormalizer`、恒真な解決済み制約、外側条件の許容性、スキーム・環境の実現可能性の下で構成 | `Scheme.approximation_exists`、`Context.approximation_exists` |
-| 値の型の比較 | `SolvedClosure` の下で、値の `Instance` 比較を任意の許容な qualified 型への型付けに反映。環境と衝突する束縛名を改名 | `Typing.instance_value` |
-| 一般化と定理7相当の変換 | 有限入力変数上の主要正規化・追加条件からスキーム近似と `Typing_S` を構成。元の導出への帰納法を13規則について証明 | `SchemeApproximation.generalized_approximation`、`Derivation.theorem7_core`、`Derivation.theorem7_mono_core` |
-| 有限の比較正規形 | スキームの実現可能性・束縛名の新鮮さ・外側条件の許容性から構成。ground 値の閉じた型項表現は不要 | `Scheme.Realizable.solved_witness_finite`、`NormalForm.exists_of_realizable_finite` |
-| 比較正規形の構成 | 改名閉性の下で新鮮化を使用。対象代入の解決済み性や残余不変性は要求しない | `ScopedPrincipalNormalizer.complete_of_substitution` |
-| 制約形式の出力健全性 | 閉じた操作宣言と `Realizable top` の下で、実際に代入した環境における `Typing_Sat` を構成 | `inferTermAt_sound_constraint` |
-| 同じ `S` での出力健全性 | 定理7と同じ正規化・閉性・射影の追加条件、閉じた操作宣言、`Realizable top`、代入後の環境の許容性から `Typing_S` を構成。効果だけの残余制約では入力環境の許容性から代入後の条件を導く | `inferTermAt_sound`、`inferTermAt_sound_effectOnly`、`inferTerm_sound`、`inferTerm_sound_effectOnly` |
-| 単相判断からの完全性 | 改名閉性と対象環境の実現可能性の下で成功。一つの有限因子で環境・型・効果の解釈と残余含意を比較 | `inferTermAt_complete_mono`、`reconstruction_factor` |
-| qualified 判断からの受理 | `SolvedClosure` と対象環境の実現可能性の下で実際の `inferTerm` が成功 | `inferTerm_complete_acceptance` |
-| qualified 型までの完全性（定理17） | `equalityTypes`、主要正規化器・`SolvedClosure`・対象環境の実現可能性。一つの有限因子で環境・qualified 型・外側条件・効果を比較。対象スキームの実現可能性は不要 | `inferTerm_complete_scheme` |
-| 再構成後の一般化 | 元の環境の変数の代入先だけを保持し、型付けを同じ `S` の計算スキームへ一般化する | `Substitution.imageSupport`、`ComputationScheme.generalizeWithSupport`、`Typing.reconstructed_computation` |
+| 定理7 | 主要正規化・`SolvedClosure`・上記の追加条件・効果等式の追加閉性・lifting・恒真な解決済み制約の下で、スキーム近似と多相 let を含む導出変換 | `Derivation.theorem7_core`、`theorem7_mono_core` |
+| 定理16 | 定理7の条件、閉じた操作宣言、入力環境の `Realizable top`、代入後の環境の許容性から、同じ `S` で出力を型付け | `theorem16`、`inferTerm_sound` |
+| 定理17 | 主要正規化・閉性・上記の追加条件・効果等式の追加閉性・対象環境の実現可能性の下で、開環境と全 qualified 対象の比較。環境と効果の一致は対象制約 `C` の下 | `theorem17`、`inferTerm_complete_scheme` |
+| 系7 | 定理16の条件と閉じた実現可能な環境の下で、同じ出力の主要計算型・有限代入による比較・qualified 型の比較・値の主要対 | `corollary7`、`Typing.corollary7` |
 
-`inferTerm_complete_acceptance` は対象スキーム自体の実現可能性を追加要求しませんが、出力スキームと対象スキームの主要性比較は結論に含みません。また、`inferTermAt_sound_constraint` の結論は `Typing_Sat` であり `Typing_S` ではありません。
+定理7は、外側制約 `C` の許容性と環境近似 `Γ ≈C Γ′` の下で、変換後の型付けとスキーム近似を構成します。`UsesHMXRules` は既存の13規則です。値制限を保存し、内部スキームの実現可能性を追加要求しません。定理16用の `transform_to_solved_subst_reconstruction` は単相 `existsIntro`・`perform`・handler も扱います。生成はこの規則範囲に入るため、定理16の式は制限しません。任意の qualified 型への `existsIntro` の導出変換は未証明ですが、定理17と系7の比較対象からは除外しません。
 
-定理17の `inferTerm_complete_scheme` は、任意の対象導出を扱い、qualified 型への `existsIntro` も除外しません。これは導出変換ではなく完全性の保証です。`ScopedPrincipalNormalizer` と `SolvedClosure` を使い、定理16の lifting 条件・恒真な解決済み制約・効果等式の追加閉性は要求しません。比較対象の環境は `C` の下で実現可能であればよく、`Realizable top` や対象スキームの実現可能性は不要です。
+効果等式の追加閉性は、型変数を変更しない代入 `θ` について、許容な `R` と整合する `R ∧ graph θ` も許容される条件です。lifting は `∃A.D` が許容なら、`dom θ ⊆ A` で `θD` が許容な有限代入が存在する条件です。主要正規化からこれらを導いたとはしません。
 
-`reconstructedScheme` は `U = ψ.imageSupport Γ.support` を計算し、残余制約・結果型・効果の support から `U` を除いた名前を量化します。`(Γ[ψ]).support` は無関係な代入先まで含む場合があるため、一般化の禁止範囲として使いません。`generalizeWithSupport_subst_avoids` は、同じ比較因子による環境上の一致から量化変数の非脱出を証明します。型スキームの比較を得た後、`ComputationScheme.outer_of_typing_instance` が同じ因子による外側制約の含意を導きます。
+`NormalFormShape.principal_shape` は主要性と `S` を保ち、型の効果注釈を変数にして効果代入を恒等にする正規形を構成します。`ScopedPrincipalNormalizer.prepare` はこれを用いる**非計算的な存在構成**です。独立した出力形式の存在仮定や実行可能ソルバーを追加したものではありません。公開の `theorem16`・`theorem17`・`corollary7` は同じ `prepare P` と `P.solved` を使います。
 
-`ReconstructionCompletenessExamples` は、閉じた qualified 環境の下の恒等関数について実際の生成制約と局所主要正規形を接続し、一般化が失われないことを確認します。対象スキームが実現可能でない例と、型・効果の名前衝突を伴う qualified 射影も、実在する `Sat_X` 正規化器で定理17へ接続しています。`mixed_reconstruction_complete` は定理16の条件付き出力を定理17へ渡し、多相 let・perform・入れ子 handler を含む開いた式を同じ `S` で比較します。
+定理17では `ReconstructionFactor.repair_factor_avoids` が、対象制約の下で因子の評価を保ちつつ束縛変数の非脱出を示します。対象スキームの実現可能性、lifting、恒真な解決済み制約は要求しません。`inferTerm_complete_scheme` の出力形式の前提は、公開の `theorem17` では `prepare_shape` により満たします。
 
-系7の `Typing.corollary7` は、`top` の下で型付け可能な閉環境の式から、実際の `inferTerm` の成功を導きます。同じ出力について、外側制約と `top` の同値、元の環境での `PrincipalComputationScheme`、全単相判断への `FiniteInstance`、全 qualified 判断への `Instance` を証明します。値の場合は同じ `S` の `PrincipalPair` も返します。比較対象は qualified な `existsIntro` を含む全導出です。型領域は `equalityTypes`、環境の閉性は `Γ.support = ∅` とし、定理16の閉性・lifting・効果等式の追加閉性・恒真な解決済み制約と、閉じた操作宣言・`Γ.Realizable top` を前提にします。対象型の実現可能性や代入後の環境の許容性は追加しません。
+`S = Sat_X` は `VariableEqualityReflection` を一般には満たしません。`inferTerm_satisfiable_open`・`inferTerm_satisfiable_closed` は、制約を保持する新比較の正規化器について、生成完全性から直接保証を証明しています。これらの例を追加条件のモデルとは扱いません。
 
-`Context.subst_approximates_closed` が捕獲回避代入後の環境を元の閉環境へ戻し、`inferTerm_finite_closed` が比較を一つの推論結果にそろえます。`Sat_X` の実在する非計算的な正規化器では全前提を満たし、恒等関数、閉じた qualified 環境、射影、名前衝突、多相 let・perform・入れ子 handler の主要性を確認します。これは具体的な型項・効果専用残余の solver の完全性ではありません。
+検証例は、`α = β` の主要正規形、入れ子の多相 let、開環境の名前衝突、潜在効果、qualified 射影、実現可能でない対象スキーム、perform、入れ子 handler を含みます。条件付き定理の適用と、具体的な正規化器による直接証明は区別しています。
 
-系7の実装：[ReconstructionPrincipality.lean](lean/EHMX/HMX/ReconstructionPrincipality.lean)、[ReconstructionPrincipalityExamples.lean](lean/EHMX/HMX/ReconstructionPrincipalityExamples.lean)。
+実現可能性からの有限証人 `Scheme.Realizable.solved_witness_finite` と `NormalForm.exists_of_realizable_finite` は維持しています。ground 値の閉じた型項表現は不要ですが、スキームの実現可能性は引き続き必要です。この補題単独で導出変換を得るとは主張しません。
 
-定理17の実装：[ReconstructionCompleteness.lean](lean/EHMX/HMX/ReconstructionCompleteness.lean)、[ReconstructionGeneralization.lean](lean/EHMX/HMX/ReconstructionGeneralization.lean)、[ReconstructionCompletenessExamples.lean](lean/EHMX/HMX/ReconstructionCompletenessExamples.lean)。
-
-`Instance.subst` は任意の有限代入を扱い、solver や `GroundRepresentation` を仮定しません。`Context.subst_avoids` は環境の support と代入の range の外側を保護します。有限証人の構成に必要なスキームの実現可能性は、一般の型付け結果からは自動的に得られません。`PrincipalNormalizer.normalize_realizable_finite` も ground 値の閉じた型項表現を要求しませんが、スキームの実現可能性・束縛名の新鮮さ・外側条件の許容性は必要です。これらの補題だけで一般の多相 `let` や handler の導出全体の変換が完成したとはしません。
-
-定理7相当の導出変換は、`equalityTypes`、`ScopedPrincipalNormalizer`、`SolvedClosure`、恒真な解決済み制約、および次の二条件の下で証明済みです。
-
-- 型変数を変更しない有限代入 `θ` について、`R` が許容され、`R ∧ graph θ` が充足可能なら、その連言も許容される。
-- `∃A.D` が許容されるなら、`dom θ ⊆ A` かつ `θD` が許容される有限代入 `θ` が存在する。これは定義28④に対応する許容性の条件で、`θ.Solved` は要求しない。
-
-定義28全体は仮定していません。効果制約 `μ ⊆ {op}` を残余に保持する例、効果等式の追加閉性、通常の型等式 `α = Int` が効果専用の残余に属さないことを `TransformationExamples.EffectResiduals` で検証しています。この例だけで具体的 solver 全体の前提を証明したとは扱いません。
-
-`Derivation.UsesHMXRules` は、導出の全節点を変数・定数・関数・適用・多相/単相 let・Sub・一般化・特殊化・制約の強化・効果等式・改名の13規則に限定します。`existsIntro`・`perform`・`handle` は対象外です。式に handler がないことだけでは、この導出条件を満たしません。値制限と、両比較を外側制約の下で行う現行の近似の定義を使います。
-
-`Derivation.theorem7_core` は、許容な外側制約 `C` と入力環境の近似 `Γ ≈C Γ′` の下で、導出から `Typing_S C Γ′ e s′ ε` と `s ≈C s′` を構成します。`Derivation.theorem7_mono_core` は元の単相型と効果をそのまま保存します。内部スキーム・環境の一様な実現可能性は前提にありません。Lean の公開定理は規則に従う導出を直接受け取り、元の `Valid Sat_X` も要求しません。
-
-証明は任意の代入・許容な外側制約に帰納仮定を広げ、元の子導出へ合成した代入で適用します（`Derivation.transform_to_solved_subst`）。一般化では環境の自由変数を保護する正規化、射影に沿った近似の移送、全 qualified 対象へのスキーム近似を証明します。多相 let では値から得た近似で環境を延長して本体を変換します。`Scheme.Approximates.realizable_iff` と整合し、近似から実現可能性を作り出しません。
-
-`TransformationExamples` では公開定理を用い、入れ子の多相 let と特殊化、開環境での名前の衝突、空でない潜在効果の保存を確認しています。既存の実現可能でないスキームを持つ let の例も保持します。強い `PrincipalNormalizer` による `forallIntro_normal_form`・`generalize_normal_form` は既存 API として保持しますが、新しい定理の証明では使いません。
-
-定理16に使う `Derivation.UsesReconstructionRules` は全規則を許し、`existsIntro` の結果だけを単相に限定します。`Inference.sound_reconstruction` は全ての生成導出についてこの条件を満たす導出を構成するため、定理16では式に対する追加の制限はありません。`transform_to_solved_subst_reconstruction` は元の子導出に帰納仮定を適用し、handler でも操作宣言の改名、節の量化、型・効果の比較、非脱出を保存します。既存の13規則の変換はこの拡張の系です。
-
-`inferTermAt_sound` の結論は、実際の出力 `(R, θ)` に対する `Typing_S R (Γ[θ]) e (θt) (θε)` です。一般の `S` では `Γ[θ].Admissible S` を前提に取ります。`EffectResiduals.Solved X = Satisfiable ∧ EffectOnly`、すなわち充足可能で型変数の評価に依存しない残余制約の場合、`inferTermAt_sound_effectOnly` は入力 `Γ.Admissible S` と `Γ.Realizable top` から代入後の環境の許容性・自己近似を導きます。環境を別の近似環境に置き換えません。`inferTerm` にも同じ保証があります。
-
-`ReconstructionExamples` では、多相 let と入れ子 handler・perform を組み合わせた開いた式の実際の生成、公開健全性定理の適用、型・効果の代入先と束縛名の衝突、qualified 射影が対象外であることを検証します。正規化器の条件と正規化成功は条件付きの適用例で明示しており、具体的な完全 solver の構成とは区別します。
-
-`unrepresented(D)` は、選んだ `S` における正規形が存在しないことを表します。一般には `D` の不充足を意味しません。`SatDecider.normalizer` も実装していますが、その解決済み集合は `Sat_X` です。
-
-参照：[ScopedNormalization.lean](lean/EHMX/HMX/ScopedNormalization.lean)、[ContextSubstitution.lean](lean/EHMX/HMX/ContextSubstitution.lean)、[ContextApproximation.lean](lean/EHMX/HMX/ContextApproximation.lean)、[NormalizationCompleteness.lean](lean/EHMX/HMX/NormalizationCompleteness.lean)、[DerivationTransformation.lean](lean/EHMX/HMX/DerivationTransformation.lean)、[FreshNormalForms.lean](lean/EHMX/HMX/FreshNormalForms.lean)、[TermReconstruction.lean](lean/EHMX/HMX/TermReconstruction.lean)、[ReconstructionSoundness.lean](lean/EHMX/HMX/ReconstructionSoundness.lean)、[EffectResiduals.lean](lean/EHMX/HMX/EffectResiduals.lean)。
+参照：[ReconstructionTheorems.lean](lean/EHMX/HMX/ReconstructionTheorems.lean)、[DerivationTransformation.lean](lean/EHMX/HMX/DerivationTransformation.lean)、[SatisfiableReconstruction.lean](lean/EHMX/HMX/SatisfiableReconstruction.lean)。
 
 ### 3.4 具体的な型クラス・効果 solver
 
@@ -161,14 +133,14 @@ D ::= F | ∃A.D
 
 ## 4. これから証明すべきことと完了条件
 
-### 優先1：抽象 `X` と一般の `S` で型項再構成を完了する
+### 後続：具体的制約系への適用と拡張
 
-1. **具体的な制約系の条件**：定理7で明示した主要正規化・閉性・lifting を具体的な解決済み集合について証明する。効果専用の残余の局所例と、全制約の正規化器の存在を区別する。
+1. **具体的な制約系の条件**：定理7で明示した新比較の主要正規化・閉性・変数等式の追加条件・lifting を具体的な解決済み集合について証明する。効果専用の残余の局所例と、全制約の正規化器の存在を区別する。
 2. **導出変換の残り**：任意の qualified 型への `existsIntro` の変換を証明する。定理16に必要な生成導出の変換は完了している。
 3. **定理17の後続**：`equalityTypes` での環境・qualified 型・外側条件の同時比較は完了。任意の `TypeDomain` への拡張は別途検討する。
 4. **系7相当は完了**：明示した前提の下で、同じ `S`・元の閉環境の主要計算型と値の主要型を証明済み。次は具体的制約系がその前提を満たすことを証明する。
 
-この段階の完了条件は、**同じ `S` での出力健全性と qualified 型までの完全性・主要性が、実際の `inferTerm` の結果について成立すること**です。受理だけ、単相型の有限因子だけ、または `S = Sat_X` での `normalized_principal_computation` をもって完了とはしません。必要な導出変換や qualified 比較を、証明せず推論契約の仮定に追加することもしません。
+今回の抽象定理の移植の完了条件は、**同じ `S` での出力健全性と qualified 型までの完全性・主要性が、実際の `inferTerm` の結果について成立すること**です。受理だけ、単相型の有限因子だけ、または `S = Sat_X` の直接証明 をもって完了とはしません。必要な導出変換や qualified 比較を、証明せず推論契約の仮定に追加することもしません。
 
 ### 優先2：具体的 `X_tc` の handler-free な範囲を完全にする
 
@@ -205,13 +177,16 @@ cd lean
 lake build
 ```
 
-定理7の公理依存は、`lean/` で次のように確認できます。依存は `propext`・`Classical.choice`・`Quot.sound` のみです。
+定理7・16・17・系7の公理依存は、`lean/` で次のように確認できます。依存は `propext`・`Classical.choice`・`Quot.sound` のみです。
 
 ```sh
 lake env lean --stdin <<'LEAN'
 import EHMX
 #print axioms EHMX.HMX.Derivation.theorem7_core
 #print axioms EHMX.HMX.Derivation.theorem7_mono_core
+#print axioms EHMX.HMX.theorem16
+#print axioms EHMX.HMX.theorem17
+#print axioms EHMX.HMX.corollary7
 LEAN
 ```
 

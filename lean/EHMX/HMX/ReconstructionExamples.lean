@@ -114,18 +114,18 @@ self-approximation when its qualifier is admissible. Uniform realizability
 must not be imposed on this reflexivity argument. -/
 theorem admissible_unrealizable_scheme_approximation :
     ∃ (Y : Constraints equalityTypes (TypeOrder.equality equalityTypes))
-      (P : Y.PrincipalNormalizer) (c : Y.Formula) (s : Scheme Y),
+      (c : Y.Formula) (s : Scheme Y),
       ¬ s.Realizable c ∧
-      (∀ t, s.Approximates P.solved c t → ¬ t.Realizable c) ∧
-      s.Approximates P.solved c s ∧
-      Context.Approximates P.solved c [s] [s] ∧
-      Typing (fun _ => none) Y P.solved c []
+      (∀ t, s.Approximates Y.Satisfiable c t → ¬ t.Realizable c) ∧
+      s.Approximates Y.Satisfiable c s ∧
+      Context.Approximates Y.Satisfiable c [s] [s] ∧
+      Typing (fun _ => none) Y Y.Satisfiable c []
         (.letE (.lam (.var 0)) (.int 0)) (.mono (.base .int)) ∅ := by
-  obtain ⟨Y, P, c, s, _, typed, notReal, letTyped⟩ :=
+  obtain ⟨Y, c, s, typed, notReal, letTyped⟩ :=
     RealizabilityExample.valid_let_without_realizable_scheme
   have approx := typed.result_approximates_self typed.root.2.2
     (by intro v hv t ht; cases ht)
-  exact ⟨Y, P, c, s, notReal,
+  exact ⟨Y, c, s, notReal,
     fun _ h ht => notReal (h.realizable_iff.mpr ht), approx, .cons approx .nil, letTyped⟩
 
 /-- The same finite name bound protects both type and effect generalization. -/
@@ -161,13 +161,13 @@ theorem swap_not_invariant : ¬ X.Equivalent (X.subst swap condition) condition 
 /-- New completeness accepts a cyclic raw map and a non-invariant C. The
 previous competitor theorem required both of the excluded hypotheses. -/
 theorem fresh_competitor_covers_swap :
-    ∃ n, ((Constraints.PrincipalNormalizer.satisfiable X).scoped X).normalize
+    ∃ n, (Constraints.ScopedPrincipalNormalizer.satisfiable X).normalize
         ⟨{0, 1}, ∅⟩ wanted = some n ∧
       ∃ φ : Substitution T,
-        (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn (swap.pullback v) ⟨{0, 1}, ∅⟩) ∧
+        (∀ v, X.holds condition v → (n.substitution.pullback (φ.pullback v)).AgreeOn (swap.pullback v) ⟨{0, 1}, ∅⟩) ∧
         X.Entails condition (X.subst φ n.residual) := by
   apply Constraints.ScopedPrincipalNormalizer.complete_of_substitution
-    ((Constraints.PrincipalNormalizer.satisfiable X).scoped X)
+    (Constraints.ScopedPrincipalNormalizer.satisfiable X)
     (Constraints.SolvedClosure.satisfiable X).rename
   · constructor
     · intro i hi
@@ -340,23 +340,29 @@ theorem mixed_reconstruction_sound {n : X.NormalForm}
 
 /-- Theorem 17 applied to the same-solved-set judgment of the mixed open
 program: two value lets, perform, and nested handlers. -/
-theorem mixed_reconstruction_complete {n : X.NormalForm}
+theorem mixed_reconstruction_complete
+    (shape : ∀ u d n, P.normalize u d = some n →
+      (∀ i, ReconstructionFactor.VariableEffects (n.substitution.types i)) ∧
+      n.substitution.effects = Effect.var) {n : X.NormalForm}
     (run : inferTermAt signature X (Constraints.Simplifier.identity X) P
       mixedContext mixedReconstruction (.var 0) (Effect.var 0) = some (.reconstructed n)) :
     ∃ m, inferTerm signature X (Constraints.Simplifier.identity X) P
         mixedContext mixedReconstruction = some (.reconstructed m) ∧ ∃ φ,
-      (∀ v, (m.substitution.pullback (φ.pullback v)).AgreeOn
+      (∀ v, X.holds n.residual v → (m.substitution.pullback (φ.pullback v)).AgreeOn
         (n.substitution.pullback v) mixedContext.support) ∧
       Instance X n.residual ((reconstructedScheme mixedContext m).valueScheme.subst φ)
         (.mono (n.substitution.apply (.var 0))) ∧
       X.Entails n.residual (X.subst φ (reconstructedScheme mixedContext m).outer) ∧
-      ∀ v, (reconstructedScheme mixedContext m).effect.eval (φ.pullback v).effects =
+      ∀ v, X.holds n.residual v → (reconstructedScheme mixedContext m).effect.eval (φ.pullback v).effects =
         ((Effect.var 0).subst n.substitution.effects).eval v.effects := by
   have typed := mixed_reconstruction_sound P hsol closure lift run
   have real : (mixedContext.subst n.substitution).Realizable n.residual :=
     (mixed_realizable.subst n.substitution).weaken (fun v _ =>
       (X.holds_subst _ _ _).mpr ((X.holds_top _).mpr trivial))
-  exact inferTerm_complete_scheme _ P closure n.substitution typed real
+  have reflect : EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved := by
+    rw [hsol]
+    exact EffectResidualNormalization.effectOnly_reflection
+  exact inferTerm_complete_scheme _ P closure reflect shape n.substitution typed real
 
 end ConditionalSoundness
 

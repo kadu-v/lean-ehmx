@@ -233,15 +233,14 @@ private theorem no_global_instance (target : Scheme X) : ¬ Instance X X.top sch
 comparison still fails. No projection or effect rule is used. -/
 theorem relative_approximation :
     ∃ (Y : Constraints equalityTypes (TypeOrder.equality equalityTypes))
-      (P : Y.PrincipalNormalizer) (d : Y.Formula) (g : Context Y) (s : Scheme Y),
-      P.solved = Y.Satisfiable ∧
-      (∀ a q, Y.Admissible P.solved q → Y.Admissible P.solved (Y.existsNames a q)) ∧
-      Y.Admissible P.solved d ∧ g.Admissible P.solved ∧
-      List.Forall₂ (Scheme.Approximates P.solved d) g g ∧
+      (d : Y.Formula) (g : Context Y) (s : Scheme Y),
+      (∀ a q, Y.Admissible Y.Satisfiable q → Y.Admissible Y.Satisfiable (Y.existsNames a q)) ∧
+      Y.Admissible Y.Satisfiable d ∧ g.Admissible Y.Satisfiable ∧
+      List.Forall₂ (Scheme.Approximates Y.Satisfiable d) g g ∧
       Typing (fun _ => none) Y Y.Satisfiable d g (.lam (.var 0)) s ∅ ∧
-      s.Realizable d ∧ s.Approximates P.solved d s ∧
+      s.Realizable d ∧ s.Approximates Y.Satisfiable d s ∧
       ¬ ∃ target, Instance Y Y.top s target := by
-  refine ⟨X, Constraints.PrincipalNormalizer.satisfiable X, c, context, scheme, rfl, ?_,
+  refine ⟨X, c, context, scheme, ?_,
     (X.admissible_satisfiable_iff _).mpr condition_sat, ?_, ?_, source_typed, source_realizable,
     Scheme.Approximates.refl ((X.admissible_satisfiable_iff _).mpr condition_sat) source_realizable, ?_⟩
   · intro a q hq
@@ -309,19 +308,18 @@ private theorem not_realizable : ¬ scheme.Realizable outer := by
       cases b <;> simp [image, Ty.eval] at bad
   | arr x e y => have bad := extract (.atom 0); simp [image, Ty.eval] at bad
 
-/-- Validity, even with a global principal normalizer, does not make every
+/-- Validity does not make every
 let-bound scheme uniformly realizable. The example uses only value
 generalization and an unused value let, not handlers or `existsIntro`.
 It refutes that intermediate implication, not the transformation theorem. -/
 theorem valid_let_without_realizable_scheme :
     ∃ (Y : Constraints equalityTypes (TypeOrder.equality equalityTypes))
-      (P : Y.PrincipalNormalizer) (c : Y.Formula) (s : Scheme Y),
-      P.solved = Y.Satisfiable ∧
-      Typing (fun _ => none) Y P.solved c [] (.lam (.var 0)) s ∅ ∧
+      (c : Y.Formula) (s : Scheme Y),
+      Typing (fun _ => none) Y Y.Satisfiable c [] (.lam (.var 0)) s ∅ ∧
       ¬ s.Realizable c ∧
-      Typing (fun _ => none) Y P.solved c []
+      Typing (fun _ => none) Y Y.Satisfiable c []
         (.letE (.lam (.var 0)) (.int 0)) (.mono (.base .int)) ∅ := by
-  refine ⟨X, Constraints.PrincipalNormalizer.satisfiable X, outer, scheme, rfl,
+  refine ⟨X, outer, scheme,
     typed, not_realizable, ?_⟩
   have root := typed.root
   obtain ⟨tree, valid⟩ := typed
@@ -343,62 +341,6 @@ private theorem assign_solved (i : Nat) (t : Ty) (hi : i ∉ t.fvTypes) :
     subst k
     simp [assign, Names.Disjoint, equalityTypes, hi]
   · intro k hk; simp [assign] at hk
-
-/-- Comparing all variables differs from comparing the variables visible after
-projection. Both candidates have tautological residuals and solve the same
-projected constraint. This is a regression test for the scope convention, not
-an assertion that either candidate is globally principal. -/
-theorem projected_comparison_distinguishes_hidden_names :
-    ∃ (Y : Constraints equalityTypes (TypeOrder.equality equalityTypes))
-      (d : Y.Formula) (n m : Y.NormalForm),
-      n.IsNormal Y.Satisfiable d ∧ m.IsNormal Y.Satisfiable d ∧
-      ¬ n.MoreGeneral m ∧
-      n.MoreGeneralOn ⟨{0}, ∅⟩ m := by
-  let n : X.NormalForm := ⟨X.top, assign 0 result⟩
-  let m : X.NormalForm := ⟨X.top, assign 0 (.arr (.base .int) ∅ (.base .int))⟩
-  have htop : X.Satisfiable X.top :=
-    ⟨⟨fun _ => .atom 0, fun _ => ∅⟩, (X.holds_top _).mpr trivial⟩
-  have invariant (θ : Substitution equalityTypes) : X.Equivalent (X.subst θ X.top) X.top :=
-    ⟨fun v _ => (X.holds_top v).mpr trivial,
-      fun v _ => (X.holds_subst θ X.top v).mpr ((X.holds_top _).mpr trivial)⟩
-  have hn : n.IsNormal X.Satisfiable outer := by
-    refine ⟨htop, assign_solved _ _ (by simp [result, Ty.fvTypes]), invariant _, ?_⟩
-    intro v hv
-    have hg := ((X.holds_and _ _ v).mp hv).2
-    have ht := ((X.holds_substitutionConstraint _ v).mp hg).1 0 (by simp [n, assign])
-    apply X.exists_intro bound qualifier v
-    apply (X.holds_eq _ _ _).mpr
-    simpa [n, assign, qualifier, equalityTypes, Ty.eval] using ht
-  have hm : m.IsNormal X.Satisfiable outer := by
-    refine ⟨htop, assign_solved _ _ (by simp [Ty.fvTypes]), invariant _, ?_⟩
-    intro v hv
-    have hg := ((X.holds_and _ _ v).mp hv).2
-    have ht := ((X.holds_substitutionConstraint _ v).mp hg).1 0 (by simp [m, assign])
-    have hv0 : v.types 0 = GroundTy.arr (.atom 0) ∅ (.atom 0) := by
-      simpa [m, assign, equalityTypes, Ty.eval, Effect.eval] using ht
-    let w : Valuation GroundTy := ⟨Function.update v.types 1 (.atom 0), v.effects⟩
-    apply (X.holds_exists bound qualifier v).mpr
-    refine ⟨w, ?_, (X.holds_eq _ _ _).mpr ?_⟩
-    · constructor
-      · intro i hi
-        have hi' : i ≠ 1 := by simpa [bound] using hi
-        simp [w, hi']
-      · intro _ _; rfl
-    · simpa [w, result, equalityTypes, Ty.eval, Effect.eval] using hv0
-  refine ⟨X, outer, n, m, hn, hm, ?_, assign 1 (.base .int), ?_, ?_⟩
-  · intro h
-    have factor := ((h.canonical X hn).1 ⟨fun _ => .atom 1, fun _ => ∅⟩)
-    have bad := congrArg (fun v => v.types 0) factor
-    simp [n, m, assign, result, Substitution.pullback, equalityTypes, Ty.eval, Effect.eval] at bad
-  · intro v
-    constructor
-    · intro i hi
-      have hi0 : i = 0 := by simpa using hi
-      subst i
-      simp [n, m, assign, result, Substitution.pullback, equalityTypes, Ty.eval, Effect.eval]
-    · intro i hi; simp at hi
-  · intro v _
-    exact (X.holds_subst _ _ _).mpr ((X.holds_top _).mpr trivial)
 
 private theorem projected_typed :
     Typing (fun _ => none) X X.Satisfiable outer []
@@ -436,71 +378,6 @@ theorem projection_without_uniform_witness :
     exact ⟨θ.apply result, .forallLeft θ scope.1 scope.2 entails
       (.sub (fun v _ => (X.holds_le _ _ _).mpr rfl))⟩
 
-
-/-- All-variable comparison cannot supply principal normalization for projected
-Herbrand equalities when solved constraints are tautologies. This identifies a
-scope mismatch, rather than disproving transformation from a normalizer. -/
-theorem all_variables_exclude_tautological_normalizer :
-    ∃ Y : Constraints equalityTypes (TypeOrder.equality equalityTypes),
-      ¬ ∃ P : Y.PrincipalNormalizer,
-        P.solved Y.top ∧ (∀ c, P.solved c → ∀ v, Y.holds c v) := by
-  refine ⟨X, ?_⟩
-  rintro ⟨P, topSolved, allTrue⟩
-  let candidate (b : BaseTy) : X.NormalForm :=
-    ⟨X.top, assign 0 (.arr (.base b) ∅ (.base b))⟩
-  have normal (b : BaseTy) : (candidate b).IsNormal P.solved outer := by
-    refine ⟨topSolved, assign_solved _ _ (by simp [Ty.fvTypes]), ⟨?_, ?_⟩, ?_⟩
-    · intro v _; exact (X.holds_top v).mpr trivial
-    · intro v _; exact (X.holds_subst _ _ _).mpr ((X.holds_top _).mpr trivial)
-    · intro v hv
-      have ht := ((X.holds_substitutionConstraint _ v).mp
-        ((X.holds_and _ _ v).mp hv).2).1 0 (by simp [candidate, assign])
-      let u := equalityTypes.groundLiteral b
-      let w : Valuation GroundTy := ⟨Function.update v.types 1 u, v.effects⟩
-      apply (X.holds_exists bound qualifier v).mpr
-      refine ⟨w, ?_, (X.holds_eq _ _ _).mpr ?_⟩
-      · constructor
-        · intro i hi
-          have hi' : i ≠ 1 := by simpa [bound] using hi
-          simp [w, hi']
-        · intro i _; rfl
-      · cases b <;> simpa [w, u, candidate, assign, result, equalityTypes, Ty.eval, Effect.eval] using ht
-  obtain ⟨n, normalized⟩ : ∃ n, P.normalize (Constraints.ConstraintProblem.initial X outer) = some n := by
-    cases h : P.normalize (Constraints.ConstraintProblem.initial X outer) with
-    | some n => exact ⟨n, rfl⟩
-    | none => exact False.elim ((P.failure _).mp h
-        ⟨candidate .int, (Constraints.NormalForm.isNormalOf_initial_iff X).mpr (normal .int)⟩)
-  have principal := P.principal_initial X normalized
-  have assigned : 0 ∈ n.substitution.domain.types := by
-    by_contra h
-    let v : Valuation GroundTy := ⟨fun _ => .atom 0, fun _ => ∅⟩
-    have hv : X.holds outer (n.substitution.pullback v) :=
-      (X.holds_subst _ _ _).mp (Constraints.NormalForm.reconstruct_entails X principal.1 v
-        (allTrue _ principal.1.1 v))
-    obtain ⟨w, hw, hd⟩ := (X.holds_exists bound qualifier _).mp hv
-    have zero := hw.1 0 (by simp [bound])
-    have equation := (X.holds_eq _ _ _).mp hd
-    have image := n.substitution.types_outside 0 h
-    simp [Substitution.pullback, image, equalityTypes, Ty.eval, v] at zero
-    simp [result, equalityTypes, Ty.eval, zero] at equation
-  let v : Valuation GroundTy := ⟨fun _ => .atom 0, fun _ => ∅⟩
-  have same : equalityTypes.eval ((candidate .int).substitution.pullback v) (n.substitution.types 0) =
-      equalityTypes.eval ((candidate .bool).substitution.pullback v) (n.substitution.types 0) := by
-    apply equalityTypes.eval_support
-    constructor
-    · intro i hi
-      have ne : i ≠ 0 := by
-        intro h; subst i
-        exact Finset.disjoint_left.mp (principal.1.2.1.type_range 0 assigned).1 assigned hi
-      simp [candidate, assign, Substitution.pullback, ne]
-    · intro i _; rfl
-  have left := congrArg (fun w => w.types 0)
-    (((principal.2 _ (normal .int)).canonical X principal.1).1 v)
-  have right := congrArg (fun w => w.types 0)
-    (((principal.2 _ (normal .bool)).canonical X principal.1).1 v)
-  change equalityTypes.eval _ _ = _ at left right
-  rw [left, right] at same
-  simp [candidate, assign, Substitution.pullback, equalityTypes, Ty.eval, Effect.eval] at same
 
 private def tautologies (c : X.Formula) : Prop := ∀ v, X.holds c v
 
@@ -543,8 +420,10 @@ private theorem projectedNormal_principal :
       obtain ⟨z, hz⟩ := shape ⟨fun _ => .atom 0, fun _ => ∅⟩
       cases b <;> simp [img, equalityTypes, Ty.eval] at hz
   | arr a eff b =>
-      refine ⟨assign 1 a, ?_, ?_⟩
-      · intro v
+      refine ⟨assign 1 a, ?_⟩
+      intro v hv
+      constructor
+      ·
         constructor
         · intro i hi
           have hi0 : i = 0 := by simpa using hi
@@ -557,8 +436,7 @@ private theorem projectedNormal_principal :
             equalityTypes, Ty.eval, Effect.eval, ha, hb]
           exact he.symm
         · intro i hi; simp at hi
-      · intro v _
-        exact (X.holds_subst _ _ _).mpr ((X.holds_top _).mpr trivial)
+      · exact (X.holds_top _).mpr trivial
 
 /-- Scoped principality does not imply coverage of all satisfiability-based
 monotypes by uniform finite instances. Ground coverage still holds. The target

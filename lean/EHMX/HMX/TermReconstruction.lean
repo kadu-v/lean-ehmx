@@ -62,8 +62,9 @@ def SatDecider.normalizer {X : Constraints T O} (D : SatDecider X) : X.ScopedPri
           simpa only [X.holds_subst, Substitution.identity_pullback] using hv
       · exact X.entails_left _ _
       · intro m hm
-        refine ⟨m.substitution, ?_, Constraints.NormalForm.reconstruct_entails X hm⟩
-        intro v
+        refine ⟨m.substitution, ?_⟩
+        intro v hv
+        refine ⟨?_, (X.holds_subst _ _ _).mp (Constraints.NormalForm.reconstruct_entails X hm v hv)⟩
         rw [Substitution.identity_pullback]
         exact ⟨fun _ _ => rfl, fun _ _ => rfl⟩
     · contradiction
@@ -175,7 +176,7 @@ theorem inferTermAt_complete_of_competitor {sig : Signature T} {X : Constraints 
       (.mono (σ.apply t)) (eff.subst σ.effects)) :
     ∃ n, inferTermAt sig X N P g e t eff = some (.reconstructed n) ∧
       ∃ φ : Substitution T,
-        (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v)
+        (∀ v, X.holds c v → (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v)
           (Inference.Protected X g t eff)) ∧
         X.Entails c (X.subst φ n.residual) := by
   obtain ⟨d, generated, entails⟩ := generateProjected_entails_subst N σ real
@@ -194,56 +195,18 @@ theorem inferTermAt_complete_of_competitor {sig : Signature T} {X : Constraints 
       obtain ⟨hR, graph⟩ := (X.holds_and _ _ _).mp hv
       have hd := (X.holds_subst _ _ _).mp (entails v (backward v hR))
       rwa [X.substitutionConstraint_fixed σ v graph] at hd
-  obtain ⟨n, run, φ, factor, residual⟩ :=
+  obtain ⟨n, run, φ, factor⟩ :=
     P.complete_of_competitor (reconstructionScope_covers X g t eff d) m normal
-  refine ⟨n, by simp [inferTermAt, generated, run], φ, ?_, X.entails_trans forward residual⟩
-  intro v
-  exact (factor v).mono (Names.subset_union_left _ _)
+  refine ⟨n, by simp [inferTermAt, generated, run], φ, ?_, ?_⟩
+  · intro v hv
+    exact ((factor v (forward v hv)).1).mono (Names.subset_union_left _ _)
+  · intro v hv
+    exact (X.holds_subst _ _ _).mpr (factor v (forward v hv)).2
 
-/-- Monomorphic reconstruction completeness with the actual substituted
-environment. Freshening constructs the competitor; neither solvedness nor
-invariance is imposed on the target substitution. This is not yet the
-qualified-type comparison of dissertation Theorem 17. -/
-theorem inferTermAt_complete_mono {sig : Signature T} {X : Constraints T O}
-    (N : X.Simplifier) (P : X.ScopedPrincipalNormalizer)
-    (rename : ∀ (p : Renaming) c, X.Admissible P.solved c →
-      X.Admissible P.solved (X.subst (p.asSubstitution T) c))
-    {g : Context X} {e : Expr} {t : T.Term} {eff : Effect}
-    (σ : Substitution T) {c : X.Formula}
-    (real : (g.subst σ).Realizable c)
-    (typed : Typing sig X P.solved c (g.subst σ) e
-      (.mono (σ.apply t)) (eff.subst σ.effects)) :
-    ∃ n, inferTermAt sig X N P g e t eff = some (.reconstructed n) ∧
-      ∃ φ : Substitution T,
-        (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v)
-          (Inference.Protected X g t eff)) ∧
-        X.Entails c (X.subst φ n.residual) := by
-  obtain ⟨d, generated, entails⟩ := generateProjected_entails_subst N σ real
-    (typed.to_satisfiable P.solved_satisfiable)
-  obtain ⟨n, run, φ, factor, residual⟩ := P.complete_of_substitution rename
-    (reconstructionScope_covers X g t eff d) σ typed.root.1 entails
-  exact ⟨n, by simp [inferTermAt, generated, run], φ,
-    fun v => (factor v).mono (Names.subset_union_left _ _), residual⟩
-
-/-- The factor simultaneously transports the environment, result, and effect. -/
-theorem reconstruction_factor {X : Constraints T O}
-    {g : Context X} {t : T.Term} {eff : Effect} {ψ φ σ : Substitution T}
-    (factor : ∀ v, (ψ.pullback (φ.pullback v)).AgreeOn (σ.pullback v)
-      (Inference.Protected X g t eff)) (v : Valuation T.Value) :
-    (g.subst ψ).ground (φ.pullback v) = (g.subst σ).ground v ∧
-      T.eval (φ.pullback v) (ψ.apply t) = T.eval v (σ.apply t) ∧
-      (eff.subst ψ.effects).eval (φ.pullback v).effects = (eff.subst σ.effects).eval v.effects := by
-  refine ⟨?_, ?_, ?_⟩
-  · simp only [Context.ground_subst]
-    exact Context.ground_support ((factor v).mono (Inference.Protected.context g t eff))
-  · simp only [Substitution.eval_apply]
-    exact T.eval_support _ _ t ((factor v).mono (Inference.Protected.type g t eff))
-  · simp only [Effect.eval_subst]
-    exact Effect.eval_support eff _ _ (fun i hi => (factor v).2 i (Inference.Protected.effect g t eff hi))
-
-/-- Instantiate a target scheme under a consistent, admissible strengthening.
-Only the assumption environment, not the target scheme, must be realizable at C.
-Alpha conversion prevents the target binder from capturing C. -/
+end EHMX.HMX
+namespace EHMX.HMX
+open EHMX EHMX.HMX
+variable {T : TypeDomain} {O : TypeOrder T}
 theorem Typing.mono_strengthening {sig : Signature T} {X : Constraints T O}
     {S : X.Formula → Prop} (sound : ∀ c, S c → X.Satisfiable c)
     (closure : X.SolvedClosure S) {c : X.Formula} {g : Context X}
@@ -278,7 +241,8 @@ theorem Typing.mono_strengthening {sig : Signature T} {X : Constraints T O}
     exact ⟨X.and c r, u, X.entails_left _ _,
       (renamed.weaken hc (X.entails_left _ _)).instance_mono inst, real.weaken (X.entails_left _ _)⟩
 
-private def Substitution.withOutputs (σ : Substitution T) (a b : Nat)
+
+def Substitution.withOutputs (σ : Substitution T) (a b : Nat)
     (t : T.Term) (eff : Effect) : Substitution T where
   domain := σ.domain.union ⟨{a}, {b}⟩
   types := fun i => if i = a then t else σ.types i
@@ -299,13 +263,13 @@ theorem inferTerm_complete_mono_of_ground {sig : Signature T} {X : Constraints T
       (T.eval v t) (eff.eval v.effects)) :
     ∃ n, inferTerm sig X N P g e = some (.reconstructed n) ∧
       ∃ φ : Substitution T,
-        (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v) g.support) ∧
+        (∀ v, X.holds c v → (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v) g.support) ∧
         X.Entails c (X.subst φ n.residual) ∧
-        ∀ v, T.eval (φ.pullback v) (reconstructedScheme g n).result = T.eval v t ∧
+        ∀ v, X.holds c v → T.eval (φ.pullback v) (reconstructedScheme g n).result = T.eval v t ∧
           (reconstructedScheme g n).effect.eval (φ.pullback v).effects = eff.eval v.effects := by
   let a := g.support.shiftTypes 0
   let b := g.support.shiftEffects 0
-  let θ := σ.withOutputs a b t eff
+  let θ := Substitution.withOutputs σ a b t eff
   have same (v : Valuation T.Value) : (θ.pullback v).AgreeOn (σ.pullback v) g.support := by
     have fresh := g.output_names_fresh
     constructor
@@ -333,15 +297,15 @@ theorem inferTerm_complete_mono_of_ground {sig : Signature T} {X : Constraints T
   obtain ⟨n, run, φ, factor, residual⟩ := P.complete_of_substitution closure.rename
     (reconstructionScope_covers X g (T.var a) (Effect.var b) d) θ admitted entails
   refine ⟨n, by simp [inferTerm, inferTermAt, a, b, generated, run], φ, ?_, residual, ?_⟩
-  · intro v
-    exact ((factor v).mono
+  · intro v hv
+    exact ((factor v hv).mono
       ((Inference.Protected.context g (T.var a) (Effect.var b)).trans
         (Names.subset_union_left _ _))).trans (same v)
-  · intro v
-    have ha := (factor v).1 a
+  · intro v hv
+    have ha := (factor v hv).1 a
       (Finset.mem_union_left _ ((Inference.Protected.type g (T.var a) (Effect.var b)).1
         (by simp [T.support_var])))
-    have hb := (factor v).2 b
+    have hb := (factor v hv).2 b
       (Finset.mem_union_left _ (Inference.Protected.effect g (T.var a) (Effect.var b)
         (by simp [Effect.var])))
     exact ⟨by simpa [a, θ, Substitution.withOutputs, Substitution.pullback,
@@ -359,9 +323,9 @@ theorem inferTerm_complete_mono {sig : Signature T} {X : Constraints T O}
     (real : (g.subst σ).Realizable c) :
     ∃ n, inferTerm sig X N P g e = some (.reconstructed n) ∧
       ∃ φ : Substitution T,
-        (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v) g.support) ∧
+        (∀ v, X.holds c v → (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v) g.support) ∧
         X.Entails c (X.subst φ n.residual) ∧
-        ∀ v, T.eval (φ.pullback v) (reconstructedScheme g n).result = T.eval v t ∧
+        ∀ v, X.holds c v → T.eval (φ.pullback v) (reconstructedScheme g n).result = T.eval v t ∧
           (reconstructedScheme g n).effect.eval (φ.pullback v).effects = eff.eval v.effects := by
   apply inferTerm_complete_mono_of_ground N P closure σ typed.root.1
   intro v hv

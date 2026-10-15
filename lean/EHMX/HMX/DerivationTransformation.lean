@@ -2,86 +2,52 @@ import EHMX.HMX.ContextApproximation
 import EHMX.HMX.PrincipalCompleteness
 import EHMX.HMX.ScopedSchemeApproximation
 
-namespace EHMX.HMX
+set_option maxHeartbeats 2000000
+
+namespace EHMX.HMX.Derivation
 variable {T : TypeDomain} {O : TypeOrder T} {X : Constraints T O}
+def UsesHMXRules {T : TypeDomain} {O : TypeOrder T} {X : Constraints T O}
+    {sig : Signature T} {c g e s eff}
+    (tree : Derivation sig X c g e s eff) : Prop :=
+  match tree with
+  | .var _ | .int _ | .bool _ => True
+  | .lam body => UsesHMXRules body
+  | .app f x => UsesHMXRules f ∧ UsesHMXRules x
+  | .letVal _ v body => UsesHMXRules v ∧ UsesHMXRules body
+  | .letMono _ v body => UsesHMXRules v ∧ UsesHMXRules body
+  | .sub body _ => UsesHMXRules body
+  | .forallIntro _ _ _ body => UsesHMXRules body
+  | .forallElim _ _ _ body _ => UsesHMXRules body
+  | .weaken body _ => UsesHMXRules body
+  | .effectEq body _ => UsesHMXRules body
+  | .alpha body _ => UsesHMXRules body
+  | .existsIntro .. | .perform .. | .handle .. => False
 
-/-- The generalization step of the transformation, once its monomorphic body
-has been proved in the selected solved set. Projection and the instance
-comparison are proved here, not included in a transformation contract. -/
-theorem Typing.generalize_normal_form {sig : Signature T}
-    (Q : T.GroundRepresentation) (P : X.PrincipalNormalizer)
-    {r c d : X.Formula} {a : Names} {t : T.Term} {n : X.NormalForm}
-    {g : Context X} {e : Expr}
-    (hr : P.solved r) (hrTrue : ∀ v, X.holds r v)
-    (hc : X.Admissible P.solved (X.and c (X.existsNames a d)))
-    (hn : n.IsPrincipal P.solved (X.and c d))
-    (scope : n.substitution.domain.Subset a) (fresh : X.Avoids c a)
-    (contextFresh : g.Avoids a) (value : Value e)
-    (body : Typing sig X P.solved n.residual g e
-      (.mono (n.substitution.apply t)) ∅) :
-    Typing sig X P.solved (X.and c (X.existsNames a d)) g e
-      (.qualified a n.residual (n.substitution.apply t)) ∅ ∧
-    (Scheme.qualified a d t).Approximates P.solved (X.and c (X.existsNames a d))
-      (.qualified a n.residual (n.substitution.apply t)) := by
-  have projection := Constraints.NormalForm.project_equivalent X Q hr hrTrue hn scope
-  have entails : X.Entails (X.and c (X.existsNames a d))
-      (X.existsNames a n.residual) :=
-    X.entails_trans (X.project_and_avoids fresh).2 projection.1
-  have projected := P.admissible_exists X Q hr hrTrue body.root.1 a
-  exact ⟨(body.generalize value a contextFresh projected).weaken hc entails,
-    Constraints.NormalForm.generalized_approximation X Q hr hrTrue hn scope fresh⟩
+def UsesReconstructionRules {T : TypeDomain} {O : TypeOrder T} {X : Constraints T O}
+    {sig : Signature T} {c g e s eff}
+    (tree : Derivation sig X c g e s eff) : Prop :=
+  match tree with
+  | .var _ | .int _ | .bool _ => True
+  | .lam body => UsesReconstructionRules body
+  | .app f x => UsesReconstructionRules f ∧ UsesReconstructionRules x
+  | .letVal _ v body => UsesReconstructionRules v ∧ UsesReconstructionRules body
+  | .letMono _ v body => UsesReconstructionRules v ∧ UsesReconstructionRules body
+  | .sub body _ => UsesReconstructionRules body
+  | .forallIntro _ _ _ body => UsesReconstructionRules body
+  | .forallElim _ _ _ body _ => UsesReconstructionRules body
+  | .weaken body _ => UsesReconstructionRules body
+  | .effectEq body _ => UsesReconstructionRules body
+  | .alpha body _ => UsesReconstructionRules body
+  | @Derivation.existsIntro _ _ _ _ _ _ _ _ s _ _ _ _ body =>
+      (∃ t, s = .mono t) ∧ UsesReconstructionRules body
+  | .perform _ _ _ _ _ body => UsesReconstructionRules body
+  | .handle _ _ _ _ _ _ _ _ _ body ret clause _ _ _ _ =>
+      UsesReconstructionRules body ∧ UsesReconstructionRules ret ∧ UsesReconstructionRules clause
 
-/-- Construct the normal form used in the forall-introduction case and
-substitute its monomorphic premise without changing the environment.
-The resulting body is still a constraint-form derivation: transforming it to
-`P.solved` is a separate obligation of Theorem 7. -/
-theorem Typing.forallIntro_normal_form {O : TypeOrder equalityTypes}
-    {X : Constraints equalityTypes O} {sig : Signature equalityTypes}
-    (P : X.PrincipalNormalizer) {r c d : X.Formula} {a : Names} {t : Ty}
-    {g : Context X} {e : Expr}
-    (hr : P.solved r) (hrTrue : ∀ v, X.holds r v)
-    (hc : X.Admissible P.solved (X.and c (X.existsNames a d)))
-    (fresh : X.Avoids c a) (contextFresh : g.Avoids a)
-    (real : (Scheme.qualified a d t).Realizable (X.and c (X.existsNames a d)))
-    (contextReal : g.Realizable (X.and c (X.existsNames a d)))
-    (body : Typing sig X X.Satisfiable (X.and c d) g e (.mono t) ∅) :
-    ∃ n : X.NormalForm, n.IsPrincipal P.solved (X.and c d) ∧
-      n.substitution.domain.Subset a ∧
-      (Scheme.qualified a d t).Approximates P.solved (X.and c (X.existsNames a d))
-        (.qualified a n.residual (n.substitution.apply t)) ∧
-      Typing sig X X.Satisfiable n.residual g e
-        (.mono (n.substitution.apply t)) ∅ := by
-  obtain ⟨m, hm, scope, _⟩ :=
-    Constraints.NormalForm.exists_of_realizable_finite X hc fresh real
-  obtain ⟨n, hn⟩ : ∃ n, P.normalize (Constraints.ConstraintProblem.initial X (X.and c d)) =
-      some n := by
-    cases run : P.normalize (Constraints.ConstraintProblem.initial X (X.and c d)) with
-    | some n => exact ⟨n, rfl⟩
-    | none => exact False.elim ((P.failure _).mp run
-        ⟨m, (Constraints.NormalForm.isNormalOf_initial_iff X).mpr hm⟩)
-  obtain ⟨n', principal, domainScope⟩ := P.scope X hr hrTrue
-    (P.principal_initial X hn) hm scope
-  have avoids : g.Avoids n'.substitution.domain := by
-    intro s hs
-    exact ⟨fun i hi => (contextFresh s hs).1 i (domainScope.1 hi),
-      fun i hi => (contextFresh s hs).2 i (domainScope.2 hi)⟩
-  have entails : X.Entails (X.and c d) (X.and c (X.existsNames a d)) := by
-    intro v hv
-    obtain ⟨hc, hd⟩ := (X.holds_and _ _ _).mp hv
-    exact (X.holds_and _ _ _).mpr ⟨hc, X.exists_intro a d v hd⟩
-  have substituted := body.substitute_avoiding_context (Constraints.Simplifier.identity X)
-    n'.substitution avoids (contextReal.weaken entails)
-    (P.solved_satisfiable _ principal.1.1)
-    (Constraints.NormalForm.reconstruct_entails X principal.1)
-  have empty : (∅ : Effect).subst n'.substitution.effects = ∅ :=
-    Effect.subst_eq_self _ _ (by simp)
-  exact ⟨n', principal, domainScope,
-    Constraints.NormalForm.generalized_approximation X equalityGroundRepresentation
-      hr hrTrue principal domainScope fresh, by simpa only [empty] using substituted⟩
+end EHMX.HMX.Derivation
 
-end EHMX.HMX
-namespace EHMX.HMX
-namespace Derivation
+namespace EHMX.HMX.Derivation
+open EHMX EHMX.HMX EHMX.HMX.Derivation
 variable {O : TypeOrder equalityTypes} (X : Constraints equalityTypes O)
 
 private theorem context_project {T : TypeDomain} {O : TypeOrder T}
@@ -102,6 +68,7 @@ private theorem context_project {T : TypeDomain} {O : TypeOrder T}
 theorem forallIntro_original_child
     {sig : Signature equalityTypes}
     (P : X.ScopedPrincipalNormalizer) (closure : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -157,7 +124,7 @@ theorem forallIntro_original_child
       exact (Finset.mem_sdiff.mp (dscope.2 (X.freeEffect_mem_support hf))).2 hi
   obtain ⟨n, bound, hn, effects, protect, boundFresh, domainBound,
       _, targetFresh, _, approx, projection⟩ :=
-    SchemeApproximation.generalized_approximation X P closure allow lift
+    EHMX.HMX.SchemeApproximation.generalized_approximation X P closure reflect allow lift
       hr truth freshD outerAdm obs qscope tscope targetScope
   have projected : X.Equivalent D (X.existsNames bound n.residual) :=
     ⟨X.entails_trans outerEq.2 projection.1, X.entails_trans projection.2 outerEq.1⟩
@@ -218,10 +185,9 @@ theorem forallIntro_original_child
   exact (approx.2.2 target ha (inst'.equivalent ⟨outerEq.2, outerEq.1⟩)).equivalent outerEq
 
 
-end Derivation
-end EHMX.HMX
-namespace EHMX.HMX
-namespace Derivation
+end EHMX.HMX.Derivation
+namespace EHMX.HMX.Derivation
+open EHMX EHMX.HMX EHMX.HMX.Derivation
 variable {O : TypeOrder equalityTypes} (X : Constraints equalityTypes O)
 
 private def pad (θ : Substitution equalityTypes) (f : Names) : Substitution equalityTypes where
@@ -238,6 +204,7 @@ private def pad (θ : Substitution equalityTypes) (f : Names) : Substitution equ
 theorem forallIntro_arbitrary_substitution
     {sig : Signature equalityTypes}
     (P : X.ScopedPrincipalNormalizer) (closure : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -303,7 +270,7 @@ theorem forallIntro_arbitrary_substitution
     intro v hv
     exact (X.holds_subst _ _ _).mpr ((X.holds_subst θ _ v).mp (entails v hv))
   obtain ⟨s', typed, approx⟩ :=
-    forallIntro_original_child X P closure allow lift hr truth value freshC freshG
+    forallIntro_original_child X P closure reflect allow lift hr truth value freshC freshG
       δ admitted entailsδ envδ ih u
       (((Names.subset_union_left _ _).trans (Names.subset_union_left _ _)).trans
         (Names.subset_union_left _ _))
@@ -315,10 +282,9 @@ theorem forallIntro_arbitrary_substitution
     (fun _ _ _ => rfl) (fun _ _ _ => rfl) approx⟩
 
 
-end Derivation
-end EHMX.HMX
-namespace EHMX.HMX
-namespace Derivation
+end EHMX.HMX.Derivation
+namespace EHMX.HMX.Derivation
+open EHMX EHMX.HMX EHMX.HMX.Derivation
 variable {O : TypeOrder equalityTypes} {X : Constraints equalityTypes O}
 
 private theorem mono_approx {S : X.Formula → Prop} {c : X.Formula} (t : Ty) :
@@ -362,30 +328,12 @@ private theorem alpha_source {s t target : Scheme X} {S : X.Formula → Prop} {c
   intro q v hq hv
   exact (h.subst_mono_iff σ q v).mpr ((inst.weaken hq).trans hv)
 
-/-- Source rules covered by the conditional Theorem 7. This is a property of
-all nodes of the derivation, not merely the absence of handlers in the expression.
-Value restriction and effect equality remain part of the current calculus. -/
-def UsesHMXRules {T : TypeDomain} {O : TypeOrder T} {X : Constraints T O}
-    {sig : Signature T} {c g e s eff}
-    (tree : Derivation sig X c g e s eff) : Prop :=
-  match tree with
-  | .var _ | .int _ | .bool _ => True
-  | .lam body => UsesHMXRules body
-  | .app f x => UsesHMXRules f ∧ UsesHMXRules x
-  | .letVal _ v body => UsesHMXRules v ∧ UsesHMXRules body
-  | .letMono _ v body => UsesHMXRules v ∧ UsesHMXRules body
-  | .sub body _ => UsesHMXRules body
-  | .forallIntro _ _ _ body => UsesHMXRules body
-  | .forallElim _ _ _ body _ => UsesHMXRules body
-  | .weaken body _ => UsesHMXRules body
-  | .effectEq body _ => UsesHMXRules body
-  | .alpha body _ => UsesHMXRules body
-  | .existsIntro .. | .perform .. | .handle .. => False
 
-end Derivation
-end EHMX.HMX
+
+end EHMX.HMX.Derivation
 
 namespace EHMX.HMX.Derivation
+open EHMX EHMX.HMX EHMX.HMX.Derivation
 variable {T : TypeDomain} {O : TypeOrder T} {X : Constraints T O}
 private theorem binder_environment {S : X.Formula → Prop}
     (sound : ∀ d, S d → X.Satisfiable d) (closure : X.SolvedClosure S)
@@ -430,6 +378,7 @@ private theorem clause_environment {S : X.Formula → Prop} {R : X.Formula}
 end EHMX.HMX.Derivation
 
 namespace EHMX.HMX.Derivation
+open EHMX EHMX.HMX EHMX.HMX.Derivation
 variable {T : TypeDomain} {O : TypeOrder T} {X : Constraints T O}
 private theorem underBinder_agrees_on (θ : Substitution T) (A U : Names) (ft fe : Nat → Nat)
     (fresh : (Names.mk (A.types.image ft) (A.effects.image fe)).Disjoint (U.union θ.range))
@@ -562,6 +511,7 @@ private theorem clause_subst_underBinder (θ : Substitution T) (B J : Names) (Q 
 end EHMX.HMX.Derivation
 
 namespace EHMX.HMX.Derivation
+open EHMX EHMX.HMX EHMX.HMX.Derivation
 variable {T : TypeDomain} {O : TypeOrder T}
 private theorem operation_underBinder (θ : Substitution T) (A : Names)
     (ft fe : Nat → Nat) (hti : Function.Injective ft) (hei : Function.Injective fe)
@@ -627,10 +577,12 @@ private theorem external_term_eval (θ κ : Substitution T) (A : Names) (ft fe :
 end EHMX.HMX.Derivation
 
 namespace EHMX.HMX.Derivation
+open EHMX EHMX.HMX EHMX.HMX.Derivation
 variable {O : TypeOrder equalityTypes} {X : Constraints equalityTypes O}
-/-- Normalize a projected premise while fixing the finite set of external names. -/
+
 private theorem normal_project
     (P : X.ScopedPrincipalNormalizer) (cl : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -662,10 +614,10 @@ private theorem normal_project
     obtain ⟨s, hs, f, b⟩ := adm
     exact ⟨s, hs, X.entails_trans eqv.1 f, X.entails_trans b eqv.2⟩
   obtain ⟨n, hn, protect, effects⟩ :=
-    EffectResidualNormalization.scoped_principal_with_effect_residual X P cl allow lift
+    EHMX.HMX.EffectResidualNormalization.scoped_principal_with_effect_residual X P cl reflect allow lift
       fresh outer (Names.subset_union_left _ F)
   obtain ⟨W, _, _, freshW, _, proj⟩ :=
-    SchemeApproximation.projected_residual X equalityGroundRepresentation hr truth
+    EHMX.HMX.SchemeApproximation.projected_residual X equalityGroundRepresentation hr truth
       (Names.subset_union_left _ F) hn protect Names.empty
   have peq := X.project_and_avoids (d := Q) fresh
   exact ⟨n, W, hn.1, protect.mono_right fscope, effects, freshW.mono_right fscope,
@@ -692,9 +644,10 @@ private theorem external_effect_eval (θ κ : Substitution equalityTypes) (A : N
   have ha : i ∉ A.effects := fun h => Finset.disjoint_left.mp avoid h hi
   simp [Substitution.underBinder, Substitution.pullback, ha, idE, Effect.eval, Effect.var]
 
-/-- Reconstruct monomorphic existential projection after any outer substitution. -/
+
 private theorem existsIntro_arbitrary_substitution {sig : Signature equalityTypes}
     (P : X.ScopedPrincipalNormalizer) (cl : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -739,7 +692,7 @@ private theorem existsIntro_arbitrary_substitution {sig : Signature equalityType
         avoid.shiftTypes_injective avoid.shiftEffects_injective
         (fresh.mono_right (Names.subset_union_right _ _))).1
   obtain ⟨n, W, hn, protect, effects, fw, proj⟩ :=
-    normal_project P cl allow lift hr truth admitted
+    normal_project P cl reflect allow lift hr truth admitted
       (avoids_of_disjoint_support D B (freshF.mono_right dc)) freshF ent
   have adm : X.Admissible P.solved n.residual :=
     ⟨n.residual, hn.1, X.entails_refl _, X.entails_refl _⟩
@@ -776,6 +729,7 @@ private theorem existsIntro_arbitrary_substitution {sig : Signature equalityType
 end EHMX.HMX.Derivation
 
 namespace EHMX.HMX.Derivation
+open EHMX EHMX.HMX EHMX.HMX.Derivation
 private theorem support_rename (t : Ty) (f h : Nat → Nat) :
     (t.rename f h).fvTypes = t.fvTypes.image f ∧
       (t.rename f h).fvEffects = t.fvEffects.image h := by
@@ -807,11 +761,12 @@ private theorem image_disjoint (a b : Finset Nat) (f : Nat → Nat)
 end EHMX.HMX.Derivation
 
 namespace EHMX.HMX.Derivation
+open EHMX EHMX.HMX EHMX.HMX.Derivation
 variable {O : TypeOrder equalityTypes} {X : Constraints equalityTypes O}
-/-- Freshen rigid and witness names, transform the original clause, and rebuild
-its universal/existential condition without allowing names to escape. -/
+
 private theorem handler_arbitrary_substitution {sig : Signature equalityTypes}
     (P : X.ScopedPrincipalNormalizer) (cl : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -917,7 +872,7 @@ private theorem handler_arbitrary_substitution {sig : Signature equalityTypes}
     exact (X.holds_exists _ _ _).mpr
       ((X.holds_clause _ _ _ _).mp (quant v hv) v ⟨fun _ _ => rfl, fun _ _ => rfl⟩)
   obtain ⟨n, W, hn, protect, effects, fw, proj⟩ :=
-    normal_project P cl allow lift hr truth admitted
+    normal_project P cl reflect allow lift hr truth admitted
       (avoids_of_disjoint_support D J' (freshJ0.mono_right dc0)) freshJF ent
   have adm : X.Admissible P.solved n.residual :=
     ⟨n.residual, hn.1, X.entails_refl _, X.entails_refl _⟩
@@ -1080,6 +1035,7 @@ private theorem handler_arbitrary_substitution {sig : Signature equalityTypes}
 end EHMX.HMX.Derivation
 
 namespace EHMX.HMX.Derivation
+open EHMX EHMX.HMX EHMX.HMX.Derivation
 variable {T : TypeDomain} {O : TypeOrder T} {X : Constraints T O}
 private theorem perform_arbitrary_substitution {sig : Signature T} {S : X.Formula → Prop}
     {D : X.Formula} {g : Context X} {arg : Expr} {op : Op} {raw : Operation T}
@@ -1132,37 +1088,14 @@ private theorem perform_arbitrary_substitution {sig : Signature T} {S : X.Formul
   simp only [Effect.eval_subst, effect_eval_union, effect_eval_singleton]
 end EHMX.HMX.Derivation
 
-namespace EHMX.HMX
-namespace Derivation
+namespace EHMX.HMX.Derivation
+open EHMX EHMX.HMX EHMX.HMX.Derivation
 variable {O : TypeOrder equalityTypes} {X : Constraints equalityTypes O}
-/-- Rules used by reconstructed terms: all expression forms are allowed.
-Only existential projection of a qualified result is excluded. -/
-def UsesReconstructionRules {T : TypeDomain} {O : TypeOrder T} {X : Constraints T O}
-    {sig : Signature T} {c g e s eff}
-    (tree : Derivation sig X c g e s eff) : Prop :=
-  match tree with
-  | .var _ | .int _ | .bool _ => True
-  | .lam body => UsesReconstructionRules body
-  | .app f x => UsesReconstructionRules f ∧ UsesReconstructionRules x
-  | .letVal _ v body => UsesReconstructionRules v ∧ UsesReconstructionRules body
-  | .letMono _ v body => UsesReconstructionRules v ∧ UsesReconstructionRules body
-  | .sub body _ => UsesReconstructionRules body
-  | .forallIntro _ _ _ body => UsesReconstructionRules body
-  | .forallElim _ _ _ body _ => UsesReconstructionRules body
-  | .weaken body _ => UsesReconstructionRules body
-  | .effectEq body _ => UsesReconstructionRules body
-  | .alpha body _ => UsesReconstructionRules body
-  | @Derivation.existsIntro _ _ _ _ _ _ _ _ s _ _ _ _ body =>
-      (∃ t, s = .mono t) ∧ UsesReconstructionRules body
-  | .perform _ _ _ _ _ body => UsesReconstructionRules body
-  | .handle _ _ _ _ _ _ _ _ _ body ret clause _ _ _ _ =>
-      UsesReconstructionRules body ∧ UsesReconstructionRules ret ∧ UsesReconstructionRules clause
 
-/-- Strong induction statement: substitute the original derivation's premises,
-then transform under any admissible entailing constraint. Induction is on the
-original tree; no size bound on regenerated derivations is assumed. -/
+
 theorem transform_to_solved_subst_reconstruction {sig : Signature equalityTypes}
     (P : X.ScopedPrincipalNormalizer) (closure : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -1242,7 +1175,7 @@ theorem transform_to_solved_subst_reconstruction {sig : Signature equalityTypes}
       (approx.2.2 (.mono (θ.apply b)) trivial inst), mono_approx _⟩
   | @forallIntro c d g e a t value freshC freshG body ih =>
     intro core θ D g' admitted entails env
-    obtain ⟨s', typed, approx⟩ := forallIntro_arbitrary_substitution X P closure allow lift
+    obtain ⟨s', typed, approx⟩ := forallIntro_arbitrary_substitution X P closure reflect allow lift
       hr truth value freshC freshG θ admitted entails env
       (fun σ q target => ih core σ q target)
     refine ⟨s', ?_, approx⟩
@@ -1278,7 +1211,7 @@ theorem transform_to_solved_subst_reconstruction {sig : Signature equalityTypes}
     intro core θ D g' admitted entails env
     obtain ⟨⟨t, rfl⟩, good⟩ := core
     refine ⟨.mono (θ.apply t), ?_, mono_approx _⟩
-    apply existsIntro_arbitrary_substitution P closure allow lift hr truth fg fs fe θ admitted entails env
+    apply existsIntro_arbitrary_substitution P closure reflect allow lift hr truth fg fs fe θ admitted entails env
     intro σ R target adm ent en
     obtain ⟨s', typed, approx⟩ := ih good σ R target adm ent en
     exact as_mono typed approx
@@ -1294,23 +1227,23 @@ theorem transform_to_solved_subst_reconstruction {sig : Signature equalityTypes}
     obtain ⟨rs, rt, ra⟩ := ihr core.2.1 θ D (.mono (θ.apply input) :: g')
       admitted entails (.cons (mono_approx _) env)
     refine ⟨.mono (θ.apply result), ?_, mono_approx _⟩
-    apply handler_arbitrary_substitution P closure allow lift hr truth hs hc hf
+    apply handler_arbitrary_substitution P closure reflect allow lift hr truth hs hc hf
       ⟨fg, ft, fe, fw, fwc, fwe⟩ hcl hspl hrst hret θ admitted entails env
       (as_mono bt ba) (as_mono rt ra)
     intro σ R target adm ent en
     obtain ⟨s', typed, approx⟩ := ihc core.2.2 σ R target adm ent en
     exact as_mono typed approx
 
-/-- Every derivation in the original thirteen-rule fragment is also covered
-by reconstruction soundness. -/
+
 theorem UsesHMXRules.reconstruction {sig : Signature equalityTypes}
     {c g e s eff} {tree : Derivation sig X c g e s eff}
     (h : UsesHMXRules tree) : UsesReconstructionRules tree := by
   induction tree <;> simp_all [UsesHMXRules, UsesReconstructionRules]
 
-/-- Compatibility entry point for the original thirteen-rule fragment. -/
+
 theorem transform_to_solved_subst {sig : Signature equalityTypes}
     (P : X.ScopedPrincipalNormalizer) (closure : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -1328,23 +1261,18 @@ theorem transform_to_solved_subst {sig : Signature equalityTypes}
       ∃ s', Typing sig X P.solved D g' e s' (eff.subst θ.effects) ∧
         (s.subst θ).Approximates P.solved D s' := by
   intro core
-  exact transform_to_solved_subst_reconstruction P closure allow lift hr truth tree core.reconstruction
+  exact transform_to_solved_subst_reconstruction P closure reflect allow lift hr truth tree core.reconstruction
 
 
-end Derivation
-end EHMX.HMX
-namespace EHMX.HMX
-namespace Derivation
+end EHMX.HMX.Derivation
+namespace EHMX.HMX.Derivation
+open EHMX EHMX.HMX EHMX.HMX.Derivation
 variable {O : TypeOrder equalityTypes} {X : Constraints equalityTypes O}
 
-/-- Conditional counterpart of HM(X) Theorem 7 for the current value-restricted
-calculus and constraint-relative approximation. The source must use only
-UsesHMXRules. Scoped principality, solved closure, effect-equation closure,
-projection lifting and a true solved residual are explicit hypotheses.
-No uniform realizability of internal schemes or contexts is required.
-This does not establish these hypotheses for a concrete solver. -/
+
 theorem theorem7_core {sig : Signature equalityTypes}
     (P : X.ScopedPrincipalNormalizer) (closure : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -1360,7 +1288,7 @@ theorem theorem7_core {sig : Signature equalityTypes}
   have entails : X.Entails c (X.subst (Substitution.identity equalityTypes) c) := by
     intro v hv
     simpa only [X.holds_subst, Substitution.identity_pullback] using hv
-  obtain ⟨s', typed, approx⟩ := transform_to_solved_subst P closure allow lift hr truth tree core
+  obtain ⟨s', typed, approx⟩ := transform_to_solved_subst P closure reflect allow lift hr truth tree core
     (Substitution.identity equalityTypes) c g' admitted entails
     (Context.Approximates.subst_identity env)
   have empty : eff.subst (Substitution.identity equalityTypes).effects = eff :=
@@ -1368,10 +1296,10 @@ theorem theorem7_core {sig : Signature equalityTypes}
   rw [empty] at typed
   exact ⟨s', typed, (Scheme.Approximates.subst_identity_iff s s').mp approx⟩
 
-/-- Monotype conclusion of Theorem 7: retain exactly the original type and effect.
-The same explicit hypotheses and source-rule restriction as theorem7_core apply. -/
+
 theorem theorem7_mono_core {sig : Signature equalityTypes}
     (P : X.ScopedPrincipalNormalizer) (closure : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -1384,10 +1312,9 @@ theorem theorem7_mono_core {sig : Signature equalityTypes}
     (tree : Derivation sig X c g e (.mono t) eff) (core : UsesHMXRules tree)
     (admitted : X.Admissible P.solved c) (env : g.Approximates P.solved c g') :
     Typing sig X P.solved c g' e (.mono t) eff := by
-  obtain ⟨s', typed, approx⟩ := theorem7_core P closure allow lift hr truth tree core admitted env
+  obtain ⟨s', typed, approx⟩ := theorem7_core P closure reflect allow lift hr truth tree core admitted env
   exact as_mono typed approx
 
 
 
-end Derivation
-end EHMX.HMX
+end EHMX.HMX.Derivation

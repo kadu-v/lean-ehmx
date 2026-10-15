@@ -44,8 +44,10 @@ theorem reconstructedScheme_outer_closed {g : Context X} {n : X.NormalForm}
   rw [eq]
   exact (X.holds_exists _ _ _).mpr ⟨u, hu, hr⟩
 
-/-- A fixed actual output covers every monomorphic typing in the original
-closed environment. A single finite substitution also preserves its effect. -/
+end EHMX.HMX
+namespace EHMX.HMX
+open EHMX EHMX.HMX
+variable {T : TypeDomain} {O : TypeOrder T} {X : Constraints T O}
 theorem inferTerm_finite_closed {sig : Signature T}
     (N : X.Simplifier) (P : X.ScopedPrincipalNormalizer)
     (closure : X.SolvedClosure P.solved) {g : Context X} {e : Expr} {n : X.NormalForm}
@@ -68,7 +70,7 @@ theorem inferTerm_finite_closed {sig : Signature T}
   apply ComputationScheme.generalize_finite g _ _ _ closed φ
   intro v hv
   exact ⟨(X.holds_subst _ _ _).mp (residual v hv),
-    (images v).1.symm ▸ O.refl _, (images v).2⟩
+    (images v hv).1.symm ▸ O.refl _, (images v hv).2⟩
 
 /-- Completeness alone yields acceptance of any qualified typing in the original
 context. This avoids assuming that identity substitution is syntactic identity. -/
@@ -89,6 +91,7 @@ theorem inferTerm_acceptance_context {sig : Signature T}
 end EHMX.HMX
 
 namespace EHMX.HMX
+open EHMX EHMX.HMX
 variable {O : TypeOrder equalityTypes} {X : Constraints equalityTypes O}
 
 /-- Corollary 7 for a fixed successful run. All conclusions use the original
@@ -96,6 +99,7 @@ closed context and the same solved set; the comparison includes all derivations.
 theorem inferTerm_principal_closed {sig : Signature equalityTypes}
     (N : X.Simplifier) (P : X.ScopedPrincipalNormalizer)
     (cl : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -125,7 +129,7 @@ theorem inferTerm_principal_closed {sig : Signature equalityTypes}
       (.mono (reconstructedScheme g n).result) (reconstructedScheme g n).effect := by
     simpa [reconstructedScheme, ComputationScheme.generalizeWithSupport,
       Substitution.apply, Ty.subst, Effect.subst, Effect.var] using
-      inferTermAt_sound_of_approximation N P cl allow lift hr truth hsig run env
+      inferTermAt_sound_of_approximation N P cl reflect allow lift hr truth hsig run env
   obtain ⟨d, _, normalized, _⟩ := inferTermAt_normal run
   have sat := (P.sound (reconstructionScope_covers X g _ _ d) normalized).2.1
   have outer := reconstructedScheme_outer_closed closed sat
@@ -149,6 +153,7 @@ Ordinary polymorphic typing of that output is asserted only for values. -/
 theorem Typing.corollary7 {sig : Signature equalityTypes}
     (N : X.Simplifier) (P : X.ScopedPrincipalNormalizer)
     (cl : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -172,7 +177,7 @@ theorem Typing.corollary7 {sig : Signature equalityTypes}
     (Value e → PrincipalPair (fun c g e s => Typing sig X P.solved c g e s ∅)
       g e X.top result.valueScheme) := by
   obtain ⟨n, run⟩ := inferTerm_acceptance_context N P cl typed real
-  exact ⟨n, run, inferTerm_principal_closed N P cl allow lift hr truth hsig
+  exact ⟨n, run, inferTerm_principal_closed N P cl reflect allow lift hr truth hsig
     run closed typed.root.2.1 real⟩
 
 end EHMX.HMX

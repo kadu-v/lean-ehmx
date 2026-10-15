@@ -1,11 +1,14 @@
 import EHMX.HMX.EffectResidualNormalization
 import EHMX.HMX.ContextApproximation
 
+
 /-! Construct generalized scheme approximations for the forall-introduction step.
 Projection and the maximal instance comparison are proved, not assumed. -/
 
-namespace EHMX.HMX
-namespace SchemeApproximation
+set_option maxHeartbeats 2000000
+
+namespace EHMX.HMX.SchemeApproximation
+open EHMX EHMX.HMX
 variable {T : TypeDomain} {O : TypeOrder T} (X : Constraints T O)
 
 theorem projected_residual
@@ -118,11 +121,10 @@ theorem projected_residual
         simpa [y, Valuation.patch, ha, z] using h.symm
 
 
-end SchemeApproximation
-end EHMX.HMX
+end EHMX.HMX.SchemeApproximation
 
-namespace EHMX.HMX
-namespace SchemeApproximation
+namespace EHMX.HMX.SchemeApproximation
+open EHMX EHMX.HMX
 variable {O : TypeOrder equalityTypes} (X : Constraints equalityTypes O)
 
 private theorem context_avoids_of_support {g : Context X} {f b : Names}
@@ -141,10 +143,9 @@ private theorem context_avoids_of_support {g : Context X} {f b : Names}
     fun i hi hf => Finset.disjoint_left.mp fresh.2 hi
       (scope.2 (member.2 (Scheme.freeEffect_mem_support hf)))⟩
 
-end SchemeApproximation
-end EHMX.HMX
-namespace EHMX.HMX
-namespace SchemeApproximation
+end EHMX.HMX.SchemeApproximation
+namespace EHMX.HMX.SchemeApproximation
+open EHMX EHMX.HMX
 variable {T : TypeDomain} {O : TypeOrder T} (X : Constraints T O)
 
 theorem source_instance_candidate
@@ -199,11 +200,10 @@ theorem source_instance_candidate
     ⟨X.entails_left _ _, fun v hv => (X.holds_and _ _ _).mpr ⟨hv, projection.1 v hv⟩⟩
 
 
-end SchemeApproximation
-end EHMX.HMX
+end EHMX.HMX.SchemeApproximation
 
-namespace EHMX.HMX
-namespace SchemeApproximation
+namespace EHMX.HMX.SchemeApproximation
+open EHMX EHMX.HMX
 variable {T : TypeDomain} {O : TypeOrder T} (X : Constraints T O)
 
 theorem principal_finite_factor
@@ -215,19 +215,19 @@ theorem principal_finite_factor
     (σ : Substitution T) (hc : X.Admissible S c)
     (entails : X.Entails c (X.subst σ d)) :
     ∃ φ : Substitution T,
-      (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v) u) ∧
+      (∀ v, X.holds c v → (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v) u) ∧
       X.Entails c (X.subst φ n.residual) := by
   obtain ⟨m, p, normal, images, residual⟩ := X.exists_fresh_normal S rename scope σ hc entails
-  obtain ⟨θ, factor, hr⟩ := hn.2 m normal
+  obtain ⟨θ, comp⟩ := hn.2 m normal
   let φ := (p.inverse.asSubstitution T).compose θ
   refine ⟨φ, ?_, ?_⟩
-  · intro v
+  · intro v hv
     rw [Substitution.compose_pullback]
-    exact (factor _).trans (images v)
+    exact ((comp _ ((X.holds_subst _ _ _).mp (residual v hv))).1).trans (images v)
   · intro v hv
     apply (X.holds_subst _ _ _).mpr
     rw [Substitution.compose_pullback]
-    exact (X.holds_subst _ _ _).mp (hr _ ((X.holds_subst _ _ _).mp (residual v hv)))
+    exact (comp _ ((X.holds_subst _ _ _).mp (residual v hv))).2
 
 theorem max_mono
     {S : X.Formula → Prop}
@@ -255,42 +255,42 @@ theorem max_mono
       fun i hi => (θ.pullback_outside v).2 i (fun h => hi (θa.2 h))⟩
   obtain ⟨φ, factor, residual⟩ :=
     principal_finite_factor X rename scope hn θ hq solves
-  have fixed (v : Valuation T.Value) : (φ.pullback v).AgreeOn v (u.diff a) := by
+  have fixed (v : Valuation T.Value) (hv : X.holds q v) : (φ.pullback v).AgreeOn v (u.diff a) := by
     constructor
     · intro i hi
       have h := Finset.mem_sdiff.mp hi
       have outside : i ∉ n.substitution.domain.types :=
         fun hj => Finset.disjoint_left.mp protect.1 hj hi
       exact ((n.substitution.pullback_outside (φ.pullback v)).1 i outside).symm.trans
-        (((factor v).1 i h.1).trans
+        (((factor v hv).1 i h.1).trans
           ((θ.pullback_outside v).1 i (fun hj => h.2 (θa.1 hj))))
     · intro i hi
       have h := Finset.mem_sdiff.mp hi
       have outside : i ∉ n.substitution.domain.effects :=
         fun hj => Finset.disjoint_left.mp protect.2 hj hi
       exact ((n.substitution.pullback_outside (φ.pullback v)).2 i outside).symm.trans
-        (((factor v).2 i h.1).trans
+        (((factor v hv).2 i h.1).trans
           ((θ.pullback_outside v).2 i (fun hj => h.2 (θa.2 hj))))
   let η := Substitution.restrictTo φ b
-  have same (v : Valuation T.Value) : (η.pullback v).AgreeOn (φ.pullback v) ((u.diff a).union b) := by
+  have same (v : Valuation T.Value) (hv : X.holds q v) : (η.pullback v).AgreeOn (φ.pullback v) ((u.diff a).union b) := by
     constructor
     · intro i hi
       by_cases hb : i ∈ b.types
       · simp [η, Substitution.restrictTo, Substitution.pullback, hb]
       · have hf := (Finset.mem_union.mp hi).resolve_right hb
         simpa [η, Substitution.restrictTo, Substitution.pullback,
-          hb, T.eval_var] using ((fixed v).1 i hf).symm
+          hb, T.eval_var] using ((fixed v hv).1 i hf).symm
     · intro i hi
       by_cases hb : i ∈ b.effects
       · simp [η, Substitution.restrictTo, Substitution.pullback, hb]
       · have hf := (Finset.mem_union.mp hi).resolve_right hb
         simpa [η, Substitution.restrictTo, Substitution.pullback,
-          hb, Effect.eval, Effect.var] using ((fixed v).2 i hf).symm
+          hb, Effect.eval, Effect.var] using ((fixed v hv).2 i hf).symm
   apply Instance.forallLeft η (Finset.Subset.refl _) (Finset.Subset.refl _)
   · intro v hv
     apply (X.holds_subst _ _ _).mpr
     exact (X.holds_support n.residual _ _
-      ((same v).mono ((Names.subset_union_left _ _).trans covered))).mpr
+      ((same v hv).mono ((Names.subset_union_left _ _).trans covered))).mpr
       ((X.holds_subst _ _ _).mp (residual v hv))
   · apply Instance.sub
     intro v hv
@@ -299,9 +299,9 @@ theorem max_mono
     have eqt : T.eval v (η.apply (n.substitution.apply t)) = T.eval v (θ.apply t) := by
       rw [Substitution.eval_apply,
         T.eval_support _ _ (n.substitution.apply t)
-          ((same v).mono ((Names.subset_union_right _ _).trans covered)),
+          ((same v hv).mono ((Names.subset_union_right _ _).trans covered)),
         Substitution.eval_apply, Substitution.eval_apply]
-      exact T.eval_support _ _ t ((factor v).mono scopeT)
+      exact T.eval_support _ _ t ((factor v hv).mono scopeT)
     rwa [eqt]
 
 theorem approximation_of_admissible_mono
@@ -363,15 +363,15 @@ theorem approximation_of_admissible_mono
 
 
 
-end SchemeApproximation
-end EHMX.HMX
+end EHMX.HMX.SchemeApproximation
 
-namespace EHMX.HMX
-namespace SchemeApproximation
+namespace EHMX.HMX.SchemeApproximation
+open EHMX EHMX.HMX
 variable {O : TypeOrder equalityTypes} (X : Constraints equalityTypes O)
 
 theorem generalized_approximation
     (P : X.ScopedPrincipalNormalizer) (closure : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -399,21 +399,21 @@ theorem generalized_approximation
         (.qualified b n.residual (n.substitution.apply t)) ∧
       X.Equivalent (X.and c (X.existsNames a d)) (X.existsNames b n.residual) := by
   obtain ⟨n, hn, protect, effects⟩ :=
-    EffectResidualNormalization.scoped_principal_with_effect_residual X P closure allow lift
+    EHMX.HMX.EffectResidualNormalization.scoped_principal_with_effect_residual X P closure reflect allow lift
       fresh outer observed
   obtain ⟨b, _, db, bf, covered, projection⟩ :=
-    SchemeApproximation.projected_residual X equalityGroundRepresentation hr truth
+    EHMX.HMX.SchemeApproximation.projected_residual X equalityGroundRepresentation hr truth
       observed hn protect (equalityTypes.support (n.substitution.apply t))
   have equiv := X.project_and_avoids (d := d) fresh
   have projected : X.Equivalent (X.and c (X.existsNames a d)) (X.existsNames b n.residual) :=
     ⟨X.entails_trans equiv.2 projection.1, X.entails_trans projection.2 equiv.1⟩
-  have forward := SchemeApproximation.source_instance_candidate X hn.1 protect bf
+  have forward := EHMX.HMX.SchemeApproximation.source_instance_candidate X hn.1 protect bf
     scopeD scopeT projected
   have admitted : (Scheme.qualified b n.residual (n.substitution.apply t)).Admissible P.solved :=
     ⟨n.residual, hn.1.1, X.entails_refl _, X.entails_refl _⟩
-  have approx := SchemeApproximation.approximation_of_admissible_mono X
+  have approx := EHMX.HMX.SchemeApproximation.approximation_of_admissible_mono X
     P.solved_satisfiable closure outer admitted forward
-    (fun q target hq entails inst => SchemeApproximation.max_mono X closure.rename
+    (fun q target hq entails inst => EHMX.HMX.SchemeApproximation.max_mono X closure.rename
       observed scopeT hn protect covered fresh hq
       (X.entails_trans entails (X.entails_left _ _)) inst)
   have support : (Scheme.qualified b n.residual (n.substitution.apply t)).support.Subset
@@ -434,5 +434,4 @@ theorem generalized_approximation
     context_avoids_of_support X contextScope bf, support, approx, projected⟩
 
 
-end SchemeApproximation
-end EHMX.HMX
+end EHMX.HMX.SchemeApproximation

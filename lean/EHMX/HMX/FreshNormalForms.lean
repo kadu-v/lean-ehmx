@@ -119,26 +119,30 @@ theorem Constraints.exists_fresh_normal
 
 /-- Complete normalization of arbitrary finite, uniformly solving target
 substitutions. The single returned factor works at all valuations. -/
-theorem Constraints.ScopedPrincipalNormalizer.complete_of_substitution
-    (P : X.ScopedPrincipalNormalizer)
-    (rename : ∀ (p : Renaming) c, X.Admissible P.solved c →
-      X.Admissible P.solved (X.subst (p.asSubstitution T) c))
-    {u : Names} {d c : X.Formula} (scope : (X.freeNames d).Subset u)
-    (σ : Substitution T) (hc : X.Admissible P.solved c)
-    (entails : X.Entails c (X.subst σ d)) :
-    ∃ n, P.normalize u d = some n ∧ ∃ φ : Substitution T,
-      (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v) u) ∧
-      X.Entails c (X.subst φ n.residual) := by
-  obtain ⟨m, p, normal, images, residual⟩ := X.exists_fresh_normal P.solved rename scope σ hc entails
-  obtain ⟨n, hn, θ, factor, hr⟩ := P.complete_of_competitor scope m normal
-  let φ := (p.inverse.asSubstitution T).compose θ
-  refine ⟨n, hn, φ, ?_, ?_⟩
-  · intro v
-    rw [Substitution.compose_pullback]
-    exact (factor _).trans (images v)
-  · intro v hv
-    apply (X.holds_subst _ _ _).mpr
-    rw [Substitution.compose_pullback]
-    exact (X.holds_subst _ _ _).mp (hr _ ((X.holds_subst _ _ _).mp (residual v hv)))
+theorem Constraints.ScopedPrincipalNormalizer.complete_of_substitution (P : X.ScopedPrincipalNormalizer)
+ (rename : ∀ (p : Renaming) c, X.Admissible P.solved c →
+   X.Admissible P.solved (X.subst (p.asSubstitution T) c))
+ {u : Names} {d c : X.Formula}
+ (scope : (X.freeNames d).Subset u) (σ : Substitution T)
+ (hc : X.Admissible P.solved c) (entails : X.Entails c (X.subst σ d)) :
+ ∃ n, P.normalize u d = some n ∧ ∃ φ : Substitution T,
+   (∀ v, X.holds c v →
+      (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v) u) ∧
+   X.Entails c (X.subst φ n.residual) := by
+ obtain ⟨m,p,hm,images,residual⟩ := X.exists_fresh_normal P.solved rename scope σ hc entails
+ obtain ⟨n,run⟩ := P.exists_of_normal scope ⟨m,hm⟩
+ obtain ⟨θ,factor⟩ := (P.principal u d scope n run).2 m hm
+ let φ := (p.inverse.asSubstitution T).compose θ
+ have hr (v : Valuation T.Value) (hv : X.holds c v) :
+   X.holds m.residual ((p.inverse.asSubstitution T).pullback v) :=
+   (X.holds_subst _ _ _).mp (residual v hv)
+ refine ⟨n,run,φ,?_,?_⟩
+ · intro v hv
+   rw [Substitution.compose_pullback]
+   exact ((factor _ (hr v hv)).1).trans (images v)
+ · intro v hv
+   apply (X.holds_subst _ _ _).mpr
+   rw [Substitution.compose_pullback]
+   exact (factor _ (hr v hv)).2
 
 end EHMX.HMX

@@ -613,17 +613,11 @@ handler の拡張 & \key{holds\_clause}：$\forall B.\exists J.D$\\\bottomrule
 \end{aligned}
 \]
 \textbf{制約を保持する主要正規形}
-\[
-\begin{gathered}
-p=(C,\theta)\in\operatorname{ConstraintProblem},\quad\Sat_X(C)\\
-\Longrightarrow\quad\operatorname{PrincipalNormal}_{\mathcal S}(p,p),\\
-\operatorname{PrincipalNormal}_{\mathcal S}(p,n)
-\iff\operatorname{Normal}_{\mathcal S}(p,n)\land
- \forall m.\ \operatorname{Normal}_{\mathcal S}(p,m)\Rightarrow n\succeq m.
-\end{gathered}
-\]
-\key{NormalForm.MoreGeneral} の反射性と \key{IsNormalOf} の定義による．
-$\mathcal S$ の射影閉性・主要正規形の存在に判定器は不要．
+充足可能な $D$ に対して $(D,\mathrm{id})$ は，後述する残余制約下の比較で主要である．
+競合する $(Q,\theta)$ には，有限因子 $\phi=\theta$ を使う．
+正規形の健全性から $Q\models\theta D$ が成立する．
+\key{ScopedPrincipalNormalizer.satisfiable} はこの非計算的な存在モデルであり，
+充足可能性判定器ではない．$S=\Sat_X$ の射影閉性も判定器なしで成立する．
 \[
 \begin{aligned}
 s&=\forall A.R\Rightarrow(t!\eta),\quad
@@ -817,14 +811,14 @@ n&=(R,\psi),\qquad [n]=R\land[\psi],\\
  &\iff S(R)\land\Solved(\psi)\land\psi R\equiv R\land[n]\models D,\\
 n\preceq_U m
  &\iff\exists\phi\text{（有限代入）}.\
-   \forall\rho.\ \psi^*(\phi^*\rho)=_U\theta^*\rho
-   \ \land\ Q\models\phi R,\quad m=(Q,\theta),\\
+   \forall\rho\models Q.\ \psi^*(\phi^*\rho)=_U\theta^*\rho
+   \ \land\ \phi^*\rho\models R,\quad m=(Q,\theta),\\
 \operatorname{Principal}_S^U(D;n)
  &\iff\operatorname{Normal}_S(D;n)\land
    \forall m.\ \operatorname{Normal}_S(D;m)\Rightarrow n\preceq_U m.
 \end{aligned}
 \]
-比較因子 $\phi$ の冪等性は要求しない．新しい出力パラメータは入力 $U$ と区別する．
+比較因子 $\phi$ は評価ごとに選ばず，全評価で共通の有限代入である．冪等性は要求しない．新しい出力パラメータは入力 $U$ と区別する．
 \[
 \begin{gathered}
 \FV(D)\subseteq U,\quad S\subseteq\Sat_X,\\
@@ -845,7 +839,7 @@ n\preceq_U m
 \Adm_S(C)\Rightarrow\Adm_S(\exists A.C).
 \end{gathered}
 \]
-主要正規形の契約からこれらの閉性は導出していない．$S=\Sat_X$ は全条件を満たす．
+主要正規形の契約からこれらの閉性は導出していない．$S=\Sat_X$ はこの三つの閉性を満たす．
 
 \begin{theorem}[新鮮化した比較正規形]
 $\Adm_S$ の改名閉性，$\FV(D)\subseteq U$ の下で，
@@ -854,7 +848,7 @@ $\Adm_S$ の改名閉性，$\FV(D)\subseteq U$ の下で，
 \Adm_S(C),\quad C\models\sigma D\\
 \Longrightarrow\quad\exists n,\phi.\
  \mathcal N(U,D)=\mathsf{some}(n)\ \land\\
- \forall\rho.\ n_\theta^*(\phi^*\rho)=_U\sigma^*\rho,
+ \forall\rho\models C.\ n_\theta^*(\phi^*\rho)=_U\sigma^*\rho,
  \qquad C\models\phi n_R.
 \end{gathered}
 \]
@@ -918,9 +912,6 @@ $P=C\land\exists A.D$ とおく．
 この補題にも \key{GroundRepresentation} は不要であり，
 外側条件 $P$ の許容性とスキームの実現可能性は引き続き必要である．
 
-\key{PrincipalNormalizer.normalize\_realizable\_finite} は，
-同じ前提と主要正規化の契約から正規化の成功と出力スキームの実現可能性を導く．
-
 \textbf{導出変換との区別}
 スキームの実現可能性は，一般の型付け結果からは自動的に従わない．
 上記の補題だけで一般の多相 $\mathbf{let}$ や handler を含む導出全体の
@@ -935,7 +926,13 @@ $\Sat_X\to S$ 変換は得られない．次節では追加条件を明示し，
 \key{ScopedPrincipalNormalizer} $P$ の解決済み集合を $S$ とし，
 \key{SolvedClosure} と恒真な解決済み制約
 $S(R_\top),\ \forall\rho.\rho\models R_\top$ を仮定する．
-さらに次の二条件を明示する．$\operatorname{graph}(\theta)$ は有限代入の等式制約である．
+さらに，次の十分条件を仮定する．
+\[
+\Adm_S(C)\land C\models\alpha=t\quad\Longrightarrow\quad t=\alpha.
+\]
+右辺は型項の構文的等号である．\key{VariableEqualityReflection} として明示し，
+効果等式は許す．効果専用の残余では証明済みだが，一般の $S$ に自動的に成立する条件ではない．
+加えて次の二条件を明示する．$\operatorname{graph}(\theta)$ は有限代入の等式制約である．
 \[
 \begin{gathered}
 \dom_T(\theta)=\varnothing,\quad
@@ -1047,8 +1044,8 @@ C\vdash s\mapsto_S t
 \textbf{検証と残る課題}
 公開定理の適用例として，入れ子の多相 let と特殊化，開環境と束縛名の衝突，
 空でない潜在効果の保存を検証する．
-既存の強い \key{PrincipalNormalizer} を使う有限証人・環境近似の補題は保持するが，
-今回の定理7の証明は \key{ScopedPrincipalNormalizer} と上記の追加条件を使う．
+旧比較・旧主要正規化器・変換用の互換補題は削除した．
+有限証人など比較に依存しない補題は維持し，定理7は新比較と上記の条件から直接証明する．
 生成される単相射影・操作・handler への拡張と定理16は以下で述べる．
 具体的制約系が全前提を満たす証明と，EHM(X) で追加した任意の qualified 型への
 射影変換は未証明である．定理17の qualified 比較と系7は以下の条件で証明した．
@@ -1083,10 +1080,17 @@ $\mathsf{unrepresented}$ は $\neg\Sat(D)$ を意味しない．
 
 
 \clearpage
+\textbf{同じ正規化器による公開定理}
+$\widehat P=\operatorname{prepare}(P)$ と置く．この変換は主要性と $S$ を保ち，
+型内の効果注釈を変数にし，効果代入を恒等にする．効果等式の追加閉性を使用する．
+存在は \key{NormalFormShape.principal\_shape} で証明し，独立した仮定にはしない．
+構成は非計算的であり，実行可能なソルバーではない．公開定理
+\key{theorem16}, \key{theorem17}, \key{corollary7} は同じ $\widehat P$ と $S$ を用いる．
+
 \textbf{定理16相当：同じ解決済み集合での出力健全性}
 
 型領域を \key{equalityTypes} とし，定理7の節と同じ主要正規化・閉性・
-恒真な解決済み制約・効果等式の追加閉性・射影から代入を得る条件を仮定する．
+変数等式の追加条件・恒真な解決済み制約・効果等式の追加閉性・射影から代入を得る条件を仮定する．
 定義28全体を仮定するものではない．
 
 \begin{theorem}[一般の解決済み集合での条件付き出力健全性]
@@ -1177,22 +1181,20 @@ $\forall B.\exists W$ の条件と変数の非脱出をそろえて handler 規�
 
 \clearpage
 \begin{theorem}[単相判断の完全性と有限因子]
-$\Adm_S$ の改名閉性の下で，
+$\operatorname{SolvedClosure}(S)$ の下で，
 \[
 \begin{gathered}
-\operatorname{Typing}_S(C,\Gamma[\sigma],e,\sigma t,\sigma\epsilon),
- \quad\Real_C(\Gamma[\sigma])\\
-\Longrightarrow\quad\exists R,\psi,\phi.\
- \mathcal T^{\rm at}(\Gamma,e,t,\epsilon)=\mathsf{reconstructed}(R,\psi)
- \ \land\ C\models\phi R,\\
-\forall\rho.\quad
- \ground{\Gamma[\psi]}_{\phi^*\rho}=\ground{\Gamma[\sigma]}_\rho,\quad
- \eval{\psi t}_{\phi^*\rho}=\eval{\sigma t}_\rho,\quad
- \eval{\psi\epsilon}_{\phi^*\rho}=\eval{\sigma\epsilon}_\rho.
+\operatorname{Typing}_S(C,\Gamma[\sigma],e,t,\epsilon),\quad\Real_C(\Gamma[\sigma])\\
+\Longrightarrow\quad\exists n,\phi.\quad
+\mathcal T(\Gamma,e)=\mathsf{reconstructed}(n),\quad C\models\phi n_R,\\
+\forall\rho\models C.\quad n_\theta^*(\phi^*\rho)=_{\supp\Gamma}\sigma^*\rho,\\
+\forall\rho\models C.\quad
+\eval{\tau}_{\phi^*\rho}=\eval{t}_\rho,\quad
+\eval{\epsilon_o}_{\phi^*\rho}=\eval{\epsilon}_\rho.
 \end{gathered}
 \]
 \end{theorem}
-\key{inferTermAt\_complete\_mono}, \key{reconstruction\_factor}．
+\key{inferTerm\_complete\_mono}．$\tau,\epsilon_o$ は出力の型と効果である．
 
 \begin{theorem}[qualified 判断からの受理]
 $\operatorname{SolvedClosure}(S)$ の下で，
@@ -1237,18 +1239,11 @@ $R;\Gamma[\psi]\vdash_S e:\tau!\epsilon_o$ を同じ $S$ の計算スキーム�
 外側制約の許容性には \key{SolvedClosure.project} を使う．
 
 \textbf{比較時に量化変数が外へ出ないこと}
-型領域が \key{equalityTypes} の場合，
-\[
-\begin{gathered}
-\forall\rho.\ \psi^*(\phi^*\rho)=_{\supp\Gamma}\sigma^*\rho,\qquad
-D\cap(\supp\Gamma\cup\operatorname{range}\sigma)=\varnothing\\
-\Longrightarrow\quad s_o[\phi]\text{ は }D\text{ を自由に含まない}.
-\end{gathered}
-\]
-\key{ComputationScheme.generalizeWithSupport\_subst\_avoids}．
-全評価で型・効果の値が一致するときの support の包含を証明して使う．
-これは追加の公理ではなく，具体的な型項と有限集合の効果についての補題である．
-この箇所に任意の \key{TypeDomain} を使えることは未証明である．
+新比較の因子の一致は $C$ の下でだけ成立する．全評価での一致から support の包含を導く証明は使わない．
+\key{ReconstructionFactor.repair\_factor\_avoids} は，出力の効果注釈の形式と
+\key{VariableEqualityReflection} を用い，$C$ の下で必要な評価を保つ一つの有限因子へ修正する．
+この因子が束縛変数を外へ出さないことを証明して qualified 型を再構成する．
+型領域は \key{equalityTypes} であり，任意の \key{TypeDomain} への拡張は主張しない．
 
 \clearpage
 \textbf{定理17相当：qualified 型までの再構成完全性}
@@ -1256,7 +1251,9 @@ D\cap(\supp\Gamma\cup\operatorname{range}\sigma)=\varnothing\\
 型領域を \key{equalityTypes} とし，型の順序と制約系 $X$ は抽象とする．
 
 主要正規化器 \key{ScopedPrincipalNormalizer} $P$ と
-\key{SolvedClosure}$(P.\mathrm{solved})$ を仮定し，$S=P.\mathrm{solved}$ と置く．
+\key{SolvedClosure}$(P.\mathrm{solved})$ を用いる．\par
+\key{VariableEqualityReflection} と
+効果等式の追加閉性を仮定する．$S=P.\mathrm{solved}$ とし，$\widehat P$ の出力を使う．
 
 \begin{theorem}[同じ代入による環境・型スキーム・外側制約の比較]
 \[
@@ -1265,16 +1262,17 @@ D\cap(\supp\Gamma\cup\operatorname{range}\sigma)=\varnothing\\
 \Real_C(\Gamma[\sigma])\\
 \Longrightarrow\quad\exists n,\phi.\quad
 \mathcal T(\Gamma,e)=\mathsf{reconstructed}(n),\\
-\forall\rho.\ \psi^*(\phi^*\rho)=_{\supp\Gamma}\sigma^*\rho,\\
+\forall\rho\models C.\ \psi^*(\phi^*\rho)=_{\supp\Gamma}\sigma^*\rho,\\
 C\vdash_i s_o[\phi]\succeq s,\qquad C\models\phi C_o,\\
-\forall\rho.\ \eval{\epsilon_o}_{\phi^*\rho}=\eval\epsilon_\rho.
+\forall\rho\models C.\ \eval{\epsilon_o}_{\phi^*\rho}=\eval\epsilon_\rho.
 \end{gathered}
 \]
 ここで $n=(R,\psi,\tau,\epsilon_o)$，$s_o,C_o$ は前頁の一般化による．
 \end{theorem}
 \key{inferTerm\_complete\_scheme}．
 環境の実現可能性は $C$ の下で要求する．$\Real_\top(\Gamma)$ や $\Real_C(s)$ は不要．
-定理16の lifting 条件，恒真な解決済み制約，効果等式の追加閉性も要求しない．
+定理16の lifting 条件と恒真な解決済み制約は要求しない．
+効果等式の追加閉性は出力形式の構成に使用する．
 
 \textbf{証明の構成}
 単相の場合，\key{inferTerm\_complete\_mono} が推論成功と一つの代入 $\phi$，
@@ -1294,14 +1292,15 @@ $s=\forall D.Q\Rightarrow t$ の場合，束縛名を $C,\Gamma,\sigma$ から�
 \textbf{検証}
 閉じた qualified 環境の下の恒等関数について，実際の生成制約の局所主要正規形と
 一般化を確認した．対象スキームが実現可能でない例と，型・効果の名前衝突を伴う
-qualified 射影には，実在する $\Sat_X$ 正規化器で公開定理を適用した．
+qualified 射影には，実在する $\Sat_X$ 正規化器を用いた生成完全性からの直接証明を適用した．
+$\Sat_X$ は変数等式の追加条件を一般には満たさず，新定理の前提のモデルとは扱わない．
 多相 let・perform・入れ子 handler の条件付き健全性出力にも，同じ $S$ で適用した．
 
 \clearpage
 \textbf{系7相当：実際の再構成結果の主要型}
 
 型領域は \key{equalityTypes} とし，定理16で明示した主要正規化・閉性・
-効果等式の追加閉性・lifting・恒真な解決済み制約を仮定する．
+変数等式の追加条件・効果等式の追加閉性・lifting・恒真な解決済み制約を仮定する．
 操作宣言は閉じており，$\supp\Gamma=\varnothing$，$\Real_\top(\Gamma)$ とする．
 原典の系7との比較では，この追加条件と値制限を明示する．
 
@@ -1327,7 +1326,7 @@ qualified 射影には，実在する $\Sat_X$ 正規化器で公開定理を適
 
 主要計算型は $\top;\Gamma$ で同じ $S$ の計算型付けを持ち，
 任意の対象単相型と効果を比較する．さらに \key{FiniteInstance} は，
-一つの有限代入で全評価について比較し，その代入の定義域を $q$ の量化変数に制限する．
+一つの有限代入で対象制約が成立する全評価について比較し，その代入の定義域を $q$ の量化変数に制限する．
 主要対は通常の型付けと任意の qualified 型への構文的比較を含む．
 非値の式を通常の多相型に一般化する規則は追加しない．
 
@@ -1360,9 +1359,10 @@ $\Gamma[\psi]$ から元の $\Gamma$ への近似を構成する．
 \end{enumerate}
 
 \textbf{実在するモデルでの確認}
-$S=\Sat_X$ の非計算的な主要正規化器について，上の前提をすべて満たして
-公開した系7を適用する．この場合，$\exists A.D$ が充足可能なら $D$ も充足可能なので，
-lifting の証人には恒等代入を使える．
+$S=\Sat_X$ の非計算的な正規化器では，生成完全性から直接，次を証明する．\par
+\key{inferTerm\_satisfiable\_open}，\par
+\key{inferTerm\_satisfiable\_closed}．
+新しい条件付き定理の変数等式の前提を満たすとは仮定しない．
 \begin{itemize}
 \item 空環境と空でない閉じた qualified 環境の恒等関数の主要型．
 \item 型・効果の代入先と束縛名の衝突，qualified 型への空でない存在射影．
@@ -1590,12 +1590,12 @@ $\exists\beta.\forall\alpha.\alpha=\beta$ & $\mathsf{unresolved}$\\\bottomrule
 再構成用の生成導出 & \key{Inference.sound\_reconstruction}\\
 生成導出の変換 & \key{Derivation.}\\
  & \key{transform\_to\_solved\_subst\_reconstruction}\\
-定理16：一般の $S$ & \key{inferTermAt\_sound}, \key{inferTerm\_sound}\\
+定理16：一般の $S$ & \key{theorem16}, \key{inferTerm\_sound}\\
 定理16：効果だけの残余 & \key{inferTermAt\_sound\_effectOnly},\\
  & \key{inferTerm\_sound\_effectOnly}\\
 代入後の環境の自己近似 & \key{EffectResiduals.output\_environment\_self}\\
-定理17：qualified 型までの完全性 & \key{inferTerm\_complete\_scheme}\\
-系7：実際の出力の主要型 & \key{inferTerm\_principal\_closed}, \key{Typing.corollary7}\\
+定理17：qualified 型までの完全性 & \key{theorem17}, \key{inferTerm\_complete\_scheme}\\
+系7：実際の出力の主要型 & \key{corollary7}, \key{Typing.corollary7}\\
 閉環境での有限代入による比較 & \key{inferTerm\_finite\_closed}\\
 元の閉環境への近似 & \key{Context.subst\_approximates\_closed}\\
 一般化で保持する名前 & \key{Substitution.imageSupport}\\
@@ -1610,7 +1610,7 @@ $\Gen,\Proj,\Inf^{\mathrm{at}},\Inf$ & \key{generate}, \key{generateProjected}, 
 不充足・未解決の排除 & \key{SatDecider.solver\_inconsistent\_iff},\\
  & \key{SatDecider.solver\_ne\_unresolved}\\
 射影閉性・主要正規形 & \key{Constraints.satisfiable\_exists\_iff},\\
- & \key{Constraints.PrincipalNormalizer.satisfiable}\\
+ & \key{ScopedPrincipalNormalizer.satisfiable}\\
 固定した生成の健全性 & \key{generate\_sound}\\
 固定した生成の完全性 & \key{Inference.groundComplete}\\
 判定器なしの主要型の存在 & \key{Typing.principal\_computation\_run},\\

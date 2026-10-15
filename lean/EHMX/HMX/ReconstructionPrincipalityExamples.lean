@@ -1,4 +1,4 @@
-import EHMX.HMX.ReconstructionPrincipality
+import EHMX.HMX.SatisfiableReconstruction
 import EHMX.HMX.AlgorithmExamples
 import EHMX.HMX.ReconstructionExamples
 
@@ -9,7 +9,7 @@ private abbrev X := Constraints.semantic T O
 private abbrev N := Constraints.Simplifier.identity X
 private def sig : Signature T := fun _ => some ⟨⟨{0}, ∅⟩, .var 0, .var 0⟩
 private noncomputable def P : X.ScopedPrincipalNormalizer :=
-  (Constraints.PrincipalNormalizer.satisfiable X).scoped X
+  Constraints.ScopedPrincipalNormalizer.satisfiable X
 
 private theorem sig_closed : sig.Closed := by
   intro op d hd
@@ -18,22 +18,6 @@ private theorem sig_closed : sig.Closed := by
 
 private theorem top_sat : X.Satisfiable X.top :=
   ⟨⟨fun _ => .atom 0, fun _ => ∅⟩, trivial⟩
-
-private theorem allow (r : X.Formula) (s : Substitution T) (_ : s.domain.types = ∅)
-    (_ : X.Admissible P.solved r) (sat : X.Satisfiable (X.and r (X.substitutionConstraint s))) :
-    X.Admissible P.solved (X.and r (X.substitutionConstraint s)) :=
-  (X.admissible_satisfiable_iff _).mpr sat
-
-/-- In the Sat model projection lifting needs no representation choice:
-the identity substitution and satisfiability of the unprojected formula suffice. -/
-private theorem lift (a : Names) (d : X.Formula)
-    (adm : X.Admissible P.solved (X.existsNames a d)) :
-    ∃ θ : Substitution T, θ.domain.Subset a ∧ X.Admissible P.solved (X.subst θ d) := by
-  have sat := (X.satisfiable_exists_iff a d).mp ((X.admissible_satisfiable_iff _).mp adm)
-  refine ⟨Substitution.identity T, ⟨Finset.empty_subset _, Finset.empty_subset _⟩, ?_⟩
-  apply (X.admissible_satisfiable_iff _).mpr
-  obtain ⟨v, hv⟩ := sat
-  exact ⟨v, (X.holds_subst _ _ _).mpr (by simpa only [Substitution.identity_pullback] using hv)⟩
 
 private theorem corollary {g : Context X} {e : Expr} {s : Scheme X} {eff : Effect}
     (typed : Typing sig X P.solved X.top g e s eff)
@@ -48,8 +32,7 @@ private theorem corollary {g : Context X} {e : Expr} {s : Scheme X} {eff : Effec
       Instance X c result.valueScheme s) ∧
     (Value e → PrincipalPair (fun c g e s => Typing sig X P.solved c g e s ∅)
       g e X.top result.valueScheme) :=
-  typed.corollary7 N P (Constraints.SolvedClosure.satisfiable X)
-    allow lift top_sat (fun _ => trivial) sig_closed closed real
+  inferTerm_satisfiable_closed N typed closed real
 
 /-- Both empty and nonempty closed qualified environments use the actual
 normalizer. This includes the generalization regression from Theorem 17. -/
@@ -193,19 +176,11 @@ theorem unrealizable_target_compared :
       inferTerm (fun _ => none) Y (Constraints.Simplifier.identity Y) Q [] (.lam (.var 0)) =
         some (.reconstructed n) ∧
       Instance Y c (reconstructedScheme [] n).valueScheme s := by
-  obtain ⟨Y, Q, c, s, solved, typed, notReal, _⟩ :=
-    RealizabilityExample.valid_let_without_realizable_scheme
-  have closure : Y.SolvedClosure Q.solved := by
-    rw [solved]
-    exact Constraints.SolvedClosure.satisfiable Y
-  have real : Context.Realizable (X := Y) Y.top [] := by intro t ht; cases ht
-  obtain ⟨n, run⟩ := inferTerm_acceptance_context (Constraints.Simplifier.identity Y)
-    (Q.scoped Y) closure typed (by intro t ht; cases ht)
-  have finite := fun d t eff (ht : Typing (fun _ => none) Y Q.solved d [] (.lam (.var 0)) (.mono t) eff) =>
-    inferTerm_finite_closed (Constraints.Simplifier.identity Y) (Q.scoped Y) closure
-      run rfl real ht
-  exact ⟨Y, Q.scoped Y, c, s, notReal, n, run,
-    typed.instance_of_finite_sameSolved Q.solved_satisfiable closure.rename closure.conjoin real finite⟩
+  obtain ⟨Y, c, s, typed, notReal, _⟩ := RealizabilityExample.valid_let_without_realizable_scheme
+  obtain ⟨n, run, _, _, _, cover, _⟩ := inferTerm_satisfiable_closed
+    (Constraints.Simplifier.identity Y) typed rfl (by intro t ht; cases ht)
+  exact ⟨Y, Constraints.ScopedPrincipalNormalizer.satisfiable Y, c, s, notReal, n, run,
+    cover _ _ _ typed⟩
 
 private theorem resume {g : GroundContext T} {e : Expr} {eff : Finset Op}
     (body : GroundTyping sig O g e (.atom 0) eff) (he : eff ⊆ {0}) :

@@ -1,11 +1,12 @@
 import EHMX.HMX.DerivationTransformation
-import EHMX.HMX.EffectResiduals
+
 
 /-! Applications of the public conditional transformation theorem.
 The normalizer assumptions remain explicit; these examples do not supply a
 complete solver for the effect-only residual language. -/
 
 namespace EHMX.HMX.TransformationExamples
+open EHMX EHMX.HMX
 variable {O : TypeOrder equalityTypes} {X : Constraints equalityTypes O}
 private abbrev sig : Signature equalityTypes := fun _ => none
 private def bound : Names := ⟨{1}, ∅⟩
@@ -64,6 +65,7 @@ private def capture : Substitution equalityTypes where
 
 section Conditional
 variable (P : X.ScopedPrincipalNormalizer) (closure : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -77,7 +79,7 @@ include hr truth in
 private theorem topAdm : X.Admissible P.solved X.top :=
   ⟨r, hr, fun v _ => truth v, fun v _ => (X.holds_top v).mpr trivial⟩
 
-include closure allow lift hr truth
+include closure reflect allow lift hr truth
 
 /-- Two value lets introduce qualified identities; the inner identity is
 specialized and applied. No internal Realizable premise is supplied. -/
@@ -85,7 +87,7 @@ theorem nested_polymorphic_let :
     Typing sig X P.solved X.top []
       (.letE (.lam (.var 0)) (.letE (.lam (.var 0)) (.app (.var 0) (.int 1))))
       (.mono (.base .int)) ∅ :=
-  Derivation.theorem7_mono_core P closure allow lift hr truth
+  EHMX.HMX.Derivation.theorem7_mono_core P closure reflect allow lift hr truth
     (nestedLetTree [] (by intro s hs; cases hs))
     (nestedLet_rules [] _) (topAdm P hr truth) .nil
 
@@ -103,7 +105,7 @@ theorem open_context_capture :
       (Context.subst capture [.mono (.var 0)]) [.mono (.var 1)] := by
     exact .cons (Scheme.Approximates.refl_of_ground trivial
       (fun v _ => ⟨v.types 1, O.refl _⟩)) .nil
-  have result := Derivation.transform_to_solved_subst P closure allow lift hr truth
+  have result := EHMX.HMX.Derivation.transform_to_solved_subst P closure reflect allow lift hr truth
     (polyTree [.mono (.var 0)] fresh)
     (by simp [polyTree, Derivation.UsesHMXRules]) capture X.top [.mono (.var 1)]
     (topAdm P hr truth) (by intro v _; exact (X.holds_subst _ _ _).mpr ((X.holds_top _).mpr trivial)) env
@@ -126,7 +128,7 @@ theorem preserves_latent_effect (eff : Effect) :
       [.mono (.arr (.base .int) eff (.base .int))] :=
     .cons (Scheme.Approximates.refl_of_ground trivial
       (fun v _ => ⟨equalityTypes.eval v (.arr (.base .int) eff (.base .int)), O.refl _⟩)) .nil
-  have result := Derivation.theorem7_mono_core P closure allow lift hr truth tree
+  have result := EHMX.HMX.Derivation.theorem7_mono_core P closure reflect allow lift hr truth tree
     (by trivial) (topAdm P hr truth) env
   have empty : ((∅ : Effect) ∪ ∅) ∪ eff = eff :=
     (congrArg (fun e => e ∪ eff) (Effect.empty_union Effect.empty)).trans
@@ -136,7 +138,8 @@ theorem preserves_latent_effect (eff : Effect) :
 end Conditional
 end EHMX.HMX.TransformationExamples
 
-/-! This local residual model checks the agreed effect-only relaxation. -/
+
+
 namespace EHMX.HMX
 namespace TransformationExamples.EffectResiduals
 variable {T : TypeDomain} {O : TypeOrder T} (X : Constraints T O)
@@ -168,8 +171,9 @@ theorem identity_is_principal {S : X.Formula → Prop} {d : X.Formula}
   · intro v hv; simpa only [X.holds_subst, Substitution.identity_pullback] using hv
   · intro v hv; simpa only [X.holds_subst, Substitution.identity_pullback] using hv
   · intro m hm
-    refine ⟨m.substitution, ?_, Constraints.NormalForm.reconstruct_entails X hm⟩
-    intro v
+    refine ⟨m.substitution, ?_⟩
+    intro v hv
+    refine ⟨?_, (X.holds_subst _ _ _).mp (Constraints.NormalForm.reconstruct_entails X hm v hv)⟩
     rw [Substitution.identity_pullback]
     exact ⟨fun _ _ => rfl, fun _ _ => rfl⟩
 

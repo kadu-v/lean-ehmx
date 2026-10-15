@@ -43,21 +43,7 @@ structure NormalForm where
   residual : X.Formula
   substitution : Substitution T
 
-/-- Dissertation Definition 22: a constraint invariant under its substitution. -/
-structure ConstraintProblem extends X.NormalForm where
-  substitution_solved : substitution.Solved
-  invariant : X.Equivalent (X.subst substitution residual) residual
-
-def ConstraintProblem.initial (d : X.Formula) : X.ConstraintProblem where
-  residual := d
-  substitution := Substitution.identity T
-  substitution_solved := Substitution.identity_solved T
-  invariant := by
-    constructor <;> intro v h <;>
-      simpa only [X.holds_subst, Substitution.identity_pullback] using h
-
 variable {X} in
-
 def NormalForm.formula (n : X.NormalForm) : X.Formula :=
   X.and n.residual (X.substitutionConstraint n.substitution)
 
@@ -68,97 +54,64 @@ def NormalForm.IsNormal (solved : X.Formula → Prop) (d : X.Formula)
     X.Equivalent (X.subst n.substitution n.residual) n.residual ∧
     X.Entails n.formula d
 
-variable {X} in
-def NormalForm.MoreGeneral (n m : X.NormalForm) : Prop :=
-  ∃ φ : Substitution T, φ.Solved ∧
-    (∀ v, n.substitution.pullback (φ.pullback v) = m.substitution.pullback v) ∧
-    X.Entails m.residual (X.subst φ n.residual)
-
-variable {X} in
-/-- Finite-observation comparison. A single finite factor must work for every
-valuation, independently of the residual. Only the observed input names are
-compared; output parameters may be instantiated. Unlike `MoreGeneral`, factors
-here are not required to be solved. This is a candidate for the scoped interface,
-not yet the comparison used by `PrincipalNormalizer`. -/
-def NormalForm.MoreGeneralOn (u : Names) (n m : X.NormalForm) : Prop :=
-  ∃ φ : Substitution T,
-    (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn
-      (m.substitution.pullback v) u) ∧
-    X.Entails m.residual (X.subst φ n.residual)
-
-theorem NormalForm.MoreGeneralOn.refl (u : Names) (n : X.NormalForm) :
-    n.MoreGeneralOn u n := by
-  refine ⟨Substitution.identity T, ?_, ?_⟩
-  · intro v
-    rw [Substitution.identity_pullback]
-    exact ⟨fun _ _ => rfl, fun _ _ => rfl⟩
-  · intro v hv
-    exact (X.holds_subst _ _ _).mpr (by rwa [Substitution.identity_pullback])
-
-theorem NormalForm.MoreGeneralOn.trans {u : Names} {n m k : X.NormalForm}
-    (h : n.MoreGeneralOn u m) (j : m.MoreGeneralOn u k) :
-    n.MoreGeneralOn u k := by
-  obtain ⟨φ, factor, residual⟩ := h
-  obtain ⟨ψ, factor', residual'⟩ := j
-  refine ⟨ψ.compose φ, ?_, ?_⟩
-  · intro v
-    rw [Substitution.compose_pullback]
-    exact (factor (ψ.pullback v)).trans (factor' v)
-  · intro v hv
-    apply (X.holds_subst _ _ _).mpr
-    rw [Substitution.compose_pullback]
-    exact (X.holds_subst _ _ _).mp
-      (residual _ ((X.holds_subst _ _ _).mp (residual' v hv)))
-
-theorem NormalForm.MoreGeneralOn.mono {u w : Names} {n m : X.NormalForm}
-    (h : n.MoreGeneralOn u m) (hw : w.Subset u) : n.MoreGeneralOn w m := by
-  obtain ⟨φ, factor, residual⟩ := h
-  exact ⟨φ, fun v => (factor v).mono hw, residual⟩
-
-theorem NormalForm.MoreGeneral.on {n m : X.NormalForm} (h : n.MoreGeneral m)
-    (u : Names) : n.MoreGeneralOn u m := by
-  obtain ⟨φ, _, factor, residual⟩ := h
-  refine ⟨φ, ?_, residual⟩
-  intro v
-  rw [factor v]
-  exact ⟨fun _ _ => rfl, fun _ _ => rfl⟩
-
-/-- A reversible change of output parameters gives mutual comparison. The
-premises describe the observed images and residual, so no unproved syntactic
-renaming law of the abstract type algebra is assumed. -/
-theorem NormalForm.MoreGeneralOn.parameters {u : Names} {n m : X.NormalForm}
-    (p : Renaming)
-    (images : ∀ v, (n.substitution.pullback ((p.asSubstitution T).pullback v)).AgreeOn
-      (m.substitution.pullback v) u)
+variable {X}
+namespace NormalForm
+/-- One finite factor compares the observed input names under the target
+residual. The same factor witnesses residual entailment for every valuation. -/
+def MoreGeneralOn (u : Names) (n m : X.NormalForm) : Prop :=
+  ∃ φ : Substitution T, ∀ v, X.holds m.residual v →
+    (n.substitution.pullback (φ.pullback v)).AgreeOn (m.substitution.pullback v) u ∧
+    X.holds n.residual (φ.pullback v)
+namespace MoreGeneralOn
+theorem refl (u : Names) (n : X.NormalForm) : MoreGeneralOn u n n := by
+  refine ⟨Substitution.identity T, ?_⟩
+  intro v hv
+  rw [Substitution.identity_pullback]
+  exact ⟨⟨fun _ _ => rfl, fun _ _ => rfl⟩, hv⟩
+theorem trans {u : Names} {n m k : X.NormalForm}
+    (h : MoreGeneralOn u n m) (j : MoreGeneralOn u m k) : MoreGeneralOn u n k := by
+  obtain ⟨φ, hf⟩ := h
+  obtain ⟨ψ, hg⟩ := j
+  refine ⟨ψ.compose φ, ?_⟩
+  intro v hv
+  obtain ⟨agreeM, holdsM⟩ := hg v hv
+  obtain ⟨agreeN, holdsN⟩ := hf (ψ.pullback v) holdsM
+  rw [Substitution.compose_pullback]
+  exact ⟨agreeN.trans agreeM, holdsN⟩
+theorem mono {u w : Names} {n m : X.NormalForm}
+    (h : MoreGeneralOn u n m) (hw : w.Subset u) : MoreGeneralOn w n m := by
+  obtain ⟨φ, hf⟩ := h
+  exact ⟨φ, fun v hv => ⟨(hf v hv).1.mono hw, (hf v hv).2⟩⟩
+theorem parameters {u : Names} {n m : X.NormalForm} (p : Renaming)
+    (images : ∀ v, X.holds m.residual v →
+      (n.substitution.pullback ((p.asSubstitution T).pullback v)).AgreeOn
+        (m.substitution.pullback v) u)
     (residual : X.Equivalent m.residual (X.subst (p.asSubstitution T) n.residual)) :
-    n.MoreGeneralOn u m ∧ m.MoreGeneralOn u n := by
+    MoreGeneralOn u n m ∧ MoreGeneralOn u m n := by
   let q := p.inverse.asSubstitution T
-  have inverse (v : Valuation T.Value) : (p.asSubstitution T).pullback (q.pullback v) = v := by
+  have inverse (v : Valuation T.Value) :
+      (p.asSubstitution T).pullback (q.pullback v) = v := by
     cases v
     simp [q, Substitution.pullback, Renaming.asSubstitution, Renaming.inverse,
-      T.eval_var, Effect.eval, Effect.var]
-  refine ⟨⟨p.asSubstitution T, images, residual.1⟩, q, ?_, ?_⟩
-  · intro v
-    have h := images (q.pullback v)
-    rw [inverse v] at h
-    exact ⟨fun i hi => (h.1 i hi).symm, fun i hi => (h.2 i hi).symm⟩
-  · intro v hv
-    apply (X.holds_subst _ _ _).mpr
+      T.eval_var, EHMX.Effect.eval, EHMX.Effect.var]
+  refine ⟨⟨p.asSubstitution T, fun v hv =>
+    ⟨images v hv, (X.holds_subst _ _ _).mp (residual.1 v hv)⟩⟩, q, ?_⟩
+  intro v hv
+  have hm : X.holds m.residual (q.pullback v) := by
     apply residual.2
     apply (X.holds_subst _ _ _).mpr
-    rwa [inverse v]
-
-theorem NormalForm.MoreGeneral.refl (n : X.NormalForm) : n.MoreGeneral n := by
-  refine ⟨Substitution.identity T, Substitution.identity_solved T, ?_, ?_⟩
-  · intro v; rw [Substitution.identity_pullback]
-  · intro v hv
-    exact (X.holds_subst _ _ _).mpr (by rwa [Substitution.identity_pullback])
-
-variable {X} in
-def NormalForm.IsPrincipal (solved : X.Formula → Prop) (d : X.Formula)
-    (n : X.NormalForm) : Prop :=
-  n.IsNormal solved d ∧ ∀ m, m.IsNormal solved d → n.MoreGeneral m
-
+    rwa [inverse]
+  have h := images (q.pullback v) hm
+  rw [inverse] at h
+  exact ⟨⟨fun i hi => (h.1 i hi).symm, fun i hi => (h.2 i hi).symm⟩, hm⟩
+theorem replace_parameters {u : Names} {n n' m m' : X.NormalForm}
+    (hn : MoreGeneralOn u n n' ∧ MoreGeneralOn u n' n)
+    (hm : MoreGeneralOn u m m' ∧ MoreGeneralOn u m' m) :
+    MoreGeneralOn u n m ↔ MoreGeneralOn u n' m' :=
+  ⟨fun h => trans (trans hn.2 h) hm.1, fun h => trans (trans hn.1 h) hm.2⟩
+end MoreGeneralOn
+end NormalForm
+variable (X)
 variable {X} in
 def NormalForm.IsPrincipalOn (u : Names) (solved : X.Formula → Prop) (d : X.Formula)
     (n : X.NormalForm) : Prop :=
@@ -173,7 +126,7 @@ theorem NormalForm.IsPrincipalOn.factor_admissible {u : Names}
     (hn : n.IsPrincipalOn u solved d) (hc : X.Admissible solved c)
     (entails : X.Entails c d) :
     ∃ φ : Substitution T,
-      (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn v u) ∧
+      (∀ v, X.holds c v → (n.substitution.pullback (φ.pullback v)).AgreeOn v u) ∧
       X.Entails c (X.subst φ n.residual) := by
   obtain ⟨r, hr, forward, backward⟩ := hc
   let m : X.NormalForm := ⟨r, Substitution.identity T⟩
@@ -185,57 +138,12 @@ theorem NormalForm.IsPrincipalOn.factor_admissible {u : Names}
       simpa only [m, X.holds_subst, Substitution.identity_pullback] using hv
     · intro v hv
       exact entails v (backward v ((X.holds_and _ _ v).mp hv).1)
-  obtain ⟨φ, factor, residual⟩ := hn.2 m hm
-  exact ⟨φ, fun v => by simpa only [m, Substitution.identity_pullback] using factor v,
-    X.entails_trans forward residual⟩
-
-variable {X} in
-def NormalForm.IsNormalOf (solved : X.Formula → Prop) (p : X.ConstraintProblem)
-    (n : X.NormalForm) : Prop :=
-  solved n.residual ∧ n.substitution.Solved ∧
-    X.Equivalent (X.subst n.substitution n.residual) n.residual ∧
-    p.toNormalForm.MoreGeneral n
-
-variable {X} in
-def NormalForm.IsPrincipalOf (solved : X.Formula → Prop) (p : X.ConstraintProblem)
-    (n : X.NormalForm) : Prop :=
-  n.IsNormalOf solved p ∧ ∀ m, m.IsNormalOf solved p → n.MoreGeneral m
-
-structure PrincipalNormalizer where
-  solved : X.Formula → Prop
-  solved_satisfiable : ∀ d, solved d → X.Satisfiable d
-  normalize : X.ConstraintProblem → Option X.NormalForm
-  principal : ∀ p n, normalize p = some n → n.IsPrincipalOf solved p
-  failure : ∀ p, normalize p = none ↔ ¬ ∃ n : X.NormalForm, n.IsNormalOf solved p
-
-/-- The constraint-based instance is inhabited for every constraint system.
-This is an existence construction, not a satisfiability decision procedure. -/
-noncomputable def PrincipalNormalizer.satisfiable : X.PrincipalNormalizer := by
-  classical
-  have principal (p : X.ConstraintProblem) (hp : X.Satisfiable p.residual) :
-      p.toNormalForm.IsPrincipalOf X.Satisfiable p :=
-    ⟨⟨hp, p.substitution_solved, p.invariant, NormalForm.MoreGeneral.refl X _⟩,
-      fun _ hm => hm.2.2.2⟩
-  exact {
-    solved := X.Satisfiable
-    solved_satisfiable := fun _ h => h
-    normalize := fun p => if X.Satisfiable p.residual then some p.toNormalForm else none
-    principal := by
-      intro p n hn
-      split at hn
-      · obtain rfl := Option.some.inj hn
-        exact principal p ‹X.Satisfiable p.residual›
-      · contradiction
-    failure := by
-      intro p
-      by_cases hp : X.Satisfiable p.residual
-      · simp only [hp, ↓reduceIte, Option.some_ne_none, false_iff, not_not]
-        exact ⟨p.toNormalForm, (principal p hp).1⟩
-      · simp only [hp, ↓reduceIte, true_iff]
-        rintro ⟨n, hn⟩
-        obtain ⟨v, hv⟩ := hn.1
-        obtain ⟨φ, _, _, he⟩ := hn.2.2.2
-        exact hp ⟨φ.pullback v, (X.holds_subst _ _ _).mp (he v hv)⟩ }
+  obtain ⟨φ, factor⟩ := hn.2 m hm
+  refine ⟨φ, ?_, ?_⟩
+  · intro v hv
+    simpa only [m, Substitution.identity_pullback] using (factor v (forward v hv)).1
+  · intro v hv
+    exact (X.holds_subst _ _ _).mpr (factor v (forward v hv)).2
 
 /-- Applying a solved substitution makes its equality graph true. -/
 theorem substitutionConstraint_pullback (s : Substitution T)
@@ -370,7 +278,7 @@ theorem NormalForm.IsPrincipalOn.factor_admissible_substitution {u : Names}
     (invariant : X.Equivalent (X.subst σ c) c)
     (entails : X.Entails c (X.subst σ d)) :
     ∃ φ : Substitution T,
-      (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v) u) ∧
+      (∀ v, X.holds c v → (n.substitution.pullback (φ.pullback v)).AgreeOn (σ.pullback v) u) ∧
       X.Entails c (X.subst φ n.residual) := by
   obtain ⟨r, hr, forward, backward⟩ := hc
   let m : X.NormalForm := ⟨r, σ⟩
@@ -386,8 +294,9 @@ theorem NormalForm.IsPrincipalOn.factor_admissible_substitution {u : Names}
       obtain ⟨hR, graph⟩ := (X.holds_and _ _ _).mp hv
       have hd := (X.holds_subst _ _ _).mp (entails v (backward v hR))
       rwa [X.substitutionConstraint_fixed σ v graph] at hd
-  obtain ⟨φ, factor, residual⟩ := hn.2 m hm
-  exact ⟨φ, factor, X.entails_trans forward residual⟩
+  obtain ⟨φ, factor⟩ := hn.2 m hm
+  exact ⟨φ, fun v hv => (factor v (forward v hv)).1,
+    fun v hv => (X.holds_subst _ _ _).mpr (factor v (forward v hv)).2⟩
 
 /-- Scoped comparison covers the target solution on the observed names.
 It does not equate the two presentations on their private parameters. -/
@@ -396,158 +305,15 @@ theorem NormalForm.MoreGeneralOn.covers {solved : X.Formula → Prop}
     (h : n.MoreGeneralOn u m) (hn : n.IsNormal solved d)
     (v : Valuation T.Value) (hv : X.holds m.formula v) :
     ∃ w, X.holds n.formula w ∧ w.AgreeOn v u := by
-  obtain ⟨φ, factor, residual⟩ := h
+  obtain ⟨φ, factor⟩ := h
   obtain ⟨hr, hg⟩ := (X.holds_and _ _ _).mp hv
   let w := n.substitution.pullback (φ.pullback v)
   refine ⟨w, (X.holds_and _ _ _).mpr ⟨?_, ?_⟩, ?_⟩
   · exact (X.holds_subst _ _ _).mp
-      (hn.2.2.1.2 _ ((X.holds_subst _ _ _).mp (residual v hr)))
+      (hn.2.2.1.2 _ (factor v hr).2)
   · exact X.substitutionConstraint_pullback _ hn.2.1.idempotent _
-  · simpa only [X.substitutionConstraint_fixed _ v hg] using factor v
+  · simpa only [X.substitutionConstraint_fixed _ v hg] using (factor v hr).1
 
-/-- For a normal source the target substitution itself is a comparison factor.
-Idempotence absorbs the original factor, and residual invariance transports
-the residual entailment. No composition of solved substitutions is needed. -/
-theorem NormalForm.MoreGeneral.canonical {solved : X.Formula → Prop}
-    {d : X.Formula} {n m : X.NormalForm} (h : n.MoreGeneral m)
-    (hn : n.IsNormal solved d) :
-    (∀ v, n.substitution.pullback (m.substitution.pullback v) = m.substitution.pullback v) ∧
-    X.Entails m.residual (X.subst m.substitution n.residual) := by
-  obtain ⟨φ, _, factor, entails⟩ := h
-  constructor
-  · intro v
-    rw [← factor v]
-    exact Substitution.idempotent_pullback hn.2.1.idempotent _
-  · intro v hv
-    have hR := (X.holds_subst _ _ v).mp (entails v hv)
-    have h := (X.holds_subst _ _ _).mp (hn.2.2.1.2 _ hR)
-    exact (X.holds_subst _ _ v).mpr (by rwa [factor v] at h)
-
-/-- Normal-form comparison is exactly unconditional implication of substitution
-graphs together with implication of the full constraint presentations. The
-unconditional graph implication must not be dropped. -/
-theorem NormalForm.moreGeneral_iff_entails {solved : X.Formula → Prop}
-    {d : X.Formula} {n m : X.NormalForm}
-    (hn : n.IsNormal solved d) (hm : m.IsNormal solved d) :
-    n.MoreGeneral m ↔
-      X.Entails (X.substitutionConstraint m.substitution)
-        (X.substitutionConstraint n.substitution) ∧ X.Entails m.formula n.formula := by
-  have graph {s : Substitution T} {v : Valuation T.Value} (hs : s.pullback v = v) :
-      X.holds (X.substitutionConstraint s) v := by
-    apply (X.holds_substitutionConstraint _ _).mpr
-    exact ⟨fun i _ => (congrArg (fun w => w.types i) hs).symm,
-      fun i _ => (congrArg (fun w => w.effects i) hs).symm⟩
-  constructor
-  · intro h
-    obtain ⟨factor, entails⟩ := h.canonical X hn
-    have hg : X.Entails (X.substitutionConstraint m.substitution)
-        (X.substitutionConstraint n.substitution) := by
-      intro v hv
-      apply graph
-      simpa only [X.substitutionConstraint_fixed m.substitution v hv] using factor v
-    refine ⟨hg, ?_⟩
-    intro v hv
-    obtain ⟨hr, hgraph⟩ := (X.holds_and _ _ _).mp hv
-    have h := (X.holds_subst _ _ _).mp (entails v hr)
-    rw [X.substitutionConstraint_fixed m.substitution v hgraph] at h
-    exact (X.holds_and _ _ _).mpr ⟨h, hg v hgraph⟩
-  · rintro ⟨hg, hf⟩
-    refine ⟨m.substitution, hm.2.1, ?_, ?_⟩
-    · intro v
-      exact X.substitutionConstraint_fixed _ _
-        (hg _ (X.substitutionConstraint_pullback _ hm.2.1.idempotent v))
-    · intro v hv
-      apply (X.holds_subst _ _ _).mpr
-      exact ((X.holds_and _ _ _).mp (hf _ ((X.holds_and _ _ _).mpr
-        ⟨(X.holds_subst _ _ _).mp (hm.2.2.1.2 v hv),
-          X.substitutionConstraint_pullback _ hm.2.1.idempotent v⟩))).1
-
-/-- Reorienting a normal form preserves principality when both its graph and
-its full constraint presentation are equivalent. This reduces representative
-selection to logical equivalences, without assuming a new normalizer law. -/
-theorem NormalForm.IsPrincipal.replace {solved : X.Formula → Prop}
-    {d : X.Formula} {n m : X.NormalForm} (hn : n.IsPrincipal solved d)
-    (hm : m.IsNormal solved d)
-    (graph : X.Equivalent (X.substitutionConstraint n.substitution)
-      (X.substitutionConstraint m.substitution))
-    (formula : X.Equivalent n.formula m.formula) : m.IsPrincipal solved d := by
-  refine ⟨hm, ?_⟩
-  intro k hk
-  obtain ⟨hgraph, hformula⟩ := (NormalForm.moreGeneral_iff_entails X hn.1 hk).mp (hn.2 k hk)
-  exact (NormalForm.moreGeneral_iff_entails X hm hk).mpr
-    ⟨X.entails_trans hgraph graph.1, X.entails_trans hformula formula.1⟩
-
-/-- Choose a new solved orientation of the same equations. The residual is
-transported with that orientation, subject to the usual consistency condition
-on the chosen solved set. It is not enough merely to change the substitution. -/
-theorem NormalForm.IsPrincipal.reorient {solved : X.Formula → Prop}
-    {d : X.Formula} {n : X.NormalForm} (hn : n.IsPrincipal solved d)
-    (σ : Substitution T) (hs : σ.Solved)
-    (graph : X.Equivalent (X.substitutionConstraint n.substitution)
-      (X.substitutionConstraint σ))
-    (consistent : X.Admissible solved (X.subst σ n.residual)) :
-    ∃ m : X.NormalForm, m.IsPrincipal solved d ∧ m.substitution = σ ∧
-      X.Equivalent m.residual (X.subst σ n.residual) := by
-  obtain ⟨r, hr, he⟩ := consistent
-  let m : X.NormalForm := ⟨r, σ⟩
-  have residual (v : Valuation T.Value) : X.holds r v ↔ X.holds n.residual (σ.pullback v) :=
-    ⟨fun hv => (X.holds_subst _ _ _).mp (he.2 v hv),
-      fun hv => he.1 v ((X.holds_subst _ _ _).mpr hv)⟩
-  have invariant : X.Equivalent (X.subst σ r) r := by
-    constructor <;> intro v hv <;>
-      simpa only [X.holds_subst, residual, Substitution.idempotent_pullback hs.idempotent] using hv
-  have formula : X.Equivalent n.formula m.formula := by
-    constructor
-    · intro v hv
-      obtain ⟨hR, hgraph⟩ := (X.holds_and _ _ _).mp hv
-      have hg := graph.1 v hgraph
-      exact (X.holds_and _ _ _).mpr ⟨(residual v).mpr
-        (by rwa [X.substitutionConstraint_fixed σ v hg]), hg⟩
-    · intro v hv
-      obtain ⟨hR, hgraph⟩ := (X.holds_and _ _ _).mp hv
-      have h := (residual v).mp hR
-      rw [X.substitutionConstraint_fixed σ v hgraph] at h
-      exact (X.holds_and _ _ _).mpr ⟨h, graph.2 v hgraph⟩
-  have normal : m.IsNormal solved d :=
-    ⟨hr, hs, invariant, X.entails_trans formula.2 hn.1.2.2.2⟩
-  exact ⟨m, hn.replace X normal graph formula, rfl, he.2, he.1⟩
-
-/-- The formula presentation is exactly the identity-input case of Definition 23. -/
-theorem NormalForm.isNormalOf_initial_iff {solved : X.Formula → Prop}
-    {d : X.Formula} {n : X.NormalForm} :
-    n.IsNormalOf solved (ConstraintProblem.initial X d) ↔ n.IsNormal solved d := by
-  constructor
-  · rintro ⟨hs, hi, hinv, φ, _, hf, he⟩
-    refine ⟨hs, hi, hinv, ?_⟩
-    intro v hv
-    obtain ⟨hr, hg⟩ := (X.holds_and _ _ _).mp hv
-    have h := (X.holds_subst _ _ _).mp (he v hr)
-    have hh : φ.pullback v = n.substitution.pullback v := by
-      simpa only [ConstraintProblem.initial, Substitution.identity_pullback] using hf v
-    rwa [hh, X.substitutionConstraint_fixed n.substitution v hg] at h
-  · intro hn
-    refine ⟨hn.1, hn.2.1, hn.2.2.1, n.substitution, hn.2.1, ?_, ?_⟩
-    · intro v; exact Substitution.identity_pullback _
-    · exact NormalForm.reconstruct_entails X hn
-
-theorem PrincipalNormalizer.principal_initial (P : X.PrincipalNormalizer)
-    {d : X.Formula} {n : X.NormalForm}
-    (h : P.normalize (ConstraintProblem.initial X d) = some n) :
-    n.IsPrincipal P.solved d := by
-  obtain ⟨hn, hp⟩ := P.principal _ _ h
-  exact ⟨(NormalForm.isNormalOf_initial_iff X).mp hn,
-    fun m hm => hp m ((NormalForm.isNormalOf_initial_iff X).mpr hm)⟩
-
-theorem PrincipalNormalizer.success_has_solution
-    (N : X.PrincipalNormalizer) {d : X.Formula} {n : X.NormalForm}
-    (hn : N.normalize (ConstraintProblem.initial X d) = some n) : X.Satisfiable d := by
-  have hp := (N.principal_initial X hn).1
-  obtain ⟨v, hv⟩ := N.solved_satisfiable n.residual hp.1
-  exact ⟨n.substitution.pullback v,
-    (X.holds_subst _ _ v).mp (NormalForm.reconstruct_entails X hp v hv)⟩
-
-/-- Meaning-preserving simplification is separate from term reconstruction.
-No soundness or completeness of inference is hidden in this interface. -/
 structure Simplifier where
   run : X.Formula → X.Formula
   equivalent : ∀ c, X.Equivalent (run c) c

@@ -111,23 +111,6 @@ theorem Context.Approximates.variable {sig : Signature T}
     ⟨.var found', hc, h.admissible, approx.1, trivial⟩
   exact typed.instance_mono (approx.2.2 (.mono t) trivial inst)
 
-/-- Construct an admissible replacement for every entry of a realizable
-environment. The free type algebra and the global principal-normalizer
-contract are exactly the hypotheses of `Scheme.approximation_exists`;
-the weaker scoped-normalizer contract is not substituted for them. -/
-theorem Context.approximation_exists {O : TypeOrder equalityTypes}
-    {X : Constraints equalityTypes O} (P : X.PrincipalNormalizer)
-    {r c : X.Formula} (hr : P.solved r) (hrTrue : ∀ v, X.holds r v)
-    (hc : X.Admissible P.solved c) {g : Context X} (real : g.Realizable c) :
-    ∃ g', g.Approximates P.solved c g' := by
-  induction g with
-  | nil => exact ⟨[], .nil⟩
-  | cons s g ih =>
-      obtain ⟨s', hs⟩ := Scheme.approximation_exists P hr hrTrue hc
-        (real s (by simp))
-      obtain ⟨g', hg⟩ := ih (fun t ht => real t (List.mem_cons_of_mem _ ht))
-      exact ⟨s' :: g', .cons hs hg⟩
-
 /-- Apply a syntactic instance comparison to a value, including a qualified
 target. Freshening the target binder protects the environment. All newly
 introduced constraints are admissible in the same solved set. -/

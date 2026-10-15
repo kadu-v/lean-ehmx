@@ -1,4 +1,4 @@
-import EHMX.HMX.ReconstructionCompleteness
+import EHMX.HMX.SatisfiableReconstruction
 import EHMX.HMX.OpenExamples
 
 namespace EHMX.HMX.ReconstructionCompletenessExamples
@@ -8,7 +8,7 @@ private abbrev X := Constraints.semantic T O
 private abbrev N := Constraints.Simplifier.identity X
 private def sig : Signature T := fun _ => some ⟨⟨{0}, ∅⟩, .var 0, .var 0⟩
 private noncomputable def P : X.ScopedPrincipalNormalizer :=
-  (Constraints.PrincipalNormalizer.satisfiable X).scoped X
+  Constraints.ScopedPrincipalNormalizer.satisfiable X
 
 private def closedContext : Context X := [.qualified Names.empty X.top (.base .int)]
 private def normal : X.NormalForm :=
@@ -94,8 +94,9 @@ theorem generated_identity_principal : normal.IsPrincipalOn observed tautologies
         effects_outside := by
           intro i hi
           exact m.substitution.effects_outside i (by simpa [Names.union] using hi) }
-      refine ⟨φ, ?_, fun _ _ => trivial⟩
-      intro v
+      refine ⟨φ, ?_⟩
+      intro v hv
+      refine ⟨?_, trivial⟩
       obtain ⟨z, hz, he⟩ := shape v
       rw [image] at hz
       obtain ⟨ha, hl, hb⟩ := GroundTy.arr.inj hz
@@ -144,18 +145,15 @@ theorem unrealizable_target_complete :
     ∃ (Y : Constraints T O) (Q : Y.ScopedPrincipalNormalizer) (c : Y.Formula) (s : Scheme Y),
       Q.solved = Y.Satisfiable ∧ ¬ s.Realizable c ∧
       ∃ n, inferTerm (fun _ => none) Y (Constraints.Simplifier.identity Y) Q [] (.lam (.var 0)) =
-        some (.reconstructed n) ∧ ∃ φ,
-        Instance Y c ((reconstructedScheme [] n).valueScheme.subst φ) s ∧
-        Y.Entails c (Y.subst φ (reconstructedScheme [] n).outer) := by
-  obtain ⟨Y, Q, c, s, solved, typed, notReal, _⟩ :=
-    RealizabilityExample.valid_let_without_realizable_scheme
-  have closure : Y.SolvedClosure Q.solved := by
-    rw [solved]
-    exact Constraints.SolvedClosure.satisfiable Y
-  obtain ⟨n, run, φ, _, inst, outer, _⟩ :=
-    inferTerm_complete_scheme (Constraints.Simplifier.identity Y) (Q.scoped Y) closure
-      (g := []) (Substitution.identity T) typed (by intro t ht; cases ht)
-  exact ⟨Y, Q.scoped Y, c, s, solved, notReal, n, run, φ, inst, outer⟩
+        some (.reconstructed n) ∧
+        Instance Y c (reconstructedScheme [] n).valueScheme s ∧
+        Y.Entails c (reconstructedScheme [] n).outer := by
+  obtain ⟨Y, c, s, typed, notReal, _⟩ := RealizabilityExample.valid_let_without_realizable_scheme
+  obtain ⟨n, run, _, cover, _⟩ := inferTerm_satisfiable_open
+    (Constraints.Simplifier.identity Y) typed (by intro t ht; cases ht)
+  have target := cover _ _ _ typed (by intro t ht; cases ht)
+  exact ⟨Y, Constraints.ScopedPrincipalNormalizer.satisfiable Y, c, s, rfl, notReal,
+    n, run, target.2, target.1⟩
 
 private def capture : Substitution T := Substitution.outputs 0 0 (.var 1) (.var 1)
 
@@ -163,12 +161,11 @@ private def capture : Substitution T := Substitution.outputs 0 0 (.var 1) (.var 
 derivation ends in a nonempty existential projection. -/
 theorem projected_capture_complete :
     let c := X.subst capture OpenExamples.condition
-    let g := OpenExamples.qualifiedContext
+    let g := OpenExamples.qualifiedContext.subst capture
     let s := OpenExamples.qualified.subst capture
-    ∃ n, inferTerm sig X N P g (.var 0) = some (.reconstructed n) ∧ ∃ φ,
-      (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn (capture.pullback v) g.support) ∧
-      Instance X (X.existsNames ⟨{50}, {50}⟩ c) ((reconstructedScheme g n).valueScheme.subst φ) s ∧
-      X.Entails (X.existsNames ⟨{50}, {50}⟩ c) (X.subst φ (reconstructedScheme g n).outer) := by
+    ∃ n, inferTerm sig X N P g (.var 0) = some (.reconstructed n) ∧
+      Instance X (X.existsNames ⟨{50}, {50}⟩ c) (reconstructedScheme g n).valueScheme s ∧
+      X.Entails (X.existsNames ⟨{50}, {50}⟩ c) (reconstructedScheme g n).outer := by
   dsimp only
   let c := X.subst capture OpenExamples.condition
   let g := OpenExamples.qualifiedContext
@@ -188,8 +185,8 @@ theorem projected_capture_complete :
     (Scheme.subst_avoids _ capture b (by constructor <;> decide))
     (by simp)
   have realProj := real.weaken (X.project_independent b c hc).1
-  obtain ⟨n, run, φ, factor, inst, outer, _⟩ := inferTerm_complete_scheme N P
-    (Constraints.SolvedClosure.satisfiable X) capture proj realProj
-  exact ⟨n, run, φ, factor, inst, outer⟩
+  obtain ⟨n, run, _, cover, _⟩ := inferTerm_satisfiable_open N proj realProj
+  have target := cover _ _ _ proj realProj
+  exact ⟨n, run, target.2, target.1⟩
 
 end EHMX.HMX.ReconstructionCompletenessExamples

@@ -10,3 +10,5 @@ import EHMX.HMX.ReconstructionPrincipality
 import EHMX.HMX.ReconstructionPrincipalityExamples
 import EHMX.HMX.TransformationExamples
 import EHMX.TypeClasses.Examples
+import EHMX.HMX.ReconstructionTheorems
+import EHMX.HMX.ResidualComparisonExamples

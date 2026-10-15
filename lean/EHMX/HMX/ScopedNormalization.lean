@@ -128,20 +128,44 @@ theorem success_iff_satisfiable (P : X.ScopedPrincipalNormalizer)
     exact P.exists_of_normal scope
       ⟨NormalForm.groundOn X Q r d v, NormalForm.groundOn_isNormal X Q hr hrTrue v hv⟩
 
-end ScopedPrincipalNormalizer
-
-/-- Compatibility with the older, stronger all-variable contract. -/
-def PrincipalNormalizer.scoped (P : X.PrincipalNormalizer) : X.ScopedPrincipalNormalizer where
-  solved := P.solved
-  solved_satisfiable := P.solved_satisfiable
-  normalize := fun _ d => P.normalize (ConstraintProblem.initial X d)
+noncomputable def satisfiable (X : Constraints T O) : X.ScopedPrincipalNormalizer := by
+ classical
+ exact {
+  solved := X.Satisfiable
+  solved_satisfiable := fun _ h => h
+  normalize := fun _ d => if X.Satisfiable d then some ⟨d, Substitution.identity T⟩ else none
   principal := by
-    intro u d _ n hn
-    have hp := P.principal_initial X hn
-    exact ⟨hp.1, fun m hm => (hp.2 m hm).on X u⟩
+    intro u d _ n run
+    split at run
+    · cases Option.some.inj run
+      refine ⟨⟨‹X.Satisfiable d›, Substitution.identity_solved T, ?_, ?_⟩, ?_⟩
+      · constructor <;> intro v hv <;>
+          simpa only [X.holds_subst, Substitution.identity_pullback] using hv
+      · exact X.entails_left _ _
+      · intro m hm
+        refine ⟨m.substitution, ?_⟩
+        intro v hv
+        refine ⟨?_, (X.holds_subst _ _ _).mp (Constraints.NormalForm.reconstruct_entails X hm v hv)⟩
+        rw [Substitution.identity_pullback]
+        exact ⟨fun _ _ => rfl, fun _ _ => rfl⟩
+    · contradiction
   failure := by
     intro u d _
-    rw [P.failure]
-    simp only [NormalForm.isNormalOf_initial_iff]
+    constructor
+    · intro run ⟨n, hn⟩
+      obtain ⟨v, hv⟩ := hn.1
+      have sat : X.Satisfiable d := ⟨n.substitution.pullback v,
+        (X.holds_subst _ _ _).mp (Constraints.NormalForm.reconstruct_entails X hn v hv)⟩
+      simp [sat] at run
+    · intro hn
+      have noSat : ¬ X.Satisfiable d := by
+        intro hd
+        apply hn
+        refine ⟨⟨d, Substitution.identity T⟩, hd, Substitution.identity_solved T, ⟨?_, ?_⟩,
+          X.entails_left _ _⟩ <;> intro v hv <;>
+          simpa only [X.holds_subst, Substitution.identity_pullback] using hv
+      simp [noSat] }
+
+end ScopedPrincipalNormalizer
 
 end EHMX.HMX.Constraints

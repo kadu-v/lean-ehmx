@@ -1,7 +1,10 @@
 import EHMX.HMX.FreshNormalForms
+import EHMX.HMX.VariableEqualityReflection
 
 /-! Normalization for Theorem 7: retain effect assignments as constraints and protect
 free environment names. The type-alias argument specializes to equalityTypes. -/
+
+set_option maxHeartbeats 2000000
 
 namespace EHMX.HMX
 namespace EffectResidualNormalization
@@ -62,7 +65,68 @@ theorem split_graph (s : Substitution T) :
     exact (X.holds_substitutionConstraint _ _).mpr
       ⟨((X.holds_substitutionConstraint _ _).mp ht).1,
         ((X.holds_substitutionConstraint _ _).mp he).2⟩
+end EffectResidualNormalization
+end EHMX.HMX
+namespace EHMX.HMX
+namespace EffectResidualNormalization
+variable {T : TypeDomain} {O : TypeOrder T} (X : Constraints T O)
 
+def swapNames (i j : Nat) : Renaming where
+  domain := ⟨{i, j}, ∅⟩
+  types := Equiv.swap i j
+  effects := Equiv.refl _
+  types_outside := by intro k hk; simp at hk; simp [Equiv.swap_apply_def, hk.1, hk.2]
+  effects_outside := by intros; rfl
+
+theorem swap_twice (i j : Nat) (v : Valuation T.Value) :
+    ((swapNames i j).asSubstitution T).pullback
+      (((swapNames i j).asSubstitution T).pullback v) = v := by
+  cases v
+  simp [Substitution.pullback, Renaming.asSubstitution, swapNames, T.eval_var,
+    Effect.eval, Effect.var]
+
+theorem pivot_as_swap {s : Substitution T} (hs : s.Solved)
+    {i j : Nat} (hi : i ∈ s.domain.types) (imageEq : s.types i = T.var j)
+    (v : Valuation T.Value) :
+    (s.pivot i j imageEq).pullback v =
+      s.pullback (((swapNames i j).asSubstitution T).pullback v) := by
+  rw [Substitution.pivot_pullback]
+  apply hs.pullback_agreeOutside
+  constructor
+  · intro k hk
+    have hki : k ≠ i := fun h => hk (h ▸ hi)
+    by_cases hkj : k = j
+    · subst k
+      simp [Substitution.pullback, Renaming.asSubstitution, swapNames, T.eval_var]
+    · simp [Substitution.pullback, Renaming.asSubstitution, swapNames, T.eval_var,
+        Equiv.swap_apply_def, hki, hkj]
+  · intro k _
+    simp [Substitution.pullback, Renaming.asSubstitution, swapNames, Effect.eval, Effect.var]
+
+theorem swap_fixed_of_graph {s : Substitution T} {i j : Nat}
+    (hi : i ∈ s.domain.types) (imageEq : s.types i = T.var j)
+    {v : Valuation T.Value} (graph : X.holds (X.substitutionConstraint s) v) :
+    ((swapNames i j).asSubstitution T).pullback v = v := by
+  have equal : v.types i = v.types j := by
+    simpa [imageEq, T.eval_var] using ((X.holds_substitutionConstraint _ _).mp graph).1 i hi
+  apply congrArg₂ Valuation.mk
+  · funext k
+    by_cases hki : k = i
+    · subst k
+      simpa [Substitution.pullback, Renaming.asSubstitution, swapNames, T.eval_var] using equal.symm
+    · by_cases hkj : k = j
+      · subst k
+        simpa [Substitution.pullback, Renaming.asSubstitution, swapNames, T.eval_var] using equal
+      · simp [Renaming.asSubstitution, swapNames, T.eval_var,
+          Equiv.swap_apply_def, hki, hkj]
+  · funext k
+    simp [Renaming.asSubstitution, swapNames, Effect.eval, Effect.var]
+end EffectResidualNormalization
+end EHMX.HMX
+
+namespace EHMX.HMX.EffectResidualNormalization
+open EHMX EHMX.HMX EHMX.HMX.EffectResidualNormalization
+variable {T : TypeDomain} {O : TypeOrder T} (X : Constraints T O)
 theorem retain_effect_assignments
     {S : X.Formula → Prop} (sound : ∀ r, S r → X.Satisfiable r)
     (allow : ∀ (r : X.Formula) (s : Substitution T), s.domain.types = ∅ →
@@ -125,76 +189,17 @@ theorem retain_effect_assignments
       exact (X.holds_subst _ _ _).mpr
         (forward _ ((rinv v).mpr (backward v hv)))
   have more : m.MoreGeneralOn u n := by
-    refine ⟨es, ?_, ?_⟩
-    · intro v
+    refine ⟨es, ?_⟩
+    intro v hv
+    constructor
+    ·
       change (ts.pullback (es.pullback v)).AgreeOn (s.pullback v) u
       rw [parts_compose solved]
       exact ⟨fun _ _ => rfl, fun _ _ => rfl⟩
-    · intro v hv
-      exact (X.holds_subst _ _ _).mpr (forward _ ((X.holds_and _ _ _).mpr
+    · exact (forward _ ((X.holds_and _ _ _).mpr
         ⟨(re v).mpr hv,
           X.substitutionConstraint_pullback es (effectsOnly_solved solved).idempotent v⟩))
-  exact ⟨m, ⟨normal, fun k hk => more.trans X (hn.2 k hk)⟩, rfl, formula⟩
-
-
-end EffectResidualNormalization
-end EHMX.HMX
-
-namespace EHMX.HMX
-namespace EffectResidualNormalization
-variable {T : TypeDomain} {O : TypeOrder T} (X : Constraints T O)
-
-def swapNames (i j : Nat) : Renaming where
-  domain := ⟨{i, j}, ∅⟩
-  types := Equiv.swap i j
-  effects := Equiv.refl _
-  types_outside := by intro k hk; simp at hk; simp [Equiv.swap_apply_def, hk.1, hk.2]
-  effects_outside := by intros; rfl
-
-theorem swap_twice (i j : Nat) (v : Valuation T.Value) :
-    ((swapNames i j).asSubstitution T).pullback
-      (((swapNames i j).asSubstitution T).pullback v) = v := by
-  cases v
-  simp [Substitution.pullback, Renaming.asSubstitution, swapNames, T.eval_var,
-    Effect.eval, Effect.var]
-
-theorem pivot_as_swap {s : Substitution T} (hs : s.Solved)
-    {i j : Nat} (hi : i ∈ s.domain.types) (imageEq : s.types i = T.var j)
-    (v : Valuation T.Value) :
-    (s.pivot i j imageEq).pullback v =
-      s.pullback (((swapNames i j).asSubstitution T).pullback v) := by
-  rw [Substitution.pivot_pullback]
-  apply hs.pullback_agreeOutside
-  constructor
-  · intro k hk
-    have hki : k ≠ i := fun h => hk (h ▸ hi)
-    by_cases hkj : k = j
-    · subst k
-      simp [Substitution.pullback, Renaming.asSubstitution, swapNames, T.eval_var]
-    · simp [Substitution.pullback, Renaming.asSubstitution, swapNames, T.eval_var,
-        Equiv.swap_apply_def, hki, hkj]
-  · intro k _
-    simp [Substitution.pullback, Renaming.asSubstitution, swapNames, Effect.eval, Effect.var]
-
-theorem swap_fixed_of_graph {s : Substitution T} {i j : Nat}
-    (hi : i ∈ s.domain.types) (imageEq : s.types i = T.var j)
-    {v : Valuation T.Value} (graph : X.holds (X.substitutionConstraint s) v) :
-    ((swapNames i j).asSubstitution T).pullback v = v := by
-  have equal : v.types i = v.types j := by
-    simpa [imageEq, T.eval_var] using ((X.holds_substitutionConstraint _ _).mp graph).1 i hi
-  apply congrArg₂ Valuation.mk
-  · funext k
-    by_cases hki : k = i
-    · subst k
-      simpa [Substitution.pullback, Renaming.asSubstitution, swapNames, T.eval_var] using equal.symm
-    · by_cases hkj : k = j
-      · subst k
-        simpa [Substitution.pullback, Renaming.asSubstitution, swapNames, T.eval_var] using equal
-      · simp [Renaming.asSubstitution, swapNames, T.eval_var,
-          Equiv.swap_apply_def, hki, hkj]
-  · funext k
-    simp [Renaming.asSubstitution, swapNames, Effect.eval, Effect.var]
-
+  exact ⟨m, ⟨normal, fun k hk => Constraints.NormalForm.MoreGeneralOn.trans more (hn.2 k hk)⟩, rfl, formula⟩
 theorem principal_pivot
     {S : X.Formula → Prop}
     (rename : ∀ (p : Renaming) c, X.Admissible S c →
@@ -246,145 +251,79 @@ theorem principal_pivot
     · intro v hv; exact (inv v).mp ((X.holds_subst _ _ _).mp hv)
     · intro v hv; exact (X.holds_subst _ _ _).mpr ((inv v).mpr hv)
   have more : m.MoreGeneralOn u n := by
-    refine ⟨p, ?_, ?_⟩
-    · intro v
+    refine ⟨p, ?_⟩
+    intro v hv
+    constructor
+    ·
       change (s.pullback (p.pullback v)).AgreeOn (n.substitution.pullback v) u
       rw [pivot_as_swap solved hi imageEq, swap_twice]
       exact ⟨fun _ _ => rfl, fun _ _ => rfl⟩
-    · intro v hv
-      apply (X.holds_subst _ _ _).mpr
-      apply (res _).mpr
+    · apply (res _).mpr
       simpa only [p, swap_twice] using hv
-  exact ⟨m, ⟨normal, fun k hk => more.trans X (hn.2 k hk)⟩, rfl, formula⟩
+  exact ⟨m, ⟨normal, fun k hk => Constraints.NormalForm.MoreGeneralOn.trans more (hn.2 k hk)⟩, rfl, formula⟩
+
+end EHMX.HMX.EffectResidualNormalization
 
 
-theorem fixed_type_is_alias
-    {s φ : Substitution equalityTypes} (hs : s.Solved)
-    {f : Finset Nat}
-    (fixed : ∀ v : Valuation GroundTy, ∀ i ∈ f,
-      (s.pullback (φ.pullback v)).types i = v.types i)
-    {i : Nat} (hi : i ∈ s.domain.types) (fi : i ∈ f) :
-    ∃ j, j ∉ f ∧ s.types i = Ty.var j := by
-  have equal (v : Valuation GroundTy) :
-      equalityTypes.eval (φ.pullback v) (s.types i) = v.types i := fixed v i fi
-  cases imageEq : s.types i with
-  | var j =>
-    refine ⟨j, ?_, rfl⟩
-    have outside : j ∉ s.domain.types := by
-      have h := (hs.type_range i hi).1
-      simpa [imageEq, equalityTypes, Ty.fvTypes] using h
-    intro fj
-    let v : Valuation GroundTy := ⟨GroundTy.atom, fun _ => ∅⟩
-    have atI := equal v
-    have atJ := fixed v j fj
-    simp only [imageEq, equalityTypes, Ty.eval] at atI
-    simp only [Substitution.pullback, s.types_outside j outside, equalityTypes, Ty.eval] at atJ
-    have e : GroundTy.atom j = GroundTy.atom i := atJ.symm.trans atI
-    have ji : j = i := GroundTy.atom.inj e
-    exact outside (ji ▸ hi)
-  | base b =>
-    have bad := equal ⟨fun _ => .arr (.atom 0) ∅ (.atom 0), fun _ => ∅⟩
-    cases b <;> simp [imageEq, equalityTypes, Ty.eval] at bad
-  | arr a e b =>
-    have bad := equal ⟨fun _ => .atom 0, fun _ => ∅⟩
-    simp [imageEq, equalityTypes, Ty.eval] at bad
-
-theorem protect_types {O : TypeOrder equalityTypes}
-    (X : Constraints equalityTypes O) {S : X.Formula → Prop}
-    (rename : ∀ (p : Renaming) c, X.Admissible S c →
-      X.Admissible S (X.subst (p.asSubstitution equalityTypes) c))
-    {d : X.Formula} {u : Names} {n : X.NormalForm}
-    (hn : n.IsPrincipalOn u S d)
-    (φ : Substitution equalityTypes) (f : Finset Nat) (fu : f ⊆ u.types)
-    (fixed : ∀ v : Valuation GroundTy, ∀ i ∈ f,
-      (n.substitution.pullback (φ.pullback v)).types i = v.types i) :
-    ∃ m : X.NormalForm, m.IsPrincipalOn u S d ∧
-      Disjoint m.substitution.domain.types f ∧
-      m.substitution.effects = n.substitution.effects ∧
-      X.Equivalent m.formula n.formula := by
-  classical
-  by_cases disjoint : Disjoint n.substitution.domain.types f
-  · exact ⟨n, hn, disjoint, rfl, X.entails_refl _, X.entails_refl _⟩
-  · have overlap : (n.substitution.domain.types ∩ f).Nonempty := by
-      by_contra h
-      exact disjoint (Finset.disjoint_iff_inter_eq_empty.mpr
-        (Finset.not_nonempty_iff_eq_empty.mp h))
-    obtain ⟨i, hi⟩ := overlap
-    obtain ⟨ndi, fi⟩ := Finset.mem_inter.mp hi
-    obtain ⟨j, jf, imageEq⟩ := fixed_type_is_alias hn.1.2.1 fixed ndi fi
-    obtain ⟨m, hm, ms, equiv⟩ := principal_pivot X rename hn ndi imageEq
-    obtain ⟨ρ, factor, _⟩ := hm.2 n hn.1
-    have fixed' : ∀ v : Valuation GroundTy, ∀ k ∈ f,
-        (m.substitution.pullback ((φ.compose ρ).pullback v)).types k = v.types k := by
-      intro v k fk
-      rw [Substitution.compose_pullback]
-      exact ((factor (φ.pullback v)).1 k (fu fk)).trans (fixed v k fk)
-    obtain ⟨k, hk, kd, ke, kf⟩ :=
-      protect_types X rename hm (φ.compose ρ) f fu fixed'
-    refine ⟨k, hk, kd, ?_, X.entails_trans kf.1 equiv.1, X.entails_trans equiv.2 kf.2⟩
-    rw [ke, ms]
-    rfl
+namespace EHMX.HMX.EffectResidualNormalization
+open EHMX EHMX.HMX EHMX.HMX.EffectResidualNormalization
+variable {O : TypeOrder equalityTypes} (X : Constraints equalityTypes O)
+theorem protect_types {S : X.Formula → Prop}
+ (rename : ∀ (p : Renaming) c, X.Admissible S c →
+   X.Admissible S (X.subst (p.asSubstitution equalityTypes) c))
+ (reflect : VariableEqualityReflection (X := X) S)
+ {d c : X.Formula} {u : Names} {n : X.NormalForm}
+ (hn : n.IsPrincipalOn u S d)
+ (hc : X.Admissible S c)
+ (φ : HMX.Substitution equalityTypes) (f : Finset Nat) (fu : f ⊆ u.types)
+ (fixed : ∀ v, X.holds c v → ∀ i ∈ f,
+   (n.substitution.pullback (φ.pullback v)).types i = v.types i)
+ (residual : X.Entails c (X.subst φ n.residual)) :
+ ∃ m : X.NormalForm, m.IsPrincipalOn u S d ∧
+   Disjoint m.substitution.domain.types f ∧
+   m.substitution.effects = n.substitution.effects ∧ X.Equivalent m.formula n.formula := by
+ classical
+ by_cases disjoint : Disjoint n.substitution.domain.types f
+ · exact ⟨n,hn,disjoint,rfl,X.entails_refl _,X.entails_refl _⟩
+ · have overlap : (n.substitution.domain.types ∩ f).Nonempty := by
+     by_contra h
+     exact disjoint (Finset.disjoint_iff_inter_eq_empty.mpr
+       (Finset.not_nonempty_iff_eq_empty.mp h))
+   obtain ⟨i,hi⟩ := overlap
+   obtain ⟨ndi,fi⟩ := Finset.mem_inter.mp hi
+   obtain ⟨j,jf,image⟩ := EHMX.HMX.EffectResidualNormalization.fixed_type_is_alias reflect hc hn.1.2.1 fixed ndi fi
+   obtain ⟨m,hm,ms,equiv⟩ := principal_pivot X rename hn ndi image
+   obtain ⟨ρ,factor⟩ := hm.2 n hn.1
+   have nr (v : HMX.Valuation GroundTy) (hv : X.holds c v) :
+       X.holds n.residual (φ.pullback v) := (X.holds_subst _ _ _).mp (residual v hv)
+   have fixed' : ∀ v, X.holds c v → ∀ k ∈ f,
+       (m.substitution.pullback ((φ.compose ρ).pullback v)).types k = v.types k := by
+     intro v hv k fk
+     rw [HMX.Substitution.compose_pullback]
+     exact (((factor (φ.pullback v) (nr v hv)).1).1 k (fu fk)).trans (fixed v hv k fk)
+   have residual' : X.Entails c (X.subst (φ.compose ρ) m.residual) := by
+     intro v hv
+     apply (X.holds_subst _ _ _).mpr
+     rw [HMX.Substitution.compose_pullback]
+     exact (factor (φ.pullback v) (nr v hv)).2
+   obtain ⟨k,hk,kd,ke,kf⟩ := protect_types rename reflect hm hc
+     (φ.compose ρ) f fu fixed' residual'
+   refine ⟨k,hk,kd,?_,X.entails_trans kf.1 equiv.1,X.entails_trans equiv.2 kf.2⟩
+   rw [ke,ms]; rfl
 termination_by (n.substitution.domain.types ∩ f).card
 decreasing_by
-  have shrink : m.substitution.domain.types ∩ f =
-      (n.substitution.domain.types ∩ f).erase i := by
-    rw [ms]
-    ext k
-    simp only [Substitution.pivot, Finset.mem_inter, Finset.mem_insert,
-      Finset.mem_erase]
-    aesop
-  rw [shrink]
-  exact Finset.card_erase_lt_of_mem hi
+ have shrink : m.substitution.domain.types ∩ f =
+     (n.substitution.domain.types ∩ f).erase i := by
+   rw [ms]
+   ext k
+   simp only [HMX.Substitution.pivot, Finset.mem_inter, Finset.mem_insert, Finset.mem_erase]
+   aesop
+ rw [shrink]
+ exact Finset.card_erase_lt_of_mem hi
+end EHMX.HMX.EffectResidualNormalization
 
 
-
-end EffectResidualNormalization
-end EHMX.HMX
-
-
-namespace EHMX.HMX
-variable {T : TypeDomain} {O : TypeOrder T} {X : Constraints T O}
-theorem scoped_lifting_factor
-    (P : X.ScopedPrincipalNormalizer) (closure : X.SolvedClosure P.solved)
-    (lift : ∀ (a : Names) (d : X.Formula),
-      X.Admissible P.solved (X.existsNames a d) →
-      ∃ θ : Substitution T, θ.domain.Subset a ∧ X.Admissible P.solved (X.subst θ d))
-    {c d : X.Formula} {a u : Names}
-    (fresh : X.Avoids c a)
-    (outer : X.Admissible P.solved (X.and c (X.existsNames a d)))
-    (observed : (X.freeNames (X.and c d)).Subset u) :
-    ∃ (n : X.NormalForm) (θ φ : Substitution T),
-      P.normalize u (X.and c d) = some n ∧
-      θ.domain.Subset a ∧
-      X.Admissible P.solved (X.subst θ (X.and c d)) ∧
-      (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn (θ.pullback v) u) ∧
-      (∀ v, (n.substitution.pullback (φ.pullback v)).AgreeOn v (u.diff a)) ∧
-      X.Entails (X.subst θ (X.and c d)) (X.subst φ n.residual) := by
-  have projected : X.Admissible P.solved (X.existsNames a (X.and c d)) := by
-    obtain ⟨s, hs, forward, backward⟩ := outer
-    have eqv := X.project_and_avoids (d := d) fresh
-    exact ⟨s, hs, X.entails_trans eqv.1 forward, X.entails_trans backward eqv.2⟩
-  obtain ⟨θ, scope, admitted⟩ := lift a (X.and c d) projected
-  obtain ⟨n, run, φ, factor, residual⟩ := P.complete_of_substitution closure.rename
-    observed θ admitted (X.entails_refl _)
-  refine ⟨n, θ, φ, run, scope, admitted, factor, ?_, residual⟩
-  intro v
-  constructor
-  · intro i hi
-    have h := Finset.mem_sdiff.mp hi
-    exact ((factor v).1 i h.1).trans
-      ((θ.pullback_outside v).1 i (fun hj => h.2 (scope.1 hj)))
-  · intro i hi
-    have h := Finset.mem_sdiff.mp hi
-    exact ((factor v).2 i h.1).trans
-      ((θ.pullback_outside v).2 i (fun hj => h.2 (scope.2 hj)))
-
-end EHMX.HMX
-
-namespace EHMX.HMX
-namespace EffectResidualNormalization
-variable {O : TypeOrder equalityTypes} (X : Constraints equalityTypes O)
-
+namespace EHMX.HMX.EffectResidualNormalization
 theorem no_effect_domain {s : Substitution equalityTypes} (hs : s.Solved)
     (idEffects : s.effects = Effect.var) : s.domain.effects = ∅ := by
   apply Finset.eq_empty_iff_forall_notMem.mpr
@@ -392,40 +331,54 @@ theorem no_effect_domain {s : Substitution equalityTypes} (hs : s.Solved)
   have h := hs.effect_range i hi
   simp [idEffects, Effect.var, hi] at h
 
+end EHMX.HMX.EffectResidualNormalization
+
+namespace EHMX.HMX.EffectResidualNormalization
+open EHMX EHMX.HMX EHMX.HMX.EffectResidualNormalization
+variable {O : TypeOrder equalityTypes} (X : Constraints equalityTypes O)
 theorem scoped_principal_with_effect_residual
-    (P : X.ScopedPrincipalNormalizer) (closure : X.SolvedClosure P.solved)
-    (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
-      X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
-      X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
-    (lift : ∀ (a : Names) (d : X.Formula),
-      X.Admissible P.solved (X.existsNames a d) →
-      ∃ θ : Substitution equalityTypes, θ.domain.Subset a ∧
-        X.Admissible P.solved (X.subst θ d))
-    {c d : X.Formula} {a u : Names}
-    (fresh : X.Avoids c a)
-    (outer : X.Admissible P.solved (X.and c (X.existsNames a d)))
-    (observed : (X.freeNames (X.and c d)).Subset u) :
-    ∃ n : X.NormalForm, n.IsPrincipalOn u P.solved (X.and c d) ∧
-      n.substitution.domain.Disjoint (u.diff a) ∧
-      n.substitution.effects = Effect.var := by
-  obtain ⟨n, θ, φ, run, _, _, _, fixed, _⟩ :=
-    scoped_lifting_factor P closure lift fresh outer observed
-  have hn := P.principal u (X.and c d) observed n run
-  obtain ⟨m, hm, ms, _⟩ :=
-    EffectResidualNormalization.retain_effect_assignments X P.solved_satisfiable allow hn
-  obtain ⟨ρ, factor, _⟩ := hm.2 n hn.1
-  have fixed' : ∀ v : Valuation GroundTy, ∀ i ∈ (u.diff a).types,
-      (m.substitution.pullback ((φ.compose ρ).pullback v)).types i = v.types i := by
-    intro v i hi
-    rw [Substitution.compose_pullback]
-    exact ((factor (φ.pullback v)).1 i (Finset.mem_sdiff.mp hi).1).trans
-      ((fixed v).1 i hi)
-  obtain ⟨k, hk, kt, ke, _⟩ := EffectResidualNormalization.protect_types X closure.rename hm
-    (φ.compose ρ) (u.diff a).types (fun _ hi => (Finset.mem_sdiff.mp hi).1) fixed'
-  have kid : k.substitution.effects = Effect.var := by
-    rw [ke, ms]; rfl
-  exact ⟨k, hk, ⟨kt, by simp [no_effect_domain hk.1.2.1 kid]⟩, kid⟩
-
-
-end EffectResidualNormalization
-end EHMX.HMX
+ (P : X.ScopedPrincipalNormalizer) (closure : X.SolvedClosure P.solved)
+ (reflect : VariableEqualityReflection (X := X) P.solved)
+ (allow : ∀ (r : X.Formula) (s : HMX.Substitution equalityTypes), s.domain.types = ∅ →
+   X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
+   X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
+ (lift : ∀ (a : Names) (d : X.Formula),
+   X.Admissible P.solved (X.existsNames a d) →
+   ∃ θ : HMX.Substitution equalityTypes, θ.domain.Subset a ∧
+     X.Admissible P.solved (X.subst θ d))
+ {c d : X.Formula} {a u : Names}
+ (fresh : X.Avoids c a)
+ (outer : X.Admissible P.solved (X.and c (X.existsNames a d)))
+ (observed : (X.freeNames (X.and c d)).Subset u) :
+ ∃ n : X.NormalForm, n.IsPrincipalOn u P.solved (X.and c d) ∧
+   n.substitution.domain.Disjoint (u.diff a) ∧ n.substitution.effects = Effect.var := by
+ have projected : X.Admissible P.solved (X.existsNames a (X.and c d)) := by
+   obtain ⟨s,hs,forward,backward⟩ := outer
+   have eqv := X.project_and_avoids (d := d) fresh
+   exact ⟨s,hs,X.entails_trans eqv.1 forward,X.entails_trans backward eqv.2⟩
+ obtain ⟨θ,scope,admitted⟩ := lift a (X.and c d) projected
+ obtain ⟨n,run,φ,factor,residual⟩ := P.complete_of_substitution closure.rename
+   observed θ admitted (X.entails_refl _)
+ have hn := P.principal u (X.and c d) observed n run
+ obtain ⟨m,hm,ms,_⟩ := retain_effect_assignments X P.solved_satisfiable allow hn
+ obtain ⟨ρ,comp⟩ := hm.2 n hn.1
+ have nr (v : HMX.Valuation GroundTy) (hv : X.holds (X.subst θ (X.and c d)) v) :
+     X.holds n.residual (φ.pullback v) := (X.holds_subst _ _ _).mp (residual v hv)
+ have fixed' : ∀ v, X.holds (X.subst θ (X.and c d)) v → ∀ i ∈ (u.diff a).types,
+     (m.substitution.pullback ((φ.compose ρ).pullback v)).types i = v.types i := by
+   intro v hv i hi
+   rw [HMX.Substitution.compose_pullback]
+   have f := (Finset.mem_sdiff.mp hi)
+   exact (((comp (φ.pullback v) (nr v hv)).1).1 i f.1).trans
+     (((factor v hv).1 i f.1).trans
+       ((θ.pullback_outside v).1 i (fun h => f.2 (scope.1 h))))
+ have mr : X.Entails (X.subst θ (X.and c d)) (X.subst (φ.compose ρ) m.residual) := by
+   intro v hv
+   apply (X.holds_subst _ _ _).mpr
+   rw [HMX.Substitution.compose_pullback]
+   exact (comp (φ.pullback v) (nr v hv)).2
+ obtain ⟨k,hk,kt,ke,_⟩ := protect_types X closure.rename reflect hm admitted
+   (φ.compose ρ) (u.diff a).types (fun _ hi => (Finset.mem_sdiff.mp hi).1) fixed' mr
+ have kid : k.substitution.effects = Effect.var := by rw [ke,ms]; rfl
+ exact ⟨k,hk,⟨kt,by simp [no_effect_domain hk.1.2.1 kid]⟩,kid⟩
+end EHMX.HMX.EffectResidualNormalization

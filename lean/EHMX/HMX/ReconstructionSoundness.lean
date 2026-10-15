@@ -85,12 +85,14 @@ theorem Inference.sound_reconstruction {sig : Signature T} {X : Constraints T O}
 end EHMX.HMX
 
 namespace EHMX.HMX
+open EHMX EHMX.HMX
 variable {O : TypeOrder equalityTypes} {X : Constraints equalityTypes O}
 /-- Reconstruction soundness in any supplied approximation of the substituted
 input environment. This also permits returning to a closed original context. -/
 theorem inferTermAt_sound_of_approximation {sig : Signature equalityTypes}
     (N : X.Simplifier) (P : X.ScopedPrincipalNormalizer)
     (cl : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -111,7 +113,7 @@ theorem inferTermAt_sound_of_approximation {sig : Signature equalityTypes}
   have adm : X.Admissible P.solved n.residual :=
     ⟨n.residual, solved, X.entails_refl _, X.entails_refl _⟩
   obtain ⟨s', typed, approx⟩ :=
-    Derivation.transform_to_solved_subst_reconstruction P cl allow lift hr truth tree good n.substitution n.residual
+    EHMX.HMX.Derivation.transform_to_solved_subst_reconstruction P cl reflect allow lift hr truth tree good n.substitution n.residual
       g' adm entails env
   exact typed.instance_mono (approx.2.2 _ trivial
     (Scheme.Approximates.refl_of_ground (S := P.solved) (c := n.residual)
@@ -124,6 +126,7 @@ substituted environment is an explicit premise. -/
 theorem inferTermAt_sound {sig : Signature equalityTypes}
     (N : X.Simplifier) (P : X.ScopedPrincipalNormalizer)
     (cl : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -142,7 +145,7 @@ theorem inferTermAt_sound {sig : Signature equalityTypes}
   have entTop : X.Entails n.residual (X.subst n.substitution X.top) := by
     intro v _
     exact (X.holds_subst _ _ _).mpr ((X.holds_top _).mpr trivial)
-  exact inferTermAt_sound_of_approximation N P cl allow lift hr truth hsig run
+  exact inferTermAt_sound_of_approximation N P cl reflect allow lift hr truth hsig run
     (Context.Approximates.refl envAdm ((real.subst n.substitution).weaken entTop))
 
 /-- Effect-only residuals preserve environment admissibility under substitution.
@@ -165,7 +168,10 @@ theorem inferTermAt_sound_effectOnly {sig : Signature equalityTypes}
     (envAdm : g.Admissible P.solved) (real : g.Realizable X.top) :
     Typing sig X P.solved n.residual (g.subst n.substitution) e
       (.mono (n.substitution.apply t)) (eff.subst n.substitution.effects) := by
-  apply inferTermAt_sound N P cl allow lift hr truth hsig run real
+  have reflect : EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved := by
+    rw [hsol]
+    exact EffectResidualNormalization.effectOnly_reflection
+  apply inferTermAt_sound N P cl reflect allow lift hr truth hsig run real
   obtain ⟨d, _, normalized, _⟩ := inferTermAt_normal run
   have sat := (P.sound (reconstructionScope_covers X g t eff d) normalized).2.1
   rw [hsol] at envAdm ⊢
@@ -174,6 +180,7 @@ theorem inferTermAt_sound_effectOnly {sig : Signature equalityTypes}
 theorem inferTerm_sound {sig : Signature equalityTypes}
     (N : X.Simplifier) (P : X.ScopedPrincipalNormalizer)
     (cl : X.SolvedClosure P.solved)
+    (reflect : EHMX.HMX.EffectResidualNormalization.VariableEqualityReflection (X := X) P.solved)
     (allow : ∀ (r : X.Formula) (s : Substitution equalityTypes), s.domain.types = ∅ →
       X.Admissible P.solved r → X.Satisfiable (X.and r (X.substitutionConstraint s)) →
       X.Admissible P.solved (X.and r (X.substitutionConstraint s)))
@@ -190,7 +197,7 @@ theorem inferTerm_sound {sig : Signature equalityTypes}
     Typing sig X P.solved n.residual (g.subst n.substitution) e
       (.mono (n.substitution.types (g.support.shiftTypes 0))) (n.substitution.effects (g.support.shiftEffects 0)) := by
   simpa [Substitution.apply, Ty.subst, Effect.subst, Effect.var] using
-    inferTermAt_sound N P cl allow lift hr truth hsig run real envAdm
+    inferTermAt_sound N P cl reflect allow lift hr truth hsig run real envAdm
 
 /-- Soundness for the fresh output variables chosen by inferTerm. -/
 theorem inferTerm_sound_effectOnly {sig : Signature equalityTypes}
