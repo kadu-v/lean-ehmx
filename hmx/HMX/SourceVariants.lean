@@ -9,16 +9,6 @@ variable {V : Type u} {K : Type v} {arity : K → Nat} {P : Type w} {parity : P 
 variable {N Const : Type}
 
 namespace Problem
-/-- Definition 23 as repeated on p.73 uses literal fixedness. -/
-def NormalFormPage73 (X : ConstraintTheory V K arity P parity)
-    (S : Set (Constraint V K arity P parity)) (p n : Problem V K arity P parity) : Prop :=
-  p.IsProblem ∧ n.substitution.IsSubstitution ∧ n.constraint ∈ S ∧
-    n.constraint.subst n.substitution = n.constraint ∧ p.MoreGeneral X n
-
-def PrincipalPage73 (X : ConstraintTheory V K arity P parity)
-    (S : Set (Constraint V K arity P parity)) (p n : Problem V K arity P parity) : Prop :=
-  p.NormalFormPage73 X S n ∧ ∀ m, p.NormalFormPage73 X S m → n.MoreGeneral X m
-
 def IsInfimum (X : ConstraintTheory V K arity P parity)
     (A : Set (Problem V K arity P parity)) (p : Problem V K arity P parity) : Prop :=
   p.IsProblem ∧ (∀ q ∈ A, p.MoreGeneral X q) ∧
@@ -44,7 +34,7 @@ variable (X : ConstraintTheory V K arity P parity) (S : Set (Constraint V K arit
 def lemma22 : Prop := X.Unitary → Problem.CompleteLowerSemilattice X
 
 /-- p.89 prints psi, not psi-prime, in the conclusion. -/
-def lemma24Printed : Prop := X.SyntacticallyUnique S →
+def lemma24Printed : Prop := X.SolvedForms S → X.SyntacticallyUnique S →
   ∀ p n m : Problem V K arity P parity, p.Principal X S n → p.Principal X S m →
     ∃ π : Assignment V K arity, π.IsRenaming ∧
       m.constraint = n.constraint.subst π ∧ n.substitution = π.comp n.substitution
@@ -69,7 +59,52 @@ def Smith : Prop := ∀ C D Γ e t (A : Finset V) (φ : Assignment V K arity),
 def HOG : Prop := ∀ C D Γ e t (A : Finset V),
   J (C ∪ D) Γ e (.type t) → Disjoint (A : Set V) (X.fv C ∪ X.envFV Γ) →
     J (C ∪ D) Γ e (.all A D (.type t))
+
+/-- The common elimination rule displayed below Figure 3.3, p.50. -/
+def Elimination : Prop := ∀ C D Γ e t (A : Finset V) (φ : Assignment V K arity),
+  J C Γ e (.all A D (.type t)) → φ.IsSubstitution → φ.domain ⊆ (A : Set V) →
+  X.Entails C (D.subst φ) → J C Γ e (.type (t.subst φ))
+
+/-- p.56. The class constraint C alpha is an explicit parameter. -/
+def NipkowPrehofer (classConstraint : V → Constraint V K arity P parity) : Prop :=
+  ∀ D Γ e s a, J (D ∪ classConstraint a) Γ e s →
+    a ∉ X.envFV Γ ∪ X.fv D → J D Γ e (.all {a} (classConstraint a) s)
+
+/-- The single-variable Smith rule printed on p.57, whose side condition
+mentions fv(Gamma) only, unlike Figure 3.3. -/
+def SmithPage57 : Prop := ∀ C D Γ e s a t,
+  J (C ∪ D) Γ e s → a ∉ X.envFV Γ →
+  X.Entails C (D.subst (Assignment.single a t)) → J C Γ e (.all {a} D s)
+
+/-- p.58. pi_alpha is the conjunction of overload predicates for alpha. -/
+def SystemOStep (overloads : V → Constraint V K arity P parity) : Prop :=
+  ∀ C Γ e s a, J (C ∪ overloads a) Γ e s →
+    a ∉ X.envFV Γ ∪ X.fv C → J C Γ e (.all {a} (overloads a) s)
+
+/-- p.59: the dependency relation is alpha_i < alpha_j iff alpha_j is NOT
+free in the result types of alpha_i and the two variables differ. The final
+pi_alpha in the printed conclusion is left as a separate parameter. -/
+def SystemOBatch (resultFV : V → Set V)
+    (overloads : List V → Constraint V K arity P parity)
+    (printedQualifier : Constraint V K arity P parity) : Prop :=
+  ∀ C Γ e t (names : List V), J (C ∪ overloads names) Γ e (.type t) →
+    Disjoint (names.toFinset : Set V) (X.envFV Γ ∪ X.fv C) →
+    (¬ ∃ i j : Fin names.length, j < i ∧
+      names[j] ∉ resultFV names[i] ∧ names[i] ≠ names[j]) →
+    J C Γ e (.all names.toFinset printedQualifier (.type t))
+
+/-- p.63. The kind syntax belongs to the compared system, not to HMX. -/
+def Ohori (Kind : Type*) (kindFV : Kind → Set V)
+    (hasKind : V → Kind → Constraint V K arity P parity) : Prop :=
+  ∀ C Γ e s a k, J (C ∪ hasKind a k) Γ e s →
+    a ∉ X.envFV Γ ∪ X.fv C → a ∉ kindFV k →
+    J C Γ e (.all {a} (hasKind a k) s)
 end QuantifierIntroduction
+
+/-- p.53: the precise condition described as trivial projection. -/
+def ConstraintTheory.TrivialSolvedProjections (X : ConstraintTheory V K arity P parity)
+    (S : Set (Constraint V K arity P parity)) : Prop :=
+  ∀ C, X.Admissible S C → ∀ a ∈ X.fv C, X.Entails ∅ (X.projectOne a C)
 
 namespace SourceRemark
 /-- p.21: notation, not an extra law. -/

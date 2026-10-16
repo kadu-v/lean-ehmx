@@ -26,12 +26,10 @@ structure SimpleTheory (Token : Type*) where
   C1 : ∀ C p, p ∈ C → entailsAtom C p
   C2 : ∀ C D q, (∀ p ∈ D, entailsAtom C p) → entailsAtom D q → entailsAtom C q
 
-/-- Definition 3, specialized to the token signature subsequently used by D7.
-    Entailment remains abstract, not validity in one chosen interpretation. -/
-structure CylindricTheory (V : Type u) (K : Type v) (arity : K → Nat)
-    (P : Type w) (parity : P → Nat) extends SimpleTheory (Predicate V K arity P parity) where
+/-- Definition 3, for an arbitrary token set, before Definition 7 adds terms. -/
+structure CylindricSystem (Token : Type v) (V : Type u) extends SimpleTheory Token where
   infiniteVariables : Infinite V
-  projectOne : V → Constraint V K arity P parity → Constraint V K arity P parity
+  projectOne : V → Finset Token → Finset Token
   E1 : ∀ a C p, p ∈ projectOne a C → entailsAtom C p
   E2 : ∀ a C D, (∀ p ∈ D, entailsAtom C p) →
     ∀ p ∈ projectOne a D, entailsAtom (projectOne a C) p
@@ -41,6 +39,21 @@ structure CylindricTheory (V : Type u) (K : Type v) (arity : K → Nat)
   E4 : ∀ a b C,
     (∀ p ∈ projectOne a (projectOne b C), entailsAtom (projectOne b (projectOne a C)) p) ∧
     (∀ p ∈ projectOne b (projectOne a C), entailsAtom (projectOne a (projectOne b C)) p)
+
+
+/-- The term-predicate specialization used by Definition 7. -/
+structure CylindricTheory (V : Type u) (K : Type v) (arity : K → Nat)
+    (P : Type w) (parity : P → Nat) extends CylindricSystem (Predicate V K arity P parity) V
+
+namespace CylindricSystem
+variable {Token : Type v} {V : Type u} (X : CylindricSystem Token V)
+def Entails (C D : Finset Token) : Prop := ∀ p ∈ D, X.entailsAtom C p
+def Equivalent (C D : Finset Token) : Prop := X.Entails C D ∧ X.Entails D C
+def project (A : Finset V) (C : Finset Token) := A.toList.foldr X.projectOne C
+def fv (C : Finset Token) : Set V := {a | ¬ X.Equivalent (X.projectOne a C) C}
+def Satisfiable (C : Finset Token) : Prop :=
+  ∃ A : Finset V, (A : Set V) = X.fv C ∧ X.Entails ∅ (X.project A C)
+end CylindricSystem
 
 namespace CylindricTheory
 variable {V K arity P parity} (X : CylindricTheory V K arity P parity)

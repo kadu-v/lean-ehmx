@@ -15,3 +15,5 @@ import HMX.ProjectionStatements
 import HMX.Background
 import HMX.SourceVariants
 import HMX.SourceNotes
+import HMX.SourceExamples
+import HMX.ComparisonExamples

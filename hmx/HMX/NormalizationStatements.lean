@@ -36,33 +36,38 @@ variable (presentation : ConstraintPresentation X) (coding : ProblemCoding V K a
 
 /-- p.92. The source proof explicitly interprets the equation in terms of
     successful results in both directions; p.88 identifies principal normal
-    forms up to semantic equivalence. We do not require identical representatives. -/
-def theorem9 (normalize : Normalizer V K arity P parity) : Prop :=
+    forms up to semantic equivalence. We do not require identical representatives.
+    D1,D2,phi1,phi2 in the printed independence condition are not identified
+    with D,D-prime,phi,phi-prime; they remain explicit unbound parameters. -/
+def theorem9 (normalize : Normalizer V K arity P parity) : Prop := X.SolvedForms S →
   Normalizer.Specification X S normalize → X.PrincipalConstraintProperty S → X.Unitary →
-  ∀ p q, p.IsProblem → q.IsProblem → p.Independent X q →
+  ∀ p q (unboundFirst unboundSecond : Problem V K arity P parity),
+    p.IsProblem → q.IsProblem → unboundFirst.Independent X unboundSecond →
     (∀ out, CombinedNormalization X normalize p q out →
       ∃ out', DeferredNormalization X normalize p q out' ∧ NormalizationResultEquivalent X out out') ∧
     (∀ out, DeferredNormalization X normalize p q out →
       ∃ out', CombinedNormalization X normalize p q out' ∧ NormalizationResultEquivalent X out out')
 
-def lemma29 : Prop := X.LiftingProperty S presentation coding →
+def lemma29 : Prop := X.SolvedForms S → X.LiftingProperty S presentation coding →
   ∀ A D φ, Problem.IsProblem ⟨X.project A D, φ⟩ →
     (Problem.HasNormalForm X S ⟨X.project A D, φ⟩ ↔ Problem.HasNormalForm X S ⟨D, φ⟩)
 
-def lemma30 : Prop := X.LiftingProperty S presentation coding →
+def lemma30 : Prop := X.SolvedForms S → X.LiftingProperty S presentation coding →
   ∀ A D φ (n : Problem V K arity P parity) π,
     Problem.IsProblem ⟨X.project A D, φ⟩ → Problem.Principal X S ⟨D, φ⟩ n →
     Freshening A (X.fv D ∪ φ.domain ∪ φ.codomain ∪ n.substitution.domain ∪ n.substitution.codomain) π →
     let ψ := π.comp (n.substitution.without A)
     Problem.Principal X S ⟨X.project A D, φ⟩ ⟨X.project A (D.subst ψ), ψ⟩
 
-def theorem10 : Prop := X.LiftingProperty S presentation coding → X.PrincipalConstraintProperty S
+def theorem10 : Prop := X.SolvedForms S → X.LiftingProperty S presentation coding → X.PrincipalConstraintProperty S
 
 /-- p.97, retaining the unspecified psi-prime of Figure 4.2. As with Theorem 18, exact output
     representatives require a separate review; this is a draft statement. -/
 def theorem11 (policy : WeakeningPolicy) (N Const : Type)
     (normalize : Normalizer V K arity P parity)
-    (gen : Generalizer (N ⊕ Const) V K arity P parity) : Prop :=
+    (gen : Generalizer (N ⊕ Const) V K arity P parity)
+    (normalizationCoding : ProblemCoding V K arity P parity) : Prop :=
+  Normalizer.Effective normalizationCoding normalize →
   CoreAssumptions X S policy → Normalizer.Specification X S normalize →
   Generalizer.Specification X S gen → X.PrincipalConstraintProperty S → X.Unitary →
   ∀ ψ C (Γ : Environment (N ⊕ Const) V K arity P parity) e t,
@@ -71,7 +76,9 @@ def theorem11 (policy : WeakeningPolicy) (N Const : Type)
 /-- The literal-output equivalence printed on p.109. Its dependence on a
     representative-selection convention is tracked separately in the audit. -/
 def theorem18 (policy : WeakeningPolicy) (N Const : Type)
-    (normalize : Normalizer V K arity P parity) : Prop :=
+    (normalize : Normalizer V K arity P parity)
+    (normalizationCoding : ProblemCoding V K arity P parity) : Prop :=
+  Normalizer.Effective normalizationCoding normalize →
   CoreAssumptions X S policy → Normalizer.Specification X S normalize →
   X.LiftingProperty S presentation coding →
   ∀ φ C (Γ : Environment (N ⊕ Const) V K arity P parity) e t,

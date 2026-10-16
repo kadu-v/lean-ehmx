@@ -24,5 +24,17 @@ def ConstraintTheory.StronglySound (X : ConstraintTheory V K arity P parity)
     (S : Set (Constraint V K arity P parity)) (presentation : ConstraintPresentation X) : Prop :=
   ∀ C A D, C ∈ S → C = X.project A D → presentation.ProjectionFree D → X.Satisfiable D →
     ∃ B φ, ClosedInstantiation B φ ∧ X.Entails ∅ (D.subst φ)
+/-- The separate assumption on pp.37–38, after Definition 12. This is not
+part of Definitions 12/13 themselves. -/
+def ConstraintTheory.SolvedProjectionFree (X : ConstraintTheory V K arity P parity)
+    (S : Set (Constraint V K arity P parity)) (presentation : ConstraintPresentation X) : Prop :=
+  ∀ C ∈ S, presentation.ProjectionFree C
+
+/-- The strengthened denotational setting described after Theorem 5.
+It is recorded separately, without rewriting that theorem or adding this
+condition to the syntactic statement on p.39. -/
+def ConstraintTheory.StrongDenotationalConditions (X : ConstraintTheory V K arity P parity)
+    (S : Set (Constraint V K arity P parity)) (presentation : ConstraintPresentation X) : Prop :=
+  X.StronglySound S presentation ∧ X.SolvedProjectionFree S presentation
 end
 end HMX

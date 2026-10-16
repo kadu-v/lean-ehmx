@@ -4,11 +4,17 @@
     "printed_page": 17,
     "pdf_page": 29,
     "description": "HM(X) の五つ組と term/constraint presentation の区別",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "§3.2の論理系、§3.6の解決済み形式の差と§3.7の文法の差を区別。",
     "status": "transcribed",
     "lean": [
       "HMX.ConstraintTheory",
       "HMX.Typing"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "§3.2の論理系、§3.6の解決済み形式の差と§3.7の文法の差を区別。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      17
     ]
   },
   {
@@ -16,10 +22,16 @@
     "printed_page": 20,
     "pdf_page": 32,
     "description": "有限 token 集合・連言・true の代表元",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "有限集合の連言を和集合、trueを空集合として表現。単純制約系は任意のTokenで記述。",
     "status": "transcribed",
     "lean": [
       "HMX.Constraint"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "有限集合の連言を和集合、trueを空集合として表現。単純制約系は任意のTokenで記述。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      20
     ]
   },
   {
@@ -27,11 +39,17 @@
     "printed_page": 21,
     "pdf_page": 33,
     "description": "意味論的 FV と構文上の出現の区別",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "意味論的FVと型・構文上の自由変数を区別し、射影に必要な有限列挙は明示。",
     "status": "transcribed",
     "lean": [
       "HMX.CylindricTheory.fv",
       "HMX.Constraint.occurrences"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "意味論的FVと型・構文上の自由変数を区別し、射影に必要な有限列挙は明示。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      21
     ]
   },
   {
@@ -39,10 +57,16 @@
     "printed_page": 22,
     "pdf_page": 34,
     "description": "開いた型構成子の署名・多ソートの例",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "型文法のvar/arrow/conと固定arity。多ソート例の演算はSourceExamplesの明示的な別型。",
     "status": "transcribed",
     "lean": [
       "HMX.Ty"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "型文法のvar/arrow/conと固定arity。多ソート例の演算はSourceExamplesの明示的な別型。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      22
     ]
   },
   {
@@ -50,11 +74,17 @@
     "printed_page": 28,
     "pdf_page": 40,
     "description": "制約を同値類とみなす規約・空の量化・α変換",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "α変換と制約同値をSchemeRepresentativeで表し、推論規則の空量化の略記はFlatViewで別に扱う。",
     "status": "transcribed",
     "lean": [
       "HMX.SchemeRepresentative",
       "HMX.FlatView"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "α変換と制約同値をSchemeRepresentativeで表し、推論規則の空量化の略記はFlatViewで別に扱う。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      28
     ]
   },
   {
@@ -62,11 +92,17 @@
     "printed_page": 29,
     "pdf_page": 41,
     "description": "S は充足可能制約の部分集合・代表元による許容性・S=空集合も許す",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "Sの全要素の充足可能性、含意同値な代表の許容性、環境・型への拡張。",
     "status": "transcribed",
     "lean": [
       "HMX.ConstraintTheory.SolvedForms",
       "HMX.ConstraintTheory.Admissible"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "Sの全要素の充足可能性、含意同値な代表の許容性、環境・型への拡張。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      29
     ]
   },
   {
@@ -74,10 +110,16 @@
     "printed_page": 30,
     "pdf_page": 42,
     "description": "REFL・ASYM・TRANS・CONTRA",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "Ref/Asym/Trans/Contra の四条件を変数についての原式どおり収録。",
     "status": "transcribed",
     "lean": [
       "HMX.ConstraintTheory.TypeOrderLaws"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "Ref/Asym/Trans/Contra の四条件を変数についての原式どおり収録。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      30
     ]
   },
   {
@@ -85,11 +127,17 @@
     "printed_page": 32,
     "pdf_page": 44,
     "description": "初期環境 Γ0 の定数宣言",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "定数名を環境の名前に含め、Γ₀の型付けを構成子の型解釈に接続。",
     "status": "transcribed",
     "lean": [
       "HMX.Expr.constant",
       "HMX.Environment"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "定数名を環境の名前に含め、Γ₀の型付けを構成子の型解釈に接続。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      32
     ]
   },
   {
@@ -97,7 +145,7 @@
     "printed_page": 34,
     "pdf_page": 46,
     "description": "CPO の最小解・値の解釈・式と型の意味",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "CPO・最小解・項と型の定義式をModelConditionsにまとめ、補題6・7・9・定理5・系2の前提へ接続。",
     "status": "transcribed",
     "lean": [
       "HMX.DomainIdeal",
@@ -105,18 +153,39 @@
       "HMX.Meaning",
       "HMX.Meaning.TermEquations",
       "HMX.Meaning.TypeEquations",
-      "HMX.SourceNotes.domainEquation"
+      "HMX.SourceNotes.domainEquation",
+      "HMX.DomainData.IsSolution",
+      "HMX.DomainData.Embeds",
+      "HMX.DomainData.LeastSolution",
+      "HMX.Meaning.ModelConditions"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "CPO・最小解・項と型の定義式をModelConditionsにまとめ、補題6・7・9・定理5・系2の前提へ接続。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      34,
+      35
     ]
   },
   {
     "id": "STRONG",
-    "printed_page": 38,
-    "pdf_page": 50,
+    "printed_page": 37,
+    "pdf_page": 49,
     "description": "強健全性に加え、解決済み制約で射影が構文的に現れないという条件",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "強健全性と解決済み形式の構文的射影自由性を区別し、pp.37–38の別表現へ接続。",
     "status": "transcribed",
     "lean": [
-      "HMX.ConstraintTheory.StronglySound"
+      "HMX.ConstraintTheory.StronglySound",
+      "HMX.ConstraintTheory.SolvedProjectionFree",
+      "HMX.ConstraintTheory.StrongDenotationalConditions",
+      "HMX.Statement.strongDenotationalSoundness"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "強健全性と解決済み形式の構文的射影自由性を区別し、pp.37–38の別表現へ接続。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      37,
+      38
     ]
   },
   {
@@ -124,12 +193,18 @@
     "printed_page": 41,
     "pdf_page": 53,
     "description": "比較 i と i2 の各規則・型スキームの同値",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "四つの比較規則とi2の変更、閉じた代入、整合性、freshnessを確認。",
     "status": "transcribed",
     "lean": [
       "HMX.Comparison",
       "HMX.Instance",
       "HMX.Instance₂"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "四つの比較規則とi2の変更、閉じた代入、整合性、freshnessを確認。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      41
     ]
   },
   {
@@ -137,11 +212,19 @@
     "printed_page": 45,
     "pdf_page": 57,
     "description": "weakening 規則を追加する案と S への十分条件を課す案",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "規則はΓを保ちCだけ強める。代替のS条件と選択をp.45以降の導出にも反映。",
     "status": "transcribed",
     "lean": [
       "HMX.WeakeningPolicy",
-      "HMX.ConstraintTheory.WeakeningCondition"
+      "HMX.ConstraintTheory.WeakeningCondition",
+      "HMX.LogicalTyping.weakening",
+      "HMX.SyntaxDirected.weakening"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "規則はΓを保ちCだけ強める。代替のS条件と選択をp.45以降の導出にも反映。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      45
     ]
   },
   {
@@ -149,11 +232,17 @@
     "printed_page": 45,
     "pdf_page": 57,
     "description": "n 導出の Inst と s 導出の Var-Inst",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "Instと、Var/Inst・Let/∀Introを組み合わせたsの規則、p.45の弱化を収録。",
     "status": "transcribed",
     "lean": [
       "HMX.NormalizedTyping",
       "HMX.SyntaxDirected"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "Instと、Var/Inst・Let/∀Introを組み合わせたsの規則、p.45の弱化を収録。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      45
     ]
   },
   {
@@ -161,10 +250,16 @@
     "printed_page": 46,
     "pdf_page": 58,
     "description": "let に現れる連言が解決済みという個別条件",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "Letの二前提と結論の制約を区別。C∧Dを単一の制約へ読み替えない。",
     "status": "transcribed",
     "lean": [
       "HMX.SyntaxDirected.letE"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "Letの二前提と結論の制約を区別。C∧Dを単一の制約へ読み替えない。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      46
     ]
   },
   {
@@ -172,10 +267,16 @@
     "printed_page": 47,
     "pdf_page": 59,
     "description": "論理的な一般化関係",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "p.47のAの範囲、非出現、CからC1∧C2の含意。表示にない分割同値を補わない。",
     "status": "transcribed",
     "lean": [
       "HMX.Generalizes"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "p.47のAの範囲、非出現、CからC1∧C2の含意。表示にない分割同値を補わない。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      47
     ]
   },
   {
@@ -183,10 +284,16 @@
     "printed_page": 48,
     "pdf_page": 60,
     "description": "入れ子の forall を許す代案と原規則の区別",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "p.48の再帰的∀規則はNestedTypingに分離。通常の平坦規則と混同しない。",
     "status": "transcribed",
     "lean": [
       "HMX.NestedTyping"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "p.48の再帰的∀規則はNestedTypingに分離。通常の平坦規則と混同しない。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      48
     ]
   },
   {
@@ -194,13 +301,19 @@
     "printed_page": 50,
     "pdf_page": 62,
     "description": "Jones・Aiken/Wimmers・Smith・HOG の比較用規則",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "図3.3の四つの規則は比較対象の判断Jへの規則として記述。HMXの規則へ追加しない。",
     "status": "transcribed",
     "lean": [
       "HMX.QuantifierIntroduction.Jones",
       "HMX.QuantifierIntroduction.AikenWimmers",
       "HMX.QuantifierIntroduction.Smith",
       "HMX.QuantifierIntroduction.HOG"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "図3.3の四つの規則は比較対象の判断Jへの規則として記述。HMXの規則へ追加しない。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      50
     ]
   },
   {
@@ -208,10 +321,17 @@
     "printed_page": 53,
     "pdf_page": 65,
     "description": "射影が自明になる条件と open world の説明",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "p.53の説明に加え、trivial projectionの条件を独立のPropで収録。",
     "status": "transcribed",
     "lean": [
-      "HMX.SourceNotes.openWorld"
+      "HMX.SourceNotes.openWorld",
+      "HMX.ConstraintTheory.TrivialSolvedProjections"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "p.53の説明に加え、trivial projectionの条件を独立のPropで収録。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      53
     ]
   },
   {
@@ -219,10 +339,23 @@
     "printed_page": 58,
     "pdf_page": 70,
     "description": "SystemO・Ohori の比較と拡張例",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "例10–18の表示プログラム・注釈・背景条件をComparisonExamplesで個別に収録。比較用の量化規則はHM(X)の規則に追加しない。",
     "status": "transcribed",
     "lean": [
-      "HMX.SourceNotes.comparisonExamples"
+      "HMX.SourceNotes.comparisonExamples",
+      "HMX.QuantifierIntroduction.SystemOStep",
+      "HMX.QuantifierIntroduction.SystemOBatch",
+      "HMX.SourceExample.Comparison.OverloadQualifier",
+      "HMX.SourceExample.Comparison.SystemOStepSpecification",
+      "HMX.SourceExample.Comparison.FirstClassLabels",
+      "HMX.SourceExample.Comparison.SystemOBatchSpecification",
+      "HMX.SourceExample.Comparison.OverloadMatrix"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "例10–18の表示プログラム・注釈・背景条件をComparisonExamplesで個別に収録。比較用の量化規則はHM(X)の規則に追加しない。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      58
     ]
   },
   {
@@ -230,12 +363,18 @@
     "printed_page": 67,
     "pdf_page": 79,
     "description": "let-realizable、projection-free derivation、S の射影閉包",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "monomorphic contextは未指定述語として明示。全導出の射影自由性と最小射影閉包を区別。",
     "status": "transcribed",
     "lean": [
       "HMX.Expr.LetRealizable",
       "HMX.LogicalTyping.AllConstraints",
       "HMX.ConstraintTheory.IsProjectionClosure"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "monomorphic contextは未指定述語として明示。全導出の射影自由性と最小射影閉包を区別。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      67
     ]
   },
   {
@@ -243,10 +382,16 @@
     "printed_page": 73,
     "pdf_page": 85,
     "description": "Xc と Xt は制約系を共有して S が異なる",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "Xc/Xtは同じXでSのみ異なる。近似のtrue下の条件とC下の最小性を接続。",
     "status": "transcribed",
     "lean": [
       "HMX.Approximates"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "Xc/Xtは同じXでSのみ異なる。近似のtrue下の条件とC下の最小性を接続。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      73
     ]
   },
   {
@@ -254,11 +399,17 @@
     "printed_page": 76,
     "pdf_page": 88,
     "description": "制約形式の型構文とスキーム同値",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "制約形式の型付けはcanonical grammar、制約版∀Elimと∃Introを使用。",
     "status": "transcribed",
     "lean": [
       "HMX.CanonicalTyping",
       "HMX.LogicalJudgmentAdmissible"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "制約形式の型付けはcanonical grammar、制約版∀Elimと∃Introを使用。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      76
     ]
   },
   {
@@ -266,10 +417,16 @@
     "printed_page": 88,
     "pdf_page": 100,
     "description": "主正規形を選ぶ normalize と失敗",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "主要正規形があればsome、なければnone。代表元の選択と計算可能性は区別。",
     "status": "transcribed",
     "lean": [
       "HMX.Normalizer.Specification"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "主要正規形があればsome、なければnone。代表元の選択と計算可能性は区別。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      88
     ]
   },
   {
@@ -277,10 +434,16 @@
     "printed_page": 93,
     "pdf_page": 105,
     "description": "定義28の四条件と Remark 3 の代表元版",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "定義28の四条件をLiftingPropertyに接続。計算可能性はコード化を引数に明示。",
     "status": "transcribed",
     "lean": [
       "HMX.ConstraintTheory.LiftingProperty"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "定義28の四条件をLiftingPropertyに接続。計算可能性はコード化を引数に明示。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      93
     ]
   },
   {
@@ -288,11 +451,20 @@
     "printed_page": 95,
     "pdf_page": 107,
     "description": "normalize の計算可能性というアルゴリズム用前提",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "95頁の計算可能性を定理11–18の正規化器使用箇所と付録の対応する命題に接続。96頁の一般化の有効性はアルゴリズムの条件として別に結合し、数学的定理へ無断で追加しない。",
     "status": "transcribed",
     "lean": [
       "HMX.Normalizer.Effective",
-      "HMX.ConstraintTheory.EffectiveProjectionFreeNormalization"
+      "HMX.ConstraintTheory.EffectiveProjectionFreeNormalization",
+      "HMX.InferenceAlgorithmConditions",
+      "HMX.Statement.theorem12",
+      "HMX.Statement.theorem13"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "95頁の計算可能性を定理11–18の正規化器使用箇所と付録の対応する命題に接続。96頁の一般化の有効性はアルゴリズムの条件として別に結合し、数学的定理へ無断で追加しない。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      95
     ]
   },
   {
@@ -300,11 +472,18 @@
     "printed_page": 96,
     "pdf_page": 108,
     "description": "最大ではなく極大な変数集合・選択の決定可能性",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "p.96のsubsetの条件を表示どおり記述。証明中のさらに強いmaximalityは仮定へ補わない。",
     "status": "transcribed",
     "lean": [
       "HMX.AlgorithmicGeneralizes",
-      "HMX.Generalizer.Effective"
+      "HMX.Generalizer.Effective",
+      "HMX.InferenceAlgorithmConditions"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "p.96のsubsetの条件を表示どおり記述。証明中のさらに強いmaximalityは仮定へ補わない。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      96
     ]
   },
   {
@@ -312,11 +491,17 @@
     "printed_page": 97,
     "pdf_page": 109,
     "description": "typing configuration とその比較",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "C・σの固定性、Γとの整合性。比較式のψとψ′の違いを原文どおり残す。",
     "status": "transcribed",
     "lean": [
       "HMX.TypingConfiguration",
       "HMX.ConfigurationMoreGeneral"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "C・σの固定性、Γとの整合性。比較式のψとψ′の違いを原文どおり残す。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      97
     ]
   },
   {
@@ -324,10 +509,16 @@
     "printed_page": 99,
     "pdf_page": 111,
     "description": "定理13の節全体の仮定・Xc または regular/unitary・射影閉性・環境の実現可能性",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "主要制約性・射影閉性、Xc又はregular+unitaryの節の条件を接続。",
     "status": "transcribed",
     "lean": [
       "HMX.Statement.OriginalCompletenessAssumptions"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "主要制約性・射影閉性、Xc又はregular+unitaryの節の条件を接続。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      99
     ]
   },
   {
@@ -335,10 +526,16 @@
     "printed_page": 102,
     "pdf_page": 114,
     "description": "制約推論の充足可能性チェックの決定可能性",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "充足判定の仕様と計算可能性を独立に記述。",
     "status": "transcribed",
     "lean": [
       "HMX.EffectiveSatisfiability"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "充足判定の仕様と計算可能性を独立に記述。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      102
     ]
   },
   {
@@ -346,10 +543,16 @@
     "printed_page": 102,
     "pdf_page": 114,
     "description": "生成制約の FV と結果変数の新鮮さ",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "Wcで新しく生成される変数の支持条件を独立の未証明命題で収録。",
     "status": "transcribed",
     "lean": [
       "HMX.Statement.constraintInferenceSupport"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "Wcで新しく生成される変数の支持条件を独立の未証明命題で収録。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      102
     ]
   },
   {
@@ -357,11 +560,17 @@
     "printed_page": 108,
     "pdf_page": 120,
     "description": "途中の正規化では FV(Γ,α) にだけ代入する",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "図4.5の中間正規化規則、Wc2とWnormalize、出力の支持を区別。",
     "status": "transcribed",
     "lean": [
       "HMX.IntermediateConstraintInference",
       "HMX.IntermediateTermInference"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "図4.5の中間正規化規則、Wc2とWnormalize、出力の支持を区別。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      108
     ]
   },
   {
@@ -369,11 +578,17 @@
     "printed_page": 197,
     "pdf_page": 209,
     "description": "比較導出の全制約が解決済みという但し書き",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "p.197の証明中の比較条件をSourceNotesへ記録し主定理へ追加しない。",
     "status": "transcribed",
     "lean": [
       "HMX.SolvedInstance",
       "HMX.SourceNotes.solvedComparison"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "p.197の証明中の比較条件をSourceNotesへ記録し主定理へ追加しない。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      197
     ]
   },
   {
@@ -381,10 +596,16 @@
     "printed_page": 198,
     "pdf_page": 210,
     "description": "定理8の証明中の閉環境・射影閉性",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "p.198の証明だけの閉環境・射影閉性を記録し、定理8の前提へ追加しない。",
     "status": "transcribed",
     "lean": [
       "HMX.SourceNotes.theorem8Proof"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "p.198の証明だけの閉環境・射影閉性を記録し、定理8の前提へ追加しない。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      198
     ]
   },
   {
@@ -392,12 +613,18 @@
     "printed_page": 208,
     "pdf_page": 220,
     "description": "gen1/gen2 の分解と regular case の仮定",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "gen1/gen2の成分の入替えは出力の型で区別し、原文の混在を記録。",
     "status": "transcribed",
     "lean": [
       "HMX.Statement.lemma33",
       "HMX.Statement.lemma34",
       "HMX.SourceNotes.generalizationComponents"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "gen1/gen2の成分の入替えは出力の型で区別し、原文の混在を記録。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      208
     ]
   },
   {
@@ -405,28 +632,452 @@
     "printed_page": 220,
     "pdf_page": 232,
     "description": "Xc の証明で恒等代入を返す正規化器",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "Xcのnormalizerが恒等代入を返す節の条件と、補題40・定理26の結論を区別。",
     "status": "transcribed",
     "lean": [
       "HMX.SatisfiabilityNormalizer",
       "HMX.Statement.lemma40",
       "HMX.Statement.theorem26"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "Xcのnormalizerが恒等代入を返す節の条件と、補題40・定理26の結論を区別。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      220
     ]
   },
   {
     "id": "REDUCTION",
     "printed_page": 39,
     "description": "根の還元・文脈閉包・捕獲回避代入・faulty と評価",
-    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "implementation": "δは閉じた値だけで定義され、結果も閉じた値。根の三規則、未指定の文脈閉包、faultyとevalを記述。型との整合性は追加しない。",
     "lean": [
       "HMX.RootReduction",
       "HMX.ReductionContext",
       "HMX.Expr.Substitutes",
       "HMX.Faulty",
       "HMX.EvaluatesWrong",
-      "HMX.EvaluatesValue"
+      "HMX.EvaluatesValue",
+      "HMX.PrimitiveReduction"
     ],
     "status": "transcribed",
-    "pdf_page": 51
+    "pdf_page": 51,
+    "source_review_status": "reviewed",
+    "transcription_note": "δは閉じた値だけで定義され、結果も閉じた値。根の三規則、未指定の文脈閉包、faultyとevalを記述。型との整合性は追加しない。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      39,
+      40
+    ]
+  },
+  {
+    "id": "HM-GRAMMAR",
+    "printed_page": 10,
+    "pdf_page": 22,
+    "description": "背景の印刷された型文法と図2.1の型",
+    "implementation": "未指定CをQualifierとして保持し、非限定HM.Schemeと分離。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.HM.PrintedScheme",
+      "HMX.HM.Scheme"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "未指定CをQualifierとして保持し、非限定HM.Schemeと分離。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      10
+    ]
+  },
+  {
+    "id": "HM-SEMANTICS",
+    "printed_page": 11,
+    "pdf_page": 23,
+    "description": "背景のCPO・項と型の意味関数",
+    "implementation": "印刷された方程式、定義式、初期環境をModelConditionsに接続。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.HM.Meaning.ModelConditions",
+      "HMX.HM.Meaning.TermEquations",
+      "HMX.HM.Meaning.TypeEquations"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "印刷された方程式、定義式、初期環境をModelConditionsに接続。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      11,
+      12
+    ]
+  },
+  {
+    "id": "HM-PRINCIPAL",
+    "printed_page": 15,
+    "pdf_page": 27,
+    "description": "背景の主要型・generic instance・一般化",
+    "implementation": "一般化、インスタンス、型付け可能性と全型への比較を収録。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.HM.PrincipalType",
+      "HMX.HM.GenericInstancePrinted",
+      "HMX.HM.gen"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "一般化、インスタンス、型付け可能性と全型への比較を収録。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      15
+    ]
+  },
+  {
+    "id": "HM-UNIFY",
+    "printed_page": 13,
+    "pdf_page": 25,
+    "description": "背景の単一化とunify",
+    "implementation": "単一化子、mgu、成功と失敗、代入の上界を収録。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.HM.Unifier",
+      "HMX.HM.MGU",
+      "HMX.HM.Unify.Specification",
+      "HMX.HM.LUB"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "単一化子、mgu、成功と失敗、代入の上界を収録。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      13
+    ]
+  },
+  {
+    "id": "FIRSTORDER",
+    "printed_page": 20,
+    "pdf_page": 32,
+    "description": "例1–2の定義全体。可算無限の変数、トークンの制限と閉性、含意・射影との一致。",
+    "implementation": "例1–2の定義全体。可算無限の変数、トークンの制限と閉性、含意・射影との一致。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.SourceExample.FirstOrderSystem",
+      "HMX.SourceExample.FirstOrderCylindricSystem"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "例1–2の定義全体。可算無限の変数、トークンの制限と閉性、含意・射影との一致。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      20,
+      21
+    ]
+  },
+  {
+    "id": "DIM",
+    "printed_page": 25,
+    "pdf_page": 37,
+    "description": "例4の二つのソートの構文とDIM1–DIM4。例3はHERBRANDであり、従来の例番号を訂正。",
+    "implementation": "例4の二つのソートの構文とDIM1–DIM4。例3はHERBRANDであり、従来の例番号を訂正。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.SourceExample.Dimension",
+      "HMX.SourceExample.SortedType",
+      "HMX.SourceExample.DIM"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "例4の二つのソートの構文とDIM1–DIM4。例3はHERBRANDであり、従来の例番号を訂正。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      25
+    ]
+  },
+  {
+    "id": "INDEX",
+    "printed_page": 25,
+    "pdf_page": 37,
+    "description": "例5の指数と型の構文およびINDEX1–INDEX3。",
+    "implementation": "例5の指数と型の構文およびINDEX1–INDEX3。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.SourceExample.Index",
+      "HMX.SourceExample.SortedType",
+      "HMX.SourceExample.INDEX"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "例5の指数と型の構文およびINDEX1–INDEX3。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      25,
+      26
+    ]
+  },
+  {
+    "id": "SUBTYPES",
+    "printed_page": 26,
+    "pdf_page": 38,
+    "description": "例5・6のSUB1–SUB6",
+    "implementation": "型・レコードの順序付きフィールド、幅・深さの規則。HMXの比較とは別の述語を引数にする。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.SourceExample.SubtypeLaws",
+      "HMX.SourceExample.RecordSubtypeLaws"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "型・レコードの順序付きフィールド、幅・深さの規則。HMXの比較とは別の述語を引数にする。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      26,
+      27
+    ]
+  },
+  {
+    "id": "INSTANCES",
+    "printed_page": 31,
+    "pdf_page": 43,
+    "description": "例7–9で指定された制約系、解決済み形式、包摂、初期環境の型を一つの仕様に接続。",
+    "implementation": "例7–9で指定された制約系、解決済み形式、包摂、初期環境の型を一つの仕様に接続。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.SourceExample.HerbrandInstance",
+      "HMX.SourceExample.DimensionInstance",
+      "HMX.SourceExample.RecordInstance"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "例7–9で指定された制約系、解決済み形式、包摂、初期環境の型を一つの仕様に接続。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      31,
+      32
+    ]
+  },
+  {
+    "id": "CLASS-RULE",
+    "printed_page": 56,
+    "pdf_page": 68,
+    "description": "Nipkow–Prehoferの比較用規則",
+    "implementation": "クラス制約を引数化しfreshnessをCとΓについて記述。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.QuantifierIntroduction.NipkowPrehofer"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "クラス制約を引数化しfreshnessをCとΓについて記述。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      56
+    ]
+  },
+  {
+    "id": "SMITH-RULE",
+    "printed_page": 57,
+    "pdf_page": 69,
+    "description": "Smithの単変数の比較用規則",
+    "implementation": "p.57はΓについてのみfreshness。図3.3の条件を挿入しない。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.QuantifierIntroduction.SmithPage57"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "p.57はΓについてのみfreshness。図3.3の条件を挿入しない。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      57
+    ]
+  },
+  {
+    "id": "OHORI-RULE",
+    "printed_page": 63,
+    "pdf_page": 75,
+    "description": "Ohoriの比較用規則",
+    "implementation": "kind、kind自由変数とkind付与制約を明示引数とし二つの非出現条件を保持。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.QuantifierIntroduction.Ohori",
+      "HMX.SourceExample.Comparison.OhoriSpecification"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "kind、kind自由変数とkind付与制約を明示引数とし二つの非出現条件を保持。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      63
+    ]
+  },
+  {
+    "id": "SECTION-ASSUMPTIONS",
+    "printed_page": 29,
+    "pdf_page": 41,
+    "description": "§3.2の設定とp.45以降の弱化の選択",
+    "implementation": "LogicalAssumptionsとCoreAssumptionsを区別。弱化を以前の結果へ遡って要求しない。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.LogicalAssumptions",
+      "HMX.CoreAssumptions"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "LogicalAssumptionsとCoreAssumptionsを区別。弱化を以前の結果へ遡って要求しない。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      29
+    ]
+  },
+  {
+    "id": "HERBRAND",
+    "printed_page": 24,
+    "pdf_page": 36,
+    "description": "等式だけのトークン、項制約系の最小性、構文的等号、単一化による充足判定の主張。",
+    "implementation": "等式だけのトークン、項制約系の最小性、構文的等号、単一化による充足判定の主張。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.SourceExample.Herbrand",
+      "HMX.SourceExample.HerbrandSatisfiability",
+      "HMX.SourceExample.HerbrandPresentation"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "等式だけのトークン、項制約系の最小性、構文的等号、単一化による充足判定の主張。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      24
+    ]
+  },
+  {
+    "id": "COMPARISON-ELIM",
+    "printed_page": 50,
+    "pdf_page": 62,
+    "description": "比較対象の体系に共通する量化除去の規則スキーマ。",
+    "implementation": "比較対象の体系に共通する量化除去の規則スキーマ。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.QuantifierIntroduction.Elimination"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "比較対象の体系に共通する量化除去の規則スキーマ。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      50
+    ]
+  },
+  {
+    "id": "CLASS-EXAMPLE",
+    "printed_page": 56,
+    "pdf_page": 68,
+    "description": "Eqのメソッド宣言、開いた世界の射影式と閉じた世界のIntインスタンス。",
+    "implementation": "Eqのメソッド宣言、開いた世界の射影式と閉じた世界のIntインスタンス。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.SourceExample.Comparison.EqualityClassMethod",
+      "HMX.SourceExample.Comparison.OpenEqualityClass",
+      "HMX.SourceExample.Comparison.IntegerEqualityInstance"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "Eqのメソッド宣言、開いた世界の射影式と閉じた世界のIntインスタンス。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      56,
+      57,
+      58
+    ]
+  },
+  {
+    "id": "INDEXED-LIST",
+    "printed_page": 70,
+    "pdf_page": 82,
+    "description": "§3.6.1のList指数型、初期環境、removeを使うプログラムと表示された制約。",
+    "implementation": "§3.6.1のList指数型、初期環境、removeを使うプログラムと表示された制約。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.SourceExample.Comparison.IndexedListEnvironment",
+      "HMX.SourceExample.Comparison.indexedListProgram",
+      "HMX.SourceExample.Comparison.IndexedListConstraint"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "§3.6.1のList指数型、初期環境、removeを使うプログラムと表示された制約。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      70,
+      71,
+      72
+    ]
+  },
+  {
+    "id": "KENNEDY",
+    "printed_page": 81,
+    "pdf_page": 93,
+    "description": "§4.1のM・Tを持つ開いた次元構文、初期環境、プログラムと表示型。例8と異なるdivの型も別に保持。",
+    "implementation": "§4.1のM・Tを持つ開いた次元構文、初期環境、プログラムと表示型。例8と異なるdivの型も別に保持。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.SourceExample.Comparison.KennedyDimension",
+      "HMX.SourceExample.Comparison.KennedyEnvironment",
+      "HMX.SourceExample.Comparison.kennedyProgram",
+      "HMX.SourceExample.Comparison.KennedyType"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "§4.1のM・Tを持つ開いた次元構文、初期環境、プログラムと表示型。例8と異なるdivの型も別に保持。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      81,
+      82,
+      83,
+      84
+    ]
+  },
+  {
+    "id": "SC-RECURSIVE",
+    "printed_page": 38,
+    "pdf_page": 50,
+    "description": "SCの構文にtop・bottom・束縛を持つμを加えるという記述。具体的なregular-treeモデルや展開法則はこの段落にないため構成しない。",
+    "implementation": "SCの構文にtop・bottom・束縛を持つμを加えるという記述。具体的なregular-treeモデルや展開法則はこの段落にないため構成しない。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.SourceExample.RecursiveSubtypeType"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "SCの構文にtop・bottom・束縛を持つμを加えるという記述。具体的なregular-treeモデルや展開法則はこの段落にないため構成しない。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      38
+    ]
+  },
+  {
+    "id": "POSITIVE-WEIGHTS",
+    "printed_page": 182,
+    "pdf_page": 194,
+    "description": "図C.1の前に指定された正の重みという定義域をWeightedSizeSpecificationで明示。",
+    "implementation": "図C.1の前に指定された正の重みという定義域をWeightedSizeSpecificationで明示。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.Expr.WeightedSizeSpecification"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "図C.1の前に指定された正の重みという定義域をWeightedSizeSpecificationで明示。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      182,
+      183
+    ]
+  },
+  {
+    "id": "APPENDIX-COMMON",
+    "printed_page": 208,
+    "pdf_page": 220,
+    "description": "付録C.7.1のregular・unitary・主要制約性・射影閉性、およびC.7.2のXcと主要制約性を命題の前提へ接続。",
+    "implementation": "付録C.7.1のregular・unitary・主要制約性・射影閉性、およびC.7.2のXcと主要制約性を命題の前提へ接続。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.Statement.lemma33",
+      "HMX.Statement.lemma34",
+      "HMX.Statement.lemma35Printed",
+      "HMX.Statement.lemma36Printed",
+      "HMX.Statement.lemma38",
+      "HMX.Statement.lemma39",
+      "HMX.Statement.lemma40",
+      "HMX.Statement.theorem26"
+    ],
+    "source_review_status": "reviewed",
+    "transcription_note": "付録C.7.1のregular・unitary・主要制約性・射影閉性、およびC.7.2のXcと主要制約性を命題の前提へ接続。",
+    "review_method": "PDF text and Lean definition/context comparison",
+    "source_pages": [
+      208,
+      209,
+      210,
+      211,
+      220,
+      221,
+      222
+    ]
   }
 ]

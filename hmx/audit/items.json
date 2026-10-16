@@ -1,21 +1,5 @@
 [
   {
-    "id": "lemma1",
-    "kind": "Lemma",
-    "number": 1,
-    "printed_page": 13,
-    "pdf_page": 25,
-    "source_excerpt": "Lemma 1 Let σ be a closed type scheme. Then [[σ]] is an ideal and W 6∈ [[σ]].",
-    "scope": "background",
-    "lean": [
-      "HMX.HM.Statement.lemma1"
-    ],
-    "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
     "id": "definition1",
     "kind": "Definition",
     "number": 1,
@@ -29,7 +13,40 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "閉じた環境の各束縛について η(x) が型の解釈に属する条件。HM の意味関数は背景モデルの定義式と接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      13
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
+  },
+  {
+    "id": "lemma1",
+    "kind": "Lemma",
+    "number": 1,
+    "printed_page": 13,
+    "pdf_page": 25,
+    "source_excerpt": "Lemma 1 Let σ be a closed type scheme. Then [[σ]] is an ideal and W 6∈ [[σ]].",
+    "scope": "background",
+    "lean": [
+      "HMX.HM.Statement.lemma1"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "閉じたスキームの ideal 性と wrong 非所属の両結論。背景モデルの条件を前提へ接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      13
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "DENOTATION",
+      "HM-DOMAIN"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem1",
@@ -45,7 +62,17 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "閉じた置換後の型・環境、環境モデル条件、wrong 非所属と項の所属の二結論。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      13
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "DENOTATION",
+      "HM-DOMAIN"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem2",
@@ -61,7 +88,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "単一化可能なら変数の改名を除いて一意な mgu、又は単一化子なし。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      14
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem3",
@@ -77,7 +111,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "HM の W 出力について置換後の型付けと型の固定性。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      14
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem4",
@@ -93,7 +134,16 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "HM の完全性。一般化した出力の置換が入力スキームの generic instance である結論。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      15
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "HM-GENERIC"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "corollary1",
@@ -109,7 +159,17 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "HM の閉じた判断から恒等置換の W 出力と一般化型の比較。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      16
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "HM-W",
+      "HM-GENERIC"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition2",
@@ -117,7 +177,7 @@
     "number": 2,
     "printed_page": 19,
     "pdf_page": 31,
-    "source_excerpt": "Definition 2 A simple constraint system is a structure (Ω, `e ) where Ω is a non–",
+    "source_excerpt": "Definition 2 A simple constraint system is a structure (Ω, `e ) where Ω is a non–\n\n[page 20]\nempty set of tokens or (primitive) constraints. I also refer to such constraints as\n\npredicates. The relation `e ⊆ pΩ × Ω is an entailment relation where pΩ is the set\n\nof finite subsets of Ω. I call C ∈ pΩ a constraint set or simply a constraint.\n\n   A constraint system (Ω, `e ) must satisfy for all constraints C, D ∈ pΩ:\n\n\n                       C1 C `e P whenever P ∈ C and\n\n                       C2 C `e Q whenever\n\n                            C `e P for all P ∈ D and D `e Q\n\n\nI extend `e to be a relation on pΩ × pΩ by: C `e D iff C `e P for every P ∈ D.\n\nFurthermore, I define C =e D iff C `e D and D `e C. The term `e C is an\n\nabbreviation for ∅ `e C and true = { P | ∅ `e P } represents the true element.\n\n   I give an example how to generate a simple constraint system based on a first–\n\norder language L.\n\n\nExample 1 For any first–order language L, and countably infinite set of variables\n\nVar, take Ω to be an arbitrary subset of open (L, Var)–formulas, and `e to be\n\nthe entailment relation with respect to some class ∆ of L–structures.              That is,\n\n{P1 , . . . , Pn } `e Q iff for every structure M ∈ ∆, an M –valuation realizes Q when-\n\never it realizes each of P1 , . . . , Pn . Such a (Ω, `e ) is a simple constraint system.\n\n\n\n\n   The extension of a simple constraint system with a projection operator ∃ᾱ leads\n\nto a cylindric constraint system.",
     "scope": "core",
     "lean": [
       "HMX.SimpleTheory"
@@ -125,7 +185,15 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "空でない任意のトークン集合と有限集合上の含意 C1・C2。型・射影を前提にしない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      19,
+      20
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition3",
@@ -133,15 +201,98 @@
     "number": 3,
     "printed_page": 20,
     "pdf_page": 32,
-    "source_excerpt": "Definition 3 A cylindric constraint system is a structure CCS = (Ω, `e ,Var, {∃α | α ∈",
+    "source_excerpt": "Definition 3 A cylindric constraint system is a structure CCS = (Ω, `e ,Var, {∃α | α ∈\n\n[page 21]\nVar}) such that:\n\n\n                   • (Ω, `e ) is a simple constraint system,\n\n                   • Var is an infinite set of variables,\n\n                   • For each variable α ∈ Var, ∃α : pΩ → pΩ\n\n                      is an operation satisfying:\n\n                       E1 C `e ∃α.C\n\n                       E2 C `e D         implies      ∃α.C `e ∃α.D\n\n                       E3 ∃α.(C ∧ ∃α.D) =e (∃α.C) ∧ (∃α.D)\n\n                       E4 ∃α.∃β.C =e ∃β.∃α.C",
     "scope": "core",
     "lean": [
+      "HMX.CylindricSystem",
       "HMX.CylindricTheory"
     ],
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "任意のトークン集合、無限変数集合、射影 E1–E4。項制約への特殊化を分けた。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      20,
+      21
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
+  },
+  {
+    "id": "example1",
+    "kind": "Example",
+    "number": 1,
+    "printed_page": 20,
+    "pdf_page": 32,
+    "source_excerpt": "Example 1 For any first–order language L, and countably infinite set of variables\n\nVar, take Ω to be an arbitrary subset of open (L, Var)–formulas, and `e to be\n\nthe entailment relation with respect to some class ∆ of L–structures.              That is,\n\n{P1 , . . . , Pn } `e Q iff for every structure M ∈ ∆, an M –valuation realizes Q when-\n\never it realizes each of P1 , . . . , Pn . Such a (Ω, `e ) is a simple constraint system.\n\n\n\n\n   The extension of a simple constraint system with a projection operator ∃ᾱ leads\n\nto a cylindric constraint system.",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.FirstOrderEntails",
+      "HMX.SourceExample.FirstOrderSystem"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "可算無限の変数、開いた式の部分集合、構造のクラスと全付値についての含意を記述。 付値の型はモデルMに依存する。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      20
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "definition4",
+    "kind": "Definition",
+    "number": 4,
+    "printed_page": 21,
+    "pdf_page": 33,
+    "source_excerpt": "Definition 4 Let C be a constraint. Then fv(C) = {α | ∃α.C 6 =e C}.",
+    "scope": "core",
+    "lean": [
+      "HMX.CylindricSystem.fv",
+      "HMX.CylindricTheory.fv"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "射影後と元の制約が含意同値でない変数の集合。構文上の出現変数とは区別。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      21
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "FV"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
+  },
+  {
+    "id": "example2",
+    "kind": "Example",
+    "number": 2,
+    "printed_page": 21,
+    "pdf_page": 33,
+    "source_excerpt": "Example 2 Let the token set Ω consist of some subclass of (L,Var) formulas closed\n\nunder existential quantification of finite conjunctions. Each operator ∃ᾱ is then\n\ninterpreted by the function which maps each finite set {P1 , . . . , Pn } of tokens to the\n\nset of tokens {∃ᾱ.P1 ∧ . . . ∧ Pn }. This way the four conditions above are satisfied.\n\n\n   The projection operator ∃ᾱ allows us to bind variables ᾱ in a constraint. If the\n\nconstraint system models a boolean algebra, projection corresponds to existential\n\nquantification. Based on the projection operator, I define the free variables fv(C)\n\nand satisfiability of a constraint C.",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.FirstOrderProjection",
+      "HMX.SourceExample.FirstOrderCylindricSystem"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "有限連言の存在量化に関するトークン集合の閉性と、実際の射影演算との一致を記述。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      21
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
   },
   {
     "id": "remark1",
@@ -157,23 +308,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
-    "id": "definition4",
-    "kind": "Definition",
-    "number": 4,
-    "printed_page": 21,
-    "pdf_page": 33,
-    "source_excerpt": "Definition 4 Let C be a constraint. Then fv(C) = {α | ∃α.C 6 =e C}.",
-    "scope": "core",
-    "lean": [
-      "HMX.CylindricTheory.fv"
+    "transcription_note": "連言・射影の結合順位、有限集合と含意同値の表記。命題を仮定にせず説明として保持。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      21
     ],
-    "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition5",
@@ -184,28 +326,22 @@
     "source_excerpt": "Definition 5 Let C be a constraint. Then C is satisfiable iff `e ∃fv(C).C.",
     "scope": "core",
     "lean": [
+      "HMX.CylindricSystem.Satisfiable",
       "HMX.CylindricTheory.Satisfiable"
     ],
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
-    "id": "lemma2",
-    "kind": "Lemma",
-    "number": 2,
-    "printed_page": 22,
-    "pdf_page": 34,
-    "source_excerpt": "Lemma 2 Let C be a constraint. Then C is satisfiable iff ∃α.C is satisfiable.",
-    "scope": "core",
-    "lean": [
-      "HMX.Statement.lemma2"
+    "transcription_note": "全自由変数を射影した制約が true から従う。有限列挙を明示する読みは FV に記録。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      22
     ],
-    "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "FV"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition6",
@@ -222,7 +358,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "有限支持・冪等な代入と型への準同型的拡張。一般の写像との区別を IsSubstitution で指定。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      22
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition7",
@@ -230,7 +373,7 @@
     "number": 7,
     "printed_page": 22,
     "pdf_page": 34,
-    "source_excerpt": "Definition 7 A term constraint system T CST = (Ω, `e , Var, {∃α | α ∈ Var}) over\n\na term algebra T is a cylindric constraint system with predicates of the form\n\n\n                              p(τ1 , . . . , τn )   (τi ∈ T )",
+    "source_excerpt": "Definition 7 A term constraint system T CST = (Ω, `e , Var, {∃α | α ∈ Var}) over\n\na term algebra T is a cylindric constraint system with predicates of the form\n\n\n                              p(τ1 , . . . , τn )   (τi ∈ T )\n\n[page 23]\nsuch that the following holds:\n\n\n            • For each pair of types τ, τ 0 there is an equality\n\n                 predicate (τ = τ 0 ) in T CST , which satisfies:\n\n                  D1 `e (α = α)\n\n                  D2 (α = β) `e (β = α)\n\n                  D3 (α = β) ∧ (β = γ) `e (α = γ)\n\n                  D4 (α = β) ∧ ∃α.(C ∧ (α = β)) `e C\n\n                  D5 (τ = τ 0 ) `e (T [τ ] = T [τ 0 ])\n\n                        where T [] is an arbitrary term context\n\n            • For each predicate p(τ1 , . . . , τn ),\n\n                  D6 [τ /α]p(τ1 , . . . , τn ) =e ∃α.(p(τ1 , . . . , τn ) ∧ (α = τ ))\n\n                        where α 6∈ fv(τ )",
     "scope": "core",
     "lean": [
       "HMX.ConstraintTheory",
@@ -240,23 +383,40 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "述語・等式と D1–D6。D4 に変数の相異条件を補わず、D6 の非出現条件を保持。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      22,
+      23
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "D4"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
-    "id": "remark2",
-    "kind": "Remark",
+    "id": "lemma2",
+    "kind": "Lemma",
     "number": 2,
-    "printed_page": 23,
-    "pdf_page": 35,
-    "source_excerpt": "Remark 2 Conditions D1 – D4 are the conditions imposed on a cylindric constraint\n\nsystem with diagonal elements, which is usually taken as the foundation of constraint\n\nprogramming languages. D4 says that equals can be substituted for equals; it is in\n\neffect the Leibniz principle. D5 states that (=) is a congruence. D6 connects the\n\nsyntactic operation of a substitution over predicates 1 with the semantic concepts\n\nof projection and equality. Substitution is extended to arbitrary constraints in the\n\ncanonical way:\n\n\n                     [τ /α](P1 ∧ . . . ∧ Pn ) = [τ /α]P1 ∧ . . . ∧ [τ /α]Pn .",
+    "printed_page": 22,
+    "pdf_page": 34,
+    "source_excerpt": "Lemma 2 Let C be a constraint. Then C is satisfiable iff ∃α.C is satisfiable.",
     "scope": "core",
     "lean": [
-      "HMX.SourceRemark.remark2"
+      "HMX.Statement.lemma2"
     ],
     "status": "transcribed",
-    "visual_check": true,
+    "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "任意の cylindric system で射影前後の充足可能性の同値。後続の項制約系へ限定しない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      22
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma3",
@@ -272,7 +432,66 @@
     "status": "transcribed",
     "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "新鮮な β への束縛変数の変更と射影の含意同値。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      23
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
+  },
+  {
+    "id": "remark2",
+    "kind": "Remark",
+    "number": 2,
+    "printed_page": 23,
+    "pdf_page": 35,
+    "source_excerpt": "Remark 2 Conditions D1 – D4 are the conditions imposed on a cylindric constraint\n\nsystem with diagonal elements, which is usually taken as the foundation of constraint\n\nprogramming languages. D4 says that equals can be substituted for equals; it is in\n\neffect the Leibniz principle. D5 states that (=) is a congruence. D6 connects the\n\nsyntactic operation of a substitution over predicates 1 with the semantic concepts\n\nof projection and equality. Substitution is extended to arbitrary constraints in the\n\ncanonical way:\n\n\n                     [τ /α](P1 ∧ . . . ∧ Pn ) = [τ /α]P1 ∧ . . . ∧ [τ /α]Pn .",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceRemark.remark2"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "D1–D6の説明と述語への代入の拡張。D4の修正条件は追加しない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      23
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
+  },
+  {
+    "id": "example3",
+    "kind": "Example",
+    "number": 3,
+    "printed_page": 24,
+    "pdf_page": 36,
+    "source_excerpt": "Example 3 For any term algebra T let HERBRAND = (Ω, `e , Var, {∃α | α ∈\n\nVar}) be the minimal term constraint system where Ω contains only primitive con-\n\nstraints of the form (τ = τ 0 ) where τ and τ 0 are types from T . Equality in HERBRAND\n\nis syntactic, i.e. T is a free algebra. Satisfiability can be checked by (first–order) uni-\n\nfication.\n\n\n    A more refined example of a term constraint system deals with physical dimension\n\ntypes in the style of Kennedy [Ken96]. The idea is to distinguish between values\n\nrepresenting different dimensions such as mass and time. To this purpose, the type\n\nlanguage is now divided into dimension types and the common types.",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.EqualityToken",
+      "HMX.SourceExample.EqualityTermLaws",
+      "HMX.SourceExample.Herbrand",
+      "HMX.SourceExample.HerbrandSatisfiability"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "等式専用トークン、定義7の六条件、最小性、自由構文上の等号を記述。充足可能性と単一化の関係も未証明の命題として収録。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      24
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "D4",
+      "HERBRAND-MINIMUM"
+    ],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
   },
   {
     "id": "lemma4",
@@ -288,7 +507,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "代入の有限定義域に対応する等式の連言と射影による表現。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      24
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma5",
@@ -304,7 +530,178 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "制約含意を両側への同じ代入が保存する。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      24
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
+  },
+  {
+    "id": "example4",
+    "kind": "Example",
+    "number": 4,
+    "printed_page": 25,
+    "pdf_page": 37,
+    "source_excerpt": "Example 4 Let T be the two-sorted term algebra consisting of dimensions and types.\n\n\n                 Dimensions d ::⊇ α | i(d) | prod(d, d) | 1 | m | s\n\n                 Types           τ ::= α | dim(d) | τ → τ\n\n\nThe dimension constructor i(·) corresponds to the inverse of a dimension and prod(·, ·)\n\nto the product of two dimensions. Dimension constants are 1 for the unit measure,\n\nm for meters and s for seconds. There might be other dimension constructors besides\n\nthe mentioned ones, therefore the language of dimension types is left open. A type\n\nis either a type variable, or a dimension, or a function type. DIM is then the term\n\nconstraint system which obeys the following additional conditions, which specify that\n\ndimension types form an Abelian group.\n\n\n               DIM1     `e (prod(α, β) = prod(β, α))\n\n               DIM2     `e (prod(α, prod(β, γ)) = prod(prod(α, β), γ))\n\n               DIM3     `e (prod(α, 1) = α)\n\n               DIM4     `e (prod(α, i(α)) = 1)\n\n\n   A similar idea can be employed to encode a simple form of arithmetic.",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.Dimension",
+      "HMX.SourceExample.SortedType",
+      "HMX.SourceExample.SortedEncoding",
+      "HMX.SourceExample.DIM",
+      "HMX.SourceExample.DimensionLaws"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "開いた次元構文、m・s・1、型への埋め込みとDIM1–DIM4。等式の両辺を同じ次元項の表現へ結び付ける。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      25
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "EXAMPLE-SIGNATURES"
+    ],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "example5",
+    "kind": "Example",
+    "number": 5,
+    "printed_page": 25,
+    "pdf_page": 37,
+    "source_excerpt": "Example 5 Let T be a two–sorted algebra consisting of indices and types.\n\n\n                        Indices i ::= α | + (i, i) | 0 | 1\n\n                        Types     τ ::= α | index(i) | τ → τ\n\n\n   The index constants 0 and 1 are constant type constructors and represent the\n\ncorresponding values. Constructor +(·, ·) has the obvious meaning. The constructors\n\nobey the usual laws of arithmetic. This can be specified by constraint rules of the\n\nform:\n\nCHAPTER 3. THE HM(X) FRAMEWORK                                                             26\n\n\n\n\n                   INDEX1         `e (+(1, 0) = 1)\n\n                   INDEX2         `e (+(i1 , i2 ) = +(i2 , i1 ))\n\n                   INDEX3         `e (+(+(i1 , i2 ), i3 ) = +(i1 , +(i2 , i3 )))\n\n\n   In the final example, I consider an extension of a term constraint system with\n\nsubtyping.",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.Index",
+      "HMX.SourceExample.SortedType",
+      "HMX.SourceExample.INDEX",
+      "HMX.SourceExample.IndexLaws"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "閉じた指数構文、0・1・加算、型への埋め込みと印刷されたINDEX1–INDEX3だけを記述。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      25,
+      26
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "EXAMPLE-SIGNATURES"
+    ],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "example6",
+    "kind": "Example",
+    "number": 6,
+    "printed_page": 26,
+    "pdf_page": 38,
+    "source_excerpt": "Example 6 A subtype constraint system over a term algebra T is a term constraint\n\nsystem with a subtype predicate (τ <: τ 0 ) for each pair of types τ and τ 0 which satisfies\n\nthe following conditions.\n\n\n                     SUB1 (α = α0 ) =e (α <: α0 ) ∧ (α0 <: α)\n\n\n\n                                 D `e (α10 <: α1 )       D `e (α2 <: α20 )\n                     SUB2\n                                     D `e (α1 → α2 <: α10 → α20 )\n\n\n\n                                 D `e (α1 <: α2 )        D `e (α2 <: α3 )\n                     SUB3\n                                             D `e (α1 <: α3 )\n\n\nLet SC be a subtype constraint system with primitive types Int and Float and record\n\ntypes of the form {l1 : τ1 , . . . , ln : τn }. Records are modelled by admitting constructors\n\nof the form\n\n                    l1 . . . ln : τ1 → . . . → τn → {l1 : τ1 , . . . , ln : τn }\n\nin the term algebra. I assume that record fields are ordered with respect to a given\n\nordering relation on field labels. The additional types obey the following rules.\n\nCHAPTER 3. THE HM(X) FRAMEWORK                                                                  27\n\n\n\n\n            SUB4 `e (Int <: Float)\n\n\n\n            SUB5 `e ({l1 : τ1 , . . . , ln : τn , . . .} <: {l1 : τ1 , . . . , ln : τn })\n\n\n\n                                  D `e (τ1 <: τ10 ) . . . D `e (τn <: τn0 )\n            SUB6\n                        D `e ({l1 : τ1 , . . . , ln : τn } <: {l1 : τ10 , . . . , ln : τn0 })\n\n\n3.1.1    Summary\n\nConstraints are semantically described by adopting the notion of cylindric algebras\n\nfound in the constraint logic programming framework [JM94]. Cylindric algebras\n\ncome with a projection operator ∃ᾱ that binds some subset of variables ᾱ in the\n\nconstraint. In the usual case where constraints are boolean algebras, projection\n\ncorresponds to existential quantification. The syntactic concept of substitutions can\n\nbe described semantically by projection and equality, i.e. [τ /α]C = ∃α.((α = τ ) ∧ C)\n\nwhere C is a constraint. I introduced term constraint systems which have a well–\n\nbehaved notion of substitution. Term constraint systems will be the parameter which\n\nallows the HM(X) framework to be customized to different application domains.\n\nCommonly, I refer to term constraint systems as constraint systems.\n\n\n\n3.2     Logical System\n\nI assume given a term constraint system X over a term algebra T as the parameter.\n\nThe HM(X) system consists of the following syntactic domains:",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.SubtypeLaws",
+      "HMX.SourceExample.RecordSubtypeLaws",
+      "HMX.SourceExample.OrderedFields",
+      "HMX.SourceExample.RecordConstructorType"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "SUB1–SUB6、Int・Float、ラベルの順序とレコード構築子の型を記述。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      26,
+      27
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "example7",
+    "kind": "Example",
+    "number": 7,
+    "printed_page": 31,
+    "pdf_page": 43,
+    "source_excerpt": "Example 7 The Hindley/Milner system is an instance of the HM(X) type system\n\nframework. Take X to be the Herbrand constraint system over the algebra of types τ .\n\nTake the set of solved forms to be the set consisting only of true, which is represented\n\nby the empty token set. Take \u0016 to be syntactic type equality. Then the only type\n\nschemes arising in proof trees of valid typing judgments are of the form ∀α.{} ⇒\n\nσ, which corresponds to Hindley/Milner type schemes ∀α.σ. The subsumption rule\n\nbecomes the trivial tautology which states that a judgment can be derived if it can\n\nbe derived. It is easy to convince oneself that a judgment Γ ` e : σ is derivable in\n\nHindley/Milner if and only if {}, Γ ` e : σ is derivable in HM(HERBRAND). It\n\nmust be noted that the judgment 2\n\n\n                            (α = β), {x : α, y : β} ` x = y : Bool\n\n\nis not derivable in HM(HERBRAND) because the constraint (α = β) is not contained\n\nin the set of solved forms.",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.HerbrandInstance",
+      "HMX.SourceExample.HerbrandPresentation",
+      "HMX.SourceExample.InitialBinding"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "HERBRANDとの対応、trueだけの解決済み形式、等号としての包摂、脚注2の等号プリミティブの型を接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      31
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "example8",
+    "kind": "Example",
+    "number": 8,
+    "printed_page": 31,
+    "pdf_page": 43,
+    "source_excerpt": "Example 8 Let X be the constraint system DIM, let the set of solved forms be the\n\nset consisting only of true, and let subsumption \u0016 be the equality relation = in DIM.\n\nThen Kennedy’s system can be recovered simply by adding primitives to the initial\n\ntype environment Γ0 that deal with dimensions. E.g. I assume that\n\n\n                  div : ∀d1 , d2 . dim(d1 ) → dim(d2 ) → dim(prod(d1 , i(d2 )))\n  2\n      Given the primitive =: ∀α.α → α → Bool in the initial type environment Γ0 .\n\nCHAPTER 3. THE HM(X) FRAMEWORK                                                           32\n\n\nis contained in Γ0 . Other basic connectives are treated analogously.",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.DimensionInstance",
+      "HMX.SourceExample.InitialBinding"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "DIMの条件、解決済み形式、包摂、Γ₀中のdivの型を同じ命題に結合。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      31,
+      32
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "example9",
+    "kind": "Example",
+    "number": 9,
+    "printed_page": 32,
+    "pdf_page": 44,
+    "source_excerpt": "Example 9 Let X be the subtype constraint system SC and let the subsumption\n\nrelation \u0016 be equal to the subtyping relation <:. Let the set of solved forms S be all\n\nsatisfiable constraints in SC. For every record {l1 : τ1 , . . . , ln : τn } in a program, I\n\nadd a datatype constructor\n\n\n                    l1 . . . ln : τ1 → . . . → τn → {l1 : τ1 , . . . , ln : τn }\n\n\nand for every field label l I add a function\n\n\n                                       ( .l) : {l : τ } → τ\n\n\nto the initial type environment Γ0 . The first corresponds to record creation, the second\n\nto record selection. Other basic primitive functions are defined analogously.\n\n   The resulting system is related to the subtyping approach of the Hopkins Object\n\nGroup [EST95b]. The main difference is that I use logical rules for quantifier intro-\n\nduction and elimination, whereas the Hopkins Object Group use a syntactic approach\n\nwhere quantifier introduction is coupled with let, and quantifier elimination is coupled\n\nwith variable use. They also consider updatable references and variants. If consid-\n\nering only programs involving record operations, then HM(SC) and the subtyping\n\napproach of the Hopkins Object Group type the same set of programs.\n\n\n3.2.1     Summary\n\nHM(X) instances are described by the five–tuple (X, \u0016, T , S, Γ0 ). The term algebra T\n\ndescribes the language of types and the term constraint X the language of constraints.\n\nX furthermore defines the subsumption predicate \u0016. The set of solved forms S",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.RecordInstance",
+      "HMX.SourceExample.RecordInitialEnvironment",
+      "HMX.SourceExample.SubtypeInstance"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "SCの六法則、充足可能な解決済み形式、包摂、プログラムのレコード構築子・フィールド選択子の型宣言を結合。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      32,
+      26,
+      27
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "RECORD-PRIMITIVES"
+    ],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
   },
   {
     "id": "definition8",
@@ -320,7 +717,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "単型は自由型変数が空の型。単なる非量化型という意味へ変更していない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      33
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition9",
@@ -336,39 +740,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
-    "id": "lemma6",
-    "kind": "Lemma",
-    "number": 6,
-    "printed_page": 35,
-    "pdf_page": 47,
-    "source_excerpt": "Lemma 6 Let σ be a closed type scheme. Then [[σ]] is an ideal.\n\n    Furthermore, I conclude that in a sound constraint system the error element is\n\nnot contained in a closed type scheme.",
-    "scope": "core",
-    "lean": [
-      "HMX.Statement.lemma6"
+    "transcription_note": "C∈S、射影後の充足から閉じた単型の等式を伴う射影の充足へ。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      33
     ],
-    "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
-    "id": "lemma7",
-    "kind": "Lemma",
-    "number": 7,
-    "printed_page": 35,
-    "pdf_page": 47,
-    "source_excerpt": "Lemma 7 Given a sound constraint system X and a closed type scheme σ. Then\n\nW 6∈ [[σ]].",
-    "scope": "core",
-    "lean": [
-      "HMX.Statement.lemma7"
-    ],
-    "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition10",
@@ -382,9 +761,16 @@
       "HMX.Meaning.Models"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "閉じた型環境の全束縛について意味関数への所属を要求。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      35
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "definition11",
@@ -398,25 +784,68 @@
       "HMX.Meaning.Coherent"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "閉じた二つの単型について、true 下の型比較が解釈の包含を導く。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      35
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
   },
   {
-    "id": "theorem5",
-    "kind": "Theorem",
-    "number": 5,
-    "printed_page": 36,
-    "pdf_page": 48,
-    "source_excerpt": "Theorem 5 (Type Soundness) Let C, Γ ` e : σ be a valid typing judgment in\n\nHM(X), where X is a sound and coherent constraint system. Let φ be a substitution\n\nsuch that φΓ and φσ are closed and such that `e φC and φ is consistent in Γ. Let\n\nη be a variable environment such that η |= φΓ. Then\n\n\n                                    (1) W 6∈ [[φσ]]\n\n                                    (2) [[e]]η ∈ [[φσ]]\n\n\n   The type soundness theorem can be simplified to top–level programs. As a corol-\n\nlary, I find Milner’s slogan “well types programs do not go wrong” carries over to\n\nsound constraint extensions.",
+    "id": "lemma6",
+    "kind": "Lemma",
+    "number": 6,
+    "printed_page": 35,
+    "pdf_page": 47,
+    "source_excerpt": "Lemma 6 Let σ be a closed type scheme. Then [[σ]] is an ideal.\n\n    Furthermore, I conclude that in a sound constraint system the error element is\n\nnot contained in a closed type scheme.",
     "scope": "core",
     "lean": [
-      "HMX.Statement.theorem5"
+      "HMX.Statement.lemma6"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "閉じた許容スキームの ideal 性。意味関数・CPO の定義条件を接続し、ideal 性自体は仮定にしない。 §3.2の型比較・Sの充足可能性をLogicalAssumptionsとして接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      35
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "DENOTATION",
+      "SEMANTIC-SCHEMES"
+    ],
+    "review_method": "PDF text and rendered formula"
+  },
+  {
+    "id": "lemma7",
+    "kind": "Lemma",
+    "number": 7,
+    "printed_page": 35,
+    "pdf_page": 47,
+    "source_excerpt": "Lemma 7 Given a sound constraint system X and a closed type scheme σ. Then\n\nW 6∈ [[σ]].",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma7"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "健全性と閉じた許容スキームから wrong 非所属。意味関数の条件を接続し、非所属を仮定にしない。 §3.2の型比較・Sの充足可能性をLogicalAssumptionsとして接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      35
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "DENOTATION",
+      "SEMANTIC-SCHEMES"
+    ],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "corollary2",
@@ -430,9 +859,43 @@
       "HMX.Statement.corollary2"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "健全かつ coherent な閉じた true 判断と環境モデルから項の wrong 非一致。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      36
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "DENOTATION"
+    ],
+    "review_method": "PDF text and rendered formula"
+  },
+  {
+    "id": "theorem5",
+    "kind": "Theorem",
+    "number": 5,
+    "printed_page": 36,
+    "pdf_page": 48,
+    "source_excerpt": "Theorem 5 (Type Soundness) Let C, Γ ` e : σ be a valid typing judgment in\n\nHM(X), where X is a sound and coherent constraint system. Let φ be a substitution\n\nsuch that φΓ and φσ are closed and such that `e φC and φ is consistent in Γ. Let\n\nη be a variable environment such that η |= φΓ. Then\n\n\n                                    (1) W 6∈ [[φσ]]\n\n                                    (2) [[e]]η ∈ [[φσ]]\n\n\n   The type soundness theorem can be simplified to top–level programs. As a corol-\n\nlary, I find Milner’s slogan “well types programs do not go wrong” carries over to\n\nsound constraint extensions.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem5"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "§3.3.1の意味関数・背景モデル、sound/coherent、閉じた整合的代入、モデル条件から二結論。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      36
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "DENOTATION"
+    ],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "definition12",
@@ -446,9 +909,18 @@
       "HMX.ConstraintTheory.StronglySound"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "C が射影自由 D の射影であること、D の充足と閉じた代入の存在。追加の解決済み形式の条件は別宣言。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      37
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "STRONG-SCOPE"
+    ],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "definition13",
@@ -462,9 +934,16 @@
       "HMX.ConstraintTheory.StronglySound"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "定義12と同じ強健全性の式。§3.3.2の主張に§3.3.1の追加条件を無断で挿入しない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      39
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "lemma8",
@@ -478,9 +957,18 @@
       "HMX.Statement.lemma8Printed"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "強健全性、閉じた代入、制約充足・環境整合性、推移閉包による還元。原典の δ の型条件は補わない。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      39
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "REDUCTION"
+    ],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "conjecture1",
@@ -497,7 +985,17 @@
     "visual_check": false,
     "category": "conjecture_not_theorem",
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "sound（strongly sound ではない）、閉じた整合的代入から eval≠wrong という予想。定理として仮定しない。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      40
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "REDUCTION",
+      "EVAL-CLOSURE"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma9",
@@ -513,7 +1011,16 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "健全性・coherence、閉じた整合的代入、型比較と充足から解釈の包含。 §3.2の型比較・Sの充足可能性をLogicalAssumptionsとして接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      42
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "DENOTATION"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma10",
@@ -529,7 +1036,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "型比較の反射・弱化・推移の三規則。§3.2の許容条件を明示。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      42
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma11",
@@ -545,7 +1059,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "比較 i と i2 の両方向。対象は同じ制約とスキーム。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      42
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition14",
@@ -561,7 +1082,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "同じ定義域を持つ環境の束縛ごとの型比較。比較の向き Γ′≼Γ を保持。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      43
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition15",
@@ -577,7 +1105,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "環境比較と制約含意をともに左側の制約 C の下で要求。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      43
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition16",
@@ -593,7 +1128,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "C 下で型スキームから非量化型へのインスタンスが存在すること。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      43
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition17",
@@ -611,7 +1153,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "制約への代入後の S 所属、束縛変数との衝突回避、型スキーム・環境への拡張。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      43
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma12",
@@ -627,7 +1176,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "制約・環境に整合的な代入による判断の置換。p.45以降の弱化選択を遡って前提にしない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      44
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma13",
@@ -644,7 +1200,16 @@
     "visual_check": false,
     "category": "explicitly_rejected_claim",
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "原典が一般には不成立とする命題。結論の C を C′へ修正しない。 §3.2の型比較・Sの充足可能性をLogicalAssumptionsとして接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      44
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "L13"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma14",
@@ -660,7 +1225,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "Γ・σとの整合性、C′∈S、C′からφCの含意。p.45の弱化の選択を引き継ぐ。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      45
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma15",
@@ -676,7 +1248,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "通常判断と正規化判断の対応。スキームの相互比較は true 下。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      46
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma16",
@@ -692,7 +1271,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "構文に沿った導出 s から通常の単型判断への健全性。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      46
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma17",
@@ -708,7 +1294,16 @@
     "status": "transcribed",
     "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "環境の実現可能性、単型・量化型の二場合、結論の未束縛 σ を独立の引数として保持。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      47
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "L17"
+    ],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "lemma18",
@@ -724,7 +1319,294 @@
     "status": "transcribed",
     "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "制約付き環境の比較による s 判断の弱化。追加した弱化規則も同じ環境を保持。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      47
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
+  },
+  {
+    "id": "example10",
+    "kind": "Example",
+    "number": 10,
+    "printed_page": 51,
+    "pdf_page": 63,
+    "source_excerpt": "Example 10\n\nCHAPTER 3. THE HM(X) FRAMEWORK                                                         52\n\n\n      let\n\n      f: ∀α.(List α ≤ Comparable Bool) ⇒ List α → List α\n\n      f x = if x.less(true) then x else Nil\n\n      in 1\n\n   I use a Haskell-style notation, adding type annotations for illustration purposes.\n\nUsing rule (∀ Intro-1), the program in Figure 10 is well-typed, even though one would\n\nnot expect the constraint in function f’s type scheme to have a solution, since the\n\nfunction type List α would not be a subtype of Comparable Bool.\n\n   In the ideal semantics of types [MPS86] which represents universal quantification\n\nby intersection, f ’s type would be an empty intersection. This is equal to the whole\n\ntype universe including the error element wrong. However, the whole program in\n\nFigure 10 is still sound because every application of f must provide a valid instantia-\n\ntion of the constraint. Since the constraint is unsatisfiable, no application is possible.\n\nIn essence, Jones treats constraints as proof obligations that have to be fulfilled by\n\npresenting “evidence” at the instantiation site. This scheme is clearly inspired by\n\nHaskell’s implementation of overloading by dictionary passing. It runs into problems\n\nif one ever wants to compute a value of a constrained type without any instantiation\n\nsites, as in the following slight variation of Example 10.",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.Comparison.example10",
+      "HMX.SourceExample.Comparison.example10FunctionType",
+      "HMX.SourceExample.Comparison.ComparableAssumptions"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "Comparableの定義、Listの部分型条件、Nilの初期型、表示プログラムとfの注釈。比較対象の規則をHM(X)へ追加しない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      51,
+      52
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "example11",
+    "kind": "Example",
+    "number": 11,
+    "printed_page": 52,
+    "pdf_page": 64,
+    "source_excerpt": "Example 11\n\n      let\n\n            y: ∀α.(List α ≤ Comparable α) ⇒ Bool\n\n            y = Nil.less(true)\n\n      in 1\n\nJones excludes this code on the grounds that y’s type is ambiguous, but it is unclear\n\nhow to generalize this restriction to arbitrary constraint systems.",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.Comparison.example11",
+      "HMX.SourceExample.Comparison.example11ValueType",
+      "HMX.SourceExample.Comparison.ComparableAssumptions"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "yの定義と注釈を保持。注釈中のComparable alphaをBoolへ修正しない。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      52,
+      51
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "EXAMPLE11"
+    ],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "example12",
+    "kind": "Example",
+    "number": 12,
+    "printed_page": 53,
+    "pdf_page": 65,
+    "source_excerpt": "Example 12\n\n      let\n\n            f: ∀β.β → Int\n\n            fx=\n\n               let y: ∀α.(List α ≤ Comparable β) ⇒ Bool\n\n                  y = Nil.less(x)\n\n               in 1\n\n      in f true\n\nThe constraint List α ≤ Comparable β has a solution, namely β = List α. Therefore,\n\nCHAPTER 3. THE HM(X) FRAMEWORK                                                      54\n\n\nusing rule (∀ Intro-2) I can generalize y’s type to\n\n\n                           ∀α.(List α ≤ Comparable β) ⇒ Bool.\n\n\nOn the other hand, if I substitute the actual parameter true in f’s definition, I get\n\nagain Example 11 which is not typable under the system with (∀ Intro-2). Hence,\n\nthe system with (∀ Intro-2) does not enjoy the property of subject reduction, which\n\nstates that if a term is typable then its reduction instances are typable as well. In a\n\nlater version, they use rule (∀ Intro–HOG) instead.\n\n   In contrast, G. Smith [Smi91] proposed rule (∀ Intro–Smith). The traded con-\n\nstraint D must be solvable by instantiation of only the quantified variables ᾱ. Hence,\n\nthe previous mentioned problems would disappear under Smith’s system. Smith’s\n\nformulation seems however overly restrictive. Consider the following example. I\n\nassume that Comparable has precisely two instances:\n\n     Int ≤ Comparable Int\n\n     Char ≤ Comparable Char\n\nNow consider the following program:",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.Comparison.example12",
+      "HMX.SourceExample.Comparison.example12FunctionType",
+      "HMX.SourceExample.Comparison.example12ValueType",
+      "HMX.SourceExample.Comparison.ComparableAssumptions"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "入れ子のlet、f true、fとyの表示された型注釈を記述。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      53,
+      54,
+      51
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "example13",
+    "kind": "Example",
+    "number": 13,
+    "printed_page": 54,
+    "pdf_page": 66,
+    "source_excerpt": "Example 13\n\n     let\n\n           f: ∀β.β → Int\n\n           fx=\n\n              let g y = y.less(x)\n\n              in 1\n\n     in 1\n\nCHAPTER 3. THE HM(X) FRAMEWORK                                                     55\n\n\nWhen typing the definition of g, Smith’s system requires a solution of the constraint\n\nτ ≤ Comparable β, where τ is y’s type. But none of the two possible substitutions\n\nτ = Int or τ = Char satisfy the constraint. This shows that Smith’s formulation has\n\nproblems when typing definitions when no instantiation sites are present.\n\n   Another quantifier introduction rule has been suggested by the Hopkins Objects\n\nGroup [EST95b]. Constrained D is not only moved from the left–hand side of the\n\nturnstile to the right–hand side, but a copy of D is kept on the left–hand side. This\n\nseems to overcome all previously mentioned problems. However, rule (∀ Intro–HOG)\n\nseems strange in that its conclusion contains two copies of the constraint D: one\n\nin which the type variables α are bound and one in which they are free. Actually,\n\nthe Hopkins Objects Group uses a slightly different system in which generalization\n\nis coupled with the let rule and one of the two constraints undergoes a variable\n\nrenaming. Nevertheless, rule (∀ Intro–HOG) does not seem to apply to systems\n\nwhich follow the open world approach.\n\n   I observe that Jones’s formulation of the quantifier introduction rule works well\n\nin systems which follow the open world approach and which use a lazy semantics.\n\nBut this formulation has problems when dealing with a strict semantics. Hence,\n\nJones’s formulation supports a “lazy” inference approach. Constraints need only to\n\nbe satisfied at instantiation sites. Aiken/Wimmers first formulation of the quantifier\n\nintroduction rule does not enjoy a subject reduction property. Smith’s and the\n\nHopkins Object Group’s formulation of the quantifier introduction rule follow the\n\nclosed world approach. Smith’s formulation has problems when typing definitions\n\nfirst, because then no knowledge about possible instantiation sites is available yet.\n\nThis can be seen as a “strict” inference approach, constraints need additionally\n\nsatisfied at definition sites. The (∀ Intro) rule in HM(X) is capable of modeling all\n\napproaches, simply by the way projection is defined on constraints in solved form.",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.Comparison.example13",
+      "HMX.SourceExample.Comparison.example13FunctionType",
+      "HMX.SourceExample.Comparison.ClosedComparableAssumptions"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "IntとCharの二つだけのインスタンスという別の状況、プログラム、fの注釈を記述。例10の仮定へ混ぜない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      54,
+      55
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "example14",
+    "kind": "Example",
+    "number": 14,
+    "printed_page": 60,
+    "pdf_page": 72,
+    "source_excerpt": "Example 14\n\n\n\n       f: ∀β.∀α.(o :: α → β) ⇒ α → Int\n\n       fx=\n\n          let g: β → Bool\n\n              g = λ y. eq (o x) y\n\n          in 1\n\n\n   Function g can not be given a polymorphic type. Projection would not be trivial\n\nif one quantifies first over the free type variable β. In HM(X) projection needs not\n\nnecessarily to be trivial. I can then type Example 14 in the following way.\n\n\n       f: ∀α.∃β.(o :: α → β) ⇒ α → Int\n\n       fx=\n\n          let g: ∀β.(o :: α → β) ⇒ β → Bool\n\n              g = λ y. eq (o x) y\n\n          in 1\n\n\n   Function g is now of polymorphic type but can not be applied to arguments with\n\ndifferent types. Every overloaded instance is uniquely determined by its argument\n\ntype. In the above example, this means that for every α there can be only one β such\n\nthat we can provide an overloaded instance of the form (o :: α → β). In Section 5.2,\n\nI state that the projection operator does not add any additional expressiveness to\n\nthe overloading system SystemO.\n\n   Projection becomes useful in an extension of SystemO with curried overloaded\n\nfunctions. Such a calculus proves to be useful in dealing with printer functions",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.Comparison.example14",
+      "HMX.SourceExample.Comparison.example14SystemOType",
+      "HMX.SourceExample.Comparison.example14SystemOLocalType",
+      "HMX.SourceExample.Comparison.example14HMXType",
+      "HMX.SourceExample.Comparison.example14LocalType",
+      "HMX.SourceExample.Comparison.OverloadingInitialEnvironment"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "eqの初期宣言と、System O側・HM(X)側それぞれのf/gの型を別に保持。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      60,
+      59
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "example15",
+    "kind": "Example",
+    "number": 15,
+    "printed_page": 61,
+    "pdf_page": 73,
+    "source_excerpt": "Example 15\n\n     fx=\n\n       let g y = print x ”Header Information”; print x y\n\n        in (g 1, g true)\n\n\nwhere the sequencing operator ; is contained as a primitive in the initial type\n\nenvironment Γ0 .\n\n   It is not possible to give function g a polymorphic type based on a system using\n\nrule (∀ Intro–SystemO), but it is now possible to apply g to arguments of different\n\ntype. In HM(X) this example can be typed as follows.",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.Comparison.example15",
+      "HMX.SourceExample.Comparison.IOInitialEnvironment"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "printと順次実行を使うプログラム。原典が型を指定しないプリミティブの型は明示的な引数として保持。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      61
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "example16",
+    "kind": "Example",
+    "number": 16,
+    "printed_page": 61,
+    "pdf_page": 73,
+    "source_excerpt": "Example 16\n\n     f : ∀α.(print :: α → String → ()) ∧ (print :: α → Int → ())∧\n\n             (print :: α → Bool → ()) ⇒ α → Int\n\n     fx=\n\n       let g : ∀β.(print :: α → β → ()) ⇒ β → ()\n\n          g y = print x ”Header Information”; print x y\n\n        in (g 1, g true)\n\n\n   In the next section, I make similar observations in case of Ohori–style records\n\nand provide more details of how the typing judgments can be derived.\n\n   I maintain that the projection operator in HM(X) allows to give a semantic",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.Comparison.example16",
+      "HMX.SourceExample.Comparison.example16Type",
+      "HMX.SourceExample.Comparison.example16LocalType"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "例15と同じプログラムの型注釈。fの印刷された結果型Intを組の型へ修正しない。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      61
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "EXAMPLE16"
+    ],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "example17",
+    "kind": "Example",
+    "number": 17,
+    "printed_page": 64,
+    "pdf_page": 76,
+    "source_excerpt": "Example 17\n\n      fx=\n\n       let g y = (x.print) ”Header Information”; (x.print) y\n\n       in (g 1, g true)\n\n\nwhere I assume that the pairing operator ( , ) and the sequencing operator ; are\n\nprimitives contained in an initial type environment Γ0 . Function g has to be of\n\npolymorphic type because one might want to apply function g to arguments with\n\ndifferent types in the let-body. In the above example, I apply g to an integer and a\n\nboolean.\n\n   But such a program is not typable in a calculus based on the (∀ Intro–Ohori)\n\nrule. Consider an intermediate derivation. Typing judgments are now extended with\n\na constraint component on the left hand side of the turnstile.\n\n\n              (α :: {{print : β → ()}}) ∧ (α :: {{String → ()}}) ∧ (β :: U ),\n\n                                         Γ0 .x : α\n\n                                            `\n\n                λy.(x.print) ”Header Information”; (x.print) y : β → ()\n\n\n   In order to give function g a polymorphic type one has to quantify over type\n\nvariable β. But the side conditions of the (∀ Intro–Ohori) rule forbid to quantify\n\nover β because β ∈ fv((α :: {{print : β → ()}})) (or expressed in terms of the constraint\n\nCHAPTER 3. THE HM(X) FRAMEWORK                                                                     65\n\n\nlanguage, projection would not be trivial). Hence, Example 17 is not typable in a\n\nsystem based on the (∀ Intro–Ohori) rule.\n\n       Remember the quantifier introduction rule in HM(X):\n\n\n                                  C ∧ D, Γ ` e : τ         ᾱ 6∈ fv(C) ∪ fv(Γ)\n                    (∀ Intro)\n                                       C ∧ ∃ᾱ.D, Γ ` e : ∀ᾱ.D ⇒ τ\n\n\n       In HM(X) it is now possible to quantify over β. Quantification over β results in\n\nthe constraint 8 ∃β.((α :: {{print : β → ()}}) ∧ (β :: U )) which is kept on the left hand\n\nside of the turnstile. In the let–body I apply function g to two arguments which\n\nresults in the constraint\n\n\n              C = (α :: {{print : String → ()}}) ∧ (α :: {{print : Int → ()}})∧\n\n                      (α :: {{print : Bool → ()}})\n\n\nbecause the constraint in the type scheme of function g has to be fulfilled. In HM(X)\n\nI can type Example 17 in the following way:\n\n\n         f : ∀α.C ⇒ α → ((), ())\n\n         fx=\n\n          let g : ∀β.(α :: {{print : β → ()}}) ∧ (β :: U ) ⇒ β → ()\n\n              g y = (x.print) ”Header Information”; (x.print) y\n\n          in (g 1, g true)\n\n\n       Note, the constraint ∃β.((α :: {{print : β → ()}}) ∧ (β :: U )) disappears because\n\nthe constraint (∃β.((α :: {{print : β → ()}}) ∧ (β :: U ))) ∧ C is semantically equivalent\n\nto the constraint C.\n   8\n    Note, (α :: {{print : β → ()}})∧(β :: U ) corresponds to the constraint D in the above formulation\nof rule (∀ Intro).",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.Comparison.example17",
+      "HMX.SourceExample.Comparison.example17Type",
+      "HMX.SourceExample.Comparison.example17LocalType",
+      "HMX.SourceExample.Comparison.example17IntermediateConstraint",
+      "HMX.SourceExample.Comparison.Kind",
+      "HMX.SourceExample.Comparison.RecordSelectorType",
+      "HMX.SourceExample.Comparison.IOInitialEnvironment"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "レコードのkind、選択子の型、初期プリミティブ、プログラムと型注釈。64頁で欠落したラベルだけを独立引数にし、String → ()は保持。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      64,
+      65,
+      62,
+      63
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "EXAMPLE17-KIND"
+    ],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "example17",
+    "kind": "Example",
+    "number": 17,
+    "printed_page": 66,
+    "pdf_page": 78,
+    "source_excerpt": "Example 17. Projection always has to be trivial in the (∀ Intro–Ohori) rule which\n\ndoes not hold in the following example. Hence, this example would not be typable\n\nin Nishimura’s calculus.",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.Comparison.example17",
+      "HMX.SourceExample.Comparison.example17Type",
+      "HMX.SourceExample.Comparison.example17LocalType",
+      "HMX.SourceExample.Comparison.example17IntermediateConstraint",
+      "HMX.SourceExample.Comparison.Kind",
+      "HMX.SourceExample.Comparison.RecordSelectorType",
+      "HMX.SourceExample.Comparison.IOInitialEnvironment"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "既出の例17への本文中の参照。独立した例や定理とは数えない。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      66
+    ],
+    "occurrence_kind": "reference",
+    "source_issue_ids": [
+      "EXAMPLE17-KIND"
+    ],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
+  },
+  {
+    "id": "example18",
+    "kind": "Example",
+    "number": 18,
+    "printed_page": 66,
+    "pdf_page": 78,
+    "source_excerpt": "Example 18\n\n     f : ∀α.(α :: {{print int : Int → ()}}) ∧ (α :: {{print bool : Bool → ()}}) ⇒ α → ((), ())\n\nCHAPTER 3. THE HM(X) FRAMEWORK                                                          67\n\n\n      fx=\n\n         let g: ∀print, β.(α :: {{print : β → ()}}) ⇒ print → β → ()\n\n            g = λ print, y . (x.print) y\n\n         in (g print int 1, g print bool true)\n\n\n   The function g takes as an additional parameter now an overloaded identifier.\n\nNote, I distinguish between the term variable print and the type variable print (The\n\nsame holds for print int and print bool.). The term print has type print. The type\n\nvariable print ranges only over overloaded identifiers (Specifically, print ranges only\n\nover field labels, but I assume that the record calculus with first class field labels is\n\nencoded in terms of an overloading application with first class overloaded identifiers.).\n\nThe constraint ( :: {{ : }}) takes now three arguments, a record, a field and the type\n\nof the field in the given record. I use sorts to ensure that the second argument always\n\nhas to be an overloaded identifier. This is reflected in the term algebra which is now\n\nmulti–sorted.\n\n   In fact, Nishimura’s calculus is a little bit more restrictive. A method name\n\n(which corresponds to a field label resp. an overloaded identifier) needs always to\n\nbe attached to its arguments. I could put stronger conditions on the extended over-\n\nloading application to enforce this. In the above example, a method name is always\n\npassed with its argument, hence this example still applies to Nishimura’s calculus.\n\n\n3.5.5     Projection in Solved Form\n\nI observe that the projection–operator does not need to be present in syntactic form\n\nin case of let–realizable judgments. An expression e is let–realizable iff every variable x\n\ndefined by a let–statement appears in a monomorphic context. A judgment C, Γ `\n\ne : τ is let–realizable iff expression e is let–realizable. A derivation C, Γ ` e : σ is",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceExample.Comparison.example18",
+      "HMX.SourceExample.Comparison.example18Type",
+      "HMX.SourceExample.Comparison.example18LocalType",
+      "HMX.SourceExample.Comparison.FirstClassLabels"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Definitions and annotations only; no proof or consistency certification.",
+    "transcription_note": "項のprintと型のprintを区別。ラベルのソートと三引数の制約、プログラムと型注釈を記述。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      66,
+      67
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text, surrounding assumptions and Lean definitions; rendered pages for marked rows"
   },
   {
     "id": "theorem6",
@@ -740,7 +1622,16 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "let-realizable、環境の射影自由性から、同値な制約と全導出の射影自由性。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      68
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "LETREAL"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "corollary3",
@@ -756,7 +1647,41 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "S の最小射影閉包との let-realizable プログラム集合の一致。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      69
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "LETREAL"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
+  },
+  {
+    "id": "definition18",
+    "kind": "Definition",
+    "number": 18,
+    "printed_page": 73,
+    "pdf_page": 85,
+    "source_excerpt": "Definition 18 Given a type σ in X c and a type σ 0 and a constraint C in X t . Then\n\nC ` σ 7→ σ 0 iff the following two conditions hold\n\n   • `i σ \u0016 σ 0\n\n[page 74]\n• Given a type σ 00 in X t such that C `i σ \u0016 σ 00 . Then C `i σ 0 \u0016 σ 00 .\n\nThe judgment 7→ extends to type environments in the usual way.",
+    "scope": "core",
+    "lean": [
+      "HMX.Approximates",
+      "HMX.EnvironmentApproximates"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "true 下の比較と、C 下の任意の項形式スキームに対する最小性の二条件。次頁の条件も収録。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      73,
+      74
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition23",
@@ -773,7 +1698,16 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "正規形と全正規形に対する主要性。73頁の構文的固定と88頁の含意同値を別宣言に保持。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      73
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "D23"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition25",
@@ -784,45 +1718,21 @@
     "source_excerpt": "Definition 25 Given a constraint system X over a term algebra T and a set of solved\n\nconstraints S in X. The constraint system X has the principal constraint property if\n\nfor every constraint problem (D, φ) in X, either (D, φ) does not have a normal form\n\nor (D, φ) has a principal normal form.\n\n   The following definition approximates type schemes in constraint form by type\n\nschemes in term form.",
     "scope": "core",
     "lean": [
-      "HMX.ConstraintTheory.PrincipalConstraintProperty"
+      "HMX.ConstraintTheory.PrincipalConstraintPropertyPage73"
     ],
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
-    "id": "definition18",
-    "kind": "Definition",
-    "number": 18,
-    "printed_page": 73,
-    "pdf_page": 85,
-    "source_excerpt": "Definition 18 Given a type σ in X c and a type σ 0 and a constraint C in X t . Then\n\nC ` σ 7→ σ 0 iff the following two conditions hold\n\n   • `i σ \u0016 σ 0",
-    "scope": "core",
-    "lean": [
-      "HMX.Approximates",
-      "HMX.EnvironmentApproximates"
+    "transcription_note": "各制約問題について正規形なし又は主要正規形あり。参照先の定義23の版を合わせる。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      73
     ],
-    "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
-    "id": "theorem7",
-    "kind": "Theorem",
-    "number": 7,
-    "printed_page": 74,
-    "pdf_page": 86,
-    "source_excerpt": "Theorem 7 (Transformation) Given a constraint system X over a term algebra T\n\nand a set S of solved forms such that S is closed under projection and X t enjoys the\n\nprincipal constraint property, a type environment Γ0 in X t and a constraint C in X t\n\nwhere C ` Γ 7→ Γ0 . Then the following holds.\n\n   • If C, Γ `X e : τ then C, Γ0 `X e : τ .\n                 c                      t\n\n\n\n\n   • If C, Γ `X e : σ where σ realizable in C then C, Γ0 `X e : σ 0 where C ` σ 7→\n                 c                                                t\n\n\n\n\n      σ0.\n\n\n   An immediate consequence is the following corollary. Please note, a substitution\n\nφ = [τ̄ /ᾱ] can also be regarded as the constraint (α1 = τ1 ) ∧ . . . ∧ (αn = τn ).",
-    "scope": "core",
-    "lean": [
-      "HMX.Statement.theorem7"
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "D23"
     ],
-    "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "corollary4",
@@ -838,7 +1748,42 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "73頁版の主要正規形と代入の等式表現。冒頭の未使用 Γ′を独立の環境として保持。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      74
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "COR4",
+      "D23"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
+  },
+  {
+    "id": "theorem7",
+    "kind": "Theorem",
+    "number": 7,
+    "printed_page": 74,
+    "pdf_page": 86,
+    "source_excerpt": "Theorem 7 (Transformation) Given a constraint system X over a term algebra T\n\nand a set S of solved forms such that S is closed under projection and X t enjoys the\n\nprincipal constraint property, a type environment Γ0 in X t and a constraint C in X t\n\nwhere C ` Γ 7→ Γ0 . Then the following holds.\n\n   • If C, Γ `X e : τ then C, Γ0 `X e : τ .\n                 c                      t\n\n\n\n\n   • If C, Γ `X e : σ where σ realizable in C then C, Γ0 `X e : σ 0 where C ` σ 7→\n                 c                                                t\n\n\n\n\n      σ0.\n\n\n   An immediate consequence is the following corollary. Please note, a substitution\n\nφ = [τ̄ /ᾱ] can also be regarded as the constraint (α1 = τ1 ) ∧ . . . ∧ (αn = τn ).",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem7"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "同じ基礎制約系の Xc/Xt、射影閉性・73頁版の主要制約性・環境近似。単型と実現可能スキームの二結論。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      74
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "D23"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem8",
@@ -854,7 +1799,17 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "型付け可能なプログラム集合の両方向。付録の証明だけの閉環境・射影閉性は主張へ追加しない。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      74
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "T8",
+      "D23"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma19",
@@ -870,7 +1825,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "§3.7の制約形式判断について充足可能な強い制約への弱化。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      77
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma20",
@@ -886,7 +1848,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "制約による∀除去と代入による∀除去の両方向。本文の見出し introduction は式に合わせて修正しない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      78
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma21",
@@ -902,7 +1871,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "新鮮変数 α と α=τ を導入した判断との同値。§3.7の判断を参照。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      79
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition19",
@@ -913,12 +1889,21 @@
     "source_excerpt": "Definition 19 (Equational Theory) An equational theory E over a term algebra\n\nT is a constraint system where for each τ, τ 0 ∈ T there is an equality predicate\n\n(τ = τ 0 ) and (· = ·) is a congruence relation. An equational theory E is regular iff\n\nfor each τ, τ 0 ∈ T such that `e (τ = τ 0 ), then fv(τ ) = fv(τ 0 ).\n\n\n   Please note, a term constraint system X implies an equational theory E. I refer\n\nto E as the underlying equational theory of X.",
     "scope": "core",
     "lean": [
+      "HMX.EquationalTheory",
+      "HMX.EquationalTheory.Regular",
       "HMX.ConstraintTheory.Regular"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "射影を要求しない等式理論、合同性、等式が自由変数集合を保存する regularity。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      86
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "definition20",
@@ -935,12 +1920,23 @@
       "HMX.ConstraintTheory.Agrees",
       "HMX.ConstraintTheory.Factors",
       "HMX.ConstraintTheory.SubstitutionMoreGeneral",
-      "HMX.ConstraintTheory.EquallyGeneral"
+      "HMX.ConstraintTheory.EquallyGeneral",
+      "HMX.EquationalTheory.Agrees",
+      "HMX.EquationalTheory.Factors",
+      "HMX.EquationalTheory.MoreGeneral",
+      "HMX.EquationalTheory.EquallyGeneral"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "dom/codom、制限、U 上の等式、合成による因子分解、存在量化、相互一般性。射影なしの等式理論でも定義。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      86
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "definition21",
@@ -948,15 +1944,24 @@
     "number": 21,
     "printed_page": 86,
     "pdf_page": 98,
-    "source_excerpt": "Definition 21 (Unitary unification) Given an equational theory E. Then E en-\n\njoys unitary unification iff for substitutions φ and ψ, either their least upper bound",
+    "source_excerpt": "Definition 21 (Unitary unification) Given an equational theory E. Then E en-\n\njoys unitary unification iff for substitutions φ and ψ, either their least upper bound\n\n[page 87]\nexists, or there is no upper bound at all. The least upper bound of φ and ψ is denoted\n\nby φ t ψ.\n\n   I also state that a constraint system X enjoys unitary unification if the underlying\n\nequational theory in X enjoys unitary unification.\n\n\n   The Herbrand constraint system HERBRAND enjoys unitary unification as shown\n\nby Robinson [Rob65]. Another example is the dimension system described in Sec-\n\ntion 3.1. In [Ken94], Kennedy shows (based on work by [LBB84]) that the dimension\n\nsystem enjoys unitary unification.\n\n   I extend the relation ≤ on substitutions to constraint problems.",
     "scope": "core",
     "lean": [
+      "HMX.EquationalTheory.Unitary",
       "HMX.ConstraintTheory.Unitary"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "二つの代入の上界が存在するなら最小上界が存在する条件。次頁に続く条件も収録。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      86,
+      87
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "definition22",
@@ -972,9 +1977,43 @@
       "HMX.Problem.MoreGeneral"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "代入による制約の構文的固定、結合、因子分解と制約含意による比較・相互比較。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      87
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
+  },
+  {
+    "id": "definition23",
+    "kind": "Definition",
+    "number": 23,
+    "printed_page": 87,
+    "pdf_page": 99,
+    "source_excerpt": "Definition 23 (Principal Normal Form) Let X be a term constraint system over\n\na term algebra T and S be the set of solved constraints in X. Let C ∈ S and D ∈ X\n\n[page 88]\nbe constraints and let φ,ψ be substitutions such that (D, φ) is a constraint problem.\n                                                          0\nThen (C, ψ) is a normal form of (D, φ) iff φ ≤φ ψ, C `e φ0 D and ψC =e C, or\n\nequivalently (D, φ) ≤ (C, ψ).\n                                                                                        0\n   (C, ψ) is principal if for all normal forms (C 0 , ψ 0 ) of (D, φ) it holds that ψ ≤φ ψ 0\n\nand C 0 `e φ0 C, or equivalently (C, ψ) ≤ (C 0 , ψ 0 ).\n\n\n   The principal normal form represents the best solution of a constraint problem.\n\nAs an example, consider the constraint system HERBRAND. In it, a principal\n\nnormal form corresponds to a most general unifier and a normal form corresponds\n\nto a unifier of a constraint problem.",
+    "scope": "core",
+    "lean": [
+      "HMX.Problem.NormalForm",
+      "HMX.Problem.Principal"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "正規形と全正規形に対する主要性。73頁の構文的固定と88頁の含意同値を別宣言に保持。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      87,
+      88
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "D23"
+    ],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "lemma22",
@@ -988,42 +2027,18 @@
       "HMX.Statement.lemma22"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
-    "id": "definition23",
-    "kind": "Definition",
-    "number": 23,
-    "printed_page": 87,
-    "pdf_page": 99,
-    "source_excerpt": "Definition 23 (Principal Normal Form) Let X be a term constraint system over\n\na term algebra T and S be the set of solved constraints in X. Let C ∈ S and D ∈ X",
-    "scope": "core",
-    "lean": [
-      "HMX.Problem.NormalForm",
-      "HMX.Problem.Principal"
+    "transcription_note": "CP 上の半束に関する主張。非空集合の下限・有界集合の上限という明示的な読みは L22 に記録し、妥当性は未検証。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      87
     ],
-    "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
-    "id": "lemma23",
-    "kind": "Lemma",
-    "number": 23,
-    "printed_page": 88,
-    "pdf_page": 100,
-    "source_excerpt": "Lemma 23 (Uniqueness) Given a constraint problem (D, φ) and two principal\n\nnormal forms (C, ψ) and (C 0 , ψ 0 ) of (D, φ). Then (C, ψ) = (C 0 , ψ 0 ).\n\n\n   The above lemma follows trivially. Please note, uniqueness only states uniqueness\n\nmodulo semantic equivalence. Hence, a principal normal form should be seen as\n\nan equivalent class. Nevertheless, it is possible to define a well–defined function\n\nnormalize from constraint problems (D, φ) to normal forms:\n\n\n                 normalize(D, φ)\n\n                 = (C, ψ) if (C, ψ) principal normal form of (D, φ)\n\n                 = fail        otherwise\n\n\n   Principal normal forms are syntactically unique if the set of solved forms satisfies\n\nthe syntactic uniqueness property.",
-    "scope": "core",
-    "lean": [
-      "HMX.Statement.lemma23"
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "L22"
     ],
-    "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "definition24",
@@ -1039,23 +2054,37 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "S に属する含意同値な制約の構文的一意性。代入の一意性を追加しない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      88
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
-    "id": "lemma24",
+    "id": "lemma23",
     "kind": "Lemma",
-    "number": 24,
-    "printed_page": 89,
-    "pdf_page": 101,
-    "source_excerpt": "Lemma 24 (Syntactic Uniqueness) Given a set S of solved forms such S satis-\n\nfies the syntactic uniqueness property, a constraint problem (D, φ) and two principal\n\nnormal forms (C, ψ) and (C 0 , ψ 0 ) of (D, φ). Then (C 0 , ψ) can be retrieved from (C, ψ)\n\nsimply by variable renaming.\n\n   Please note, checking whether a set of solved forms satisfies the syntactic unique-\n\nness property is a non–trivial task. It requires a decidable entailment test. For\n\ninstance, in case of subtyping, it is not know yet whether entailment is decidable or\n\nnot [Pot98].\n\n   The property of having a principal normal form extends to constraint systems.",
+    "number": 23,
+    "printed_page": 88,
+    "pdf_page": 100,
+    "source_excerpt": "Lemma 23 (Uniqueness) Given a constraint problem (D, φ) and two principal\n\nnormal forms (C, ψ) and (C 0 , ψ 0 ) of (D, φ). Then (C, ψ) = (C 0 , ψ 0 ).\n\n\n   The above lemma follows trivially. Please note, uniqueness only states uniqueness\n\nmodulo semantic equivalence. Hence, a principal normal form should be seen as\n\nan equivalent class. Nevertheless, it is possible to define a well–defined function\n\nnormalize from constraint problems (D, φ) to normal forms:\n\n\n                 normalize(D, φ)\n\n                 = (C, ψ) if (C, ψ) principal normal form of (D, φ)\n\n                 = fail        otherwise\n\n\n   Principal normal forms are syntactically unique if the set of solved forms satisfies\n\nthe syntactic uniqueness property.",
     "scope": "core",
     "lean": [
-      "HMX.Statement.lemma24Printed"
+      "HMX.Statement.lemma23"
     ],
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "主要正規形の一意性は制約問題の相互一般性であり構文的一致ではない。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      88
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition25",
@@ -1071,7 +2100,41 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "各制約問題について正規形なし又は主要正規形あり。参照先の定義23の版を合わせる。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      89
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "D23"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
+  },
+  {
+    "id": "lemma24",
+    "kind": "Lemma",
+    "number": 24,
+    "printed_page": 89,
+    "pdf_page": 101,
+    "source_excerpt": "Lemma 24 (Syntactic Uniqueness) Given a set S of solved forms such S satis-\n\nfies the syntactic uniqueness property, a constraint problem (D, φ) and two principal\n\nnormal forms (C, ψ) and (C 0 , ψ 0 ) of (D, φ). Then (C 0 , ψ) can be retrieved from (C, ψ)\n\nsimply by variable renaming.\n\n   Please note, checking whether a set of solved forms satisfies the syntactic unique-\n\nness property is a non–trivial task. It requires a decidable entailment test. For\n\ninstance, in case of subtyping, it is not know yet whether entailment is decidable or\n\nnot [Pot98].\n\n   The property of having a principal normal form extends to constraint systems.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma24Printed"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "結論に印刷された (C′,ψ) を保持。ψ′への修正を行わない。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      89
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "L24"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition26",
@@ -1087,7 +2150,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "解決済み C から従う等式は true からも従う。非空性や主要制約性を加えない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      90
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma25",
@@ -1103,7 +2173,16 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "S の解決済み性と equation-free から unitary。主要制約性・Sの非空性を補わない。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      90
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "L25"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma26",
@@ -1117,9 +2196,16 @@
       "HMX.Statement.lemma26"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "交差して正規形になる二つの主要正規形の交換。両結論を収録。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      91
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "lemma27",
@@ -1133,9 +2219,16 @@
       "HMX.Statement.lemma27"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "独立性の四条件、主要制約性、unitary。本文の最終結論は normal form。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      91
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "lemma28",
@@ -1149,9 +2242,16 @@
       "HMX.Statement.lemma28"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "独立性の四条件、段階的な主要正規化から結合全体の normal form。結論を principal に強めない。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      91
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "theorem9",
@@ -1159,15 +2259,25 @@
     "number": 9,
     "printed_page": 91,
     "pdf_page": 103,
-    "source_excerpt": "Theorem 9 (Eager versus by Need Normalization) Given a constraint system\n\nX over a term algebra T and a set of solved constraints S in X such that X enjoys\n\nthe principal constraint property and unitary unification. Given constraint problems\n\n(D, φ) and (D0 , φ0 ) such that dom(φ1 ) ∩ codom(φ2 ) = ∅, dom(φ2 ) ∩ codom(φ1 ) = ∅,",
+    "source_excerpt": "Theorem 9 (Eager versus by Need Normalization) Given a constraint system\n\nX over a term algebra T and a set of solved constraints S in X such that X enjoys\n\nthe principal constraint property and unitary unification. Given constraint problems\n\n(D, φ) and (D0 , φ0 ) such that dom(φ1 ) ∩ codom(φ2 ) = ∅, dom(φ2 ) ∩ codom(φ1 ) = ∅,\n\n[page 92]\nfv(D1 ) ∩ dom(φ2 ) = ∅ and fv(D2 ) ∩ dom(φ1 ) = ∅. Then\n\n\n                              normalize((D, φ) t (D0 , φ0 ))\n\n                                            =\n\n                         normalize(normalize(D, φ) t D0 , φ0 )\n\n\nProof: The equation normalize((D, φ) t (D0 , φ0 )) = normalize(normalize(D, φ) t\n\nD0 , φ0 ) states that if the left–side holds the right–side follows and vice versa. Please\n\nnote, Lemma 26 allows to strengthen the result of Lemmas 27 and 28 to principal\n\nnormal forms.\n\n\n\n4.2.1     Lifting of Normalization\n\nOne of the improvement of the HM(X) framework is the projection operator which\n\nallows for a binding of type variables in the constraint part. The normalization\n\nprocedure in HM(X) has to deal with projected constraints. whereas previously\n\nnormalization only had to deal with projection–free constraints.",
     "scope": "core",
     "lean": [
       "HMX.Statement.theorem9"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "正規化の両方向と失敗を記述。独立性に現れる D1/D2/φ1/φ2 を D/D′/φ/φ′と同一視しない。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      91,
+      92
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "T9-SYMBOLS"
+    ],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "definition27",
@@ -1181,9 +2291,16 @@
       "HMX.ConstraintPresentation.ProjectionFree"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "構文的な基本述語だけからなる制約。含意同値な射影自由表現の存在とは区別。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      92
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "definition28",
@@ -1191,7 +2308,7 @@
     "number": 28,
     "printed_page": 92,
     "pdf_page": 104,
-    "source_excerpt": "Definition 28 (Lifting Property) Given a constraint system X over a term alge-\n\nbra T and a set S of solved forms. X satisfies the lifting property iff the following\n\nconditions hold:",
+    "source_excerpt": "Definition 28 (Lifting Property) Given a constraint system X over a term alge-\n\nbra T and a set S of solved forms. X satisfies the lifting property iff the following\n\nconditions hold:\n\n[page 93]\n1. There exists a computable procedure normalize such that for each constraint\n\n      problem (D, φ) where D is projection–free, normalize(D, φ) = (C, ψ) and (C, ψ)\n\n      is the principal normal form of (D, φ), or normalize(D, φ) reports failure if\n\n      (D, φ) does not have a normal form at all.\n\n  2. S is equation–free and this is the only condition imposed on S.\n\n  3. Given a constraint problem (D, φ) and a normal form (C, ψ) then C = ψD.\n\n  4. For each ∃ᾱ.C ∈ S there exist τ̄ and D ∈ S such that [τ̄ /ᾱ]C = D ∈ S.",
     "scope": "core",
     "lean": [
       "HMX.ConstraintTheory.LiftingProperty",
@@ -1201,25 +2318,20 @@
       "HMX.ConstraintTheory.LiftingWitnesses"
     ],
     "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
-    "id": "remark3",
-    "kind": "Remark",
-    "number": 3,
-    "printed_page": 93,
-    "pdf_page": 105,
-    "source_excerpt": "Remark 3 Condition (2.) states that the set of solved forms only property is being\n\nequation–free (being satisfiable is always implicitly assumed). In case of the Hind-\n\nley/Milner system, this would allow the constraint ∃α.(α = β) (which is equation–\n\nfree) being in solved form. Obviously, such constraints are redundant. Lifting still\n\napplies if the set of solved forms satisfies the syntactic uniqueness property, see Def-\n\ninition 24.\n\n   The next two lemmas are the key lemmas to lift normalization procedures on\n\nprojection–free constraints to the general case.",
-    "scope": "core",
-    "lean": [
-      "HMX.SourceRemark.remark3"
-    ],
-    "status": "transcribed",
     "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "次頁の四条件を含め収録。計算可能性、解決済み形式、正規化、等式の全称範囲を保持。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      92,
+      93
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "D28",
+      "D28-EQUALITY"
+    ],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "lemma29",
@@ -1235,7 +2347,14 @@
     "status": "transcribed",
     "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "lifting 条件の下で射影前後の正規形の存在が同値。証明中の w.l.o.g. 条件は追加しない。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      93
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "lemma30",
@@ -1251,7 +2370,39 @@
     "status": "transcribed",
     "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "結論の制約は D への代入であり C へ修正しない。ψ の束縛変数外への制限と新鮮な置換を保持。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      93
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "L30-RESTRICT"
+    ],
+    "review_method": "PDF text and rendered formula"
+  },
+  {
+    "id": "remark3",
+    "kind": "Remark",
+    "number": 3,
+    "printed_page": 93,
+    "pdf_page": 105,
+    "source_excerpt": "Remark 3 Condition (2.) states that the set of solved forms only property is being\n\nequation–free (being satisfiable is always implicitly assumed). In case of the Hind-\n\nley/Milner system, this would allow the constraint ∃α.(α = β) (which is equation–\n\nfree) being in solved form. Obviously, such constraints are redundant. Lifting still\n\napplies if the set of solved forms satisfies the syntactic uniqueness property, see Def-\n\ninition 24.\n\n   The next two lemmas are the key lemmas to lift normalization procedures on\n\nprojection–free constraints to the general case.",
+    "scope": "core",
+    "lean": [
+      "HMX.SourceRemark.remark3"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "解決済み形式と構文的一意性についての原文の説明。lifting の第五条件に変更しない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      93
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "lemma29",
@@ -1267,7 +2418,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "独立した主張の再掲ではなく、既出の番号への本文中の参照。参照先の宣言に対応付ける。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      94
+    ],
+    "occurrence_kind": "reference",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem10",
@@ -1283,7 +2441,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "lifting property の四条件から主要制約性。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      94
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem11",
@@ -1299,7 +2464,18 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "W と Wbyneed の同じ出力の同値。図4.2の未指定 ψ′を勝手に修正しない。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      97,
+      95
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "WBYNEED",
+      "NORMALIZER-REPRESENTATIVES"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma31",
@@ -1315,7 +2491,15 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "W の出力が typing configuration を満たす。固定性と環境整合性は定義へ接続。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      98,
+      95
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem12",
@@ -1331,7 +2515,15 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "W の健全性。C・τ の固定性は構文的一致。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      98,
+      95
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem13",
@@ -1347,23 +2539,17 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
-    "id": "definition29",
-    "kind": "Definition",
-    "number": 29,
-    "printed_page": 100,
-    "pdf_page": 112,
-    "source_excerpt": "Definition 29 (Principal types) Given an instance X of the HM(X) type system.\n\nX satisfies the principal type property iff the following holds. Given a pair (Γ, e)\n\nsuch that C 0 , Γ ` e : σ 0 for some constraint C 0 and type scheme σ 0 . Then there is a\n\nconstraint C and a type scheme σ such that\n\n   • C, Γ ` e : σ\n\n   • If C 0 , Γ ` e : σ 0 then C 0 `e C and C 0 `i σ \u0016 σ 0 .\n\nThe pair (C, σ) is called a principal type. Commonly, the constraint component\n\nequals true.",
-    "scope": "core",
-    "lean": [
-      "HMX.Statement.principalTypeProperty"
+    "transcription_note": "§4.3の二クラスの条件と実現可能な置換後環境。configuration 比較の原文の式は保持。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      99,
+      95
     ],
-    "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "CONFIG"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "corollary5",
@@ -1379,7 +2565,38 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "閉じた true 判断・環境実現可能性、W と true への一般化、true 下の型比較。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      100,
+      95
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
+  },
+  {
+    "id": "definition29",
+    "kind": "Definition",
+    "number": 29,
+    "printed_page": 100,
+    "pdf_page": 112,
+    "source_excerpt": "Definition 29 (Principal types) Given an instance X of the HM(X) type system.\n\nX satisfies the principal type property iff the following holds. Given a pair (Γ, e)\n\nsuch that C 0 , Γ ` e : σ 0 for some constraint C 0 and type scheme σ 0 . Then there is a\n\nconstraint C and a type scheme σ such that\n\n   • C, Γ ` e : σ\n\n   • If C 0 , Γ ` e : σ 0 then C 0 `e C and C 0 `i σ \u0016 σ 0 .\n\nThe pair (C, σ) is called a principal type. Commonly, the constraint component\n\nequals true.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.principalTypeProperty"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "任意の型付け可能な (Γ,e) に対し、型付け・制約含意・型比較を満たす主要対が存在すること。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      100
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "definition24",
@@ -1395,39 +2612,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
-    "id": "theorem14",
-    "kind": "Theorem",
-    "number": 14,
-    "printed_page": 104,
-    "pdf_page": 116,
-    "source_excerpt": "Theorem 14 (Soundness of Inference) Given a term e and a type environment\n\nΓ. If C, Γ `Wc e : α then C, Γ ` e : α.\n\n\n   For the completeness result, I only consider those typing judgments C, Γ ` e : σ\n\nwhere the type environment and the constraint on the left hand side of the turnstile\n\nare realizable, i.e. have a type instance. Recall, a type environment Γ is realizable\n\nin a constraint C if for every x : σ ∈ Γ there is a τ such that C `i σ \u0016 τ .",
-    "scope": "core",
-    "lean": [
-      "HMX.Statement.theorem14"
+    "transcription_note": "独立した主張の再掲ではなく、既出の番号への本文中の参照。参照先の宣言に対応付ける。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      103
     ],
-    "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
-    "id": "theorem15",
-    "kind": "Theorem",
-    "number": 15,
-    "printed_page": 104,
-    "pdf_page": 116,
-    "source_excerpt": "Theorem 15 (Completeness of Inference) Given a typing judgment C, Γ ` e :\n\nσ such that Γ is realizable in C. Then C 0 , Γ `Wc e : α such that\n\n\n                                      C `e ∃α.C 0\n\n                                C `i ∀α.C 0 ⇒ α \u0016 σ.\n\n\n   I need the realizability condition to state the property about the constraint.\n\nOtherwise, I could not state that C `e ∃α.C 0 .\n\n   The completeness result could be stated in a much more concise way than in the\n\nterm–based HM(X) system. To achieve principal types I only need satisfiability. A\n\ndecidable satisfiability test results into decidable type inference.",
-    "scope": "core",
-    "lean": [
-      "HMX.Statement.theorem15"
-    ],
-    "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "occurrence_kind": "reference",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "corollary6",
@@ -1443,7 +2635,60 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "閉じた制約形式判断から Wc、存在射影の充足と量化型の比較。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      104
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
+  },
+  {
+    "id": "theorem14",
+    "kind": "Theorem",
+    "number": 14,
+    "printed_page": 104,
+    "pdf_page": 116,
+    "source_excerpt": "Theorem 14 (Soundness of Inference) Given a term e and a type environment\n\nΓ. If C, Γ `Wc e : α then C, Γ ` e : α.\n\n\n   For the completeness result, I only consider those typing judgments C, Γ ` e : σ\n\nwhere the type environment and the constraint on the left hand side of the turnstile\n\nare realizable, i.e. have a type instance. Recall, a type environment Γ is realizable\n\nin a constraint C if for every x : σ ∈ Γ there is a τ such that C `i σ \u0016 τ .",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem14"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "§3.7の制約形式 Wc と CanonicalTyping の健全性。通常の∀除去に置き換えない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      104
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
+  },
+  {
+    "id": "theorem15",
+    "kind": "Theorem",
+    "number": 15,
+    "printed_page": 104,
+    "pdf_page": 116,
+    "source_excerpt": "Theorem 15 (Completeness of Inference) Given a typing judgment C, Γ ` e :\n\nσ such that Γ is realizable in C. Then C 0 , Γ `Wc e : α such that\n\n\n                                      C `e ∃α.C 0\n\n                                C `i ∀α.C 0 ⇒ α \u0016 σ.\n\n\n   I need the realizability condition to state the property about the constraint.\n\nOtherwise, I could not state that C `e ∃α.C 0 .\n\n   The completeness result could be stated in a much more concise way than in the\n\nterm–based HM(X) system. To achieve principal types I only need satisfiability. A\n\ndecidable satisfiability test results into decidable type inference.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem15"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "§3.7の実現可能な環境から Wc、存在射影の含意と量化型の比較。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      104
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem16",
@@ -1459,7 +2704,40 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "主要制約性・射影閉性、Wterm、Cの含意同値での固定とτの構文的固定。lifting 条件を追加しない。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      106,
+      95
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
+  },
+  {
+    "id": "corollary7",
+    "kind": "Corollary",
+    "number": 7,
+    "printed_page": 107,
+    "pdf_page": 119,
+    "source_excerpt": "Corollary 7 (Principal types) Given an HM(X) instance where X satisfies the\n\nprincipal constraint property. Given a closed typing judgment true, Γ ` e : σ where\n\nΓ is realizable in true. Then ψ, D, Γ `Wterm e : τ for some substitution ψ, constraint\n\n[page 108]\nD and types τ, σo such that\n\n\n                                D, ψΓ, τ `gen (σo , true)\n\n                                       `i σo \u0016 σ.\n\n\n   The basic trick I apply lies in postponing the term reconstruction step to the\n\nvery end. In intermediate steps I always keep inference judgments in normalized\n\nform C, Γ `Wc e : α. Then generalization is unproblematic. Term reconstruction is\n\nonly performed at the very end. This achieves sound and complete type inference.\n\nThe drawback is that constraints in intermediate steps might become big. In case of\n\nthe dimension type system, equality constraints are not resolved via unification but\n\nonly accumulated and checked whether they are satisfiable or not. Fortunately, for\n\na large class of systems it is even possible to perform normalization in intermediate\n\nsteps while retaining complete inference.\n\n   I consider a variation of the inference system `Wterm where normalization is\n\nallowed to be performed in intermediate steps. Rule (Normalize) is added to the\n\ninference system `Wterm .\n\n\n                            C, Γ `Wc e : α       (D, φ) = normalize(C, id)\n            (Normalize)\n                                          D ∧ φ, Γ `Wc e : α\n\n\nThe idea is to represent normal forms in constraint form. The normalization pro-\n\ncedure states that D `e φC. It follows that D ∧ φ `e C where the substitution\n\nφ = [τ̄ /ᾱ] is considered as the constraint (α1 = τ1 ) ∧ . . . ∧ (αn = τn ). Please note,\n\ngiven C, Γ `Wc e : α the invariant fv(C) ⊆ fv(Γ, α) and α 6∈ fv(Γ) still holds. The\n\nsubstitution φ in the (Normalize) rule operates only on the free variables fv(Γ, α).\n\n   In inference system `Wnormalize (see Figure 4.5) the (Normalize) rule is applied",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.corollary7"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "閉じた true 判断・環境実現可能性・主要制約性、Wterm と true への一般化、型比較。次頁を含む。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      107,
+      108,
+      95
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem17",
@@ -1475,23 +2753,15 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
-    "id": "corollary7",
-    "kind": "Corollary",
-    "number": 7,
-    "printed_page": 107,
-    "pdf_page": 119,
-    "source_excerpt": "Corollary 7 (Principal types) Given an HM(X) instance where X satisfies the\n\nprincipal constraint property. Given a closed typing judgment true, Γ ` e : σ where\n\nΓ is realizable in true. Then ψ, D, Γ `Wterm e : τ for some substitution ψ, constraint",
-    "scope": "core",
-    "lean": [
-      "HMX.Statement.corollary7"
+    "transcription_note": "主要制約性・実現可能なφΓ、Wterm出力と一般化、FV(Γ)上の因子分解、C下の比較・含意。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      107,
+      95
     ],
-    "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem18",
@@ -1507,7 +2777,17 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "lifting 下の Wterm と Wnormalize の同じ出力の両方向。代表元の一致の成立性は別課題。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      109,
+      95
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "NORMALIZER-REPRESENTATIVES"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma7",
@@ -1523,7 +2803,17 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。健全性と閉じた許容スキームから wrong 非所属。意味関数の条件を接続し、非所属を仮定にしない。 §3.2の型比較・Sの充足可能性をLogicalAssumptionsとして接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      182
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "DENOTATION",
+      "SEMANTIC-SCHEMES"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem5",
@@ -1537,9 +2827,18 @@
       "HMX.Statement.theorem5"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。§3.3.1の意味関数・背景モデル、sound/coherent、閉じた整合的代入、モデル条件から二結論。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      183
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "DENOTATION"
+    ],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "lemma10",
@@ -1555,7 +2854,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。型比較の反射・弱化・推移の三規則。§3.2の許容条件を明示。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      185
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma11",
@@ -1571,7 +2877,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。比較 i と i2 の両方向。対象は同じ制約とスキーム。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      187
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma17",
@@ -1579,7 +2892,7 @@
     "number": 17,
     "printed_page": 187,
     "pdf_page": 199,
-    "source_excerpt": "Lemma 17 (Completeness of `s ) Given C 0 , Γ0 `n e : σ 0 , C 0 `i Γ \u0016 Γ0 and Γ0 is",
+    "source_excerpt": "Lemma 17 (Completeness of `s ) Given C 0 , Γ0 `n e : σ 0 , C 0 `i Γ \u0016 Γ0 and Γ0 is\n\n[page 188]\nrealizable in C 0 . Then\n\n\n                 (a)   σ0 = τ :      C, Γ `s e : τ        C 0 `e C\n\n                 (b) otherwise : C, Γ `s e : τ            C, Γ, τ `gen (σo , Co )\n\n                                     C 0 `e C o      C 0 `i σ o \u0016 σ\n\n\n\nProof: I use induction on the derivation `n .\n\n\nCase (Inst) I know that C 0 , Γ0 `n x : σ 0 where x : σ 0 ∈ Γ0 . By assumption I know\n\nthere is a x : σ in Γ such that C 0 `i σ \u0016 σ 0 . If σ 0 = τ then I can immediately apply\n\nthe (Inst) rule and I am done. Otherwise, w.l.o.g. I can assume that σ = ∀ᾱ.D ⇒ τ 0 .\n\nI set C = [β̄/ᾱ]D and τ = [β̄/ᾱ]τ 0 where β̄ are fresh type variables. I apply again the\n\n(Inst) rule and find C, Γ `s x : τ . I set (σo , Co ) = gen(C, Γ, τ ) where σo is essentially\n\na renamed version of σ. I find that C 0 `i σo \u0016 σ 0 . By assumption Γ0 is realizable in\n\nC 0 , hence there is a τ such that C 0 `e [τ̄ /ᾱ]D. This leads us to the conclusion that\n\nC 0 `e Co and I am done.\n\n\nCase (Abs) I find the following situation:\n\n\n                                    C 0 , Γ0x .x : τ 0 `n e : τ 0\n\n                                  C 0 , Γ0x `n λx.e : τ 0 → τ 00\n\n\nApplication of the induction hypothesis yields\n\n\n                           C, Γx .x : τ 0 `s e : τ 00         C 0 `e C",
     "scope": "appendix",
     "lean": [
       "HMX.Statement.lemma17"
@@ -1587,7 +2900,17 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。環境の実現可能性、単型・量化型の二場合、結論の未束縛 σ を独立の引数として保持。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      187,
+      188
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "L17"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma18",
@@ -1603,7 +2926,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。制約付き環境の比較による s 判断の弱化。追加した弱化規則も同じ環境を保持。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      193
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem7",
@@ -1619,7 +2949,16 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。同じ基礎制約系の Xc/Xt、射影閉性・73頁版の主要制約性・環境近似。単型と実現可能スキームの二結論。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      194
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "D23"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem8",
@@ -1635,7 +2974,17 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。型付け可能なプログラム集合の両方向。付録の証明だけの閉環境・射影閉性は主張へ追加しない。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      197
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "T8",
+      "D23"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma20",
@@ -1643,7 +2992,7 @@
     "number": 20,
     "printed_page": 198,
     "pdf_page": 210,
-    "source_excerpt": "Lemma 20 Given an instance of the HM(X) system in term form. If the judgment\n\nC, Γ ` e : σ is derivable using the constraint–based (∀ Elim) rule then C, Γ ` e : σ is",
+    "source_excerpt": "Lemma 20 Given an instance of the HM(X) system in term form. If the judgment\n\nC, Γ ` e : σ is derivable using the constraint–based (∀ Elim) rule then C, Γ ` e : σ is\n\n[page 199]\nderivable using the substitution–based formulation of the (∀ Elim) rule instead. The\n\nreverse direction holds too.\n\nProof: The proof proceeds by induction on the derivation. It is sufficient to con-\n\nsider only applications of the elimination rules. Consider the last application of the\n\nconstraint–based (∀ Elim) rule in the derivation tree:\n\n\n                          C, Γ ` e : ∀ᾱ.D ⇒ τ 0          C `e ∃ᾱ.D\n\n                                      C ∧ D, Γ ` e : τ 0\n\n\nBy induction, the premise can be transformed in such a way that all applications\n\nof the constraint–based elimination rule are replaced by the term–based elimination\n\nrule. Weakening applied to the premise yields C ∧ D, Γ ` e : ∀ᾱ.D ⇒ τ 0 . Finally,\n\napplication of the term–based elimination rule yields C ∧ D, Γ ` e : τ 0 . and this\n\nconcludes the inductive proof.\n\n   For the other direction, consider the last application of the term–based elimina-\n\ntion rule in the derivation tree:\n\n\n                         C, Γ ` e : ∀ᾱ.D ⇒ τ 0          C `e [τ̄ /ᾱ]D\n\n                                      C, Γ ` e : [τ̄ /ᾱ]τ 0\n\n\nApplication of the induction hypothesis to the premise allows to replace all term–\n\nbased elimination rule applications by constraint–based rule applications. It holds\n\nthat C `e [τ̄ /ᾱ]D `e ∃ᾱ.D. This allows to apply the constraint–based elimination\n\nrule which yields C ∧ D, Γ ` e : τ 0 . Remember, I consider equivalence of the two\n\nformulations of the elimination rules only in the term–based fragment of HM(X).\n\nHence, it is possible to apply the substitution lemma. I get the judgment C ∧\n\n[τ̄ /ᾱ]D, Γ ` e : [τ̄ /ᾱ]τ 0 which is equivalent to C, Γ ` e : [τ̄ /ᾱ]τ 0 . This concludes the",
     "scope": "appendix",
     "lean": [
       "HMX.Statement.lemma20"
@@ -1651,7 +3000,15 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。制約による∀除去と代入による∀除去の両方向。本文の見出し introduction は式に合わせて修正しない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      198,
+      199
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma21",
@@ -1667,7 +3024,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。新鮮変数 α と α=τ を導入した判断との同値。§3.7の判断を参照。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      200
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma26",
@@ -1683,7 +3047,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。交差して正規形になる二つの主要正規形の交換。両結論を収録。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      200
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma27",
@@ -1694,12 +3065,21 @@
     "source_excerpt": "Lemma 27 Given a constraint system X over a term algebra T and a set of solved\n\nconstraints S in X such that X enjoys the principal constraint property and unitary\n\nunification. Given constraint problems (D1 , φ1 ) and (D2 , φ2 ) such that dom(φ1 ) ∩\n\ncodom(φ2 ) = ∅, dom(φ2 ) ∩ codom(φ1 ) = ∅, fv(D1 ) ∩ dom(φ2 ) = ∅ and fv(D2 ) ∩\n\ndom(φ1 ) = ∅. Let (C, ψ) be the principal normal form of (D1 , φ1 ) t (D2 , φ2 ). Then\n\nthe principal normal form (C1 , ψ1 ) of (D1 , φ1 ) exists and (C, ψ) is a principal normal\n\nform of (C1 , ψ1 ) t (D2 , φ2 ).\n                                           0",
     "scope": "appendix",
     "lean": [
-      "HMX.Statement.lemma27"
+      "HMX.Statement.lemma27Appendix"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の最終結論は principal normal form。本文p.91のnormal formと分けて lemma27Appendix に収録。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      201
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "L27-VARIANT"
+    ],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "lemma28",
@@ -1715,7 +3095,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。独立性の四条件、段階的な主要正規化から結合全体の normal form。結論を principal に強めない。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      203
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma29",
@@ -1731,7 +3118,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。lifting 条件の下で射影前後の正規形の存在が同値。証明中の w.l.o.g. 条件は追加しない。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      204
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma30",
@@ -1747,7 +3141,16 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。結論の制約は D への代入であり C へ修正しない。ψ の束縛変数外への制限と新鮮な置換を保持。 解決済み形式Sの共通条件をSolvedFormsとして接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      204
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "L30-RESTRICT"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem12",
@@ -1763,7 +3166,15 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。W の健全性。C・τ の固定性は構文的一致。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      206,
+      95
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma33",
@@ -1779,7 +3190,18 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。regular な場合の一般化後の制約含意。gen2 を制約成分として型付けする読みを記録。 §3.2の型比較・Sの充足可能性をLogicalAssumptionsとして接続。 付録208頁の節の共通条件も明示。証明中のw.l.o.g.条件は追加しない。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      209,
+      208
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "GEN12",
+      "GEN-MAX"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "remark6",
@@ -1795,7 +3217,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。補題33のregularityへの依存とXcの限定版の説明。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      209
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma34",
@@ -1811,7 +3240,17 @@
     "status": "transcribed",
     "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。一般化後の型比較は true 下。gen1 を型成分として型付けする読みを記録。 §3.2の型比較・Sの充足可能性をLogicalAssumptionsとして接続。 付録208頁の節の共通条件も明示。証明中のw.l.o.g.条件は追加しない。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      210,
+      208
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "GEN12"
+    ],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "lemma35",
@@ -1827,7 +3266,17 @@
     "status": "transcribed",
     "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。冒頭の φ1 と式の φ′1 を別変数として保持。未指定 C2・φ′も引数化し、支持条件を改変しない。 §3.2の型比較・Sの充足可能性をLogicalAssumptionsとして接続。 付録208頁の節の共通条件も明示。証明中のw.l.o.g.条件は追加しない。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      210,
+      208
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "L35L36"
+    ],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "lemma36",
@@ -1843,7 +3292,17 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。φ1、φ′1、未指定 C1/C2 を区別。型の固定性と最後の比較をそのまま記述。 §3.2の型比較・Sの充足可能性をLogicalAssumptionsとして接続。 付録208頁の節の共通条件も明示。証明中のw.l.o.g.条件は追加しない。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      211,
+      208
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "L35L36"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma37",
@@ -1851,7 +3310,7 @@
     "number": 37,
     "printed_page": 211,
     "pdf_page": 223,
-    "source_excerpt": "Lemma 37 (Completeness of `W ) Given C 0 , φΓ `s e : τ 0 . Then\n\n\n                                        ψ, C, Γ `W e : τ",
+    "source_excerpt": "Lemma 37 (Completeness of `W ) Given C 0 , φΓ `s e : τ 0 . Then\n\n\n                                        ψ, C, Γ `W e : τ\n\n[page 212]\nfor some substitutions ψ, φ0 , constraint C and type τ such that,\n\n\n                           0\n                      ψ ≤φf v(Γ) φ   C 0 `e φ0 C    C 0 `i φ0 τ \u0016 τ 0 .\n\n\nProof: In this case I can not use induction on the derivation `s . I run into problems\n\nin case of the (Let) rule. In order to apply the induction hypothesis I have to rewrite\n\nthe right premise of the (Let) rule. But this would break the inductive proof on the\n\nderivation `s . The trick is that first I perform induction on the size of expressions\n\nand then on the number of (Sub) rules. In Figure C.1 I introduce a measure on the\n\nsize of expressions which is parameterized on a map w from identifiers to positive\n\nintegers. This method appears also in a technical report by Kennedy [Ken96]. He\n\nmentions that the original idea is due to Tobias Nipkow.\n\n   The proof proceeds first by induction on δ(w, e) and then on the number of\n\noccurrences of rule (Sub) in the original derivation.\n\n\nCase (Var) I find the following situation:\n\n\n                                     C 0 , φΓ `s e : τ 0\n\n\nwhere σ = ∀ᾱ.D ⇒ τ ∈ Γ and C 0 `i φσ \u0016 τ 0 . I set π = [β̄/ᾱ] as a variable renaming\n\nsubstitution where β̄ are fresh type variables. I get that\n\n\n                   C 0 `e (δ ◦ φ ◦ π)D        C 0 `i (δ ◦ φ ◦ π)τ \u0016 τ 0\n\n\nwhere δ is a solution to the bound type variables. Then, (C 0 , δ ◦ φ ◦ π) is a normal\n\nform of (D, π). Because HM(X) satisfies the principal constraint property I get that",
     "scope": "appendix",
     "lean": [
       "HMX.Statement.lemma37"
@@ -1859,7 +3318,16 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。regular な場合の s 判断から W、因子分解・制約含意・型比較の三結論。次頁の結論を収録。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      211,
+      212,
+      95
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem25",
@@ -1875,7 +3343,15 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。付録の明示された ψ≤φ′φ を直接記述。p.98のconfiguration比較のψ/ψ′の誤記候補を流用しない。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      219,
+      95
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma38",
@@ -1891,7 +3367,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。恒等代入の因子分解に加え、FV(Γ)上の構文的一致を保持。制約の一般化に関する結論。 §3.2の型比較・Sの充足可能性をLogicalAssumptionsとして接続。 付録220頁の節の共通条件も明示。証明中のw.l.o.g.条件は追加しない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      220
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma39",
@@ -1907,7 +3390,14 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。恒等代入・構文的一致を保持。一般化後の比較は true 下。 §3.2の型比較・Sの充足可能性をLogicalAssumptionsとして接続。 付録220頁の節の共通条件も明示。証明中のw.l.o.g.条件は追加しない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      220
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "remark7",
@@ -1923,7 +3413,16 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。non-regular と印刷された箇所を regular に修正せず保持。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      220
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "REGULAR"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "lemma40",
@@ -1939,23 +3438,18 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
-  },
-  {
-    "id": "theorem26",
-    "kind": "Theorem",
-    "number": 26,
-    "printed_page": 223,
-    "pdf_page": 235,
-    "source_excerpt": "Theorem 26 Given C 0 , φΓ ` e : σ 0 and φΓ is realizable in C 0 . Then\n\n\n                                     id, C, Γ `W e : τ\n\n\nfor some constraints C, Co , types τ, σo and substitution φ0 such that,\n\n                         0\n                   id ≤φf v(Γ) φ   C 0 `e φ 0 C o   C 0 `i φ0 σo \u0016 σ 0 and\n\n                                   C, Γ, τ `gen (σo , Co ).",
-    "scope": "appendix",
-    "lean": [
-      "HMX.Statement.theorem26"
+    "transcription_note": "付録の再掲を本文と別に照合。Xc の恒等 normalizer。結論に印刷されていない φ′ を制約・型に作用させない。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。 付録220頁の節の共通条件も明示。証明中のw.l.o.g.条件は追加しない。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      221,
+      95,
+      220
     ],
-    "status": "transcribed",
-    "visual_check": false,
-    "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "L40"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem13",
@@ -1971,7 +3465,17 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "独立した主張の再掲ではなく、既出の番号への本文中の参照。参照先の宣言に対応付ける。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      223,
+      95
+    ],
+    "occurrence_kind": "reference",
+    "source_issue_ids": [
+      "CONFIG"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem16",
@@ -1979,7 +3483,7 @@
     "number": 16,
     "printed_page": 223,
     "pdf_page": 235,
-    "source_excerpt": "Theorem 16 (Soundness of Inference) Given an instance of the HM(X) system",
+    "source_excerpt": "Theorem 16 (Soundness of Inference) Given an instance of the HM(X) system\n\n[page 224]\nwhere X satisfies the principal constraint property and the set S is closed under\n\nprojection. Given a type environment Γ and a term e. If ψ, C, Γ `Wterm e : τ then\n\nC, ψΓ ` e : τ where ψC =e C and ψτ = τ .\n\nProof: I only consider the final step of the derivation `Wterm .\n\n\n                    C, Γ `Wc e : α      (D, ψ) = normalize(C, id)\n\n                           ψ|f v(Γ) , D, Γ `Wterm e : ψ(α)\n\n\n   From the premise, I obtain\n\n\n                                               c\n                                     C, Γ `X e : α\n\n\nbecause constraint–based inference is sound. Furthermore, I know that D `e ψC\n\nwhich yields that\n                                           c\n                                D, ψΓ `X e : ψ(α)\n\nNormalization ensures that ψΓ is in X t . I apply the Transformation Theorem 7 and\n\nobtain\n                                           t\n                                D, ψΓ `X e : ψ(α)\n\nand I am done.",
     "scope": "appendix",
     "lean": [
       "HMX.Statement.theorem16"
@@ -1987,7 +3491,41 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。主要制約性・射影閉性、Wterm、Cの含意同値での固定とτの構文的固定。lifting 条件を追加しない。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      223,
+      224,
+      95
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
+  },
+  {
+    "id": "theorem26",
+    "kind": "Theorem",
+    "number": 26,
+    "printed_page": 223,
+    "pdf_page": 235,
+    "source_excerpt": "Theorem 26 Given C 0 , φΓ ` e : σ 0 and φΓ is realizable in C 0 . Then\n\n\n                                     id, C, Γ `W e : τ\n\n\nfor some constraints C, Co , types τ, σo and substitution φ0 such that,\n\n                         0\n                   id ≤φf v(Γ) φ   C 0 `e φ 0 C o   C 0 `i φ0 σo \u0016 σ 0 and\n\n                                   C, Γ, τ `gen (σo , Co ).",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.theorem26"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "付録の再掲を本文と別に照合。Xcの恒等出力と id≤φ′φ、制約・型へのφ′の作用を直接記述。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。 付録220頁の節の共通条件も明示。証明中のw.l.o.g.条件は追加しない。",
+    "source_review_status": "reviewed",
+    "source_pages": [
+      223,
+      95,
+      220
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [],
+    "review_method": "PDF text and Lean definition/context comparison"
   },
   {
     "id": "theorem17",
@@ -1995,15 +3533,26 @@
     "number": 17,
     "printed_page": 224,
     "pdf_page": 236,
-    "source_excerpt": "Theorem 17 (Completeness of Inference) Given an instance of the HM(X)\n                                                                           t\nsystem where X satisfies the principal constraint property. Given C, φΓ `X e : σ\n\nsuch that φΓ realizable in C. Then ψ, D, Γ `W e : τ for some substitution ψ,",
+    "source_excerpt": "Theorem 17 (Completeness of Inference) Given an instance of the HM(X)\n                                                                           t\nsystem where X satisfies the principal constraint property. Given C, φΓ `X e : σ\n\nsuch that φΓ realizable in C. Then ψ, D, Γ `W e : τ for some substitution ψ,\n\n[page 225]\nconstraints D, Co and types τ, σo such that\n\n                        0\n                   ψ ≤φf v(Γ) φ            C `i φ0 σo \u0016 σ          C `e φ0 Co\n\n                                        D, ψΓ, τ `gen (σo , Co )\n\n\n\n                         t\nProof: Given C, φΓ `X e : σ. I perform type inference in X c and obtain\n\n\n                                           C̃, Γ `Wc e : α\n\n\nsuch that\n                             00\n                     id ≤φf v(Γ) φ C `e φ00 Co0           C `i φ00 σo0 \u0016 σ\n\nwhere σo0 = ∀α. ⇒ C̃ and Co = ∃α.C̃. Furthermore, I assume that σ = ∀γ̄.D0 ⇒ τ 0 .\n\nFrom C `i φ00 σo \u0016 σ I can deduce that there exists π = [τ /α] such that\n\n\n                C ∧ D0 `e (π ◦ φ00 )C̃             C ∧ D0 `i (π ◦ φ00 )τ \u0016 τ 0 .   (C.12)\n\n\nBut then I know the principal normal form of C̃ exists. I set\n\n\n                                  (D, ψ) = normalize(C̃, id)\n\n\nand find that\n                                  000\n                        ψ ≤φ (π ◦ φ00 )              C ∧ D0 `e φ000 D.             (C.13)\n\nI can apply the term reconstruction step and find that\n\n\n                                    ψ, D, Γ `Wterm e : ψ(α).",
     "scope": "appendix",
     "lean": [
-      "HMX.Statement.theorem17"
+      "HMX.Statement.theorem17Appendix"
     ],
     "status": "transcribed",
-    "visual_check": false,
+    "visual_check": true,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録は W と印刷し、本文p.107はWterm。theorem17Appendix は印刷されたWを図4.1として保持。証明中のWtermへ読み替えない。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      224,
+      225,
+      95
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "T17-VARIANT"
+    ],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "theorem18",
@@ -2019,6 +3568,16 @@
     "status": "transcribed",
     "visual_check": false,
     "validation": "Statement only; no proof or consistency certification.",
-    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
+    "transcription_note": "付録の再掲を本文と別に照合。lifting 下の Wterm と Wnormalize の同じ出力の両方向。代表元の一致の成立性は別課題。 95頁で以後の仮定とされた正規化の計算可能性を明示的な前提として接続。",
+    "source_review_status": "reviewed_with_source_note",
+    "source_pages": [
+      226,
+      95
+    ],
+    "occurrence_kind": "statement",
+    "source_issue_ids": [
+      "NORMALIZER-REPRESENTATIVES"
+    ],
+    "review_method": "PDF text and Lean definition/context comparison"
   }
 ]

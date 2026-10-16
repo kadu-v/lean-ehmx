@@ -48,9 +48,13 @@ inductive EagerInference (X : ConstraintTheory V K arity P parity)
       (combine₂ : q.Combines X ⟨Constraint.le t₁ (.arrow t₂ (.var a)), Assignment.id⟩ p)
       (result : normalize p = some n) :
       EagerInference X normalize gen (n.substitution.restrict (X.envFV Γ)) n.constraint Γ (.app e₁ e₂) (n.substitution a)
-  | letE (unbound : Γ.lookup (.inl x) = none) (d : EagerInference X normalize gen ψ₁ C₁ Γ e t)
-      (subst : Environment.Substitutes ψ₁ Γ Δ) (g : gen C₁ Δ t = (C₂, s))
-      (b : EagerInference X normalize gen ψ₂ C₃ (Γ.extend (.inl x) s) e' t')
+  /- Figure 4.1 prints Gamma (not Gamma_x) as gen's environment. Keep a
+  separate full environment, whose erasure is the environment of the premises. -/
+  | letE (full : Environment (N ⊕ Const) V K arity P parity)
+      (erased : full.erase (.inl x) = Γ) (unbound : Γ.lookup (.inl x) = none)
+      (d : EagerInference X normalize gen ψ₁ C₁ Γ e t)
+      (subst : Environment.Substitutes ψ₁ full Δ) (g : gen C₁ Δ t = (C₂, s))
+      (b : EagerInference X normalize gen ψ₂ C₃ (Environment.extend Γ (.inl x) s) e' t')
       (combine : Problem.Combines X ⟨C₂, ψ₁⟩ ⟨C₃, ψ₂⟩ p) (result : normalize p = some n) :
       EagerInference X normalize gen (n.substitution.restrict (X.envFV Γ)) n.constraint Γ (.letE x e e') (t'.subst n.substitution)
 

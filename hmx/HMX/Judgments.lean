@@ -143,8 +143,8 @@ inductive LogicalTyping {N Const : Type} (style : LogicalStyle) (X : ConstraintT
       (env : EnvironmentRepresentative X Γ Δ) (scheme : SchemeRepresentative X s t)
       (ok : LogicalJudgmentAdmissible style X S C Δ t) : LogicalTyping style X S policy C Δ e t
   | weakening (enabled : policy = .explicitRule) (d : LogicalTyping style X S policy C Γ e s)
-      (h : ConstrainedEnvironmentInstance X S D C Δ Γ)
-      (ok : LogicalJudgmentAdmissible style X S D Δ s) : LogicalTyping style X S policy D Δ e s
+      (h : X.Entails D C)
+      (ok : LogicalJudgmentAdmissible style X S D Γ s) : LogicalTyping style X S policy D Γ e s
 
   | instVar (enabled : style = .normalized) (lookup : Γ.lookup (.inl x) = some s)
       (i : Instance X S C s (.type t)) (ok : LogicalJudgmentAdmissible style X S C Γ (.type t)) :

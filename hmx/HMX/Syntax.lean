@@ -170,8 +170,10 @@ def lookup (Γ : Environment N V K arity P parity) (x : N) : Option (Scheme V K 
   | [] => none
   | (y, s) :: Γ => if x = y then some s else lookup Γ x
 def WellFormed (Γ : Environment N V K arity P parity) : Prop := (Γ.map Prod.fst).Nodup
+def erase (Γ : Environment N V K arity P parity) (x : N) :=
+  Γ.filter (fun binding => binding.1 ≠ x)
 def extend (Γ : Environment N V K arity P parity) (x : N) (s : Scheme V K arity P parity) :=
-  (x, s) :: Γ.filter (fun binding => binding.1 ≠ x)
+  (x, s) :: Γ.erase x
 def Substitutes (φ : Assignment V K arity)
     (Γ Δ : Environment N V K arity P parity) : Prop :=
   Γ.WellFormed ∧ Δ.WellFormed ∧ ∀ x,

@@ -56,6 +56,11 @@ def weightedSize (weights : N ⊕ Const → Nat) : Expr N Const → Nat
   | .letE x e e' => e.weightedSize weights +
       e'.weightedSize (Function.update weights (.inl x) (e.weightedSize weights))
 
+/-- p.182 fixes positive input weights before Figure C.1. The recurrence
+above is a total helper; this is the source's domain-restricted definition. -/
+def WeightedSizeSpecification (weights : N ⊕ Const → Nat) (size : Expr N Const → Nat) : Prop :=
+  (∀ x, 0 < weights x) ∧ size = weightedSize weights
+
 inductive Subexpression : Expr N Const → Expr N Const → Prop
   | refl (e) : Subexpression e e
   | lam : Subexpression e b → Subexpression e (.lam x b)
@@ -70,6 +75,7 @@ end Expr
     see the separate audit issue REDUCTION. -/
 structure PrimitiveReduction (N Const : Type*) where
   delta : Const → Expr N Const → Option (Expr N Const)
+  domain : ∀ c v r, delta c v = some r → v.Value ∧ v.fv = ∅
   closedValue : ∀ c v r, v.Value → v.fv = ∅ → delta c v = some r → r.Value ∧ r.fv = ∅
 
 /-- The three rules actually printed on p.39, before any context closure. -/
@@ -89,11 +95,12 @@ def Faulty (δ : PrimitiveReduction N Const) (e : Expr N Const) : Prop :=
   ∃ c v, v.Value ∧ Expr.Subexpression (.app (.constant c) v) e ∧ δ.delta c v = none
 
 /-- p.40 is expressed relationally because the source gives no value for
-    divergence. Zero steps are allowed for an expression already faulty. -/
+    divergence. The transitive closure is exactly the one specified on p.39;
+    no reflexive case is added for an expression already faulty or a value. -/
 def EvaluatesWrong (δ : PrimitiveReduction N Const) (context : ReductionContext δ) (e : Expr N Const) : Prop :=
-  ∃ e', Relation.ReflTransGen context.step e e' ∧ Faulty δ e'
+  ∃ e', Relation.TransGen context.step e e' ∧ Faulty δ e'
 def EvaluatesValue (δ : PrimitiveReduction N Const) (context : ReductionContext δ) (e v : Expr N Const) : Prop :=
-  Relation.ReflTransGen context.step e v ∧ v.Value
+  Relation.TransGen context.step e v ∧ v.Value
 
 namespace Statement
 variable {V : Type u} {K : Type v} {arity : K → Nat} {P : Type w} {parity : P → Nat}
@@ -103,19 +110,19 @@ variable (policy : WeakeningPolicy) (N Const : Type) (δ : PrimitiveReduction N 
 /-- p.39. A transcription, not a proof: the source does not give a type
     compatibility condition for delta. Its mathematical adequacy is deferred to proof review. -/
 def lemma8Printed (presentation : ConstraintPresentation X) : Prop :=
-  CoreAssumptions X S policy → X.StronglySound S presentation →
+  LogicalAssumptions X S → X.StronglySound S presentation →
   ∀ C (Γ Δ : Environment (N ⊕ Const) V K arity P parity) e e' s s' φ,
-    Typing X S policy C Γ e s → φ.IsSubstitution →
+    Typing X S .conditionOnSolvedForms C Γ e s → φ.IsSubstitution →
     Environment.Substitutes φ Γ Δ → Scheme.Substitutes φ s s' →
     X.envFV Δ = ∅ → X.schemeFV s' = ∅ → X.Entails ∅ (C.subst φ) →
     X.ConsistentEnvironment S φ Γ → Relation.TransGen context.step e e' →
-      Typing X S policy ∅ Δ e' s'
+      Typing X S .conditionOnSolvedForms ∅ Δ e' s'
 
 /-- Explicitly a conjecture in the dissertation, p.40; it assumes Sound,
     not StronglySound. It is not promoted to a theorem here. -/
-def conjecture1 : Prop := CoreAssumptions X S policy → X.Sound S →
+def conjecture1 : Prop := LogicalAssumptions X S → X.Sound S →
   ∀ C (Γ Δ : Environment (N ⊕ Const) V K arity P parity) e s s' φ,
-    Typing X S policy C Γ e s → φ.IsSubstitution →
+    Typing X S .conditionOnSolvedForms C Γ e s → φ.IsSubstitution →
     Environment.Substitutes φ Γ Δ → Scheme.Substitutes φ s s' →
     X.envFV Δ = ∅ → X.schemeFV s' = ∅ → X.Entails ∅ (C.subst φ) →
     X.ConsistentEnvironment S φ Γ → ¬ EvaluatesWrong δ context e

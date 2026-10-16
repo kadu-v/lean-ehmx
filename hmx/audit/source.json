@@ -23,10 +23,12 @@
     "chapter5": "Excluded except when a dependency is explicitly needed.",
     "background": "Printed pages 8--16, including Figures 2.1--2.3 and numbered results."
   },
-  "status": "transcription_complete",
+  "status": "transcribed",
   "proof_phase_authorized": false,
   "original_ehmx_baseline": "64dc8e2",
   "branch": "hmx/thesis-statements",
   "mathematical_validation": "pending",
-  "completion_means": "All in-scope numbered statements and catalogued rules/conventions are recorded. This is not a claim of provability, consistency, or a completed semantic model."
+  "completion_means": "定義・仮定・定理文の転記と原典との照合。記録した原文の表記差・未指定記号の読みは保持し、証明・背景モデルの構成や存在・主張および読みの数学的妥当性は完了条件に含めない。",
+  "coverage_status": "complete",
+  "source_review_status": "complete"
 }

@@ -41,6 +41,19 @@ def Generalizer.Effective (X : ConstraintTheory V K arity P parity)
     coding.input k = some (C, Γ, t) → X.Admissible S C → X.EnvironmentAdmissible S Γ →
       coding.output (run k) = some (gen C Γ t)
 
+/-- pp.95–96 distinguish a deduction system from an effective algorithm.
+p.95 explicitly assumes computable normalization in the following results;
+p.96 makes effective generalization a condition for an algorithm, without
+adding it as a new hypothesis of each mathematical soundness statement. -/
+def InferenceAlgorithmConditions (X : ConstraintTheory V K arity P parity)
+    (S : Set (Constraint V K arity P parity))
+    (problemCoding : ProblemCoding V K arity P parity)
+    (generalizationCoding : GeneralizationCoding N V K arity P parity)
+    (normalize : Normalizer V K arity P parity)
+    (gen : Generalizer N V K arity P parity) : Prop :=
+  Normalizer.Specification X S normalize ∧ Normalizer.Effective problemCoding normalize ∧
+  Generalizer.Specification X S gen ∧ Generalizer.Effective X S generalizationCoding gen
+
 namespace Statement
 /-- The invariant stated in §§4.4.1 and 4.4.2. It is a proposition to prove,
     not an extra field in the constraint theory. -/

@@ -1,17 +1,26 @@
 {
   "source_sha256": "a76e1754b9ae8480257d0826c7a91c4ba885e9b8aba50441058a8405b7e31f5f",
-  "scope": "Independent HMX dissertation transcription; not proofs or mathematical fidelity certification",
-  "numbered_items": 101,
-  "numbered_occurrences": 125,
-  "mapped_declarations_checked": 193,
+  "scope": "定義・仮定・定理文の原典照合と転記、Lean型検査、対応記録の検査。証明・数学的妥当性は対象外。",
+  "numbered_items": 119,
+  "numbered_occurrences": 144,
+  "statement_occurrences": 140,
+  "reference_occurrences": 4,
+  "figures": 15,
+  "conventions": 57,
+  "mapped_declarations_checked": 315,
   "build": {
     "command": "cd hmx && lake build",
     "result": "passed",
-    "jobs": 866
+    "jobs": 869
   },
   "coverage": {
     "command": "scripts/check_audit.py --require-complete --lean-checks",
     "result": "passed"
+  },
+  "audit_regression_tests": {
+    "command": "python -m unittest discover -s scripts -p test_check_audit.py -v",
+    "result": "passed",
+    "tests": 15
   },
   "axioms_of_four_statement_definitions": [
     "propext",
@@ -19,11 +28,21 @@
     "Quot.sound"
   ],
   "pdf": {
-    "pages": 17,
-    "sha256": "3dab9d8dd9455f6e91322039f1dcab3c38c3e0df1aba94644b3dbd86316edd3a",
-    "lean_hashes": "all matched",
-    "visual_review": "All 17 pages rendered and inspected for clipping, layout and pagination."
+    "pages": 31,
+    "sha256": "99d54ecd7ec86e961f662d1b8dce9e12d3b2036844208455ab1866e49cbcfea0",
+    "lean_hashes": "all 26 matched",
+    "visual_review": "All 31 pages rendered and inspected; pages 4, 20, and 28 additionally inspected individually. No clipping, overlap, or missing symbols observed."
   },
   "mathematical_validation": "pending",
-  "proofs_added": false
+  "proofs_added": false,
+  "source_fidelity": {
+    "command": "scripts/check_audit.py --require-complete --lean-checks",
+    "result": "passed",
+    "remaining_implementation_findings": [],
+    "all_occurrences_individually_reviewed": true,
+    "recorded_source_issues": 50,
+    "limitation": "Recorded textual comparisons and readings; not a proof of source equivalence or mathematical truth.",
+    "condition_connection_check": "Printed elaborated bodies of 36 definitions checked for required conditions; parameter-only occurrences do not count."
+  },
+  "condition_connections_checked": 36
 }

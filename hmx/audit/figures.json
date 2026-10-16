@@ -7,7 +7,13 @@
     "lean": [
       "HMX.HM.Typing"
     ],
-    "status": "transcribed"
+    "status": "transcribed",
+    "source_review_status": "reviewed",
+    "transcription_note": "Var/Abs/App/Let/∀Intro/∀Elim、Γからxの除去、非出現と型代入。",
+    "source_pages": [
+      11
+    ],
+    "review_method": "PDF text and Lean rule comparison"
   },
   {
     "id": "figure2.2",
@@ -17,7 +23,13 @@
     "lean": [
       "HMX.HM.Inference"
     ],
-    "status": "transcribed"
+    "status": "transcribed",
+    "source_review_status": "reviewed",
+    "transcription_note": "HMの四つのW規則、代入の合成ではなく上界、unify、一般化、出力のτ′を保持。",
+    "source_pages": [
+      15
+    ],
+    "review_method": "PDF text and Lean rule comparison"
   },
   {
     "id": "figure2.3",
@@ -27,7 +39,13 @@
     "lean": [
       "HMX.SourceNotes.figure23"
     ],
-    "status": "transcribed"
+    "status": "transcribed",
+    "source_review_status": "reviewed",
+    "transcription_note": "意味モデル・型付け・推論の関係を説明文字列として収録。新しい定理ではない。",
+    "source_pages": [
+      16
+    ],
+    "review_method": "PDF text and Lean rule comparison"
   },
   {
     "id": "figure3.1",
@@ -37,7 +55,13 @@
     "lean": [
       "HMX.Typing"
     ],
-    "status": "transcribed"
+    "status": "transcribed",
+    "source_review_status": "reviewed",
+    "transcription_note": "通常の七規則、型・制約の許容性、整合的代入。p.45の弱化は選択として分離。",
+    "source_pages": [
+      29
+    ],
+    "review_method": "PDF text and Lean rule comparison"
   },
   {
     "id": "figure3.2",
@@ -47,7 +71,13 @@
     "lean": [
       "HMX.SyntaxDirected"
     ],
-    "status": "transcribed"
+    "status": "transcribed",
+    "source_review_status": "reviewed",
+    "transcription_note": "Var/Abs/App/Letとp.45の指定による弱化。Letの制約連言と一般化を保持。",
+    "source_pages": [
+      46
+    ],
+    "review_method": "PDF text and Lean rule comparison"
   },
   {
     "id": "figure3.3",
@@ -60,7 +90,13 @@
       "HMX.QuantifierIntroduction.Smith",
       "HMX.QuantifierIntroduction.HOG"
     ],
-    "status": "transcribed"
+    "status": "transcribed",
+    "source_review_status": "reviewed",
+    "transcription_note": "四つの∀導入規則。結論のCとC∧D、Dの充足又は代入の存在を区別。",
+    "source_pages": [
+      50
+    ],
+    "review_method": "PDF text and Lean rule comparison"
   },
   {
     "id": "figure3.4",
@@ -70,7 +106,13 @@
     "lean": [
       "HMX.CanonicalTyping"
     ],
-    "status": "transcribed"
+    "status": "transcribed",
+    "source_review_status": "reviewed",
+    "transcription_note": "制約形式の文法と∀Elim・∃Intro、S=Satの文脈。",
+    "source_pages": [
+      77
+    ],
+    "review_method": "PDF text and Lean rule comparison"
   },
   {
     "id": "figure4.1",
@@ -80,7 +122,16 @@
     "lean": [
       "HMX.EagerInference"
     ],
-    "status": "transcribed"
+    "status": "transcribed",
+    "source_review_status": "reviewed",
+    "transcription_note": "各規則のnormalization、制約問題の結合、一般化。原文の型・代入の出力を保持。 Letのgenは印刷どおりΓを使い、Γxと区別。",
+    "source_pages": [
+      95
+    ],
+    "review_method": "PDF text and Lean rule comparison",
+    "source_issue_ids": [
+      "FIG41-ENVIRONMENT"
+    ]
   },
   {
     "id": "figure4.2",
@@ -92,7 +143,13 @@
       "HMX.ByNeedInference"
     ],
     "status": "transcribed",
-    "visual_check": true
+    "visual_check": true,
+    "source_review_status": "reviewed",
+    "transcription_note": "遅延したφ′と最終normalizeのψ′を区別。未指定ψ′を勝手に補わない。",
+    "source_pages": [
+      97
+    ],
+    "review_method": "PDF text and rendered formula"
   },
   {
     "id": "figure4.3",
@@ -100,9 +157,19 @@
     "pdf_page": 114,
     "title": "Type inference in constraint form",
     "lean": [
+      "HMX.ConstraintFormInference",
       "HMX.ConstraintInference"
     ],
-    "status": "transcribed"
+    "status": "transcribed",
+    "source_review_status": "reviewed",
+    "transcription_note": "制約生成の四規則とfreshness。§3.7向けの入力文法はConstraintFormInferenceで指定。 入力変数αの非出現とα1≠α2という未印刷の条件は削除。",
+    "source_pages": [
+      102
+    ],
+    "review_method": "PDF text and Lean rule comparison",
+    "source_issue_ids": [
+      "INFERENCE-FRESHNESS"
+    ]
   },
   {
     "id": "figure4.4",
@@ -113,7 +180,16 @@
       "HMX.ConstraintInference",
       "HMX.TermInference"
     ],
-    "status": "transcribed"
+    "status": "transcribed",
+    "source_review_status": "reviewed",
+    "transcription_note": "図4.3と同じ生成規則の後にnormalizeとFV(Γ)への制限による項再構成。 入力変数αの非出現とα1≠α2という未印刷の条件は削除。",
+    "source_pages": [
+      106
+    ],
+    "review_method": "PDF text and Lean rule comparison",
+    "source_issue_ids": [
+      "INFERENCE-FRESHNESS"
+    ]
   },
   {
     "id": "figure4.5",
@@ -125,7 +201,17 @@
       "HMX.IntermediateConstraintInference",
       "HMX.IntermediateTermInference"
     ],
-    "status": "transcribed"
+    "status": "transcribed",
+    "source_review_status": "reviewed",
+    "transcription_note": "Appの上段もWc2。中間normalize、∀Introの支持、最後の項再構成を保持。 入力変数αの非出現とα1≠α2という未印刷の条件は削除。",
+    "source_pages": [
+      109
+    ],
+    "visual_check": true,
+    "review_method": "PDF text and rendered formula",
+    "source_issue_ids": [
+      "INFERENCE-FRESHNESS"
+    ]
   },
   {
     "id": "figure4.6",
@@ -135,7 +221,13 @@
     "lean": [
       "HMX.SourceNotes.figure46"
     ],
-    "status": "transcribed"
+    "status": "transcribed",
+    "source_review_status": "reviewed",
+    "transcription_note": "項形式の論理系・推論・条件の関係図を文字列として収録。",
+    "source_pages": [
+      112
+    ],
+    "review_method": "PDF text and Lean rule comparison"
   },
   {
     "id": "figure4.7",
@@ -145,7 +237,13 @@
     "lean": [
       "HMX.SourceNotes.figure47"
     ],
-    "status": "transcribed"
+    "status": "transcribed",
+    "source_review_status": "reviewed",
+    "transcription_note": "制約形式の論理系・推論の関係図を文字列として収録。",
+    "source_pages": [
+      113
+    ],
+    "review_method": "PDF text and Lean rule comparison"
   },
   {
     "id": "figureC.1",
@@ -153,8 +251,16 @@
     "pdf_page": 195,
     "title": "Measure of expression size",
     "lean": [
-      "HMX.Expr.weightedSize"
+      "HMX.Expr.weightedSize",
+      "HMX.Expr.WeightedSizeSpecification"
     ],
-    "status": "transcribed"
+    "status": "transcribed",
+    "source_review_status": "reviewed",
+    "transcription_note": "変数の重み、λの+1、Appの和、Let本体の重みの更新を収録。 重みの正値条件をSpecificationで明示。",
+    "source_pages": [
+      183
+    ],
+    "visual_check": true,
+    "review_method": "PDF text and rendered formula"
   }
 ]

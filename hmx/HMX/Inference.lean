@@ -32,12 +32,10 @@ inductive ConstraintInference (X : ConstraintTheory V K arity P parity) :
       (sat : X.Satisfiable (X.project A (Constraint.eq (.var b) t ∪ D))) :
       ConstraintInference X (X.project A (Constraint.eq (.var b) t ∪ D)) Γ (.constant c) b
   | abs (unbound : Γ.lookup (.inl x) = none) (d : ConstraintInference X C (Γ.extend (.inl x) (.type (.var a))) e g)
-      (freshInput : a ∉ X.envFV Γ)
       (fresh : b ∉ X.envFV Γ ∪ X.fv C ∪ ({a, g} : Set V))
       (sat : X.Satisfiable (X.project {a, g} (Constraint.eq (.var b) (.arrow (.var a) (.var g)) ∪ C))) :
       ConstraintInference X (X.project {a, g} (Constraint.eq (.var b) (.arrow (.var a) (.var g)) ∪ C)) Γ (.lam x e) b
   | app (f : ConstraintInference X C₁ Γ e₁ a₁) (d : ConstraintInference X C₂ Γ e₂ a₂)
-      (distinct : a₁ ≠ a₂)
       (fresh : a ∉ X.envFV Γ ∪ X.fv C₁ ∪ X.fv C₂ ∪ ({a₁, a₂} : Set V))
       (sat : X.Satisfiable (X.project {a₁, a₂} (C₁ ∪ C₂ ∪ Constraint.le (.var a₁) (.arrow (.var a₂) (.var a))))) :
       ConstraintInference X (X.project {a₁, a₂} (C₁ ∪ C₂ ∪ Constraint.le (.var a₁) (.arrow (.var a₂) (.var a))))
@@ -48,6 +46,14 @@ inductive ConstraintInference (X : ConstraintTheory V K arity P parity) :
       ConstraintInference X (X.project {a} C₁ ∪ C₃) Γ (.letE x e e') β
 
   | equ (d : ConstraintInference X C Γ e a) (h : X.Equivalent C D) : ConstraintInference X D Γ e a
+
+/-- Section 4.4.1 uses the type grammar of Section 3.7. Section 4.4.2
+also invokes the shared rules with term-form environments. Keep the input
+grammar explicit instead of identifying those two uses. -/
+def ConstraintFormInference (X : ConstraintTheory V K arity P parity)
+    (C : Constraint V K arity P parity) (Γ : Environment (N ⊕ Const) V K arity P parity)
+    (e : Expr N Const) (a : V) : Prop :=
+  (∀ x s, Γ.lookup x = some s → s.ConstraintForm) ∧ ConstraintInference X C Γ e a
 
 /-- Figure 4.4: one reconstruction, after the entire constraint derivation.
     The normalizer's substitution and the reported restricted substitution differ. -/

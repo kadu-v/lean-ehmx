@@ -1,8 +1,8 @@
 [
   {
     "file": "HMX/AppendixStatements.lean",
-    "source": "pp.208–225",
-    "role": "補題33–40、定理25–26"
+    "source": "pp.201,208–225",
+    "role": "本文と異なる補題27・定理17の再掲、補題33–40、定理25–26"
   },
   {
     "file": "HMX/Background.lean",
@@ -56,7 +56,7 @@
   },
   {
     "file": "HMX/Normalization.lean",
-    "source": "pp.85–93; D19–28",
+    "source": "pp.73,85–93; D19–28",
     "role": "正規形・主要性・lifting 条件"
   },
   {
@@ -76,12 +76,12 @@
   },
   {
     "file": "HMX/Semantics.lean",
-    "source": "pp.34–36,42",
+    "source": "pp.34–38,42",
     "role": "表示的意味論、定義10–11、補題6–7,9、定理5、系2"
   },
   {
     "file": "HMX/SoundnessConditions.lean",
-    "source": "pp.33,38–39; D9,D12–13",
+    "source": "pp.33,37–39; D9,D12–13",
     "role": "健全性の条件"
   },
   {
@@ -91,7 +91,7 @@
   },
   {
     "file": "HMX/SourceVariants.lean",
-    "source": "pp.21,23,50,73,87–89,93,209,220",
+    "source": "pp.21,23,50,53,56–59,63,87–89,93,209,220",
     "role": "異なる印刷式・比較用規則・注意書き"
   },
   {
@@ -113,5 +113,20 @@
     "file": "HMX.lean",
     "source": "全対象範囲",
     "role": "独立したプロジェクトの import 一覧"
+  },
+  {
+    "file": "HMX/SemanticDomain.lean",
+    "source": "pp.11–12,34–35",
+    "role": "CPO、連続性、領域方程式と最小解の抽象条件"
+  },
+  {
+    "file": "HMX/SourceExamples.lean",
+    "source": "pp.20–27,31–32,38",
+    "role": "例1–9の定義・仮定全体とSCの追加構文"
+  },
+  {
+    "file": "HMX/ComparisonExamples.lean",
+    "source": "pp.51–67,70–72,81–84",
+    "role": "比較の例10–18と本文中の例のプログラム・型注釈・初期環境・構文"
   }
 ]

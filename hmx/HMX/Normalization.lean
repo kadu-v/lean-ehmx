@@ -7,6 +7,36 @@ local instance normalizationDecidable (p : Prop) : Decidable p := Classical.prop
 universe u v w
 variable {V : Type u} {K : Type v} {arity : K → Nat} {P : Type w} {parity : P → Nat}
 
+/-- Definition 19's equational theory, independently of projection or D4/D6.
+The congruence laws apply to the equality predicate under each constraint. -/
+structure EquationalTheory (V : Type u) (K : Type v) (arity : K → Nat)
+    (P : Type w) (parity : P → Nat) extends SimpleTheory (Predicate V K arity P parity) where
+  refl : ∀ C t, entailsAtom C (.equal t t)
+  symm : ∀ C t u, entailsAtom C (.equal t u) → entailsAtom C (.equal u t)
+  trans : ∀ C t u z, entailsAtom C (.equal t u) → entailsAtom C (.equal u z) → entailsAtom C (.equal t z)
+  congr : ∀ C t u (ctx : TermContext V K arity),
+    entailsAtom C (.equal t u) → entailsAtom C (.equal (ctx.fill t) (ctx.fill u))
+
+def EquationalTheory.Regular (E : EquationalTheory V K arity P parity) : Prop :=
+  ∀ t u, E.entailsAtom ∅ (.equal t u) → t.fv = u.fv
+
+namespace EquationalTheory
+variable (E : EquationalTheory V K arity P parity)
+def Agrees (U : Set V) (ψ φ : Assignment V K arity) : Prop :=
+  ∀ a ∈ U, E.entailsAtom ∅ (.equal (ψ a) (φ a))
+def Factors (U : Set V) (ψ κ φ : Assignment V K arity) : Prop :=
+  κ.IsSubstitution ∧ E.Agrees U (κ.comp ψ) φ
+def MoreGeneral (U : Set V) (ψ φ : Assignment V K arity) : Prop :=
+  ψ.IsSubstitution ∧ φ.IsSubstitution ∧ ∃ κ, E.Factors U ψ κ φ
+def EquallyGeneral (U : Set V) (ψ φ : Assignment V K arity) : Prop :=
+  E.MoreGeneral U ψ φ ∧ E.MoreGeneral U φ ψ
+def LUB (φ ψ θ : Assignment V K arity) : Prop :=
+  E.MoreGeneral Set.univ φ θ ∧ E.MoreGeneral Set.univ ψ θ ∧
+  ∀ χ, E.MoreGeneral Set.univ φ χ → E.MoreGeneral Set.univ ψ χ → E.MoreGeneral Set.univ θ χ
+def Unitary : Prop := ∀ φ ψ, φ.IsSubstitution → ψ.IsSubstitution →
+  (∃ θ, E.LUB φ ψ θ) ∨ ¬ ∃ θ, E.MoreGeneral Set.univ φ θ ∧ E.MoreGeneral Set.univ ψ θ
+end EquationalTheory
+
 namespace ConstraintTheory
 variable (X : ConstraintTheory V K arity P parity)
 def Regular : Prop := ∀ t u, X.Entails ∅ (Constraint.eq t u) → t.fv = u.fv
@@ -53,6 +83,17 @@ def Principal (S : Set (Constraint V K arity P parity)) (p n : Problem V K arity
   p.NormalForm X S n ∧ ∀ m, p.NormalForm X S m → n.MoreGeneral X m
 def HasNormalForm (S : Set (Constraint V K arity P parity)) (p : Problem V K arity P parity) : Prop :=
   ∃ n, p.NormalForm X S n
+/-- Definition 23 as repeated on p.73 uses literal fixedness. -/
+def NormalFormPage73 (X : ConstraintTheory V K arity P parity)
+    (S : Set (Constraint V K arity P parity)) (p n : Problem V K arity P parity) : Prop :=
+  p.IsProblem ∧ n.substitution.IsSubstitution ∧ n.constraint ∈ S ∧
+    n.constraint.subst n.substitution = n.constraint ∧ p.MoreGeneral X n
+
+def PrincipalPage73 (X : ConstraintTheory V K arity P parity)
+    (S : Set (Constraint V K arity P parity)) (p n : Problem V K arity P parity) : Prop :=
+  p.NormalFormPage73 X S n ∧ ∀ m, p.NormalFormPage73 X S m → n.MoreGeneral X m
+
+
 def Independent (p q : Problem V K arity P parity) : Prop :=
   Disjoint p.substitution.domain q.substitution.codomain ∧
   Disjoint q.substitution.domain p.substitution.codomain ∧
@@ -64,6 +105,11 @@ namespace ConstraintTheory
 variable (X : ConstraintTheory V K arity P parity)
 def PrincipalConstraintProperty (S : Set (Constraint V K arity P parity)) : Prop :=
   ∀ p : Problem V K arity P parity, p.IsProblem → p.HasNormalForm X S → ∃ n, p.Principal X S n
+/-- Definition 25 as used immediately after the literal-fixedness Definition 23
+on p.73. Keep that local definition separate from the p.89 version. -/
+def PrincipalConstraintPropertyPage73 (S : Set (Constraint V K arity P parity)) : Prop :=
+  ∀ p : Problem V K arity P parity, p.IsProblem →
+    (∃ n, p.NormalFormPage73 X S n) → ∃ n, p.PrincipalPage73 X S n
 def SyntacticallyUnique (S : Set (Constraint V K arity P parity)) : Prop :=
   ∀ C ∈ S, ∀ D ∈ S, X.Equivalent C D → C = D
 def EquationFreeConstraint (C : Constraint V K arity P parity) : Prop :=

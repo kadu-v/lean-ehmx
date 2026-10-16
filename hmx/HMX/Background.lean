@@ -10,6 +10,13 @@ local instance backgroundDecidable (p : Prop) : Decidable p := Classical.propDec
 universe u v d
 variable {V : Type u} {K : Type v} {arity : K → Nat} {N Const : Type}
 
+/-- The literal grammar on p.10 includes an unexplained qualifier C.
+Its type is explicit; the following flat Scheme is the notation of Figure 2.1.
+No semantics for this unexplained qualifier is invented. -/
+inductive PrintedScheme (Qualifier : Type*) (V : Type u) (K : Type v) (arity : K → Nat) where
+  | type : Ty V K arity → PrintedScheme Qualifier V K arity
+  | all : V → Qualifier → PrintedScheme Qualifier V K arity → PrintedScheme Qualifier V K arity
+
 structure Scheme (V : Type u) (K : Type v) (arity : K → Nat) where
   bound : Finset V
   body : Ty V K arity
@@ -62,6 +69,11 @@ inductive Typing : Env (N ⊕ Const) V K arity → Expr N Const → Scheme V K a
       (finite : φ.IsSubstitution) (domain : φ.domain ⊆ (A : Set V)) : Typing Γ e (.mono (t.subst φ))
   | alpha (d : Typing Γ e s) (h : s.Alpha t) : Typing Γ e t
 
+/-- The unnumbered definition immediately before Corollary 1 (p.15). -/
+def PrincipalType (Γ : Env (N ⊕ Const) V K arity) (e : Expr N Const)
+    (s : Scheme V K arity) : Prop :=
+  Typing Γ e s ∧ ∀ t, Typing Γ e t → GenericInstancePrinted s t
+
 def Unifier (t u : Ty V K arity) (φ : Assignment V K arity) : Prop :=
   φ.IsSubstitution ∧ t.subst φ = u.subst φ
 
@@ -103,21 +115,59 @@ inductive Inference (unify : Unify V K arity) : Assignment V K arity →
       (combine : LUB ψ₁ ψ₂ ψ') (unboundPsi : Assignment V K arity) :
       Inference unify (unboundPsi.restrict (envFV Γ)) Γ (.letE x e e') (u.subst unboundPsi)
 
-structure Meaning (N Const : Type) (V : Type u) (K : Type v) (arity : K → Nat) (D : Type d) where
-  wrong : D
+/-- Interpretation data for the background HM system. The model conditions
+below connect these data to the equations on pp.11–12. -/
+structure Meaning (N Const : Type) (V : Type u) (K : Type v) (arity : K → Nat)
+    (D : Type d) extends DomainData Const D where
   term : Expr N Const → (N ⊕ Const → D) → D
+  type : Ty V K arity → Set D
   scheme : Scheme V K arity → Set D
+
+namespace Meaning
+variable {D : Type d} [PartialOrder D] [OrderBot D]
+variable (M : Meaning N Const V K arity D)
+
+def TermEquations : Prop :=
+  (∀ η x, M.term (.var x) η = η (.inl x)) ∧
+  (∀ η c, M.term (.constant c) η = η (.inr c)) ∧
+  (∀ η x e, DomainContinuous (fun v => M.term e (Function.update η (.inl x) v)) ∧
+    M.term (.lam x e) η = M.functionValue (fun v => M.term e (Function.update η (.inl x) v))) ∧
+  (∀ η f a, M.term (.app f a) η =
+    match M.functionOf (M.term f η) with
+    | some g => if M.term a η ≠ M.wrong then g (M.term a η) else M.wrong
+    | none => M.wrong) ∧
+  (∀ η x e b, M.term (.letE x e b) η = if M.term e η ≠ M.wrong
+    then M.term b (Function.update η (.inl x) (M.term e η)) else M.wrong)
+
+def TypeEquations (Γ₀ : Env (N ⊕ Const) V K arity) : Prop :=
+  (∀ t u, t.IsMonotype → u.IsMonotype → M.type (.arrow t u) =
+    {v | ∃ f, DomainContinuous f ∧ v = M.functionValue f ∧ ∀ x ∈ M.type t, f x ∈ M.type u}) ∧
+  (∀ k ts, (Ty.con k ts).IsMonotype → M.type (.con k ts) =
+    {v | v = ⊥ ∨ ∃ (c : Const) (us : List (Ty V K arity)) (vs : List D),
+      (∀ t ∈ us, t.IsMonotype) ∧ List.Forall₂ (fun t x => x ∈ M.type t) us vs ∧
+      Typing Γ₀ (.constant c) (.mono (us.foldr Ty.arrow (.con k ts))) ∧
+      v = M.constructorValue c vs}) ∧
+  (∀ s, s.fv = ∅ → M.scheme s =
+    {v | ∀ φ, ClosedInstantiation s.bound φ → v ∈ M.type (s.body.subst φ)}) ∧
+  (∀ s t, s.Alpha t → M.scheme s = M.scheme t)
+
+/-- p.11 prints no constructor summand although p.12 interprets constructors.
+Keep the printed equation (empty constructor signature), not a corrected one. -/
+def ModelConditions (Γ₀ : Env (N ⊕ Const) V K arity) : Prop :=
+  M.toDomainData.LeastSolution ∅ ∧ M.TermEquations ∧ M.TypeEquations Γ₀
+end Meaning
 
 def Meaning.Models (M : Meaning N Const V K arity D) (η : N ⊕ Const → D)
     (Γ : Env (N ⊕ Const) V K arity) : Prop :=
   envFV Γ = ∅ ∧ ∀ x s, lookup Γ x = some s → η x ∈ M.scheme s
 
 namespace Statement
-variable {D : Type d} (M : Meaning N Const V K arity D)
+variable {D : Type d} [PartialOrder D] [OrderBot D] (M : Meaning N Const V K arity D)
+variable (Γ₀ : Env (N ⊕ Const) V K arity)
 
-def lemma1 [PartialOrder D] : Prop := ∀ s, s.fv = ∅ → DomainIdeal (M.scheme s) ∧ M.wrong ∉ M.scheme s
+def lemma1 : Prop := M.ModelConditions Γ₀ → ∀ s, s.fv = ∅ → DomainIdeal (M.scheme s) ∧ M.wrong ∉ M.scheme s
 
-def theorem1 : Prop := ∀ (Γ Δ : Env (N ⊕ Const) V K arity) e s s' φ η,
+def theorem1 : Prop := M.ModelConditions Γ₀ → ∀ (Γ Δ : Env (N ⊕ Const) V K arity) e s s' φ η,
   Typing Γ e s → φ.IsSubstitution → EnvSubstitutes φ Γ Δ → s.Substitutes φ s' →
   envFV Δ = ∅ → s'.fv = ∅ → M.Models η Δ →
     M.wrong ∉ M.scheme s' ∧ M.term e η ∈ M.scheme s'
