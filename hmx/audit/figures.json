@@ -1,0 +1,121 @@
+[
+  {
+    "id": "figure3.1",
+    "printed_page": 29,
+    "pdf_page": 41,
+    "title": "Logical system",
+    "lean": [
+      "HMX.Typing"
+    ],
+    "status": "draft"
+  },
+  {
+    "id": "figure3.2",
+    "printed_page": 46,
+    "pdf_page": 58,
+    "title": "Normalized typing rules",
+    "lean": [
+      "HMX.SyntaxDirected"
+    ],
+    "status": "draft"
+  },
+  {
+    "id": "figure3.3",
+    "printed_page": 50,
+    "pdf_page": 62,
+    "title": "Versions of the quantifier introduction rule",
+    "lean": [],
+    "status": "not_transcribed"
+  },
+  {
+    "id": "figure3.4",
+    "printed_page": 77,
+    "pdf_page": 89,
+    "title": "Logical type system in constraint form",
+    "lean": [
+      "HMX.CanonicalTyping"
+    ],
+    "status": "draft"
+  },
+  {
+    "id": "figure4.1",
+    "printed_page": 95,
+    "pdf_page": 107,
+    "title": "Type inference in term form",
+    "lean": [
+      "HMX.EagerInference"
+    ],
+    "status": "draft"
+  },
+  {
+    "id": "figure4.2",
+    "printed_page": 97,
+    "pdf_page": 109,
+    "title": "By need type inference in term form",
+    "lean": [
+      "HMX.DeferredInference",
+      "HMX.ByNeedInference"
+    ],
+    "status": "draft_with_documented_repairs",
+    "visual_check": true
+  },
+  {
+    "id": "figure4.3",
+    "printed_page": 102,
+    "pdf_page": 114,
+    "title": "Type inference in constraint form",
+    "lean": [
+      "HMX.ConstraintInference"
+    ],
+    "status": "draft"
+  },
+  {
+    "id": "figure4.4",
+    "printed_page": 106,
+    "pdf_page": 118,
+    "title": "Revised type inference in term form",
+    "lean": [
+      "HMX.ConstraintInference",
+      "HMX.TermInference"
+    ],
+    "status": "draft"
+  },
+  {
+    "id": "figure4.5",
+    "printed_page": 109,
+    "pdf_page": 121,
+    "title": "Revised type inference in term form II",
+    "lean": [
+      "HMX.IntermediateStep",
+      "HMX.IntermediateConstraintInference",
+      "HMX.IntermediateTermInference"
+    ],
+    "status": "draft"
+  },
+  {
+    "id": "figure4.6",
+    "printed_page": 112,
+    "pdf_page": 124,
+    "title": "Type inference in term form",
+    "lean": [],
+    "status": "dependency_diagram"
+  },
+  {
+    "id": "figure4.7",
+    "printed_page": 113,
+    "pdf_page": 125,
+    "title": "Type inference in constraint form",
+    "lean": [],
+    "status": "dependency_diagram"
+  },
+  {
+    "id": "figureC.1",
+    "printed_page": 183,
+    "pdf_page": 195,
+    "title": "Measure of expression size",
+    "lean": [
+      "HMX.Expr.weightedSize"
+    ],
+    "status": "draft"
+  }
+]

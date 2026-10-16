@@ -1,0 +1,1726 @@
+[
+  {
+    "id": "lemma1",
+    "kind": "Lemma",
+    "number": 1,
+    "printed_page": 13,
+    "pdf_page": 25,
+    "source_excerpt": "Lemma 1 Let σ be a closed type scheme. Then [[σ]] is an ideal and W 6∈ [[σ]].",
+    "scope": "background",
+    "lean": [],
+    "status": "dependency_review_pending",
+    "visual_check": false
+  },
+  {
+    "id": "definition1",
+    "kind": "Definition",
+    "number": 1,
+    "printed_page": 13,
+    "pdf_page": 25,
+    "source_excerpt": "Definition 1 A variable environment η models a closed typing environment Γ, writ-\n\nten η |= Γ, if for all x : σ ∈ Γ, η(x) ∈ [[σ]].",
+    "scope": "background",
+    "lean": [],
+    "status": "dependency_review_pending",
+    "visual_check": false
+  },
+  {
+    "id": "theorem1",
+    "kind": "Theorem",
+    "number": 1,
+    "printed_page": 13,
+    "pdf_page": 25,
+    "source_excerpt": "Theorem 1 (Type Soundness) Let Γ ` e : σ be a valid typing judgment. Let φ\n\nbe a substitution such that φΓ and φσ are closed. Let η be a variable environment\n\nsuch that η |= φΓ. Then\n                                     (1) W 6∈ [[φσ]]\n\n                                     (2) [[e]]η ∈ [[φσ]]\n\n   The type soundness result is commonly summarized through the catch–phrase\n\n“well types programs do not go wrong”.\n\n\n2.2.3     The Inference System\n\nIt is common knowledge that the type inference problem in the Hindley/Milner\n\nsystem can be reduced to a unification problem. Robinson [Rob65] gives an algorithm\n\nwhich computes the most general unifier of two types or otherwise reports failure. I\n\nrefer to Robinson’s algorithm as a function unify. The interested reader should refer\n\nto [LMM87, Rob65] for a more detailed exposition.\n\n   Given two types τ1 and τ2 . Then τ1 and τ2 are unifiable iff there exists a substi-\n\ntution φ such that φτ1 = φτ2 . In such a case, the substitution φ is called a unifier of\n\ntypes τ1 and τ2 . A substitution ψ is a most general unifier (commonly abbreviated\n\nby mgu) of τ1 and τ2 iff ψτ1 = ψτ2 and given another unifier φ of τ1 and τ2 , then\n\nthere exists a substitution ρ such that φ = ρ ◦ ψ.\n\n   Robinson could state the following result.",
+    "scope": "background",
+    "lean": [],
+    "status": "dependency_review_pending",
+    "visual_check": false
+  },
+  {
+    "id": "theorem2",
+    "kind": "Theorem",
+    "number": 2,
+    "printed_page": 14,
+    "pdf_page": 26,
+    "source_excerpt": "Theorem 2 (Robinson) Given two types τ1 and τ2 . Then τ1 and τ2 are unifiable\n\nand a most general unifier exists (and this most general unifier is unique up to\n\nvariable renaming), or τ1 and τ2 do not have any unifiers.\n\n   This allows to define the following well–defined unify function:\n\n\n                          unify(τ1 , τ2 )\n\n                          = ψ        if ψ is a mgu of τ1 and τ2\n\n                          = fail otherwise\n\n\n   The inference system can be found in Figure 2.2. In contrast to the original pre-\n\nsentation [DM82], I present the inference system as a deduction system with clauses\n\nof the form ψ, Γ `W e : τ with type environment Γ, expression e as input values and\n\nsubstitution ψ, type τ as output values. For each syntactic construct of expressions\n\ne there is one clause. The deduction rules can be interpreted operationally, as a logic\n\nprogram that constructs a bottom–up derivation of `W clauses. The operator t in\n\nrules (App) and (Let) builds the least upper bound of substitutions.\n\n   In the (Var) rule, an unqualified type τ is represented as ∀∅.τ . This avoids a\n\nseparate case of this rule for unqualified types. In rule (App), the typing problem\n\nis translated into a unification problem. Then, the three resulting substitutions are\n\ncombined with the t operator which computes the least upper bound by constructing\n\nthe mgu.\n\n   In [DM82] the following results were stated. Any judgment derivable by the\n\ninference system is also derivable in the logical system.",
+    "scope": "background",
+    "lean": [],
+    "status": "dependency_review_pending",
+    "visual_check": false
+  },
+  {
+    "id": "theorem3",
+    "kind": "Theorem",
+    "number": 3,
+    "printed_page": 14,
+    "pdf_page": 26,
+    "source_excerpt": "Theorem 3 (Soundness of Inference) Given a term e and a type environment\n\nΓ. If ψ, Γ `W e : τ    then ψΓ ` e : τ and ψτ = τ .\n\n   Before I state the completeness result, I restate the definition of a generic instance.",
+    "scope": "background",
+    "lean": [],
+    "status": "dependency_review_pending",
+    "visual_check": false
+  },
+  {
+    "id": "theorem4",
+    "kind": "Theorem",
+    "number": 4,
+    "printed_page": 15,
+    "pdf_page": 27,
+    "source_excerpt": "Theorem 4 (Completeness of Inference) Let φΓ ` e : σ be a typing judgment.\n\nThen ψ, Γ `W e : τ for some substitutions ψ, ρ and type τ such that ρgen(ψΓ, τ ) < σ.\n\n\n    The completeness theorem can be simplified for top–level programs to the fol-\n\nlowing corollary, which states that the type inference algorithm computes principal\n\ntypes. Given a type environment Γ and an expression σ, then σ is a principal type\n\nof e under Γ iff Γ ` e : σ and if Γ ` e : σ 0 for any other σ 0 then σ < σ 0 .",
+    "scope": "background",
+    "lean": [],
+    "status": "dependency_review_pending",
+    "visual_check": false
+  },
+  {
+    "id": "corollary1",
+    "kind": "Corollary",
+    "number": 1,
+    "printed_page": 16,
+    "pdf_page": 28,
+    "source_excerpt": "Corollary 1 (Principal Types) Let Γ ` e : σ be a closed typing judgment. Then\n\nid, Γ `W e : τ such that gen(Γ, τ ) < σ.\n\n\n2.2.4    Summary\n\nThe Hindley/Milner system consists of three components: the logical system which\n\ndescribes the well–typed programs, the inference system which infers principal types\n\nand the semantic model which ensures that well–typed programs do not go wrong.\n\nFigure 2.3 exhibits the relationships among the three components. In the remain-\n\ning part of my dissertation, I consider an extension of the Hindley/Milner system\n\nwith constraints which retains the two elementary properties of the standard Hind-\n\nley/Milner system: the type soundness result and the principal types property.",
+    "scope": "background",
+    "lean": [],
+    "status": "dependency_review_pending",
+    "visual_check": false
+  },
+  {
+    "id": "definition2",
+    "kind": "Definition",
+    "number": 2,
+    "printed_page": 19,
+    "pdf_page": 31,
+    "source_excerpt": "Definition 2 A simple constraint system is a structure (Ω, `e ) where Ω is a non–",
+    "scope": "core",
+    "lean": [
+      "HMX.CylindricTheory",
+      "HMX.CylindricTheory.Entails",
+      "HMX.CylindricTheory.Equivalent"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition3",
+    "kind": "Definition",
+    "number": 3,
+    "printed_page": 20,
+    "pdf_page": 32,
+    "source_excerpt": "Definition 3 A cylindric constraint system is a structure CCS = (Ω, `e ,Var, {∃α | α ∈",
+    "scope": "core",
+    "lean": [
+      "HMX.CylindricTheory"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "remark1",
+    "kind": "Remark",
+    "number": 1,
+    "printed_page": 21,
+    "pdf_page": 33,
+    "source_excerpt": "Remark 1 For simplicity, I omit set notation for constraints, and connect con-\n\nstraints by ∧ instead of the union operator ∪ and generally do not enclose simple\n\nconstraints P in opening and closing braces. For instance, P ∧ Q is an abbreviation\n\nfor {P } ∪ {Q}. I assume that ∧ binds tighter than ∃ᾱ. For instance, ∃ᾱ.C ∧ D\n\nstands for ∃ᾱ.(C ∧ D). I write C =e D iff C `e D and D `e C.\n\n\nExample 2 Let the token set Ω consist of some subclass of (L,Var) formulas closed\n\nunder existential quantification of finite conjunctions. Each operator ∃ᾱ is then\n\ninterpreted by the function which maps each finite set {P1 , . . . , Pn } of tokens to the\n\nset of tokens {∃ᾱ.P1 ∧ . . . ∧ Pn }. This way the four conditions above are satisfied.\n\n\n   The projection operator ∃ᾱ allows us to bind variables ᾱ in a constraint. If the\n\nconstraint system models a boolean algebra, projection corresponds to existential\n\nquantification. Based on the projection operator, I define the free variables fv(C)\n\nand satisfiability of a constraint C.",
+    "scope": "core",
+    "lean": [],
+    "status": "annotation_pending",
+    "visual_check": false
+  },
+  {
+    "id": "definition4",
+    "kind": "Definition",
+    "number": 4,
+    "printed_page": 21,
+    "pdf_page": 33,
+    "source_excerpt": "Definition 4 Let C be a constraint. Then fv(C) = {α | ∃α.C 6 =e C}.",
+    "scope": "core",
+    "lean": [
+      "HMX.CylindricTheory.fv"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition5",
+    "kind": "Definition",
+    "number": 5,
+    "printed_page": 22,
+    "pdf_page": 34,
+    "source_excerpt": "Definition 5 Let C be a constraint. Then C is satisfiable iff `e ∃fv(C).C.",
+    "scope": "core",
+    "lean": [
+      "HMX.CylindricTheory.Satisfiable"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma2",
+    "kind": "Lemma",
+    "number": 2,
+    "printed_page": 22,
+    "pdf_page": 34,
+    "source_excerpt": "Lemma 2 Let C be a constraint. Then C is satisfiable iff ∃α.C is satisfiable.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma2"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition6",
+    "kind": "Definition",
+    "number": 6,
+    "printed_page": 22,
+    "pdf_page": 34,
+    "source_excerpt": "Definition 6 A substitution φ is an idempotent mapping from the set of variables\n\nVar to the term algebra Term(Σ) which is the identity everywhere except on a finite\n\nset of variables. Substitutions are extended homomorphically to types.",
+    "scope": "core",
+    "lean": [
+      "HMX.Assignment.IsSubstitution",
+      "HMX.Ty.subst"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition7",
+    "kind": "Definition",
+    "number": 7,
+    "printed_page": 22,
+    "pdf_page": 34,
+    "source_excerpt": "Definition 7 A term constraint system T CST = (Ω, `e , Var, {∃α | α ∈ Var}) over\n\na term algebra T is a cylindric constraint system with predicates of the form\n\n\n                              p(τ1 , . . . , τn )   (τi ∈ T )",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstraintTheory",
+      "HMX.Predicate.subst",
+      "HMX.Constraint.subst"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "remark2",
+    "kind": "Remark",
+    "number": 2,
+    "printed_page": 23,
+    "pdf_page": 35,
+    "source_excerpt": "Remark 2 Conditions D1 – D4 are the conditions imposed on a cylindric constraint\n\nsystem with diagonal elements, which is usually taken as the foundation of constraint\n\nprogramming languages. D4 says that equals can be substituted for equals; it is in\n\neffect the Leibniz principle. D5 states that (=) is a congruence. D6 connects the\n\nsyntactic operation of a substitution over predicates 1 with the semantic concepts\n\nof projection and equality. Substitution is extended to arbitrary constraints in the\n\ncanonical way:\n\n\n                     [τ /α](P1 ∧ . . . ∧ Pn ) = [τ /α]P1 ∧ . . . ∧ [τ /α]Pn .",
+    "scope": "core",
+    "lean": [],
+    "status": "annotation_pending",
+    "visual_check": true
+  },
+  {
+    "id": "lemma3",
+    "kind": "Lemma",
+    "number": 3,
+    "printed_page": 23,
+    "pdf_page": 35,
+    "source_excerpt": "Lemma 3 (Renaming) Let C be a constraint and β a new type variable. Then\n\n∃α.C =e ∃β.[β/α]C.\n  1\n     Substitutions is only defined on types but is extended naturally to predicates;\n[τ /α]p(τ1 , . . . , τn ) = p([τ /α]τ1 , . . . , [τ /α]τn ).",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma3"
+    ],
+    "status": "draft",
+    "visual_check": true
+  },
+  {
+    "id": "lemma4",
+    "kind": "Lemma",
+    "number": 4,
+    "printed_page": 24,
+    "pdf_page": 36,
+    "source_excerpt": "Lemma 4 (Normal Form) Let C be a constraint and φ = [τ̄ /ᾱ] be a substitution.\n\nThen φC =e ∃ᾱ.((α1 = τ1 ) ∧ . . . ∧ (αn = τn ) ∧ C).",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma4"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma5",
+    "kind": "Lemma",
+    "number": 5,
+    "printed_page": 24,
+    "pdf_page": 36,
+    "source_excerpt": "Lemma 5 (Substitution) Let C, D be constraints such that C `e D and φ be a\n\nsubstitution. Then φC `e φD.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma5"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition8",
+    "kind": "Definition",
+    "number": 8,
+    "printed_page": 33,
+    "pdf_page": 45,
+    "source_excerpt": "Definition 8 A monotype is a type τ with fv(τ ) = ∅.\n\n\n     I let µ range over monotypes.",
+    "scope": "core",
+    "lean": [
+      "HMX.Ty.IsMonotype"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition9",
+    "kind": "Definition",
+    "number": 9,
+    "printed_page": 33,
+    "pdf_page": 45,
+    "source_excerpt": "Definition 9 A constraint system X is sound if for all type variables ᾱ and con-\n\nstraints C ∈ S, if `e ∃ᾱ.C then there are monotypes µ̄ such that `e ∃ᾱ.((ᾱ =\n\nµ̄) ∧ C).\n\n\n     The soundness proof is based on an ideal semantics of types which is a direct\n\nextension of the semantics in [Mil78].",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstraintTheory.Sound"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma6",
+    "kind": "Lemma",
+    "number": 6,
+    "printed_page": 35,
+    "pdf_page": 47,
+    "source_excerpt": "Lemma 6 Let σ be a closed type scheme. Then [[σ]] is an ideal.\n\n    Furthermore, I conclude that in a sound constraint system the error element is\n\nnot contained in a closed type scheme.",
+    "scope": "core",
+    "lean": [],
+    "status": "not_transcribed",
+    "visual_check": false
+  },
+  {
+    "id": "lemma7",
+    "kind": "Lemma",
+    "number": 7,
+    "printed_page": 35,
+    "pdf_page": 47,
+    "source_excerpt": "Lemma 7 Given a sound constraint system X and a closed type scheme σ. Then\n\nW 6∈ [[σ]].",
+    "scope": "core",
+    "lean": [],
+    "status": "not_transcribed",
+    "visual_check": false
+  },
+  {
+    "id": "definition10",
+    "kind": "Definition",
+    "number": 10,
+    "printed_page": 35,
+    "pdf_page": 47,
+    "source_excerpt": "Definition 10 A variable environment η models a closed typing environment Γ,\n\nwritten η |= Γ, if for all x : σ ∈ Γ, η(x) ∈ [[σ]].",
+    "scope": "core",
+    "lean": [],
+    "status": "not_transcribed",
+    "visual_check": false
+  },
+  {
+    "id": "definition11",
+    "kind": "Definition",
+    "number": 11,
+    "printed_page": 35,
+    "pdf_page": 47,
+    "source_excerpt": "Definition 11 The constraint system X is coherent if for all monotypes µ and µ0 ,\n\nif `e (µ \u0016 µ0 ) then [[µ]] ⊆ [[µ0 ]].",
+    "scope": "core",
+    "lean": [],
+    "status": "not_transcribed",
+    "visual_check": false
+  },
+  {
+    "id": "theorem5",
+    "kind": "Theorem",
+    "number": 5,
+    "printed_page": 36,
+    "pdf_page": 48,
+    "source_excerpt": "Theorem 5 (Type Soundness) Let C, Γ ` e : σ be a valid typing judgment in\n\nHM(X), where X is a sound and coherent constraint system. Let φ be a substitution\n\nsuch that φΓ and φσ are closed and such that `e φC and φ is consistent in Γ. Let\n\nη be a variable environment such that η |= φΓ. Then\n\n\n                                    (1) W 6∈ [[φσ]]\n\n                                    (2) [[e]]η ∈ [[φσ]]\n\n\n   The type soundness theorem can be simplified to top–level programs. As a corol-\n\nlary, I find Milner’s slogan “well types programs do not go wrong” carries over to\n\nsound constraint extensions.",
+    "scope": "core",
+    "lean": [],
+    "status": "not_transcribed",
+    "visual_check": false
+  },
+  {
+    "id": "corollary2",
+    "kind": "Corollary",
+    "number": 2,
+    "printed_page": 36,
+    "pdf_page": 48,
+    "source_excerpt": "Corollary 2 Let X be a sound and coherent constraint system. Let true, Γ ` e : σ\n\nbe a valid closed typing judgment in HM(X). If η |= Γ then [[e]]η 6= W.",
+    "scope": "core",
+    "lean": [],
+    "status": "not_transcribed",
+    "visual_check": false
+  },
+  {
+    "id": "definition12",
+    "kind": "Definition",
+    "number": 12,
+    "printed_page": 37,
+    "pdf_page": 49,
+    "source_excerpt": "Definition 12 A constraint system X is strongly sound iff for all constraints C ∈ S\n\nwhere C = ∃ᾱ.D where D is projection–free, `e ∃fv(D).D then there exists type\n\nvariables ᾱ and monotypes µ̄ such that `e [µ̄/ᾱ]D.\n\n\n   A constraint D is projection–free if D is a set of primitive predicates.\n\n   In fact, I need one further assumption. Projection is not allowed to appear in\n\nsyntactic form, i.e. the projection operator does not appear in syntactic form in\n\nconstraints which are in solved form. This assumption is rather technical and does",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstraintTheory.StronglySound"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition13",
+    "kind": "Definition",
+    "number": 13,
+    "printed_page": 39,
+    "pdf_page": 51,
+    "source_excerpt": "Definition 13 A constraint system X is strongly sound if for all constraints C ∈ S\n\nwhere C = ∃ᾱ.D where D is projection–free, `e ∃fv(D).D then there exists type\n\nvariables ᾱ and monotypes µ̄ such that `e [µ̄/ᾱ]D.",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstraintTheory.StronglySound"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma8",
+    "kind": "Lemma",
+    "number": 8,
+    "printed_page": 39,
+    "pdf_page": 51,
+    "source_excerpt": "Lemma 8 (Subject reduction) Let C, Γ ` e : σ be a valid typing judgment in\n\nHM(X), where X is a strongly sound constraint system. Let φ be a substitution such\n\nthat φΓ and φσ are closed and such that `e φC and φ is consistent 3 in Γ. Let be\n\nan expression e0 such that e −→∗ e0 . Then true, φΓ ` e0 : φσ.\n\n\n      One important observation is that the typing rules preserve satisfiability. This\n\nmeans the constraints in the conclusion of a typing rule are satisfiable iff the con-\n\nstraints in the premise are satisfiable. This allows to adopt the inductive proof of\n\nthe subject reduction stated in [WF91]. Other proofs can be adopted in a similar\n\nway.\n\n      In order to state the syntactic type soundness result, I restate the definitions of\n\nfaulty expressions and the evaluation function on expressions as stated in [WF91].\n  3\n      A definition can be found in Section 3.4.2.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma8Printed"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "conjecture1",
+    "kind": "Conjecture",
+    "number": 1,
+    "printed_page": 40,
+    "pdf_page": 52,
+    "source_excerpt": "Conjecture 1 (Syntactic Type Soundness) Let C, Γ ` e : σ be a valid typing\n\njudgment in HM(X), where X is a sound constraint system. Let φ be a substitution\n\nsuch that φΓ and φσ are closed and such that `e φC and φ is consistent 4 in Γ.\n\nThen eval(e) 6= W.\n\n\n      The above result is only stated as a conjecture. I have not formally proven all\n\nsteps to establish the syntactic type soundness result. This seems a rather tedious\n\nexercise. I believe that all results found in [WF91] can straightforwardly be adopted.\n\n\n3.3.3        Summary\n\nThe syntactic approach improves over the denotational approach, that is, it gives a\n\nsemantic meaning to systems dealing with recursive types. In contrast, the denota-\n\ntional approach is more abstract. As an example, consider the common problem with\n\ndivision by zero. In the denotational approach, I can simply denote division by zero\n\nby the bottom element ⊥ which is not possible to model in the syntactic approach.\n\nNone of two approaches provides an efficient compilation method. Efficient compi-\n\nlation methods have already been studied in the context of records [Oho97, Oho95,\n\nGas98]. I believe it is rather difficult to develop an efficient compilation method for\n\ngeneral applications.\n  4\n      A definition can be found right before the semantic type soundness result in Section 3.3.1.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.conjecture1"
+    ],
+    "status": "draft",
+    "visual_check": false,
+    "category": "conjecture_not_theorem"
+  },
+  {
+    "id": "lemma9",
+    "kind": "Lemma",
+    "number": 9,
+    "printed_page": 42,
+    "pdf_page": 54,
+    "source_excerpt": "Lemma 9 Given a sound and coherent constraint system X. Given a constraint C,\n\ntype schemes σ, σ 0 and a substitution φ such that φσ, φσ 0 closed, φ consistent in σ, σ 0 ,\n\nC `i σ \u0016 σ 0 and `e φC. Then [[φσ]] ⊆ [[φσ 0 ]].",
+    "scope": "core",
+    "lean": [],
+    "status": "not_transcribed",
+    "visual_check": false
+  },
+  {
+    "id": "lemma10",
+    "kind": "Lemma",
+    "number": 10,
+    "printed_page": 42,
+    "pdf_page": 54,
+    "source_excerpt": "Lemma 10 The following inference rules are derivable.\n\n\n                      (Ref-σ)                       C `i σ \u0016 σ\n\n                                        D `e C           C `i σ \u0016 σ 0\n                     (Weaken)\n                                                   D `i σ \u0016 σ 0\n\n                                   C `i σ1 \u0016 σ2            C `i σ2 \u0016 σ3\n                      (Trans)\n                                                   C `i σ1 \u0016 σ3\n\n\n   Furthermore it is possible to normalize derivations C `i σ \u0016 σ 0 such that all\n\n(∀ \u0016) steps are performed before (\u0016 ∀) steps. I introduce the following new relation\n\n`i2 which enforces to perform first (∀ \u0016) steps and then (\u0016 ∀) steps. All rules are\n\nthe same except for the (∀ \u0016) rule:\n\n\n                C `i2 [τ̄ /ᾱ]σ \u0016 τ 0     C `e [τ̄ /ᾱ]D          [τ̄ /ᾱ] consistent in σ\n      (∀ \u00162 )                                                                                .\n                                              i2                     0\n                                        C `        (∀ᾱ.D ⇒ σ) \u0016 τ\n\n\n   The relations `i and `i2 are equivalent.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma10"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma11",
+    "kind": "Lemma",
+    "number": 11,
+    "printed_page": 42,
+    "pdf_page": 54,
+    "source_excerpt": "Lemma 11 (Equivalence of `i and `i2 ) Let C be a constraint and σ, σ 0 be type\n\nschemes. Then C `i σ \u0016 σ 0 iff C `i2 σ \u0016 σ 0 .",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma11"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition14",
+    "kind": "Definition",
+    "number": 14,
+    "printed_page": 43,
+    "pdf_page": 55,
+    "source_excerpt": "Definition 14 (Type Environment) Let C be a constraint and Γ and Γ0 be type\n\ncontexts such that Γ = {e1 : σ1 , . . . , en : σn } and Γ0 = {e1 : σ10 , . . . , en : σn0 }. Then\n\nC `i Γ0 \u0016 Γ iff C `i σi0 \u0016 σi       ∀i ∈ {1, . . . , n}.\n\n\n   I introduce an ordering on pairs (C, Γ) where C is a constraint and Γ is a type\n\nenvironment.",
+    "scope": "core",
+    "lean": [
+      "HMX.EnvironmentInstance"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition15",
+    "kind": "Definition",
+    "number": 15,
+    "printed_page": 43,
+    "pdf_page": 55,
+    "source_excerpt": "Definition 15 (Constrained Type Environment) Given constraints C and C 0\n\nand type environments Γ and Γ0 . I refer to tuples (C, Γ) as a constrained type\n\nenvironment. Furthermore, (C, Γ) ≤ (C 0 , Γ0 ) iff C `i Γ \u0016 Γ0 and C `e C 0 .\n\n\n3.4.2      Basic Definitions",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstrainedEnvironmentInstance"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition16",
+    "kind": "Definition",
+    "number": 16,
+    "printed_page": 43,
+    "pdf_page": 55,
+    "source_excerpt": "Definition 16 (Realizable) Given a constraint C and a type scheme σ. Then σ\n\nis realizable with respect to C iff there is a τ such that C `i σ \u0016 τ .\n\n\n   The set S of solved forms is not necessarily closed under substitutions. The next\n\ndefinition introduces the notion of consistency which ensures that all substitutions\n\napplied to constraints preserve the property of being in solved form.",
+    "scope": "core",
+    "lean": [
+      "HMX.Realizable"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition17",
+    "kind": "Definition",
+    "number": 17,
+    "printed_page": 43,
+    "pdf_page": 55,
+    "source_excerpt": "Definition 17 (Consistent) Given an HM(X) instance, a constraint C, type scheme\n\nσ and substitution φ. Then substitution φ is consistent with respect to a constraint C\n\niff φC ∈ S. Substitution φ is consistent with respect to type scheme σ = ∀ᾱ.D ⇒ τ\n\niff φD ∈ S where w.l.o.g. there are no name clashes between ᾱ and φ. This extends\n\nnaturally to type environments",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstraintTheory.ConsistentConstraint",
+      "HMX.ConstraintTheory.ConsistentScheme",
+      "HMX.ConstraintTheory.ConsistentEnvironment"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma12",
+    "kind": "Lemma",
+    "number": 12,
+    "printed_page": 44,
+    "pdf_page": 56,
+    "source_excerpt": "Lemma 12 (Substitution) Given C, Γ ` e : σ and a substitution φ such that φ is\n\nconsistent with respect to C and Γ. Then φC, φΓ ` e : φσ.\n\n   Surprisingly, the following result does not hold in general.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma12"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma13",
+    "kind": "Lemma",
+    "number": 13,
+    "printed_page": 44,
+    "pdf_page": 56,
+    "source_excerpt": "Lemma 13 (Weakening) Given C, Γ ` e : σ, a constraint C 0 ∈ S and a type\n\nenvironment Γ0 such that (C 0 , Γ0 ) ≤ (C, Γ). Then C, Γ0 ` e : σ.\n\n   It states that given a judgment C, Γ ` e : σ, expression e is still derivable with\n\ntype σ if a stronger constraint and a stronger type environment is used. Remember,\n\nconstraints in typing judgments need to be always in solved form. The problem\n\noccurs in case of the (∀ Intro) rule. I assume there is the following derivation:\n\n\n                              C ∧ D, Γ ` e : τ       ᾱ 6∈ fv(C) ∪ fv(Γ)\n                 (∀ Intro)\n                                  C ∧ ∃ᾱ.D, Γ ` e : ∀ᾱ.D ⇒ τ\n\n\nFurthermore, I assume there is a constraint C 0 in solved form such that C 0 `e\n\nC ∧ ∃ᾱ.D. In order to deduce the judgment C 0 , Γ ` e : ∀ᾱ.D ⇒ τ , I need to show\n\nthat C 0 ∧ D is in solved form. But this does not necessarily hold. Because there\n\nmight exist constraints C 0 , C and D such that D ∈ S, C ∧ D ∈ S, C ∧ ∃ᾱ.D ∈ S,\n\nC 0 ∈ S, C 0 `e C ∧ ∃ᾱ.D but C 0 ∧ D 6∈ S.\n\n   There are two ways to fix this problem. I could either add the following additional\n\nrule to the typing rules in Figure 3.1:\n\n\n                                C, Γ ` e : σ       C 0 `e C      C0 ∈ S\n                (Weakening)\n                                              C 0, Γ ` e : σ",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma13Printed"
+    ],
+    "status": "draft",
+    "visual_check": false,
+    "category": "explicitly_rejected_claim"
+  },
+  {
+    "id": "lemma14",
+    "kind": "Lemma",
+    "number": 14,
+    "printed_page": 45,
+    "pdf_page": 57,
+    "source_excerpt": "Lemma 14 (Substitution and Weakening) Given C, Γ ` e : σ, a constraint\n\nC 0 ∈ S and a substitution φ such that φ consistent in Γ and σ and C 0 `e φC. Then\n\nC 0 , φΓ ` e : φσ.\n\n   I can make the same observations as in case of the Weakening Lemma. Therefore,\n\nthis lemma holds under the same conditions. I omit the straightforward proof.\n\n\n3.4.4     Normalized Derivations\n\nI introduce a derivation `n which is based on derivation ` in Figure 3.1. Instead\n\nof rule (∀ Elim) there is the following new rule:\n\n\n                     (Inst) C, Γ `n x : τ   (x : σ ∈ Γ C `i σ \u0016 τ )\n\n\n   All other rules stay unchanged. Derivation `n simply enforces (∀ Elim) steps as\n\nearly as possible.\n\n   Next, I consider a syntax directed derivation `s . The (∀ Intro) rule is combined\n\nwith the (Let) rule. Furthermore, the (Var) and (Inst) rules are combined in the",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma14"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma15",
+    "kind": "Lemma",
+    "number": 15,
+    "printed_page": 46,
+    "pdf_page": 58,
+    "source_excerpt": "Lemma 15 (Equivalence of ` and `n ) Given a type environment Γ, a constraint\n\nC, a term e and a type scheme σ. Then C, Γ ` e : σ iff C, Γ `n e : σ 0 where\n\n`i σ ≡ σ 0 .",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma15"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma16",
+    "kind": "Lemma",
+    "number": 16,
+    "printed_page": 46,
+    "pdf_page": 58,
+    "source_excerpt": "Lemma 16 (Soundness of `s ) Given C, Γ `s e : τ . Then C, Γ ` e : τ .\n\n\n    Both lemmas can be proven by straightforward induction.\n\n    In the following lemma, it is essential that the type environment Γ0 is realizable.\n\nRecall, a type environment Γ0 is realizable in a constraint C if for every x : σ ∈ Γ0\n\nthere is a τ such that C `i σ \u0016 τ .",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma16"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma17",
+    "kind": "Lemma",
+    "number": 17,
+    "printed_page": 47,
+    "pdf_page": 59,
+    "source_excerpt": "Lemma 17 (Completeness of `s ) Given C 0 , Γ0 `n e : σ 0 , C 0 `i Γ \u0016 Γ0 and Γ0\n\nis realizable in C 0 . Then\n\n\n                      (a)   σ0 = τ :    C, Γ `s e : τ    C 0 `e C\n\n                      (b) otherwise : C, Γ `s e : τ      C, Γ, τ `gen (σo , Co )\n\n                                        C 0 `e C o   C 0 `i σ o \u0016 σ",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma17"
+    ],
+    "status": "draft",
+    "visual_check": true
+  },
+  {
+    "id": "lemma18",
+    "kind": "Lemma",
+    "number": 18,
+    "printed_page": 47,
+    "pdf_page": 59,
+    "source_excerpt": "Lemma 18 (Weakening) Given C, Γ `s e : τ and (C 0 , Γ0 ) ≤ (C, Γ).                      Then\n\nC 0 , Γ0 `s e : τ .\n\n\n3.4.5        Nested Forall Quantifiers\n\nThe careful reader might have noticed that nested type schemes such as\n\n\n                            ∀α.(α <: τ1 ) ⇒ (∀β.(β <: τ2 ) ⇒ α → β)\n\n\ndo not appear in the type system. Although, perfectly well–formed according to the\n\nsyntactic domain of type schemes as defined in Section 3.2, such type schemes with\n\nnested forall quantifiers are ruled out. Please consult the typing rules in Figure 3.1.\n\nRules (∀ Intro) and (∀ Elim) assume that all type schemes are of the form ∀ᾱ.C ⇒\n\nτ , i.e. type schemes appearing in typing judgments do not contain nested forall\n\nquantifiers. 5\n\n       The following formulation of quantifier introduction and elimination rule might\n\nbe logically more pleasing:\n   5\n       Note, higher–order types such as (∀α.α) → (∀β.β → β) are not permitted at all.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma18"
+    ],
+    "status": "draft",
+    "visual_check": true
+  },
+  {
+    "id": "theorem6",
+    "kind": "Theorem",
+    "number": 6,
+    "printed_page": 68,
+    "pdf_page": 80,
+    "source_excerpt": "Theorem 6 (Projection in Solved Form) Given a let–realizable judgment C, Γ `\n\ne : τ where constraints appearing in Γ are projection–free. Then one can derive\n\nC 0 , Γ ` e : τ such that C 0 , Γ ` e : τ is projection–free and C 0 =e C for some\n\nconstraint C 0 .",
+    "scope": "core",
+    "lean": [],
+    "status": "not_transcribed",
+    "visual_check": false
+  },
+  {
+    "id": "corollary3",
+    "kind": "Corollary",
+    "number": 3,
+    "printed_page": 69,
+    "pdf_page": 81,
+    "source_excerpt": "Corollary 3 Given an instance X of the HM(X) framework where S denotes the\n\nset of solved forms. We denote by S ∃ the smallest superset of S that is closed under\n\nprojection. We consider a variation of X , denoted by X ∃ where the set of solved\n\nforms equals S ∃ . Then X and X ∃ type the same set of let–realizable programs.",
+    "scope": "core",
+    "lean": [],
+    "status": "not_transcribed",
+    "visual_check": false
+  },
+  {
+    "id": "definition23",
+    "kind": "Definition",
+    "number": 23,
+    "printed_page": 73,
+    "pdf_page": 85,
+    "source_excerpt": "Definition 23 Let X be a term constraint system over a term algebra T and S be\n\nthe set of solved constraints in X. Let C ∈ S and D ∈ X be constraints and let φ,ψ\n\nbe substitutions such that (D, φ) is a constraint problem. Then (C, ψ) is a normal\n                        0\nform of (D, φ) iff φ ≤φ ψ, C `e φ0 D and ψC = C.\n                                                                                        0\n   (C, ψ) is principal if for all normal forms (C 0 , ψ 0 ) of (D, φ) it holds that ψ ≤φ ψ 0\n\nand C 0 `e φ0 C.",
+    "scope": "core",
+    "lean": [
+      "HMX.Problem.NormalForm",
+      "HMX.Problem.Principal"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition25",
+    "kind": "Definition",
+    "number": 25,
+    "printed_page": 73,
+    "pdf_page": 85,
+    "source_excerpt": "Definition 25 Given a constraint system X over a term algebra T and a set of solved\n\nconstraints S in X. The constraint system X has the principal constraint property if\n\nfor every constraint problem (D, φ) in X, either (D, φ) does not have a normal form\n\nor (D, φ) has a principal normal form.\n\n   The following definition approximates type schemes in constraint form by type\n\nschemes in term form.",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstraintTheory.PrincipalConstraintProperty"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition18",
+    "kind": "Definition",
+    "number": 18,
+    "printed_page": 73,
+    "pdf_page": 85,
+    "source_excerpt": "Definition 18 Given a type σ in X c and a type σ 0 and a constraint C in X t . Then\n\nC ` σ 7→ σ 0 iff the following two conditions hold\n\n   • `i σ \u0016 σ 0",
+    "scope": "core",
+    "lean": [
+      "HMX.Approximates",
+      "HMX.EnvironmentApproximates"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem7",
+    "kind": "Theorem",
+    "number": 7,
+    "printed_page": 74,
+    "pdf_page": 86,
+    "source_excerpt": "Theorem 7 (Transformation) Given a constraint system X over a term algebra T\n\nand a set S of solved forms such that S is closed under projection and X t enjoys the\n\nprincipal constraint property, a type environment Γ0 in X t and a constraint C in X t\n\nwhere C ` Γ 7→ Γ0 . Then the following holds.\n\n   • If C, Γ `X e : τ then C, Γ0 `X e : τ .\n                 c                      t\n\n\n\n\n   • If C, Γ `X e : σ where σ realizable in C then C, Γ0 `X e : σ 0 where C ` σ 7→\n                 c                                                t\n\n\n\n\n      σ0.\n\n\n   An immediate consequence is the following corollary. Please note, a substitution\n\nφ = [τ̄ /ᾱ] can also be regarded as the constraint (α1 = τ1 ) ∧ . . . ∧ (αn = τn ).",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem7"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "corollary4",
+    "kind": "Corollary",
+    "number": 4,
+    "printed_page": 74,
+    "pdf_page": 86,
+    "source_excerpt": "Corollary 4 (Substitutions in Constraint Form) Given a constraint system X\n\nover a term algebra T and a set S of solved forms such that S is closed under\n\nprojection and X t enjoys the principal constraint property, a type environment Γ0 in\n                                  c\nX t and a judgment D ∧ φ, Γ `X e : α such that (D, φ) is a principal normal form.\n                 t\nThen D, φΓ `X e : φ(α).\n\n\n   I am now in the position to state under which conditions there is a correspondence\n\nbetween judgments in constraint and term form.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.corollary4"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem8",
+    "kind": "Theorem",
+    "number": 8,
+    "printed_page": 74,
+    "pdf_page": 86,
+    "source_excerpt": "Theorem 8 (Full and Faithful) Given a constraint system X over a term alge-\n\nbra T . If X t satisfies the principal constraint property then every program typable in\n\nX c is typable in X t and vice versa.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem8"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma19",
+    "kind": "Lemma",
+    "number": 19,
+    "printed_page": 77,
+    "pdf_page": 89,
+    "source_excerpt": "Lemma 19 (Weakening) Given a judgment C, Γ ` e : σ and a satisfiable con-\n\nstraint D such that D `e C. Then D, Γ ` e : σ.\n\n\n   I give a brief description of the typing rules and point out only the changes com-\n\npared to the formulation in term form. Rules (Var) to (∀ Intro) remain unchanged",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma19"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma20",
+    "kind": "Lemma",
+    "number": 20,
+    "printed_page": 78,
+    "pdf_page": 90,
+    "source_excerpt": "Lemma 20 (Equivalence of Quantifier Introduction Rules) Given an instance\n\nof the HM(X) system in term form. If the judgment C, Γ ` e : σ is derivable us-\n\ning the constraint–based (∀ Elim) rule then C, Γ ` e : σ is derivable using the\n\nsubstitution–based formulation of the (∀ Elim) rule instead. The reverse direction\n\nholds, too.\n\n\n   Rule (∃ Intro) is motivated by the following logical rule: ∀α.(P → Q) = (∃α.P ) →\n\nQ where α 6∈ fv(Q). The outermost forall quantification of the free type variable α\n\nin the judgment C, Γ ` e : σ can be moved to the constraint part, if α does only\n\nappear in the constraint part. This hides type variables which only appear in the\n\nconstraint part of typing judgments.\n\n   Rules (∀ Elim) and (∃ Intro) evolved out of a discussion with Martin Müller.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma20"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma21",
+    "kind": "Lemma",
+    "number": 21,
+    "printed_page": 79,
+    "pdf_page": 91,
+    "source_excerpt": "Lemma 21 (Canonical Form) Given a constraint C, a type environment Γ, a\n\nterm e and a type τ . Then C, Γ ` e : τ iff C ∧ (α = τ ), Γ ` e : α where α is a fresh\n\ntype variable.\n\n\n3.7.1     Summary\n\nI gave a logical presentation of the HM(X) system where all typing information is\n\nrepresented in constraint form. The motivation was to give the cleanest possible\n\npresentation for such a system.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma21"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition19",
+    "kind": "Definition",
+    "number": 19,
+    "printed_page": 86,
+    "pdf_page": 98,
+    "source_excerpt": "Definition 19 (Equational Theory) An equational theory E over a term algebra\n\nT is a constraint system where for each τ, τ 0 ∈ T there is an equality predicate\n\n(τ = τ 0 ) and (· = ·) is a congruence relation. An equational theory E is regular iff\n\nfor each τ, τ 0 ∈ T such that `e (τ = τ 0 ), then fv(τ ) = fv(τ 0 ).\n\n\n   Please note, a term constraint system X implies an equational theory E. I refer\n\nto E as the underlying equational theory of X.",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstraintTheory.Regular"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition20",
+    "kind": "Definition",
+    "number": 20,
+    "printed_page": 86,
+    "pdf_page": 98,
+    "source_excerpt": "Definition 20 (Substitutions) Given an equational theory E over a term alge-\n\nbra T . Given a substitution φ and a domain U of variables. Then dom(φ) =\n\n{α | φ(α) 6= α} denotes the domain of φ and codom(φ) = {β | ∃α ∈ dom(φ).β ∈\n\nfv(φ(α))} denotes the codomain of φ. Let φ|U be the restriction of the substitution φ\n\nto the domain U . That is, φ|U (x) = φ(x) iff x ∈ U and φ|U (x) = x otherwise. For\n\nsubstitutions φ and ψ, I write ψ =U φ iff `e (ψ(x) = φ(x)) for all x ∈ U . I write\n      0                                                                  0\nψ ≤φU φ iff φ0 ◦ ψ =U φ. I write ψ ≤U φ iff there exists φ0 such that ψ ≤φ φ. ψ =U φ\n\niff ψ ≤U φ and φ ≤U ψ. In general, I omit the set U .\n\n\n   It follows from [LMM87] that ≤U is a complete lower semi–lattice where least\n\nupper bounds, if they exist, correspond to unifications and greatest lower bounds\n\ncorrespond to anti–unifications.",
+    "scope": "core",
+    "lean": [
+      "HMX.Assignment.domain",
+      "HMX.Assignment.codomain",
+      "HMX.Assignment.restrict",
+      "HMX.ConstraintTheory.Agrees",
+      "HMX.ConstraintTheory.Factors",
+      "HMX.ConstraintTheory.SubstitutionMoreGeneral",
+      "HMX.ConstraintTheory.EquallyGeneral"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition21",
+    "kind": "Definition",
+    "number": 21,
+    "printed_page": 86,
+    "pdf_page": 98,
+    "source_excerpt": "Definition 21 (Unitary unification) Given an equational theory E. Then E en-\n\njoys unitary unification iff for substitutions φ and ψ, either their least upper bound",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstraintTheory.Unitary"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition22",
+    "kind": "Definition",
+    "number": 22,
+    "printed_page": 87,
+    "pdf_page": 99,
+    "source_excerpt": "Definition 22 (Constraint Problems) Given a constraint system X over a term\n\nalgebra T . Given a constraint C in X and a substitution ψ. The pair (C, ψ) is called\n\na constraint problem iff ψC = C. (D, φ) = (D1 , φ1 ) t (D2 , φ2 ) is the combination of\n\nthe constraint problems (D1 , φ1 ) and (D2 , φ2 ) iff φ = φ1 t φ2 and D = φ(D1 ∧ D2 ).\n\n(C, φ) ≤ (C 0 , φ0 ) iff there exists a substitution ψ such that φ ≤ψ φ0 and C 0 `e ψC,\n\nand (C, φ) = (C 0 , φ0 ) iff (C, φ) ≤ (C 0 , φ0 ) and (C 0 , φ0 ) ≤ (C, φ). This makes ≤ a\n\npartial ordering relation on constraint problems.\n\n   I refer to CP as the set of constraint problems in X.",
+    "scope": "core",
+    "lean": [
+      "HMX.Problem.IsProblem",
+      "HMX.Problem.Combines",
+      "HMX.Problem.MoreGeneral"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma22",
+    "kind": "Lemma",
+    "number": 22,
+    "printed_page": 87,
+    "pdf_page": 99,
+    "source_excerpt": "Lemma 22 Given a constraint system X over a term algebra T such that X enjoys\n\nunitary unification. Then (CP, ≤) is a complete lower semi–lattice where least upper\n\nbounds exist.\n\n\n   Normalization means then computation of a normal form of a constraint prob-\n\nlem (C, ψ).",
+    "scope": "core",
+    "lean": [],
+    "status": "not_transcribed",
+    "visual_check": false
+  },
+  {
+    "id": "definition23",
+    "kind": "Definition",
+    "number": 23,
+    "printed_page": 87,
+    "pdf_page": 99,
+    "source_excerpt": "Definition 23 (Principal Normal Form) Let X be a term constraint system over\n\na term algebra T and S be the set of solved constraints in X. Let C ∈ S and D ∈ X",
+    "scope": "core",
+    "lean": [
+      "HMX.Problem.NormalForm",
+      "HMX.Problem.Principal"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma23",
+    "kind": "Lemma",
+    "number": 23,
+    "printed_page": 88,
+    "pdf_page": 100,
+    "source_excerpt": "Lemma 23 (Uniqueness) Given a constraint problem (D, φ) and two principal\n\nnormal forms (C, ψ) and (C 0 , ψ 0 ) of (D, φ). Then (C, ψ) = (C 0 , ψ 0 ).\n\n\n   The above lemma follows trivially. Please note, uniqueness only states uniqueness\n\nmodulo semantic equivalence. Hence, a principal normal form should be seen as\n\nan equivalent class. Nevertheless, it is possible to define a well–defined function\n\nnormalize from constraint problems (D, φ) to normal forms:\n\n\n                 normalize(D, φ)\n\n                 = (C, ψ) if (C, ψ) principal normal form of (D, φ)\n\n                 = fail        otherwise\n\n\n   Principal normal forms are syntactically unique if the set of solved forms satisfies\n\nthe syntactic uniqueness property.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma23"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition24",
+    "kind": "Definition",
+    "number": 24,
+    "printed_page": 88,
+    "pdf_page": 100,
+    "source_excerpt": "Definition 24 (Syntactic Uniqueness Property) Given a set S of solved forms.\n\nThen S satisfies the syntactic uniqueness property if given C ∈ S there is no other\n\nconstraint D ∈ S such that C =e D.",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstraintTheory.SyntacticallyUnique"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma24",
+    "kind": "Lemma",
+    "number": 24,
+    "printed_page": 89,
+    "pdf_page": 101,
+    "source_excerpt": "Lemma 24 (Syntactic Uniqueness) Given a set S of solved forms such S satis-\n\nfies the syntactic uniqueness property, a constraint problem (D, φ) and two principal\n\nnormal forms (C, ψ) and (C 0 , ψ 0 ) of (D, φ). Then (C 0 , ψ) can be retrieved from (C, ψ)\n\nsimply by variable renaming.\n\n   Please note, checking whether a set of solved forms satisfies the syntactic unique-\n\nness property is a non–trivial task. It requires a decidable entailment test. For\n\ninstance, in case of subtyping, it is not know yet whether entailment is decidable or\n\nnot [Pot98].\n\n   The property of having a principal normal form extends to constraint systems.",
+    "scope": "core",
+    "lean": [],
+    "status": "not_transcribed",
+    "visual_check": false
+  },
+  {
+    "id": "definition25",
+    "kind": "Definition",
+    "number": 25,
+    "printed_page": 89,
+    "pdf_page": 101,
+    "source_excerpt": "Definition 25 (Principal Constraint Property) Given a constraint system X\n\nover a term algebra T and a set of solved constraints S in X. The constraint system\n\nX has the principal constraint property if for every constraint problem (D, φ) in X,\n\neither (D, φ) does not have a normal form or (D, φ) has a principal normal form.\n\n   I state that a constraint system possesses most general normalizers if the con-\n\nstraint system satisfies the principal constraint property. I also state that the HM(X)\n\ntype system has the principal constraint property if X has the principal constraint\n\nproperty.\n\n   In Section 5.1, I discuss in detail a type system for Ohori-style records that satis-\n\nfies the principal constraint property. This example belongs to a class of constraint\n\nsystems where constraint solving involves some form of unification. Further exam-\n\nples of constraint systems of this kind are HERBRAND and DIM. In general, there\n\nare already a wide range of unification procedures [BS94]. But mostly they work on\n\nmore restricted constraint domains, e.g. the projection operator does not appear in\n\nthe constraint language. In the next section, I show how these unification procedures\n\ncan be lifted to become normalization procedures in HM(X).",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstraintTheory.PrincipalConstraintProperty"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition26",
+    "kind": "Definition",
+    "number": 26,
+    "printed_page": 90,
+    "pdf_page": 102,
+    "source_excerpt": "Definition 26 (Equation–free) Given a constraint system X over a term algebra\n\nT and a set S of solved forms. Then S is in equation–free iff for each C ∈ S if\n\nC `e (τ = τ 0 ) then `e (τ = τ 0 ). In such a situation, I refer to S as the set of solved\n\nand equation–free forms.",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstraintTheory.EquationFree"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma25",
+    "kind": "Lemma",
+    "number": 25,
+    "printed_page": 90,
+    "pdf_page": 102,
+    "source_excerpt": "Lemma 25 Given a constraint system X over a term algebra T and a set S of solved\n\nforms such that S is equation–free. Then X enjoys unitary unification.\n\n   The next lemmas lead to the conclusion that normalization can be performed in\n\narbitrary order.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma25Printed"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma26",
+    "kind": "Lemma",
+    "number": 26,
+    "printed_page": 91,
+    "pdf_page": 103,
+    "source_excerpt": "Lemma 26 Given two constraint problems (D, φ) and (D0 , φ0 ), a principal normal\n\nform (C, ψ) of (D0 , φ0 ) and a principal normal form (C 0 , ψ 0 ) of (D, φ) such that (C, ψ)\n\nis also a normal form of (D, φ) and (C 0 , ψ 0 ) is also a normal form of (D0 , φ0 ). Then\n\n(C, ψ) is a principal normal form of (D, φ) and (C 0 , ψ 0 ) is principal normal form of\n\n(D0 , φ0 ).",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma26"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma27",
+    "kind": "Lemma",
+    "number": 27,
+    "printed_page": 91,
+    "pdf_page": 103,
+    "source_excerpt": "Lemma 27 Given a constraint system X over a term algebra T and a set of solved\n\nconstraints S in X such that X enjoys the principal constraint property and unitary\n\nunification. Given constraint problems (D1 , φ1 ) and (D2 , φ2 ) such that dom(φ1 ) ∩\n\ncodom(φ2 ) = ∅, dom(φ2 ) ∩ codom(φ1 ) = ∅, fv(D1 ) ∩ dom(φ2 ) = ∅ and fv(D2 ) ∩\n\ndom(φ1 ) = ∅. Let (C, ψ) be the principal normal form of (D1 , φ1 ) t (D2 , φ2 ). Then\n\nthe principal normal form (C1 , ψ1 ) of (D1 , φ1 ) exists and (C, ψ) is a normal form\n\nof (C1 , ψ1 ) t (D2 , φ2 ).",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma27"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma28",
+    "kind": "Lemma",
+    "number": 28,
+    "printed_page": 91,
+    "pdf_page": 103,
+    "source_excerpt": "Lemma 28 Given a constraint system X over a term algebra T and a set of solved\n\nconstraints S in X such that X enjoys the principal constraint property and unitary\n\nunification. Given constraint problems (D1 , φ1 ) and (D2 , φ2 ) such that dom(φ1 ) ∩\n\ncodom(φ2 ) = ∅, dom(φ2 ) ∩ codom(φ1 ) = ∅, fv(D1 ) ∩ dom(φ2 ) = ∅ and fv(D2 ) ∩\n\ndom(φ1 ) = ∅. Let (C1 , ψ1 ) be the principal normal form of (D1 , φ1 ) and (C, ψ) be\n\nthe principal normal form of (C1 , ψ1 ) t (D2 , φ2 ). Then (C, ψ) is a normal form of\n\n(D1 , φ1 ) t (D2 , φ2 ).",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma28"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem9",
+    "kind": "Theorem",
+    "number": 9,
+    "printed_page": 91,
+    "pdf_page": 103,
+    "source_excerpt": "Theorem 9 (Eager versus by Need Normalization) Given a constraint system\n\nX over a term algebra T and a set of solved constraints S in X such that X enjoys\n\nthe principal constraint property and unitary unification. Given constraint problems\n\n(D, φ) and (D0 , φ0 ) such that dom(φ1 ) ∩ codom(φ2 ) = ∅, dom(φ2 ) ∩ codom(φ1 ) = ∅,",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem9"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition27",
+    "kind": "Definition",
+    "number": 27,
+    "printed_page": 92,
+    "pdf_page": 104,
+    "source_excerpt": "Definition 27 (Projection–free) A constraint C is projection–free iff C consid-\n\nered as a set consists only of primitive predicates.\n\n\n   Normalization in the special case of equality constraints has already been widely\n\nstudied in the literature. There exits a wide range of results, I only mention [BS94].\n\nIn the following, I give a method on how to lift normalization procedures for projection–\n\nfree constraints to the general case. Lifting holds under some sufficient conditions.",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstraintPresentation.ProjectionFree"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition28",
+    "kind": "Definition",
+    "number": 28,
+    "printed_page": 92,
+    "pdf_page": 104,
+    "source_excerpt": "Definition 28 (Lifting Property) Given a constraint system X over a term alge-\n\nbra T and a set S of solved forms. X satisfies the lifting property iff the following\n\nconditions hold:",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstraintTheory.LiftingProperty",
+      "HMX.ConstraintTheory.EffectiveProjectionFreeNormalization",
+      "HMX.ConstraintTheory.LiftingSolvedForms",
+      "HMX.ConstraintTheory.LiftingNormalForms",
+      "HMX.ConstraintTheory.LiftingWitnesses"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "remark3",
+    "kind": "Remark",
+    "number": 3,
+    "printed_page": 93,
+    "pdf_page": 105,
+    "source_excerpt": "Remark 3 Condition (2.) states that the set of solved forms only property is being\n\nequation–free (being satisfiable is always implicitly assumed). In case of the Hind-\n\nley/Milner system, this would allow the constraint ∃α.(α = β) (which is equation–\n\nfree) being in solved form. Obviously, such constraints are redundant. Lifting still\n\napplies if the set of solved forms satisfies the syntactic uniqueness property, see Def-\n\ninition 24.\n\n   The next two lemmas are the key lemmas to lift normalization procedures on\n\nprojection–free constraints to the general case.",
+    "scope": "core",
+    "lean": [],
+    "status": "annotation_pending",
+    "visual_check": true
+  },
+  {
+    "id": "lemma29",
+    "kind": "Lemma",
+    "number": 29,
+    "printed_page": 93,
+    "pdf_page": 105,
+    "source_excerpt": "Lemma 29 (Lifting of Normal Forms) Given a constraint system X over a term\n\nalgebra T and a set S of solved forms such that X satisfies the lifting property. Given\n\na constraint problem (∃ᾱ.D, φ). Then (∃ᾱ.D, φ) does have a normal form iff (D, φ)\n\ndoes have a normal form.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma29"
+    ],
+    "status": "draft",
+    "visual_check": true
+  },
+  {
+    "id": "lemma30",
+    "kind": "Lemma",
+    "number": 30,
+    "printed_page": 93,
+    "pdf_page": 105,
+    "source_excerpt": "Lemma 30 (Lifting of Principal Normal Forms) Given a constraint system X\n\nover a term algebra T and a set S of solved forms such that X satisfies the lifting\n\nproperty. Given a constraint problem (∃ᾱ.D, φ). Let (C, ψ) be the principal normal\n\nform of (D, φ). Then (∃ᾱ.(π ◦ ψ\\ᾱ )D, (π ◦ ψ\\ᾱ )) is the principal normal form of\n\n(∃ᾱ.D, φ) where π = [β̄/ᾱ] and β̄ are new.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma30"
+    ],
+    "status": "draft",
+    "visual_check": true
+  },
+  {
+    "id": "lemma29",
+    "kind": "Lemma",
+    "number": 29,
+    "printed_page": 94,
+    "pdf_page": 106,
+    "source_excerpt": "Lemma 29 allows a reduction of the existence check of normal forms to the base\n\ncase of projection–free constraint problems. Lemma 30 allows a computation of\n\nprincipal normal forms based on the normalization procedure for projection–free\n\nconstraints.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma29"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem10",
+    "kind": "Theorem",
+    "number": 10,
+    "printed_page": 94,
+    "pdf_page": 106,
+    "source_excerpt": "Theorem 10 (Lifting of Normalization) Given a constraint system X over a\n\nterm algebra T and a set S of solved forms such that X satisfies the lifting prop-\n\nerty. Then X satisfies the principal constraint property.\n\n\n      The dimension system in Section 3.1 is an example of a system which satisfies\n\nthe lifting property. Further examples are discussed in Section 5.1.\n\n\n\n4.3        Inference in Term Form\n\nI connect the principal constraint property of a constraint system with the principal\n\ntypes property of a type system. Figure 4.1 gives a generic type inference algorithm\n\nthat computes principal types, if the constraint system satisfies the principal con-\n\nstraint property and some additional restrictions. 2 The algorithm is formulated as\n\na deduction system over clauses of the form ψ, C, Γ `W e : τ with type environment\n\nΓ, expression e as input values and substitution ψ, constraint C, type τ as output\n\nvalues. For each syntactic construct of expressions e there is one clause. The de-\n\nduction rules can be interpreted operationally, as a logic program that constructs a\n\nbottom–up derivation of `W clauses.\n\n      In the (Var) rule, I assume that an unqualified type τ can be represented as\n\n∀∅.true ⇒ τ . This avoids a separate case of this rule for unqualified types. In\n\nrules (App) and (Let) I combine the results of the premises and build the conclusion\n  2\n    Here, I consider inference in term form which has some problems as pointed out earlier, see\nSection 4.1",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem10"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem11",
+    "kind": "Theorem",
+    "number": 11,
+    "printed_page": 97,
+    "pdf_page": 109,
+    "source_excerpt": "Theorem 11 (Eager versus by Need Inference) Given a constraint system X\n\nover a term algebra T and a set S of solved forms such that X enjoys the principal\n\nconstraint property and unitary unification. Then ψ, C, Γ `W e : τ iff ψ, C, Γ `Wbyneed\n\ne : τ.\n\n\n\n4.3.1       Soundness and Completeness Results\n\nThe result triple of the type inference algorithm `W forms a typing configuration\n\n(C, σ, ψ), which consists of a constraint C ∈ S, a type scheme σ and a substitution\n\nψ such that ψC = C, ψσ = σ and ψ is consistent with respect to Γ. Recall, a\n\nsubstitution φ is consistent with respect to a type scheme σ = ∀ᾱ.D ⇒ τ if ψD ∈ S\n\nwhere I assume there are no name clashes between ᾱ and ψ. This extends naturally\n\nto type environments. Given two typing configurations (C, σ, ψ) and (C 0 , σ 0 , ψ 0 ), I",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem11"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma31",
+    "kind": "Lemma",
+    "number": 31,
+    "printed_page": 98,
+    "pdf_page": 110,
+    "source_excerpt": "Lemma 31 (Typing Configuration) Given a type environment Γ and a term e.\n\nIf ψ, C, Γ `W e : τ then (C, τ, ψ) is a typing configuration.\n\n\n    Furthermore, this typing configuration always represents a valid typing of the\n\ngiven term under the given type environment.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.lemma31"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem12",
+    "kind": "Theorem",
+    "number": 12,
+    "printed_page": 98,
+    "pdf_page": 110,
+    "source_excerpt": "Theorem 12 (Soundness of Inference) Given a term e and a type environment Γ.\n\nIf ψ, C, Γ `W e : τ        then C, ψΓ ` e : τ , ψC = C and ψτ = τ .\n\n\n    To achieve complete inference, I require that an HM(X) type system has to fulfill\n\nthe principal constraint property. But Kennedy’s example shows that inference is\n\nnot complete even if the constraint system possesses most general normalizers. To\n\nachieve complete inference in term form, I have to restrict the completeness results\n\nto regular theories. Recall, an equational theory is regular if `e (τ = τ 0 ) implies\n\nfv(τ ) = fv(τ 0 ). I say a constraint system X is regular if the underlying equational\n\ntheory is regular. An example of a non–regular theory is the dimension constraint\n\nsystem DIM.\n\n    Type inference in term form also includes inference in constraint form (more about\n\nthis in the next section) as a special case if normalization is trivial, i.e. normalization\n\nrepresents only a satisfiability test. The following completeness results holds for two\n\nclasses of constraint systems. By X c I denote the class of constraint systems where\n\nS equals to the set of all satisfiable constraints, hence normalization only involves\n\na satisfiability test. For the second class, denoted by X reg , I consider only regular\n\nconstraint systems.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem12"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem13",
+    "kind": "Theorem",
+    "number": 13,
+    "printed_page": 99,
+    "pdf_page": 111,
+    "source_excerpt": "Theorem 13 (Completeness of Inference) Let C 0 , φΓ ` e : σ 0 be a typing judg-\n\nment such that φΓ is realizable in C 0 . Then\n\n\n                                    ψ, C, Γ `W e : τ\n\n\nfor some substitution ψ, constraints C, Co , types τ, σo , such that\n\n\n                               C, ψΓ, τ      `gen    (Co , σo )\n\n                             (Co , σo , ψ)   ≤Γ     (C 0 , σ 0 , φ)",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem13"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition29",
+    "kind": "Definition",
+    "number": 29,
+    "printed_page": 100,
+    "pdf_page": 112,
+    "source_excerpt": "Definition 29 (Principal types) Given an instance X of the HM(X) type system.\n\nX satisfies the principal type property iff the following holds. Given a pair (Γ, e)\n\nsuch that C 0 , Γ ` e : σ 0 for some constraint C 0 and type scheme σ 0 . Then there is a\n\nconstraint C and a type scheme σ such that\n\n   • C, Γ ` e : σ\n\n   • If C 0 , Γ ` e : σ 0 then C 0 `e C and C 0 `i σ \u0016 σ 0 .\n\nThe pair (C, σ) is called a principal type. Commonly, the constraint component\n\nequals true.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.principalTypeProperty"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "corollary5",
+    "kind": "Corollary",
+    "number": 5,
+    "printed_page": 100,
+    "pdf_page": 112,
+    "source_excerpt": "Corollary 5 (Principal Types) Let true, Γ ` e : σ be a closed typing judgment\n\nsuch that Γ is realizable in true. Then φ, C, Γ `W e : τ for some substitution φ,\n\nconstraint C, types τ, σo such that\n\n\n                               C, φΓ, τ   `gen    (true, σo )\n\n                                  `i σo     \u0016         σ\n\n\n   Please note, this is a straightforward extension of the notion of principal types\n\nfound in the Hindley/Milner system. In this system, principality states there is\n\none unique type (a principal type) from which all other types can be generated\n\n(by building generic instances). In contrast, a principal type in HM(X) represents\n\nrather a class of types which are semantically equivalent. As an example, consider\n\nthe program λx.x in a variation of the Hindley/Milner system where the set of\n\nsolved forms equals all satisfiable constraints. One obvious principal type would be",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.corollary5"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "definition24",
+    "kind": "Definition",
+    "number": 24,
+    "printed_page": 103,
+    "pdf_page": 115,
+    "source_excerpt": "Definition 24 in Section 4.2). Simplification strategies in the context of subtyping\n\nwere studied in [Pot98, EST95a].\n\n      I can state the following results. I omit to give proofs of the soundness and com-\n\npleteness results. Both proofs are almost identical to the soundness and completeness\n\nresults of the class X c in case of inference in term form.\n\n  3\n      Before I apply x I generate a generic instance of x, see the (Var) rule.",
+    "scope": "core",
+    "lean": [
+      "HMX.ConstraintTheory.SyntacticallyUnique"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem14",
+    "kind": "Theorem",
+    "number": 14,
+    "printed_page": 104,
+    "pdf_page": 116,
+    "source_excerpt": "Theorem 14 (Soundness of Inference) Given a term e and a type environment\n\nΓ. If C, Γ `Wc e : α then C, Γ ` e : α.\n\n\n   For the completeness result, I only consider those typing judgments C, Γ ` e : σ\n\nwhere the type environment and the constraint on the left hand side of the turnstile\n\nare realizable, i.e. have a type instance. Recall, a type environment Γ is realizable\n\nin a constraint C if for every x : σ ∈ Γ there is a τ such that C `i σ \u0016 τ .",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem14"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem15",
+    "kind": "Theorem",
+    "number": 15,
+    "printed_page": 104,
+    "pdf_page": 116,
+    "source_excerpt": "Theorem 15 (Completeness of Inference) Given a typing judgment C, Γ ` e :\n\nσ such that Γ is realizable in C. Then C 0 , Γ `Wc e : α such that\n\n\n                                      C `e ∃α.C 0\n\n                                C `i ∀α.C 0 ⇒ α \u0016 σ.\n\n\n   I need the realizability condition to state the property about the constraint.\n\nOtherwise, I could not state that C `e ∃α.C 0 .\n\n   The completeness result could be stated in a much more concise way than in the\n\nterm–based HM(X) system. To achieve principal types I only need satisfiability. A\n\ndecidable satisfiability test results into decidable type inference.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem15"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "corollary6",
+    "kind": "Corollary",
+    "number": 6,
+    "printed_page": 104,
+    "pdf_page": 116,
+    "source_excerpt": "Corollary 6 (Principal Types) Let true, Γ ` e : σ be a closed typing judgment\n\nsuch that Γ is realizable in true. Then C, Γ `Wc e : α such that\n\n\n                                        `e ∃α.C\n\n                                  `i ∀α.C ⇒ α \u0016 σ.\n\n\n4.4.2     Term Inference\n\nI turn my attention to the inference problem in the term–based system as described\n\nin Section 3.2. Kennedy’s example shows that the standard inference algorithm does",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.corollary6"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem16",
+    "kind": "Theorem",
+    "number": 16,
+    "printed_page": 106,
+    "pdf_page": 118,
+    "source_excerpt": "Theorem 16 (Soundness of Inference) Given an instance of the HM(X) system\n\nwhere X satisfies the principal constraint property and the set S is closed under\n\nprojection. Given a type environment Γ and a term e. If ψ, C, Γ `Wterm e : τ then\n\nC, ψΓ ` e : τ where ψC =e C and ψτ = τ .",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem16"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem17",
+    "kind": "Theorem",
+    "number": 17,
+    "printed_page": 107,
+    "pdf_page": 119,
+    "source_excerpt": "Theorem 17 (Completeness of Inference) Given an HM(X) instance where X\n\nsatisfies the principal constraint property. Given C, φΓ ` e : σ such that φΓ is\n\nrealizable in C. Then ψ, D, Γ `Wterm e : τ for some substitution ψ, constraints\n\nD, Co and types τ, σo such that\n\n\n                                  D, ψΓ, τ `gen (σo , Co )\n                        0\n                   ψ ≤φf v(Γ) φ      C `i φ0 σo \u0016 σ          C `e φ0 Co .\n\n\n   To achieve complete inference, I need less assumptions compared to the complete-\n\nness result for the inference system `W (see Theorem 13). Unitary unification is not\n\nnecessary because during the actual inference process no substitutions are computed.\n\n   I can furthermore simplify the completeness results to top–level programs which\n\nstates that the inference system computes principal types.",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem17"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "corollary7",
+    "kind": "Corollary",
+    "number": 7,
+    "printed_page": 107,
+    "pdf_page": 119,
+    "source_excerpt": "Corollary 7 (Principal types) Given an HM(X) instance where X satisfies the\n\nprincipal constraint property. Given a closed typing judgment true, Γ ` e : σ where\n\nΓ is realizable in true. Then ψ, D, Γ `Wterm e : τ for some substitution ψ, constraint",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.corollary7"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem18",
+    "kind": "Theorem",
+    "number": 18,
+    "printed_page": 109,
+    "pdf_page": 121,
+    "source_excerpt": "Theorem 18 (Equivalence of `Wterm and `Wnormalize ) Given an HM(X) instance\n\nwhere X satisfies the lifting property. Then φ, D, Γ `Wterm e : τ iff φ, D, Γ `Wnormalize\n\ne : τ.\n\n\n    Inference system `Wnormalize can be seen as a constraint–based formulation of\n\ninference system `W . Specifically, it follows that `Wnormalize and `W have the\n\nsame complexity.\n\n    The dimension system DIM satisfies the lifting property. Hence, principal types",
+    "scope": "core",
+    "lean": [
+      "HMX.Statement.theorem18"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma7",
+    "kind": "Lemma",
+    "number": 7,
+    "printed_page": 182,
+    "pdf_page": 194,
+    "source_excerpt": "Lemma 7 Given a sound constraint system X and a closed type scheme σ. Then\n\nW 6∈ [[σ]].",
+    "scope": "appendix",
+    "lean": [],
+    "status": "not_transcribed",
+    "visual_check": false
+  },
+  {
+    "id": "theorem5",
+    "kind": "Theorem",
+    "number": 5,
+    "printed_page": 183,
+    "pdf_page": 195,
+    "source_excerpt": "Theorem 5 (Type Soundness) Let C, Γ ` e : σ be a valid typing judgment in\n\nHM(X), where X is a sound and coherent constraint system. Let φ be a substitution\n\nsuch that φΓ and φσ are closed and such that `e φC and φ is consistent in Γ. Let\n\nη be a variable environment such that η |= φΓ. Then\n\n\n                                        (1) W 6∈ [[φσ]]\n\n                                        (2) [[e]]η ∈ [[φσ]]",
+    "scope": "appendix",
+    "lean": [],
+    "status": "not_transcribed",
+    "visual_check": false
+  },
+  {
+    "id": "lemma10",
+    "kind": "Lemma",
+    "number": 10,
+    "printed_page": 185,
+    "pdf_page": 197,
+    "source_excerpt": "Lemma 10 The following inference rules are derivable.\n\n\n                         (Ref-σ)                    C `i σ \u0016 σ\n\n                                            D `e C          C `i σ \u0016 σ 0\n                        (Weaken)\n                                                    D `i σ \u0016 σ 0\n\n                                        C `i σ1 \u0016 σ2           C `i σ2 \u0016 σ3\n                         (Trans)\n                                                   C `i σ1 \u0016 σ3",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma10"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma11",
+    "kind": "Lemma",
+    "number": 11,
+    "printed_page": 187,
+    "pdf_page": 199,
+    "source_excerpt": "Lemma 11 Let C be a constraint and σ, σ 0 be type schemes. Then C `i σ \u0016 σ 0 iff\n\nC `i2 σ \u0016 σ 0 .",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma11"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma17",
+    "kind": "Lemma",
+    "number": 17,
+    "printed_page": 187,
+    "pdf_page": 199,
+    "source_excerpt": "Lemma 17 (Completeness of `s ) Given C 0 , Γ0 `n e : σ 0 , C 0 `i Γ \u0016 Γ0 and Γ0 is",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma17"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma18",
+    "kind": "Lemma",
+    "number": 18,
+    "printed_page": 193,
+    "pdf_page": 205,
+    "source_excerpt": "Lemma 18 (Weakening) Given C, Γ `s e : τ and (C 0 , Γ0 ) ≤ (C, Γ). Then\n\nC 0 , Γ0 `s e : τ .",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma18"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem7",
+    "kind": "Theorem",
+    "number": 7,
+    "printed_page": 194,
+    "pdf_page": 206,
+    "source_excerpt": "Theorem 7 (Transformation) Given a constraint system X over a term algebra T\n\nand a set S of solved forms such that S is closed under projection and X t enjoys the\n\nprincipal constraint property, a type environment Γ0 in X t and a constraint C in X t\n\nwhere C ` Γ 7→ Γ0 . Then the following holds.\n\n   • If C, Γ `X e : τ then C, Γ0 `X e : τ .\n                   c                    t\n\n\n\n\n   • If C, Γ `X e : σ where σ realizable in C then C, Γ0 `X e : σ 0 where C ` σ 7→\n                   c                                                t\n\n\n\n\n         σ0.",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.theorem7"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem8",
+    "kind": "Theorem",
+    "number": 8,
+    "printed_page": 197,
+    "pdf_page": 209,
+    "source_excerpt": "Theorem 8 (Full and Faithful) Given a constraint system X over a term alge-\n\nbra T . If X t satisfies the principal constraint property then every program typable in\n\nX c is typable in X t and vice versa.",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.theorem8"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma20",
+    "kind": "Lemma",
+    "number": 20,
+    "printed_page": 198,
+    "pdf_page": 210,
+    "source_excerpt": "Lemma 20 Given an instance of the HM(X) system in term form. If the judgment\n\nC, Γ ` e : σ is derivable using the constraint–based (∀ Elim) rule then C, Γ ` e : σ is",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma20"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma21",
+    "kind": "Lemma",
+    "number": 21,
+    "printed_page": 200,
+    "pdf_page": 212,
+    "source_excerpt": "Lemma 21 Given a constraint C, a type environment Γ, a term e and a type τ .\n\nThen C, Γ ` e : τ iff C ∧ (α = τ ), Γ ` e : α where α is a fresh type variable.",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma21"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma26",
+    "kind": "Lemma",
+    "number": 26,
+    "printed_page": 200,
+    "pdf_page": 212,
+    "source_excerpt": "Lemma 26 Given two constraint problems (D, φ) and (D0 , φ0 ), a principal normal\n\nform (C, ψ) of (D0 , φ0 ) and a principal normal form (C 0 , ψ 0 ) of (D, φ) such that (C, ψ)\n\nis also a normal form of (D, φ) and (C 0 , ψ 0 ) is also a normal form of (D0 , φ0 ). Then\n\n(C, ψ) is a principal normal form of (D, φ) and (C 0 , ψ 0 ) is principal normal form of\n\n(D0 , φ0 ).",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma26"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma27",
+    "kind": "Lemma",
+    "number": 27,
+    "printed_page": 201,
+    "pdf_page": 213,
+    "source_excerpt": "Lemma 27 Given a constraint system X over a term algebra T and a set of solved\n\nconstraints S in X such that X enjoys the principal constraint property and unitary\n\nunification. Given constraint problems (D1 , φ1 ) and (D2 , φ2 ) such that dom(φ1 ) ∩\n\ncodom(φ2 ) = ∅, dom(φ2 ) ∩ codom(φ1 ) = ∅, fv(D1 ) ∩ dom(φ2 ) = ∅ and fv(D2 ) ∩\n\ndom(φ1 ) = ∅. Let (C, ψ) be the principal normal form of (D1 , φ1 ) t (D2 , φ2 ). Then\n\nthe principal normal form (C1 , ψ1 ) of (D1 , φ1 ) exists and (C, ψ) is a principal normal\n\nform of (C1 , ψ1 ) t (D2 , φ2 ).\n                                           0",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma27"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma28",
+    "kind": "Lemma",
+    "number": 28,
+    "printed_page": 203,
+    "pdf_page": 215,
+    "source_excerpt": "Lemma 28 Given a constraint system X over a term algebra T and a set of solved\n\nconstraints S in X such that X satisfies the principal constraint property and unitary\n\nunification. Given constraint problems (D1 , φ1 ) and (D2 , φ2 ) such that dom(φ1 ) ∩\n\ncodom(φ2 ) = ∅, dom(φ2 ) ∩ codom(φ1 ) = ∅, fv(D1 ) ∩ dom(φ2 ) = ∅ and fv(D2 ) ∩\n\ndom(φ1 ) = ∅. Let (C1 , ψ1 ) be the principal normal form of (D1 , φ1 ) and (C, ψ) be\n\nthe principal normal form of (C1 , ψ1 ) t (D2 , φ2 ). Then (C, ψ) is a normal form of\n\n(D1 , φ1 ) t (D2 , φ2 ).\n                                                                                         0",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma28"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma29",
+    "kind": "Lemma",
+    "number": 29,
+    "printed_page": 204,
+    "pdf_page": 216,
+    "source_excerpt": "Lemma 29 Given a constraint system X over a term algebra T and a set S of\n\nsolved forms such that X satisfies the lifting property. Given a constraint problem\n\n(∃ᾱ.D, φ). Then (∃ᾱ.D, φ) does have a normal form iff (D, φ) does have a normal\n\nform.",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma29"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma30",
+    "kind": "Lemma",
+    "number": 30,
+    "printed_page": 204,
+    "pdf_page": 216,
+    "source_excerpt": "Lemma 30 Given a constraint system X over a term algebra T and a set S of solved\n\nforms such that X satisfies the lifting property. Given a constraint problem (∃ᾱ.D, φ).\n\nLet (C, ψ) be the principal normal form of (D, φ). Then (∃ᾱ.(π ◦ ψ\\ᾱ )D, (π ◦ ψ\\ᾱ ))\n\nis the principal normal form of (∃ᾱ.D, φ) where π = [β̄/ᾱ] and β̄ are new.",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma30"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem12",
+    "kind": "Theorem",
+    "number": 12,
+    "printed_page": 206,
+    "pdf_page": 218,
+    "source_excerpt": "Theorem 12 (Soundness of Inference) Given a type environment Γ and a term\n\ne. If ψ, C, Γ `W e : τ then C, ψΓ ` e : τ , ψC = C and ψτ = τ .",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.theorem12"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma33",
+    "kind": "Lemma",
+    "number": 33,
+    "printed_page": 209,
+    "pdf_page": 221,
+    "source_excerpt": "Lemma 33 Given a type context Γ, constraints C, C̃, types τ, τ 0 and substitutions\n                                          0\nφ, φ0 , ψ such that C `e φ0 C̃ and ψ ≤φf v(Γ) φ. Then Co `e φ0 C̃o where C, φΓ, τ 0 `gen2\n\nCo and C̃, ψΓ, τ `gen2 C̃o .",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma33"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "remark6",
+    "kind": "Remark",
+    "number": 6,
+    "printed_page": 209,
+    "pdf_page": 221,
+    "source_excerpt": "Remark 6 The proof of the previous lemma relies on the fact that X is regular. For\n\nX in X c I only need a restricted version of this lemma. Therefore, I still can achieve\n\ncomplete type inference for X in X c .\n\n   The next lemma is similar to the previous one, except that it compares types\n\ninstead of constraints.",
+    "scope": "appendix",
+    "lean": [],
+    "status": "annotation_pending",
+    "visual_check": false
+  },
+  {
+    "id": "lemma34",
+    "kind": "Lemma",
+    "number": 34,
+    "printed_page": 210,
+    "pdf_page": 222,
+    "source_excerpt": "Lemma 34 Given a type context Γ, constraints C, C̃, types τ, τ 0 and substitutions\n                                                                    0\nφ, φ0 , ψ such that C `e φ0 C̃, C `i φ0 τ \u0016 τ 0 and ψ ≤φf v(Γ) φ. Then `i φ0 σ̃o \u0016 σo\n\nwhere C, φΓ, τ 0 `gen1 σo and C̃, ψΓ, τ `gen1 σ̃o .\n\n\n   The next lemma states that I can lift some properties about a constraint and a\n\nsubstitution to the same constraint but extended substitution.",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma34"
+    ],
+    "status": "draft",
+    "visual_check": true
+  },
+  {
+    "id": "lemma35",
+    "kind": "Lemma",
+    "number": 35,
+    "printed_page": 210,
+    "pdf_page": 222,
+    "source_excerpt": "Lemma 35 Given a set U of variables, constraints C1 , C 0 and substitutions ψ, ψ1 , ψ2 , φ, φ1\n                                                                    0           φ0\nsuch that ψ1 C1 = C1 , C 0 `e φ01 C1 , ψ = ψ1 t ψ2 , ψ ≤φU φ, ψ1 ≤U1 φ, codom(ψ2 ) ∩\n\nfv(C1 ) ⊆ U and codom(ψ1 ) ∩ fv(C2 ) ⊆ U . Then C 0 `e (φ0 ◦ ψ)C1 .",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma35Printed"
+    ],
+    "status": "draft",
+    "visual_check": true
+  },
+  {
+    "id": "lemma36",
+    "kind": "Lemma",
+    "number": 36,
+    "printed_page": 211,
+    "pdf_page": 223,
+    "source_excerpt": "Lemma 36 Given a set U of variables, a constraint C 0 , type schemes σ̃, σ 00 and\n\nsubstitutions ψ, ψ1 , ψ2 , φ, φ1 such that ψ1 σ̃ = σ̃, C 0 `i φ01 σ̃ \u0016 σ 00 , ψ = ψ1 t ψ2 ,\n      0           φ0\nψ ≤φU φ, ψ1 ≤U1 φ, codom(ψ2 ) ∩ fv(C1 ) ⊆ U and codom(ψ1 ) ∩ fv(C2 ) ⊆ U . Then\n\nC 0 `i (φ0 ◦ ψ)σ̃ \u0016 σ 00 .",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma36Printed"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma37",
+    "kind": "Lemma",
+    "number": 37,
+    "printed_page": 211,
+    "pdf_page": 223,
+    "source_excerpt": "Lemma 37 (Completeness of `W ) Given C 0 , φΓ `s e : τ 0 . Then\n\n\n                                        ψ, C, Γ `W e : τ",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma37"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem25",
+    "kind": "Theorem",
+    "number": 25,
+    "printed_page": 219,
+    "pdf_page": 231,
+    "source_excerpt": "Theorem 25 Given C 0 , φΓ ` e : σ 0 and φΓ is realizable in C 0 . Then\n\n\n                                          ψ, C, Γ `W e : τ\n\n\nfor some substitutions φ0 , ψ, constraints C, Co and types τ, σo such that,\n\n\n                  0\n         ψ ≤φf v(Γ) φ      C 0 `e φ0 Co    C 0 `i φ0 σo \u0016 σ 0 andC, ψΓ, τ `gen (σo , Co ).",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.theorem25"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma38",
+    "kind": "Lemma",
+    "number": 38,
+    "printed_page": 220,
+    "pdf_page": 232,
+    "source_excerpt": "Lemma 38 Given a type context Γ, constraints C, C̃, types τ, τ 0 and substitutions\n                                        0\nφ, φ0 such that C `e φ0 C̃ and id ≤φf v(Γ) φ where φ0 is syntactically equal to φ on\n\nfv(Γ). Then Co `e φ0 C̃o where C, φΓ, τ 0 `gen2 Co and C̃, Γ, τ `gen2 C̃o .",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma38"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "lemma39",
+    "kind": "Lemma",
+    "number": 39,
+    "printed_page": 220,
+    "pdf_page": 232,
+    "source_excerpt": "Lemma 39 Given a type context Γ, constraints C, C̃, types τ, τ 0 and substitutions\n                                                        0\nφ, φ0 such that C `e φ0 C̃, C `i φ0 τ \u0016 τ 0 and id ≤φf v(Γ) φ where φ0 is syntactically\n\nequal to φ on fv(Γ). Then `i φ0 σ̃o \u0016 σo where C, φΓ, τ 0 `gen1 σo and C̃, Γ, τ `gen1\n\nσ̃o .",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma39"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "remark7",
+    "kind": "Remark",
+    "number": 7,
+    "printed_page": 220,
+    "pdf_page": 232,
+    "source_excerpt": "Remark 7 Both original lemmas can only be proven for non–regular theories. But it\n\nis interesting to point that both lemmas hold for arbitrary theories if the substitution\n\nψ is equal to the identity substitution. In the previous proof I showed that γ 6∈ fv(ψΓ).",
+    "scope": "appendix",
+    "lean": [],
+    "status": "annotation_pending",
+    "visual_check": false
+  },
+  {
+    "id": "lemma40",
+    "kind": "Lemma",
+    "number": 40,
+    "printed_page": 221,
+    "pdf_page": 233,
+    "source_excerpt": "Lemma 40 (Completeness of `W ) Given C 0 , φΓ `s e : τ 0 . Then\n\n\n                                     id, C, Γ `W e : τ\n\n\nfor some constraint C, type τ and substitution φ0 such that,\n\n\n                              0\n                        id ≤φf v(Γ) φ   C 0 `e C     C 0 `i τ \u0016 τ 0 .",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.lemma40"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem26",
+    "kind": "Theorem",
+    "number": 26,
+    "printed_page": 223,
+    "pdf_page": 235,
+    "source_excerpt": "Theorem 26 Given C 0 , φΓ ` e : σ 0 and φΓ is realizable in C 0 . Then\n\n\n                                     id, C, Γ `W e : τ\n\n\nfor some constraints C, Co , types τ, σo and substitution φ0 such that,\n\n                         0\n                   id ≤φf v(Γ) φ   C 0 `e φ 0 C o   C 0 `i φ0 σo \u0016 σ 0 and\n\n                                   C, Γ, τ `gen (σo , Co ).",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.theorem26"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem13",
+    "kind": "Theorem",
+    "number": 13,
+    "printed_page": 223,
+    "pdf_page": 235,
+    "source_excerpt": "Theorem 13 (Completeness of Inference) follows from Theorem 25 and 26.\n\n\n\nC.8      Proofs of Section 4.4\n\nI prove soundness and completeness of the revised term–based inference system, given\n\nin Figure 4.4. The proofs relies on sound and complete inference for the constraint–\n\nbased system. I omit soundness and completeness proofs for the constraint–based\n\nsystem which are straightforward and analogous to the completeness result for the\n\nclass X c in case of the term–based inference system. The technical problem lies in\n\ntransforming judgments in constraint form into judgments in term form. Remember,\n\nthe inference system in term form in Section 4.4.2 performs inference first in the\n\npurely constraint–based fragment of HM(X). Term reconstruction is performed at the\n\nend. The output is a judgment in the term–based fragment of HM(X). Technically, I\n\nneed to show how to transform judgments (derivation trees) of the constraint–based\n\nfragment of HM(X) into judgments (derivation trees) of the term–based fragment.\n\nThis can be done by applying the Transformation Theorem 7 (see Section 3.6).",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.theorem13"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem16",
+    "kind": "Theorem",
+    "number": 16,
+    "printed_page": 223,
+    "pdf_page": 235,
+    "source_excerpt": "Theorem 16 (Soundness of Inference) Given an instance of the HM(X) system",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.theorem16"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem17",
+    "kind": "Theorem",
+    "number": 17,
+    "printed_page": 224,
+    "pdf_page": 236,
+    "source_excerpt": "Theorem 17 (Completeness of Inference) Given an instance of the HM(X)\n                                                                           t\nsystem where X satisfies the principal constraint property. Given C, φΓ `X e : σ\n\nsuch that φΓ realizable in C. Then ψ, D, Γ `W e : τ for some substitution ψ,",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.theorem17"
+    ],
+    "status": "draft",
+    "visual_check": false
+  },
+  {
+    "id": "theorem18",
+    "kind": "Theorem",
+    "number": 18,
+    "printed_page": 226,
+    "pdf_page": 238,
+    "source_excerpt": "Theorem 18 (Equivalence of `Wterm and `Wnormalize ) Given an HM(X) in-\n\nstance where X satisfies the lifting property. Then φ, D, Γ `Wterm e : τ iff φ, D, Γ `Wnormalize\n\ne : τ.",
+    "scope": "appendix",
+    "lean": [
+      "HMX.Statement.theorem18"
+    ],
+    "status": "draft",
+    "visual_check": false
+  }
+]

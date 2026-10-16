@@ -1,0 +1,30 @@
+{
+  "file": "../main.pdf",
+  "sha256": "a76e1754b9ae8480257d0826c7a91c4ba885e9b8aba50441058a8405b7e31f5f",
+  "bytes": 795363,
+  "pdf_pages": 268,
+  "author": "Martin Sulzmann",
+  "title": "A General Framework for Hindley/Milner Type Systems with Constraints",
+  "dissertation_date": "May 2000",
+  "pdf_creation_note": "PDF metadata is not the dissertation date.",
+  "scope": {
+    "core_printed_pages": [
+      17,
+      113
+    ],
+    "core_pdf_pages": [
+      29,
+      125
+    ],
+    "appendix_printed_pages": [
+      182,
+      226
+    ],
+    "chapter5": "Excluded except when a dependency is explicitly needed.",
+    "background": "Dependency review, not automatically all earlier results."
+  },
+  "status": "draft_not_frozen",
+  "proof_phase_authorized": false,
+  "original_ehmx_baseline": "64dc8e2",
+  "branch": "hmx/thesis-statements"
+}
