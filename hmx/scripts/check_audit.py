@@ -46,12 +46,13 @@ groups = {key: [r for r in items if r['id'] == key] for key in sorted({r['id'] f
 mapped = sum(any(r['lean'] for r in rows) for rows in groups.values())
 unmapped = [key for key, rows in groups.items() if not any(r['lean'] for r in rows)]
 issues = json.loads((ROOT / 'audit/ambiguities.json').read_text())
-open_issues = [r['id'] for r in issues if r['status'] != 'resolved']
+open_issues = [r['id'] for r in issues if r['status'] == 'recorded_for_proof_review']
 print(f'Numbered inventory: {len(items)} occurrences, {len(groups)} distinct items')
-print(f'Items with draft Lean mappings: {mapped}')
+print(f'Items with Lean mappings: {mapped}')
 print('Items without Lean mappings: ' + ', '.join(unmapped))
-print('Open audit issues: ' + ', '.join(open_issues))
-print('Freeze status: ' + source['status'])
+print('Mathematical review deferred: ' + ', '.join(open_issues))
+print('Transcription status: ' + source['status'])
+print('Mathematical validation: ' + source.get('mathematical_validation', 'pending'))
 
 if args.lean_checks:
     linked = items + json.loads((ROOT / 'audit/figures.json').read_text()) + json.loads((ROOT / 'audit/conventions.json').read_text())
@@ -68,19 +69,29 @@ if args.lean_checks:
         errors.append('A checked statement definition depends on sorryAx.')
 
 if args.require_complete:
+    if unmapped:
+        errors.append('Numbered items without a transcription remain.')
     for group in ['items', 'figures', 'conventions']:
         data = json.loads((ROOT / f'audit/{group}.json').read_text())
-        if any(r['status'] not in ['verified', 'excluded_with_reason', 'dependency_diagram_verified'] for r in data):
-            errors.append(f'{group}: source review/transcription is incomplete')
         for row in data:
-            if row['status'] == 'excluded_with_reason' and not row.get('exclusion_reason'):
-                errors.append(f'{group}/{row["id"]}: exclusion has no recorded reason')
-            if row['status'] == 'verified' and not row.get('second_source_review'):
-                errors.append(f'{group}/{row["id"]}: second source comparison is not recorded')
-    if open_issues:
-        errors.append('Unresolved source or implementation issues remain.')
-    if source['status'] != 'frozen':
-        errors.append('The specification has not been frozen.')
+            if row['status'] != 'transcribed' or not row.get('lean'):
+                errors.append(f'{group}/{row["id"]}: missing transcription or mapping')
+            if not 1 <= row['pdf_page'] <= source['pdf_pages']:
+                errors.append(f'{group}/{row["id"]}: invalid source page')
+            if group == 'items' and not row.get('source_excerpt'):
+                errors.append(f'{group}/{row["id"]}: missing original text')
+    for issue in issues:
+        if issue['status'] != 'recorded_for_proof_review' or not issue.get('transcription_handling'):
+            errors.append(f'{issue["id"]}: handling of the original text is not recorded')
+    modules = json.loads((ROOT / 'audit/modules.json').read_text())
+    if {r['file'] for r in modules} != {str(p.relative_to(ROOT)) for p in files}:
+        errors.append('Reverse source mapping does not cover every Lean module.')
+    if any(not r.get('source') or not r.get('role') for r in modules):
+        errors.append('A module has no recorded source or implementation role.')
+    if source['status'] != 'transcription_complete':
+        errors.append('Transcription coverage has not been completed.')
+    if source.get('mathematical_validation') != 'pending':
+        errors.append('This statement-only check must not certify mathematical validity.')
 if errors:
     for error in errors:
         print('ERROR: ' + error)

@@ -78,39 +78,37 @@ inductive RootReduction (δ : PrimitiveReduction N Const) : Expr N Const → Exp
   | beta (value : v.Value) (subst : Expr.Substitutes x v e r) : RootReduction δ (.app (.lam x e) v) r
   | letE (value : v.Value) (subst : Expr.Substitutes x v e r) : RootReduction δ (.letE x v e) r
 
-/-- Weak, left-to-right call-by-value context closure. This makes the otherwise
-    unspecified 'standard' closure on p.39 explicit, rather than conflating it
-    with reduction under lambdas or arbitrary contexts. -/
-inductive Reduction (δ : PrimitiveReduction N Const) : Expr N Const → Expr N Const → Prop
-  | root : RootReduction δ e e' → Reduction δ e e'
-  | appLeft : Reduction δ f f' → Reduction δ (.app f a) (.app f' a)
-  | appRight : v.Value → Reduction δ a a' → Reduction δ (.app v a) (.app v a')
-  | letDefinition : Reduction δ e e' → Reduction δ (.letE x e b) (.letE x e' b)
+/-- The source calls the contextual closure standard without specifying it.
+The closure relation is supplied explicitly; only the printed root rules above
+are fixed here. No evaluation order is silently chosen by the transcription. -/
+structure ReductionContext (δ : PrimitiveReduction N Const) where
+  step : Expr N Const → Expr N Const → Prop
+  root : ∀ e e', RootReduction δ e e' → step e e'
 
 def Faulty (δ : PrimitiveReduction N Const) (e : Expr N Const) : Prop :=
   ∃ c v, v.Value ∧ Expr.Subexpression (.app (.constant c) v) e ∧ δ.delta c v = none
 
 /-- p.40 is expressed relationally because the source gives no value for
     divergence. Zero steps are allowed for an expression already faulty. -/
-def EvaluatesWrong (δ : PrimitiveReduction N Const) (e : Expr N Const) : Prop :=
-  ∃ e', Relation.ReflTransGen (Reduction δ) e e' ∧ Faulty δ e'
-def EvaluatesValue (δ : PrimitiveReduction N Const) (e v : Expr N Const) : Prop :=
-  Relation.ReflTransGen (Reduction δ) e v ∧ v.Value
+def EvaluatesWrong (δ : PrimitiveReduction N Const) (context : ReductionContext δ) (e : Expr N Const) : Prop :=
+  ∃ e', Relation.ReflTransGen context.step e e' ∧ Faulty δ e'
+def EvaluatesValue (δ : PrimitiveReduction N Const) (context : ReductionContext δ) (e v : Expr N Const) : Prop :=
+  Relation.ReflTransGen context.step e v ∧ v.Value
 
 namespace Statement
 variable {V : Type u} {K : Type v} {arity : K → Nat} {P : Type w} {parity : P → Nat}
 variable (X : ConstraintTheory V K arity P parity) (S : Set (Constraint V K arity P parity))
-variable (policy : WeakeningPolicy) (N Const : Type) (δ : PrimitiveReduction N Const)
+variable (policy : WeakeningPolicy) (N Const : Type) (δ : PrimitiveReduction N Const) (context : ReductionContext δ)
 
 /-- p.39. A transcription, not a proof: the source does not give a type
-    compatibility condition for delta. It must be resolved before freezing. -/
+    compatibility condition for delta. Its mathematical adequacy is deferred to proof review. -/
 def lemma8Printed (presentation : ConstraintPresentation X) : Prop :=
   CoreAssumptions X S policy → X.StronglySound S presentation →
   ∀ C (Γ Δ : Environment (N ⊕ Const) V K arity P parity) e e' s s' φ,
     Typing X S policy C Γ e s → φ.IsSubstitution →
     Environment.Substitutes φ Γ Δ → Scheme.Substitutes φ s s' →
     X.envFV Δ = ∅ → X.schemeFV s' = ∅ → X.Entails ∅ (C.subst φ) →
-    X.ConsistentEnvironment S φ Γ → Relation.TransGen (Reduction δ) e e' →
+    X.ConsistentEnvironment S φ Γ → Relation.TransGen context.step e e' →
       Typing X S policy ∅ Δ e' s'
 
 /-- Explicitly a conjecture in the dissertation, p.40; it assumes Sound,
@@ -120,7 +118,7 @@ def conjecture1 : Prop := CoreAssumptions X S policy → X.Sound S →
     Typing X S policy C Γ e s → φ.IsSubstitution →
     Environment.Substitutes φ Γ Δ → Scheme.Substitutes φ s s' →
     X.envFV Δ = ∅ → X.schemeFV s' = ∅ → X.Entails ∅ (C.subst φ) →
-    X.ConsistentEnvironment S φ Γ → ¬ EvaluatesWrong δ e
+    X.ConsistentEnvironment S φ Γ → ¬ EvaluatesWrong δ context e
 end Statement
 end
 end HMX

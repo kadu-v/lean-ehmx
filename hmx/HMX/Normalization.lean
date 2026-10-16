@@ -91,13 +91,11 @@ variable (X : ConstraintTheory V K arity P parity)
     This is stronger than merely requiring every member of S to be equation-free. -/
 def LiftingSolvedForms (S : Set (Constraint V K arity P parity)) : Prop :=
   ∀ C, C ∈ S ↔ X.Satisfiable C ∧ X.EquationFreeConstraint C
-/-- D28(3): applies to EVERY normal form, not just the chosen principal one.
-    Equality is read modulo entailment. Literal finite-set equality conflicts
-    with D28(2), which includes all equivalent equation-free representatives;
-    see audit issue D28-EQUALITY. -/
+/-- D28(3), retaining the printed equality. The possible conflict with
+    condition (2) is recorded, not repaired in the source transcription. -/
 def LiftingNormalForms (S : Set (Constraint V K arity P parity)) : Prop :=
   ∀ p n : Problem V K arity P parity, p.NormalForm X S n →
-    X.Equivalent n.constraint (p.constraint.subst n.substitution)
+    n.constraint = p.constraint.subst n.substitution
 def LiftingWitnesses (S : Set (Constraint V K arity P parity)) : Prop :=
   ∀ A C, X.project A C ∈ S → ∃ φ : Assignment V K arity,
     φ.IsSubstitution ∧ φ.domain ⊆ (A : Set V) ∧ C.subst φ ∈ S

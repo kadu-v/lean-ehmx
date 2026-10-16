@@ -19,14 +19,18 @@ def TermContext.fill {V K arity} (t : Ty V K arity) : TermContext V K arity → 
   | .arrowRight u c => .arrow u (c.fill t)
   | .argument k i ts c => .con k (Function.update ts i (c.fill t))
 
-/-- Definitions 2–3. These are abstract entailment and projection, NOT entailment
-    in one chosen interpretation. -/
-structure CylindricTheory (V : Type u) (K : Type v) (arity : K → Nat)
-    (P : Type w) (parity : P → Nat) where
-  infiniteVariables : Infinite V
-  entailsAtom : Constraint V K arity P parity → Predicate V K arity P parity → Prop
+/-- Definition 2 is independent of variables, types and projection. -/
+structure SimpleTheory (Token : Type*) where
+  tokensNonempty : Nonempty Token
+  entailsAtom : Finset Token → Token → Prop
   C1 : ∀ C p, p ∈ C → entailsAtom C p
   C2 : ∀ C D q, (∀ p ∈ D, entailsAtom C p) → entailsAtom D q → entailsAtom C q
+
+/-- Definition 3, specialized to the token signature subsequently used by D7.
+    Entailment remains abstract, not validity in one chosen interpretation. -/
+structure CylindricTheory (V : Type u) (K : Type v) (arity : K → Nat)
+    (P : Type w) (parity : P → Nat) extends SimpleTheory (Predicate V K arity P parity) where
+  infiniteVariables : Infinite V
   projectOne : V → Constraint V K arity P parity → Constraint V K arity P parity
   E1 : ∀ a C p, p ∈ projectOne a C → entailsAtom C p
   E2 : ∀ a C D, (∀ p ∈ D, entailsAtom C p) →
@@ -52,16 +56,15 @@ def Satisfiable (C : Constraint V K arity P parity) : Prop :=
   ∃ A : Finset V, (A : Set V) = X.fv C ∧ X.Entails ∅ (X.project A C)
 end CylindricTheory
 
-/-- Definition 7, with the distinct-variable condition in D4 restored.
-    The printed formula and the reason for this correction are retained in
-    audit/ambiguities.json (D4). No other axiom is strengthened here. -/
+/-- Definition 7 as printed, including D4 without a distinct-variable side
+    condition. This is a source transcription, not a consistency assertion. -/
 structure ConstraintTheory (V : Type u) (K : Type v) (arity : K → Nat)
     (P : Type w) (parity : P → Nat) extends CylindricTheory V K arity P parity where
   D1 : ∀ a, toCylindricTheory.Entails ∅ (Constraint.eq (.var a) (.var a))
   D2 : ∀ a b, toCylindricTheory.Entails (Constraint.eq (.var a) (.var b)) (Constraint.eq (.var b) (.var a))
   D3 : ∀ a b c, toCylindricTheory.Entails
     (Constraint.eq (.var a) (.var b) ∪ Constraint.eq (.var b) (.var c)) (Constraint.eq (.var a) (.var c))
-  D4 : ∀ a b C, a ≠ b → toCylindricTheory.Entails
+  D4 : ∀ a b C, toCylindricTheory.Entails
     (Constraint.eq (.var a) (.var b) ∪ projectOne a (C ∪ Constraint.eq (.var a) (.var b))) C
   D5 : ∀ t u (ctx : TermContext V K arity), toCylindricTheory.Entails
     (Constraint.eq t u) (Constraint.eq (ctx.fill t) (ctx.fill u))

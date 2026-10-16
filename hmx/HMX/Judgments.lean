@@ -111,21 +111,21 @@ def LogicalJudgmentAdmissible (style : LogicalStyle) (X : ConstraintTheory V K a
 
 /-- Figure 3.1. Ordinary unrestricted let; neither effects nor a value restriction.
     `equ` exposes the source's equivalence-class convention for constraints. -/
-inductive LogicalTyping (style : LogicalStyle) (X : ConstraintTheory V K arity P parity) (S : Set (Constraint V K arity P parity))
+inductive LogicalTyping {N Const : Type} (style : LogicalStyle) (X : ConstraintTheory V K arity P parity) (S : Set (Constraint V K arity P parity))
     (policy : WeakeningPolicy) : Constraint V K arity P parity →
-    Environment (N ⊕ Const) V K arity P parity → Expr N Const → Scheme V K arity P parity → Prop where
+    Environment (N ⊕ Const) V K arity P parity → Expr N Const → Scheme V K arity P parity → Type (max u v w) where
   | var (h : Γ.lookup (.inl x) = some s) (ok : LogicalJudgmentAdmissible style X S C Γ s) :
       LogicalTyping style X S policy C Γ (.var x) s
   | constant (h : Γ.lookup (.inr c) = some s) (ok : LogicalJudgmentAdmissible style X S C Γ s) :
       LogicalTyping style X S policy C Γ (.constant c) s
   | sub (d : LogicalTyping style X S policy C Γ e (.type t)) (h : X.Entails C (Constraint.le t u))
       (ok : LogicalJudgmentAdmissible style X S C Γ (.type u)) : LogicalTyping style X S policy C Γ e (.type u)
-  | abs (d : LogicalTyping style X S policy C (Γ.extend (.inl x) (.type t)) e (.type u))
+  | abs (unbound : Γ.lookup (.inl x) = none) (d : LogicalTyping style X S policy C (Γ.extend (.inl x) (.type t)) e (.type u))
       (ok : LogicalJudgmentAdmissible style X S C Γ (.type (.arrow t u))) :
       LogicalTyping style X S policy C Γ (.lam x e) (.type (.arrow t u))
   | app (f : LogicalTyping style X S policy C Γ e₁ (.type (.arrow t u)))
       (a : LogicalTyping style X S policy C Γ e₂ (.type t)) : LogicalTyping style X S policy C Γ (.app e₁ e₂) (.type u)
-  | letE (d : LogicalTyping style X S policy C Γ e s)
+  | letE (unbound : Γ.lookup (.inl x) = none) (d : LogicalTyping style X S policy C Γ e s)
       (b : LogicalTyping style X S policy C (Γ.extend (.inl x) s) e' (.type t)) :
       LogicalTyping style X S policy C Γ (.letE x e e') (.type t)
   | forallIntro {A : Finset V} (d : LogicalTyping style X S policy (C ∪ D) Γ e (.type t))
@@ -173,28 +173,58 @@ inductive LogicalTyping (style : LogicalStyle) (X : ConstraintTheory V K arity P
       (subst : Scheme.Substitutes φ s t) (ok : LogicalJudgmentAdmissible style X S C Γ t) :
       LogicalTyping style X S policy C Γ e t
 
-abbrev Typing {N Const : Type*} (X : ConstraintTheory V K arity P parity)
-    (S : Set (Constraint V K arity P parity)) (policy : WeakeningPolicy) :=
-  LogicalTyping (N := N) (Const := Const) .ordinary X S policy
-abbrev NormalizedTyping {N Const : Type*} (X : ConstraintTheory V K arity P parity)
-    (S : Set (Constraint V K arity P parity)) (policy : WeakeningPolicy) :=
-  LogicalTyping (N := N) (Const := Const) .normalized X S policy
-abbrev ConstraintEliminationTyping {N Const : Type*} (X : ConstraintTheory V K arity P parity)
-    (S : Set (Constraint V K arity P parity)) (policy : WeakeningPolicy) :=
-  LogicalTyping (N := N) (Const := Const) .constraintElimination X S policy
-abbrev CanonicalTyping {N Const : Type*} (X : ConstraintTheory V K arity P parity)
-    (S : Set (Constraint V K arity P parity)) (policy : WeakeningPolicy) :=
-  LogicalTyping (N := N) (Const := Const) .canonical X S policy
-abbrev NestedTyping {N Const : Type*} (X : ConstraintTheory V K arity P parity)
-    (S : Set (Constraint V K arity P parity)) (policy : WeakeningPolicy) :=
-  LogicalTyping (N := N) (Const := Const) .nested X S policy
+namespace LogicalTyping
+/-- Every left-hand constraint in a derivation, including its root (§3.5.5). -/
+def AllConstraints {N Const : Type} {style : LogicalStyle} {X : ConstraintTheory V K arity P parity}
+    {S : Set (Constraint V K arity P parity)} {policy : WeakeningPolicy}
+    {C : Constraint V K arity P parity} {Γ : Environment (N ⊕ Const) V K arity P parity}
+    {e : Expr N Const} {s : Scheme V K arity P parity}
+    (Q : Constraint V K arity P parity → Prop) :
+    LogicalTyping (N := N) (Const := Const) style X S policy C Γ e s → Prop
+  | .var _ _ | .constant _ _ => Q C
+  | .sub d _ _ | .abs _ d _ | .forallIntro d _ _ | .equ d _ _ | .alpha d _ _ =>
+      Q C ∧ AllConstraints Q d
+  | .app d b | .letE _ d b => Q C ∧ AllConstraints Q d ∧ AllConstraints Q b
+  | .forallElim _ d _ _ _ _ => Q C ∧ AllConstraints Q d
+  | .representatives d _ _ _ | .weakening _ d _ _ => Q C ∧ AllConstraints Q d
+  | .instVar _ _ _ _ | .instConstant _ _ _ _ => Q C
+  | .constraintElim _ d _ _ | .existsIntro _ d _ _ | .nestedIntro _ d _ _ =>
+      Q C ∧ AllConstraints Q d
+  | .nestedElim _ d _ _ _ _ _ _ _ => Q C ∧ AllConstraints Q d
+end LogicalTyping
+
+def Typing {N Const : Type} (X : ConstraintTheory V K arity P parity)
+    (S : Set (Constraint V K arity P parity)) (policy : WeakeningPolicy)
+    (C : Constraint V K arity P parity) (Γ : Environment (N ⊕ Const) V K arity P parity)
+    (e : Expr N Const) (s : Scheme V K arity P parity) : Prop :=
+  Nonempty (LogicalTyping .ordinary X S policy C Γ e s)
+def NormalizedTyping {N Const : Type} (X : ConstraintTheory V K arity P parity)
+    (S : Set (Constraint V K arity P parity)) (policy : WeakeningPolicy)
+    (C : Constraint V K arity P parity) (Γ : Environment (N ⊕ Const) V K arity P parity)
+    (e : Expr N Const) (s : Scheme V K arity P parity) : Prop :=
+  Nonempty (LogicalTyping .normalized X S policy C Γ e s)
+def ConstraintEliminationTyping {N Const : Type} (X : ConstraintTheory V K arity P parity)
+    (S : Set (Constraint V K arity P parity)) (policy : WeakeningPolicy)
+    (C : Constraint V K arity P parity) (Γ : Environment (N ⊕ Const) V K arity P parity)
+    (e : Expr N Const) (s : Scheme V K arity P parity) : Prop :=
+  Nonempty (LogicalTyping .constraintElimination X S policy C Γ e s)
+def CanonicalTyping {N Const : Type} (X : ConstraintTheory V K arity P parity)
+    (S : Set (Constraint V K arity P parity)) (policy : WeakeningPolicy)
+    (C : Constraint V K arity P parity) (Γ : Environment (N ⊕ Const) V K arity P parity)
+    (e : Expr N Const) (s : Scheme V K arity P parity) : Prop :=
+  Nonempty (LogicalTyping .canonical X S policy C Γ e s)
+def NestedTyping {N Const : Type} (X : ConstraintTheory V K arity P parity)
+    (S : Set (Constraint V K arity P parity)) (policy : WeakeningPolicy)
+    (C : Constraint V K arity P parity) (Γ : Environment (N ⊕ Const) V K arity P parity)
+    (e : Expr N Const) (s : Scheme V K arity P parity) : Prop :=
+  Nonempty (LogicalTyping .nested X S policy C Γ e s)
 
 /-- §3.4.4, p.47. Generalization accepts a scheme, not only an unqualified type.
     This is the logical relation; a maximal-variable algorithm is separate. -/
 def Generalizes (X : ConstraintTheory V K arity P parity) (S : Set (Constraint V K arity P parity))
     (C : Constraint V K arity P parity) (Γ : Environment N V K arity P parity)
     (s : Scheme V K arity P parity) (Co : Constraint V K arity P parity) (so : Scheme V K arity P parity) : Prop :=
-  ∃ A C₁ C₂, X.Equivalent C (C₁ ∪ C₂) ∧ X.Equivalent Co (X.project A C) ∧
+  ∃ A C₁ C₂, X.Equivalent Co (X.project A C) ∧
     X.Equivalent Co (C₁ ∪ X.project A C₂) ∧ so = Scheme.all A C₂ s ∧
     Disjoint (A : Set V) (X.fv C₁ ∪ X.envFV Γ) ∧
     X.Admissible S C ∧ X.Admissible S Co ∧

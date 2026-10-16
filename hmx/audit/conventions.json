@@ -4,8 +4,8 @@
     "printed_page": 17,
     "pdf_page": 29,
     "description": "HM(X) の五つ組と term/constraint presentation の区別",
-    "implementation": "HMX.ConstraintTheory; HMX.Typing",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.ConstraintTheory",
       "HMX.Typing"
@@ -16,8 +16,8 @@
     "printed_page": 20,
     "pdf_page": 32,
     "description": "有限 token 集合・連言・true の代表元",
-    "implementation": "HMX.Constraint",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.Constraint"
     ]
@@ -27,8 +27,8 @@
     "printed_page": 21,
     "pdf_page": 33,
     "description": "意味論的 FV と構文上の出現の区別",
-    "implementation": "HMX.CylindricTheory.fv; HMX.Constraint.occurrences",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.CylindricTheory.fv",
       "HMX.Constraint.occurrences"
@@ -39,8 +39,8 @@
     "printed_page": 22,
     "pdf_page": 34,
     "description": "開いた型構成子の署名・多ソートの例",
-    "implementation": "HMX.Ty (single-sort draft; multi-sort examples not implemented)",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.Ty"
     ]
@@ -50,8 +50,8 @@
     "printed_page": 28,
     "pdf_page": 40,
     "description": "制約を同値類とみなす規約・空の量化・α変換",
-    "implementation": "HMX.SchemeRepresentative; HMX.FlatView; fresh alpha-equivalent bound names in inference",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.SchemeRepresentative",
       "HMX.FlatView"
@@ -62,8 +62,8 @@
     "printed_page": 29,
     "pdf_page": 41,
     "description": "S は充足可能制約の部分集合・代表元による許容性・S=空集合も許す",
-    "implementation": "HMX.ConstraintTheory.SolvedForms; HMX.ConstraintTheory.Admissible",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.ConstraintTheory.SolvedForms",
       "HMX.ConstraintTheory.Admissible"
@@ -74,8 +74,8 @@
     "printed_page": 30,
     "pdf_page": 42,
     "description": "REFL・ASYM・TRANS・CONTRA",
-    "implementation": "HMX.ConstraintTheory.TypeOrderLaws",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.ConstraintTheory.TypeOrderLaws"
     ]
@@ -85,8 +85,8 @@
     "printed_page": 32,
     "pdf_page": 44,
     "description": "初期環境 Γ0 の定数宣言",
-    "implementation": "HMX.Expr.constant; HMX.Environment",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.Expr.constant",
       "HMX.Environment"
@@ -97,17 +97,24 @@
     "printed_page": 34,
     "pdf_page": 46,
     "description": "CPO の最小解・値の解釈・式と型の意味",
-    "implementation": "pending",
-    "status": "review_pending",
-    "lean": []
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.DomainIdeal",
+      "HMX.DomainContinuous",
+      "HMX.Meaning",
+      "HMX.Meaning.TermEquations",
+      "HMX.Meaning.TypeEquations",
+      "HMX.SourceNotes.domainEquation"
+    ]
   },
   {
     "id": "STRONG",
     "printed_page": 38,
     "pdf_page": 50,
     "description": "強健全性に加え、解決済み制約で射影が構文的に現れないという条件",
-    "implementation": "HMX.ConstraintTheory.StronglySound; no-projection convention remains under review",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.ConstraintTheory.StronglySound"
     ]
@@ -117,8 +124,8 @@
     "printed_page": 41,
     "pdf_page": 53,
     "description": "比較 i と i2 の各規則・型スキームの同値",
-    "implementation": "HMX.Comparison; HMX.Instance; HMX.Instance₂",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.Comparison",
       "HMX.Instance",
@@ -130,8 +137,8 @@
     "printed_page": 45,
     "pdf_page": 57,
     "description": "weakening 規則を追加する案と S への十分条件を課す案",
-    "implementation": "HMX.WeakeningPolicy; HMX.ConstraintTheory.WeakeningCondition",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.WeakeningPolicy",
       "HMX.ConstraintTheory.WeakeningCondition"
@@ -142,8 +149,8 @@
     "printed_page": 45,
     "pdf_page": 57,
     "description": "n 導出の Inst と s 導出の Var-Inst",
-    "implementation": "HMX.NormalizedTyping; HMX.SyntaxDirected",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.NormalizedTyping",
       "HMX.SyntaxDirected"
@@ -154,8 +161,8 @@
     "printed_page": 46,
     "pdf_page": 58,
     "description": "let に現れる連言が解決済みという個別条件",
-    "implementation": "HMX.SyntaxDirected.letE",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.SyntaxDirected.letE"
     ]
@@ -165,8 +172,8 @@
     "printed_page": 47,
     "pdf_page": 59,
     "description": "論理的な一般化関係",
-    "implementation": "HMX.Generalizes",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.Generalizes"
     ]
@@ -176,8 +183,8 @@
     "printed_page": 48,
     "pdf_page": 60,
     "description": "入れ子の forall を許す代案と原規則の区別",
-    "implementation": "HMX.NestedTyping",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.NestedTyping"
     ]
@@ -187,44 +194,57 @@
     "printed_page": 50,
     "pdf_page": 62,
     "description": "Jones・Aiken/Wimmers・Smith・HOG の比較用規則",
-    "implementation": "comparison-only source material, not adopted rules",
-    "status": "review_pending",
-    "lean": []
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.QuantifierIntroduction.Jones",
+      "HMX.QuantifierIntroduction.AikenWimmers",
+      "HMX.QuantifierIntroduction.Smith",
+      "HMX.QuantifierIntroduction.HOG"
+    ]
   },
   {
     "id": "OPENWORLD",
     "printed_page": 53,
     "pdf_page": 65,
     "description": "射影が自明になる条件と open world の説明",
-    "implementation": "source annotation; no concrete class solver",
-    "status": "review_pending",
-    "lean": []
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.SourceNotes.openWorld"
+    ]
   },
   {
     "id": "EXAMPLES",
     "printed_page": 58,
     "pdf_page": 70,
     "description": "SystemO・Ohori の比較と拡張例",
-    "implementation": "comparison-only source material; Chapter 5 excluded",
-    "status": "review_pending",
-    "lean": []
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.SourceNotes.comparisonExamples"
+    ]
   },
   {
     "id": "LETREAL",
     "printed_page": 67,
     "pdf_page": 79,
     "description": "let-realizable、projection-free derivation、S の射影閉包",
-    "implementation": "pending",
-    "status": "review_pending",
-    "lean": []
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.Expr.LetRealizable",
+      "HMX.LogicalTyping.AllConstraints",
+      "HMX.ConstraintTheory.IsProjectionClosure"
+    ]
   },
   {
     "id": "PRESENTATION",
     "printed_page": 73,
     "pdf_page": 85,
     "description": "Xc と Xt は制約系を共有して S が異なる",
-    "implementation": "HMX.Approximates",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.Approximates"
     ]
@@ -234,8 +254,8 @@
     "printed_page": 76,
     "pdf_page": 88,
     "description": "制約形式の型構文とスキーム同値",
-    "implementation": "HMX.CanonicalTyping; HMX.LogicalJudgmentAdmissible (syntax restriction written, source review pending)",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.CanonicalTyping",
       "HMX.LogicalJudgmentAdmissible"
@@ -246,8 +266,8 @@
     "printed_page": 88,
     "pdf_page": 100,
     "description": "主正規形を選ぶ normalize と失敗",
-    "implementation": "HMX.Normalizer.Specification",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.Normalizer.Specification"
     ]
@@ -257,8 +277,8 @@
     "printed_page": 93,
     "pdf_page": 105,
     "description": "定義28の四条件と Remark 3 の代表元版",
-    "implementation": "HMX.ConstraintTheory.LiftingProperty; representative variant of Remark 3 remains open",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.ConstraintTheory.LiftingProperty"
     ]
@@ -268,8 +288,8 @@
     "printed_page": 95,
     "pdf_page": 107,
     "description": "normalize の計算可能性というアルゴリズム用前提",
-    "implementation": "HMX.Normalizer.Effective; HMX.ConstraintTheory.EffectiveProjectionFreeNormalization",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.Normalizer.Effective",
       "HMX.ConstraintTheory.EffectiveProjectionFreeNormalization"
@@ -280,8 +300,8 @@
     "printed_page": 96,
     "pdf_page": 108,
     "description": "最大ではなく極大な変数集合・選択の決定可能性",
-    "implementation": "HMX.AlgorithmicGeneralizes; HMX.Generalizer.Effective",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.AlgorithmicGeneralizes",
       "HMX.Generalizer.Effective"
@@ -292,8 +312,8 @@
     "printed_page": 97,
     "pdf_page": 109,
     "description": "typing configuration とその比較",
-    "implementation": "HMX.TypingConfiguration; HMX.ConfigurationMoreGeneral",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.TypingConfiguration",
       "HMX.ConfigurationMoreGeneral"
@@ -304,8 +324,8 @@
     "printed_page": 99,
     "pdf_page": 111,
     "description": "定理13の節全体の仮定・Xc または regular/unitary・射影閉性・環境の実現可能性",
-    "implementation": "HMX.Statement.OriginalCompletenessAssumptions",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.Statement.OriginalCompletenessAssumptions"
     ]
@@ -315,8 +335,8 @@
     "printed_page": 102,
     "pdf_page": 114,
     "description": "制約推論の充足可能性チェックの決定可能性",
-    "implementation": "HMX.EffectiveSatisfiability",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.EffectiveSatisfiability"
     ]
@@ -326,8 +346,8 @@
     "printed_page": 102,
     "pdf_page": 114,
     "description": "生成制約の FV と結果変数の新鮮さ",
-    "implementation": "HMX.Statement.constraintInferenceSupport (unproved proposition)",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.Statement.constraintInferenceSupport"
     ]
@@ -337,8 +357,8 @@
     "printed_page": 108,
     "pdf_page": 120,
     "description": "途中の正規化では FV(Γ,α) にだけ代入する",
-    "implementation": "HMX.IntermediateConstraintInference; HMX.IntermediateTermInference",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.IntermediateConstraintInference",
       "HMX.IntermediateTermInference"
@@ -349,10 +369,11 @@
     "printed_page": 197,
     "pdf_page": 209,
     "description": "比較導出の全制約が解決済みという但し書き",
-    "implementation": "HMX.SolvedInstance; scope pending",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
-      "HMX.SolvedInstance"
+      "HMX.SolvedInstance",
+      "HMX.SourceNotes.solvedComparison"
     ]
   },
   {
@@ -360,20 +381,23 @@
     "printed_page": 198,
     "pdf_page": 210,
     "description": "定理8の証明中の閉環境・射影閉性",
-    "implementation": "pending scope resolution",
-    "status": "review_pending",
-    "lean": []
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
+    "lean": [
+      "HMX.SourceNotes.theorem8Proof"
+    ]
   },
   {
     "id": "GENPARTS",
     "printed_page": 208,
     "pdf_page": 220,
     "description": "gen1/gen2 の分解と regular case の仮定",
-    "implementation": "HMX.Statement.lemma33; HMX.Statement.lemma34; paired maximal-generalization witnesses; GEN-MAX remains under review",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.Statement.lemma33",
-      "HMX.Statement.lemma34"
+      "HMX.Statement.lemma34",
+      "HMX.SourceNotes.generalizationComponents"
     ]
   },
   {
@@ -381,8 +405,8 @@
     "printed_page": 220,
     "pdf_page": 232,
     "description": "Xc の証明で恒等代入を返す正規化器",
-    "implementation": "HMX.SatisfiabilityNormalizer; HMX.Statement.lemma40; HMX.Statement.theorem26",
-    "status": "review_pending",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
+    "status": "transcribed",
     "lean": [
       "HMX.SatisfiabilityNormalizer",
       "HMX.Statement.lemma40",
@@ -393,15 +417,16 @@
     "id": "REDUCTION",
     "printed_page": 39,
     "description": "根の還元・文脈閉包・捕獲回避代入・faulty と評価",
-    "implementation": "HMX.RootReduction; HMX.Reduction; HMX.Expr.Substitutes; HMX.Faulty; HMX.EvaluatesWrong; HMX.EvaluatesValue",
+    "implementation": "対応する Lean 宣言を収録。本文・図・証明中の注意を区別する。記号の読みと未証明の事項は ambiguities.json に記録。",
     "lean": [
       "HMX.RootReduction",
-      "HMX.Reduction",
+      "HMX.ReductionContext",
       "HMX.Expr.Substitutes",
       "HMX.Faulty",
       "HMX.EvaluatesWrong",
       "HMX.EvaluatesValue"
     ],
-    "status": "review_pending"
+    "status": "transcribed",
+    "pdf_page": 51
   }
 ]

@@ -31,7 +31,7 @@ inductive ConstraintInference (X : ConstraintTheory V K arity P parity) :
       (env : X.EnvironmentAdmissible X.Satisfiable Γ)
       (sat : X.Satisfiable (X.project A (Constraint.eq (.var b) t ∪ D))) :
       ConstraintInference X (X.project A (Constraint.eq (.var b) t ∪ D)) Γ (.constant c) b
-  | abs (d : ConstraintInference X C (Γ.extend (.inl x) (.type (.var a))) e g)
+  | abs (unbound : Γ.lookup (.inl x) = none) (d : ConstraintInference X C (Γ.extend (.inl x) (.type (.var a))) e g)
       (freshInput : a ∉ X.envFV Γ)
       (fresh : b ∉ X.envFV Γ ∪ X.fv C ∪ ({a, g} : Set V))
       (sat : X.Satisfiable (X.project {a, g} (Constraint.eq (.var b) (.arrow (.var a) (.var g)) ∪ C))) :
@@ -42,7 +42,7 @@ inductive ConstraintInference (X : ConstraintTheory V K arity P parity) :
       (sat : X.Satisfiable (X.project {a₁, a₂} (C₁ ∪ C₂ ∪ Constraint.le (.var a₁) (.arrow (.var a₂) (.var a))))) :
       ConstraintInference X (X.project {a₁, a₂} (C₁ ∪ C₂ ∪ Constraint.le (.var a₁) (.arrow (.var a₂) (.var a))))
         Γ (.app e₁ e₂) a
-  | letE (d : ConstraintInference X C₁ Γ e a)
+  | letE (unbound : Γ.lookup (.inl x) = none) (d : ConstraintInference X C₁ Γ e a)
       (b : ConstraintInference X C₃ (Γ.extend (.inl x) (.all {a} C₁ (.type (.var a)))) e' β)
       (sat : X.Satisfiable (X.project {a} C₁ ∪ C₃)) :
       ConstraintInference X (X.project {a} C₁ ∪ C₃) Γ (.letE x e e') β
@@ -71,8 +71,7 @@ def AlgorithmicGeneralizes (X : ConstraintTheory V K arity P parity)
     X.Admissible S (X.project A C) ∧
     (∀ B : Finset V, A ⊆ B → (B : Set V) ⊆ (X.fv C ∪ X.schemeFV s) \ X.envFV Γ →
       X.Admissible S (X.project B C) → B = A) ∧
-    ∃ C₁ C₂, X.Equivalent C (C₁ ∪ C₂) ∧
-      X.Equivalent Co (X.project A C) ∧ X.Equivalent Co (C₁ ∪ X.project A C₂) ∧
+    ∃ C₁ C₂, X.Equivalent Co (X.project A C) ∧ X.Equivalent Co (C₁ ∪ X.project A C₂) ∧
       so = .all A C₂ s ∧ Disjoint (A : Set V) (X.fv C₁ ∪ X.envFV Γ) ∧
       X.SchemeAdmissible S so
 end

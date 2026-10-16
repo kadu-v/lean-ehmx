@@ -26,7 +26,7 @@ inductive IntermediateStep (X : ConstraintTheory V K arity P parity)
       (env : X.EnvironmentAdmissible X.Satisfiable Γ)
       (sat : X.Satisfiable (X.project A (Constraint.eq (.var b) t ∪ D))) :
       IntermediateStep X normalize (X.project A (Constraint.eq (.var b) t ∪ D)) Γ (.constant c) b
-  | abs (d : IntermediateConstraintInference X normalize C (Γ.extend (.inl x) (.type (.var a))) e g)
+  | abs (unbound : Γ.lookup (.inl x) = none) (d : IntermediateConstraintInference X normalize C (Γ.extend (.inl x) (.type (.var a))) e g)
       (freshInput : a ∉ X.envFV Γ)
       (fresh : b ∉ X.envFV Γ ∪ X.fv C ∪ ({a, g} : Set V))
       (sat : X.Satisfiable (X.project {a, g} (Constraint.eq (.var b) (.arrow (.var a) (.var g)) ∪ C))) :
@@ -37,7 +37,7 @@ inductive IntermediateStep (X : ConstraintTheory V K arity P parity)
       (sat : X.Satisfiable (X.project {a₁, a₂} (C₁ ∪ C₂ ∪ Constraint.le (.var a₁) (.arrow (.var a₂) (.var a))))) :
       IntermediateStep X normalize (X.project {a₁, a₂} (C₁ ∪ C₂ ∪ Constraint.le (.var a₁) (.arrow (.var a₂) (.var a))))
         Γ (.app e₁ e₂) a
-  | letE (d : IntermediateConstraintInference X normalize C₁ Γ e a)
+  | letE (unbound : Γ.lookup (.inl x) = none) (d : IntermediateConstraintInference X normalize C₁ Γ e a)
       (b : IntermediateConstraintInference X normalize C₃ (Γ.extend (.inl x) (.all {a} C₁ (.type (.var a)))) e' β)
       (sat : X.Satisfiable (X.project {a} C₁ ∪ C₃)) :
       IntermediateStep X normalize (X.project {a} C₁ ∪ C₃) Γ (.letE x e e') β

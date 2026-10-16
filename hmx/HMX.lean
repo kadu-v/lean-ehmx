@@ -10,3 +10,8 @@ import HMX.NormalizationStatements
 import HMX.AppendixStatements
 import HMX.OperationalSemantics
 import HMX.Effectiveness
+import HMX.Semantics
+import HMX.ProjectionStatements
+import HMX.Background
+import HMX.SourceVariants
+import HMX.SourceNotes

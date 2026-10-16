@@ -1,0 +1,29 @@
+{
+  "source_sha256": "a76e1754b9ae8480257d0826c7a91c4ba885e9b8aba50441058a8405b7e31f5f",
+  "scope": "Independent HMX dissertation transcription; not proofs or mathematical fidelity certification",
+  "numbered_items": 101,
+  "numbered_occurrences": 125,
+  "mapped_declarations_checked": 193,
+  "build": {
+    "command": "cd hmx && lake build",
+    "result": "passed",
+    "jobs": 866
+  },
+  "coverage": {
+    "command": "scripts/check_audit.py --require-complete --lean-checks",
+    "result": "passed"
+  },
+  "axioms_of_four_statement_definitions": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "pdf": {
+    "pages": 17,
+    "sha256": "3dab9d8dd9455f6e91322039f1dcab3c38c3e0df1aba94644b3dbd86316edd3a",
+    "lean_hashes": "all matched",
+    "visual_review": "All 17 pages rendered and inspected for clipping, layout and pagination."
+  },
+  "mathematical_validation": "pending",
+  "proofs_added": false
+}

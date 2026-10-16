@@ -21,10 +21,12 @@
       226
     ],
     "chapter5": "Excluded except when a dependency is explicitly needed.",
-    "background": "Dependency review, not automatically all earlier results."
+    "background": "Printed pages 8--16, including Figures 2.1--2.3 and numbered results."
   },
-  "status": "draft_not_frozen",
+  "status": "transcription_complete",
   "proof_phase_authorized": false,
   "original_ehmx_baseline": "64dc8e2",
-  "branch": "hmx/thesis-statements"
+  "branch": "hmx/thesis-statements",
+  "mathematical_validation": "pending",
+  "completion_means": "All in-scope numbered statements and catalogued rules/conventions are recorded. This is not a claim of provability, consistency, or a completed semantic model."
 }

@@ -52,14 +52,13 @@ def lemma29 : Prop := X.LiftingProperty S presentation coding →
 def lemma30 : Prop := X.LiftingProperty S presentation coding →
   ∀ A D φ (n : Problem V K arity P parity) π,
     Problem.IsProblem ⟨X.project A D, φ⟩ → Problem.Principal X S ⟨D, φ⟩ n →
-    Disjoint (A : Set V) (φ.domain ∪ φ.codomain) →
     Freshening A (X.fv D ∪ φ.domain ∪ φ.codomain ∪ n.substitution.domain ∪ n.substitution.codomain) π →
-    let ψ := (π.comp n.substitution).without A
+    let ψ := π.comp (n.substitution.without A)
     Problem.Principal X S ⟨X.project A D, φ⟩ ⟨X.project A (D.subst ψ), ψ⟩
 
 def theorem10 : Prop := X.LiftingProperty S presentation coding → X.PrincipalConstraintProperty S
 
-/-- p.97, using the repaired Figure 4.2. As with Theorem 18, exact output
+/-- p.97, retaining the unspecified psi-prime of Figure 4.2. As with Theorem 18, exact output
     representatives require a separate review; this is a draft statement. -/
 def theorem11 (policy : WeakeningPolicy) (N Const : Type)
     (normalize : Normalizer V K arity P parity)

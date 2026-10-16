@@ -1,5 +1,35 @@
 [
   {
+    "id": "figure2.1",
+    "printed_page": 11,
+    "pdf_page": 23,
+    "title": "HM background",
+    "lean": [
+      "HMX.HM.Typing"
+    ],
+    "status": "transcribed"
+  },
+  {
+    "id": "figure2.2",
+    "printed_page": 15,
+    "pdf_page": 27,
+    "title": "HM background",
+    "lean": [
+      "HMX.HM.Inference"
+    ],
+    "status": "transcribed"
+  },
+  {
+    "id": "figure2.3",
+    "printed_page": 16,
+    "pdf_page": 28,
+    "title": "HM background",
+    "lean": [
+      "HMX.SourceNotes.figure23"
+    ],
+    "status": "transcribed"
+  },
+  {
     "id": "figure3.1",
     "printed_page": 29,
     "pdf_page": 41,
@@ -7,7 +37,7 @@
     "lean": [
       "HMX.Typing"
     ],
-    "status": "draft"
+    "status": "transcribed"
   },
   {
     "id": "figure3.2",
@@ -17,15 +47,20 @@
     "lean": [
       "HMX.SyntaxDirected"
     ],
-    "status": "draft"
+    "status": "transcribed"
   },
   {
     "id": "figure3.3",
     "printed_page": 50,
     "pdf_page": 62,
     "title": "Versions of the quantifier introduction rule",
-    "lean": [],
-    "status": "not_transcribed"
+    "lean": [
+      "HMX.QuantifierIntroduction.Jones",
+      "HMX.QuantifierIntroduction.AikenWimmers",
+      "HMX.QuantifierIntroduction.Smith",
+      "HMX.QuantifierIntroduction.HOG"
+    ],
+    "status": "transcribed"
   },
   {
     "id": "figure3.4",
@@ -35,7 +70,7 @@
     "lean": [
       "HMX.CanonicalTyping"
     ],
-    "status": "draft"
+    "status": "transcribed"
   },
   {
     "id": "figure4.1",
@@ -45,7 +80,7 @@
     "lean": [
       "HMX.EagerInference"
     ],
-    "status": "draft"
+    "status": "transcribed"
   },
   {
     "id": "figure4.2",
@@ -56,7 +91,7 @@
       "HMX.DeferredInference",
       "HMX.ByNeedInference"
     ],
-    "status": "draft_with_documented_repairs",
+    "status": "transcribed",
     "visual_check": true
   },
   {
@@ -67,7 +102,7 @@
     "lean": [
       "HMX.ConstraintInference"
     ],
-    "status": "draft"
+    "status": "transcribed"
   },
   {
     "id": "figure4.4",
@@ -78,7 +113,7 @@
       "HMX.ConstraintInference",
       "HMX.TermInference"
     ],
-    "status": "draft"
+    "status": "transcribed"
   },
   {
     "id": "figure4.5",
@@ -90,23 +125,27 @@
       "HMX.IntermediateConstraintInference",
       "HMX.IntermediateTermInference"
     ],
-    "status": "draft"
+    "status": "transcribed"
   },
   {
     "id": "figure4.6",
     "printed_page": 112,
     "pdf_page": 124,
     "title": "Type inference in term form",
-    "lean": [],
-    "status": "dependency_diagram"
+    "lean": [
+      "HMX.SourceNotes.figure46"
+    ],
+    "status": "transcribed"
   },
   {
     "id": "figure4.7",
     "printed_page": 113,
     "pdf_page": 125,
     "title": "Type inference in constraint form",
-    "lean": [],
-    "status": "dependency_diagram"
+    "lean": [
+      "HMX.SourceNotes.figure47"
+    ],
+    "status": "transcribed"
   },
   {
     "id": "figureC.1",
@@ -116,6 +155,6 @@
     "lean": [
       "HMX.Expr.weightedSize"
     ],
-    "status": "draft"
+    "status": "transcribed"
   }
 ]

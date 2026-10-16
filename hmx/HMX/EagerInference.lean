@@ -37,7 +37,7 @@ inductive EagerInference (X : ConstraintTheory V K arity P parity)
       (fresh : Freshening A (X.envFV Γ ∪ X.fv D ∪ (t.fv : Set V)) π)
       (result : normalize ⟨D.subst π, π⟩ = some n) :
       EagerInference X normalize gen (n.substitution.restrict (X.envFV Γ)) n.constraint Γ (.constant c) (t.subst n.substitution)
-  | abs (d : EagerInference X normalize gen ψ C (Γ.extend (.inl x) (.type (.var a))) e t)
+  | abs (unbound : Γ.lookup (.inl x) = none) (d : EagerInference X normalize gen ψ C (Γ.extend (.inl x) (.type (.var a))) e t)
       (fresh : a ∉ X.envFV Γ) :
       EagerInference X normalize gen (ψ.without {a}) C Γ (.lam x e) (.arrow (ψ a) t)
   | app (f : EagerInference X normalize gen ψ₁ C₁ Γ e₁ t₁)
@@ -48,7 +48,7 @@ inductive EagerInference (X : ConstraintTheory V K arity P parity)
       (combine₂ : q.Combines X ⟨Constraint.le t₁ (.arrow t₂ (.var a)), Assignment.id⟩ p)
       (result : normalize p = some n) :
       EagerInference X normalize gen (n.substitution.restrict (X.envFV Γ)) n.constraint Γ (.app e₁ e₂) (n.substitution a)
-  | letE (d : EagerInference X normalize gen ψ₁ C₁ Γ e t)
+  | letE (unbound : Γ.lookup (.inl x) = none) (d : EagerInference X normalize gen ψ₁ C₁ Γ e t)
       (subst : Environment.Substitutes ψ₁ Γ Δ) (g : gen C₁ Δ t = (C₂, s))
       (b : EagerInference X normalize gen ψ₂ C₃ (Γ.extend (.inl x) s) e' t')
       (combine : Problem.Combines X ⟨C₂, ψ₁⟩ ⟨C₃, ψ₂⟩ p) (result : normalize p = some n) :
@@ -63,8 +63,9 @@ def TypingConfiguration (X : ConstraintTheory V K arity P parity)
 def ConfigurationMoreGeneral (X : ConstraintTheory V K arity P parity)
     (S : Set (Constraint V K arity P parity)) (Γ : Environment N V K arity P parity)
     (C : Constraint V K arity P parity) (s : Scheme V K arity P parity) (ψ : Assignment V K arity)
-    (D : Constraint V K arity P parity) (t : Scheme V K arity P parity) (φ : Assignment V K arity) : Prop :=
-  ∃ κ s', X.Factors (X.envFV Γ) ψ κ φ ∧ Scheme.Substitutes κ s s' ∧
+    (D : Constraint V K arity P parity) (t : Scheme V K arity P parity) (_φ : Assignment V K arity) : Prop :=
+  -- p.98 prints psi again on the right; phi is an unused printed parameter.
+  ∃ κ s', X.Factors (X.envFV Γ) ψ κ ψ ∧ Scheme.Substitutes κ s s' ∧
     X.Entails D (C.subst κ) ∧ Instance X S D s' t
 end
 end HMX

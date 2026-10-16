@@ -18,14 +18,14 @@ variable (X : ConstraintTheory V K arity P parity)
 variable (S : Set (Constraint V K arity P parity)) (policy : WeakeningPolicy)
 variable (N Const : Type)
 
-/-- Appendix C.7.1, p.209. Uses the maximal generalization of the algorithm
-    (p.96), not the unrestricted relation on p.47. See issue GEN-MAX. -/
+/-- Appendix C.7.1, p.209. Uses the printed generalization relation; the stronger maximality
+    used by the proof is recorded in issue GEN-MAX, not added here. -/
 def lemma33 : Prop := X.Regular → X.ProjectionClosed S →
   ∀ C D t t' φ ψ κ (Γ Δ Ψ : Environment (N ⊕ Const) V K arity P parity) Co Do so uo,
     φ.IsSubstitution → ψ.IsSubstitution → X.Factors (X.envFV Γ) ψ κ φ →
     Environment.Substitutes φ Γ Δ → Environment.Substitutes ψ Γ Ψ → X.Entails C (D.subst κ) →
-    AlgorithmicGeneralizes X S C Δ (.type t') Co so →
-    AlgorithmicGeneralizes X S D Ψ (.type t) Do uo → X.Entails Co (Do.subst κ)
+    Generalizes X S C Δ (.type t') Co so →
+    Generalizes X S D Ψ (.type t) Do uo → X.Entails Co (Do.subst κ)
 
 /-- Appendix C.7.1, p.210. The comparison of generalized schemes is under
     true. Both generalized outputs use the same witnesses as their constraints. -/
@@ -34,8 +34,8 @@ def lemma34 : Prop := X.Regular → X.ProjectionClosed S →
     φ.IsSubstitution → ψ.IsSubstitution → X.Factors (X.envFV Γ) ψ κ φ →
     Environment.Substitutes φ Γ Δ → Environment.Substitutes ψ Γ Ψ → X.Entails C (D.subst κ) →
     Instance X S C (.type (t.subst κ)) (.type t') →
-    AlgorithmicGeneralizes X S C Δ (.type t') Co so →
-    AlgorithmicGeneralizes X S D Ψ (.type t) Do uo →
+    Generalizes X S C Δ (.type t') Co so →
+    Generalizes X S D Ψ (.type t) Do uo →
     Scheme.Substitutes κ uo uo' → Instance X S ∅ uo' so
 
 /-- Literal quantified reading of Lemma 35. Symbols omitted from its opening
@@ -81,20 +81,20 @@ def lemma38 : Prop := X.ProjectionClosed X.Satisfiable →
   ∀ C D t t' φ κ (Γ Δ : Environment (N ⊕ Const) V K arity P parity) Co Do so uo,
     φ.IsSubstitution → X.Factors (X.envFV Γ) Assignment.id κ φ →
     (∀ a ∈ X.envFV Γ, κ a = φ a) → Environment.Substitutes φ Γ Δ → X.Entails C (D.subst κ) →
-    AlgorithmicGeneralizes X X.Satisfiable C Δ (.type t') Co so →
-    AlgorithmicGeneralizes X X.Satisfiable D Γ (.type t) Do uo → X.Entails Co (Do.subst κ)
+    Generalizes X X.Satisfiable C Δ (.type t') Co so →
+    Generalizes X X.Satisfiable D Γ (.type t) Do uo → X.Entails Co (Do.subst κ)
 
 def lemma39 : Prop := X.ProjectionClosed X.Satisfiable →
   ∀ C D t t' φ κ (Γ Δ : Environment (N ⊕ Const) V K arity P parity) Co Do so uo uo',
     φ.IsSubstitution → X.Factors (X.envFV Γ) Assignment.id κ φ →
     (∀ a ∈ X.envFV Γ, κ a = φ a) → Environment.Substitutes φ Γ Δ → X.Entails C (D.subst κ) →
     Instance X X.Satisfiable C (.type (t.subst κ)) (.type t') →
-    AlgorithmicGeneralizes X X.Satisfiable C Δ (.type t') Co so →
-    AlgorithmicGeneralizes X X.Satisfiable D Γ (.type t) Do uo →
+    Generalizes X X.Satisfiable C Δ (.type t') Co so →
+    Generalizes X X.Satisfiable D Γ (.type t) Do uo →
     Scheme.Substitutes κ uo uo' → Instance X X.Satisfiable ∅ uo' so
 
-/-- p.221, with the factor applied to C and t as used by the proof on p.222.
-    The printed conclusion without these applications is preserved in issue L40. -/
+/-- p.221 as printed: no factor is applied to the constraint or type in
+    the last two conclusions. The proof uses a different formula (issue L40). -/
 def lemma40 (normalize : Normalizer V K arity P parity)
     (gen : Generalizer (N ⊕ Const) V K arity P parity) : Prop :=
   CoreAssumptions X X.Satisfiable policy → SatisfiabilityNormalizer X normalize →
@@ -102,8 +102,8 @@ def lemma40 (normalize : Normalizer V K arity P parity)
   ∀ C' φ (Γ Δ : Environment (N ⊕ Const) V K arity P parity) e t',
     φ.IsSubstitution → Environment.Substitutes φ Γ Δ → SyntaxDirected X X.Satisfiable C' Δ e t' →
     ∃ C t κ, EagerInference X normalize gen Assignment.id C Γ e t ∧
-      X.Factors (X.envFV Γ) Assignment.id κ φ ∧ X.Entails C' (C.subst κ) ∧
-      Instance X X.Satisfiable C' (.type (t.subst κ)) (.type t')
+      X.Factors (X.envFV Γ) Assignment.id κ φ ∧ X.Entails C' C ∧
+      Instance X X.Satisfiable C' (.type t) (.type t')
 
 def theorem26 (normalize : Normalizer V K arity P parity)
     (gen : Generalizer (N ⊕ Const) V K arity P parity) : Prop :=

@@ -67,16 +67,17 @@ def lemma16 : Prop := CoreAssumptions X S policy →
   ∀ C (Γ : Environment (N ⊕ Const) V K arity P parity) e t,
     SyntaxDirected X S C Γ e t → Typing X S policy C Γ e (.type t)
 
-/-- p.47 / Appendix C.3. The final unbound sigma is read as sigma-prime;
-    generalization returns (constraint, scheme), as in its defining equation. -/
-def lemma17 : Prop := CoreAssumptions X S policy →
+/-- p.47. The final sigma is not bound by the printed statement; it is an
+    explicit parameter here, not identified with sigma-prime. The reversed
+    order of the displayed generalization pair is recorded in the audit. -/
+def lemma17 (unboundSigma : Scheme V K arity P parity) : Prop := CoreAssumptions X S policy →
   ∀ C' (Γ Γ' : Environment (N ⊕ Const) V K arity P parity) e s',
     NormalizedTyping X S policy C' Γ' e s' → EnvironmentInstance X S C' Γ Γ' →
     EnvironmentRealizable X S C' Γ' →
       (∀ t, s' = .type t → ∃ C, SyntaxDirected X S C Γ e t ∧ X.Entails C' C) ∧
       (∀ A D t, s' = .all A D (.type t) → ∃ C u Co so,
         SyntaxDirected X S C Γ e u ∧ Generalizes X S C Γ (.type u) Co so ∧
-        X.Entails C' Co ∧ Instance X S C' so s')
+        X.Entails C' Co ∧ Instance X S C' so unboundSigma)
 def lemma18 : Prop := CoreAssumptions X S policy →
   ∀ C D (Γ Δ : Environment (N ⊕ Const) V K arity P parity) e t,
     SyntaxDirected X S C Γ e t → ConstrainedEnvironmentInstance X S D C Δ Γ →

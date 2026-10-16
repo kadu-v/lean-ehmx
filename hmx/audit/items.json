@@ -7,9 +7,13 @@
     "pdf_page": 25,
     "source_excerpt": "Lemma 1 Let σ be a closed type scheme. Then [[σ]] is an ideal and W 6∈ [[σ]].",
     "scope": "background",
-    "lean": [],
-    "status": "dependency_review_pending",
-    "visual_check": false
+    "lean": [
+      "HMX.HM.Statement.lemma1"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition1",
@@ -19,9 +23,13 @@
     "pdf_page": 25,
     "source_excerpt": "Definition 1 A variable environment η models a closed typing environment Γ, writ-\n\nten η |= Γ, if for all x : σ ∈ Γ, η(x) ∈ [[σ]].",
     "scope": "background",
-    "lean": [],
-    "status": "dependency_review_pending",
-    "visual_check": false
+    "lean": [
+      "HMX.HM.Meaning.Models"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem1",
@@ -31,9 +39,13 @@
     "pdf_page": 25,
     "source_excerpt": "Theorem 1 (Type Soundness) Let Γ ` e : σ be a valid typing judgment. Let φ\n\nbe a substitution such that φΓ and φσ are closed. Let η be a variable environment\n\nsuch that η |= φΓ. Then\n                                     (1) W 6∈ [[φσ]]\n\n                                     (2) [[e]]η ∈ [[φσ]]\n\n   The type soundness result is commonly summarized through the catch–phrase\n\n“well types programs do not go wrong”.\n\n\n2.2.3     The Inference System\n\nIt is common knowledge that the type inference problem in the Hindley/Milner\n\nsystem can be reduced to a unification problem. Robinson [Rob65] gives an algorithm\n\nwhich computes the most general unifier of two types or otherwise reports failure. I\n\nrefer to Robinson’s algorithm as a function unify. The interested reader should refer\n\nto [LMM87, Rob65] for a more detailed exposition.\n\n   Given two types τ1 and τ2 . Then τ1 and τ2 are unifiable iff there exists a substi-\n\ntution φ such that φτ1 = φτ2 . In such a case, the substitution φ is called a unifier of\n\ntypes τ1 and τ2 . A substitution ψ is a most general unifier (commonly abbreviated\n\nby mgu) of τ1 and τ2 iff ψτ1 = ψτ2 and given another unifier φ of τ1 and τ2 , then\n\nthere exists a substitution ρ such that φ = ρ ◦ ψ.\n\n   Robinson could state the following result.",
     "scope": "background",
-    "lean": [],
-    "status": "dependency_review_pending",
-    "visual_check": false
+    "lean": [
+      "HMX.HM.Statement.theorem1"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem2",
@@ -43,9 +55,13 @@
     "pdf_page": 26,
     "source_excerpt": "Theorem 2 (Robinson) Given two types τ1 and τ2 . Then τ1 and τ2 are unifiable\n\nand a most general unifier exists (and this most general unifier is unique up to\n\nvariable renaming), or τ1 and τ2 do not have any unifiers.\n\n   This allows to define the following well–defined unify function:\n\n\n                          unify(τ1 , τ2 )\n\n                          = ψ        if ψ is a mgu of τ1 and τ2\n\n                          = fail otherwise\n\n\n   The inference system can be found in Figure 2.2. In contrast to the original pre-\n\nsentation [DM82], I present the inference system as a deduction system with clauses\n\nof the form ψ, Γ `W e : τ with type environment Γ, expression e as input values and\n\nsubstitution ψ, type τ as output values. For each syntactic construct of expressions\n\ne there is one clause. The deduction rules can be interpreted operationally, as a logic\n\nprogram that constructs a bottom–up derivation of `W clauses. The operator t in\n\nrules (App) and (Let) builds the least upper bound of substitutions.\n\n   In the (Var) rule, an unqualified type τ is represented as ∀∅.τ . This avoids a\n\nseparate case of this rule for unqualified types. In rule (App), the typing problem\n\nis translated into a unification problem. Then, the three resulting substitutions are\n\ncombined with the t operator which computes the least upper bound by constructing\n\nthe mgu.\n\n   In [DM82] the following results were stated. Any judgment derivable by the\n\ninference system is also derivable in the logical system.",
     "scope": "background",
-    "lean": [],
-    "status": "dependency_review_pending",
-    "visual_check": false
+    "lean": [
+      "HMX.HM.Statement.theorem2"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem3",
@@ -55,9 +71,13 @@
     "pdf_page": 26,
     "source_excerpt": "Theorem 3 (Soundness of Inference) Given a term e and a type environment\n\nΓ. If ψ, Γ `W e : τ    then ψΓ ` e : τ and ψτ = τ .\n\n   Before I state the completeness result, I restate the definition of a generic instance.",
     "scope": "background",
-    "lean": [],
-    "status": "dependency_review_pending",
-    "visual_check": false
+    "lean": [
+      "HMX.HM.Statement.theorem3"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem4",
@@ -67,9 +87,13 @@
     "pdf_page": 27,
     "source_excerpt": "Theorem 4 (Completeness of Inference) Let φΓ ` e : σ be a typing judgment.\n\nThen ψ, Γ `W e : τ for some substitutions ψ, ρ and type τ such that ρgen(ψΓ, τ ) < σ.\n\n\n    The completeness theorem can be simplified for top–level programs to the fol-\n\nlowing corollary, which states that the type inference algorithm computes principal\n\ntypes. Given a type environment Γ and an expression σ, then σ is a principal type\n\nof e under Γ iff Γ ` e : σ and if Γ ` e : σ 0 for any other σ 0 then σ < σ 0 .",
     "scope": "background",
-    "lean": [],
-    "status": "dependency_review_pending",
-    "visual_check": false
+    "lean": [
+      "HMX.HM.Statement.theorem4"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "corollary1",
@@ -79,9 +103,13 @@
     "pdf_page": 28,
     "source_excerpt": "Corollary 1 (Principal Types) Let Γ ` e : σ be a closed typing judgment. Then\n\nid, Γ `W e : τ such that gen(Γ, τ ) < σ.\n\n\n2.2.4    Summary\n\nThe Hindley/Milner system consists of three components: the logical system which\n\ndescribes the well–typed programs, the inference system which infers principal types\n\nand the semantic model which ensures that well–typed programs do not go wrong.\n\nFigure 2.3 exhibits the relationships among the three components. In the remain-\n\ning part of my dissertation, I consider an extension of the Hindley/Milner system\n\nwith constraints which retains the two elementary properties of the standard Hind-\n\nley/Milner system: the type soundness result and the principal types property.",
     "scope": "background",
-    "lean": [],
-    "status": "dependency_review_pending",
-    "visual_check": false
+    "lean": [
+      "HMX.HM.Statement.corollary1"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition2",
@@ -92,12 +120,12 @@
     "source_excerpt": "Definition 2 A simple constraint system is a structure (Ω, `e ) where Ω is a non–",
     "scope": "core",
     "lean": [
-      "HMX.CylindricTheory",
-      "HMX.CylindricTheory.Entails",
-      "HMX.CylindricTheory.Equivalent"
+      "HMX.SimpleTheory"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition3",
@@ -110,8 +138,10 @@
     "lean": [
       "HMX.CylindricTheory"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "remark1",
@@ -121,9 +151,13 @@
     "pdf_page": 33,
     "source_excerpt": "Remark 1 For simplicity, I omit set notation for constraints, and connect con-\n\nstraints by ∧ instead of the union operator ∪ and generally do not enclose simple\n\nconstraints P in opening and closing braces. For instance, P ∧ Q is an abbreviation\n\nfor {P } ∪ {Q}. I assume that ∧ binds tighter than ∃ᾱ. For instance, ∃ᾱ.C ∧ D\n\nstands for ∃ᾱ.(C ∧ D). I write C =e D iff C `e D and D `e C.\n\n\nExample 2 Let the token set Ω consist of some subclass of (L,Var) formulas closed\n\nunder existential quantification of finite conjunctions. Each operator ∃ᾱ is then\n\ninterpreted by the function which maps each finite set {P1 , . . . , Pn } of tokens to the\n\nset of tokens {∃ᾱ.P1 ∧ . . . ∧ Pn }. This way the four conditions above are satisfied.\n\n\n   The projection operator ∃ᾱ allows us to bind variables ᾱ in a constraint. If the\n\nconstraint system models a boolean algebra, projection corresponds to existential\n\nquantification. Based on the projection operator, I define the free variables fv(C)\n\nand satisfiability of a constraint C.",
     "scope": "core",
-    "lean": [],
-    "status": "annotation_pending",
-    "visual_check": false
+    "lean": [
+      "HMX.SourceRemark.remark1"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition4",
@@ -136,8 +170,10 @@
     "lean": [
       "HMX.CylindricTheory.fv"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition5",
@@ -150,8 +186,10 @@
     "lean": [
       "HMX.CylindricTheory.Satisfiable"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma2",
@@ -164,8 +202,10 @@
     "lean": [
       "HMX.Statement.lemma2"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition6",
@@ -179,8 +219,10 @@
       "HMX.Assignment.IsSubstitution",
       "HMX.Ty.subst"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition7",
@@ -195,8 +237,10 @@
       "HMX.Predicate.subst",
       "HMX.Constraint.subst"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "remark2",
@@ -206,9 +250,13 @@
     "pdf_page": 35,
     "source_excerpt": "Remark 2 Conditions D1 – D4 are the conditions imposed on a cylindric constraint\n\nsystem with diagonal elements, which is usually taken as the foundation of constraint\n\nprogramming languages. D4 says that equals can be substituted for equals; it is in\n\neffect the Leibniz principle. D5 states that (=) is a congruence. D6 connects the\n\nsyntactic operation of a substitution over predicates 1 with the semantic concepts\n\nof projection and equality. Substitution is extended to arbitrary constraints in the\n\ncanonical way:\n\n\n                     [τ /α](P1 ∧ . . . ∧ Pn ) = [τ /α]P1 ∧ . . . ∧ [τ /α]Pn .",
     "scope": "core",
-    "lean": [],
-    "status": "annotation_pending",
-    "visual_check": true
+    "lean": [
+      "HMX.SourceRemark.remark2"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma3",
@@ -221,8 +269,10 @@
     "lean": [
       "HMX.Statement.lemma3"
     ],
-    "status": "draft",
-    "visual_check": true
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma4",
@@ -235,8 +285,10 @@
     "lean": [
       "HMX.Statement.lemma4"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma5",
@@ -249,8 +301,10 @@
     "lean": [
       "HMX.Statement.lemma5"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition8",
@@ -263,8 +317,10 @@
     "lean": [
       "HMX.Ty.IsMonotype"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition9",
@@ -277,8 +333,10 @@
     "lean": [
       "HMX.ConstraintTheory.Sound"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma6",
@@ -288,9 +346,13 @@
     "pdf_page": 47,
     "source_excerpt": "Lemma 6 Let σ be a closed type scheme. Then [[σ]] is an ideal.\n\n    Furthermore, I conclude that in a sound constraint system the error element is\n\nnot contained in a closed type scheme.",
     "scope": "core",
-    "lean": [],
-    "status": "not_transcribed",
-    "visual_check": false
+    "lean": [
+      "HMX.Statement.lemma6"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma7",
@@ -300,9 +362,13 @@
     "pdf_page": 47,
     "source_excerpt": "Lemma 7 Given a sound constraint system X and a closed type scheme σ. Then\n\nW 6∈ [[σ]].",
     "scope": "core",
-    "lean": [],
-    "status": "not_transcribed",
-    "visual_check": false
+    "lean": [
+      "HMX.Statement.lemma7"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition10",
@@ -312,9 +378,13 @@
     "pdf_page": 47,
     "source_excerpt": "Definition 10 A variable environment η models a closed typing environment Γ,\n\nwritten η |= Γ, if for all x : σ ∈ Γ, η(x) ∈ [[σ]].",
     "scope": "core",
-    "lean": [],
-    "status": "not_transcribed",
-    "visual_check": false
+    "lean": [
+      "HMX.Meaning.Models"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition11",
@@ -324,9 +394,13 @@
     "pdf_page": 47,
     "source_excerpt": "Definition 11 The constraint system X is coherent if for all monotypes µ and µ0 ,\n\nif `e (µ \u0016 µ0 ) then [[µ]] ⊆ [[µ0 ]].",
     "scope": "core",
-    "lean": [],
-    "status": "not_transcribed",
-    "visual_check": false
+    "lean": [
+      "HMX.Meaning.Coherent"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem5",
@@ -336,9 +410,13 @@
     "pdf_page": 48,
     "source_excerpt": "Theorem 5 (Type Soundness) Let C, Γ ` e : σ be a valid typing judgment in\n\nHM(X), where X is a sound and coherent constraint system. Let φ be a substitution\n\nsuch that φΓ and φσ are closed and such that `e φC and φ is consistent in Γ. Let\n\nη be a variable environment such that η |= φΓ. Then\n\n\n                                    (1) W 6∈ [[φσ]]\n\n                                    (2) [[e]]η ∈ [[φσ]]\n\n\n   The type soundness theorem can be simplified to top–level programs. As a corol-\n\nlary, I find Milner’s slogan “well types programs do not go wrong” carries over to\n\nsound constraint extensions.",
     "scope": "core",
-    "lean": [],
-    "status": "not_transcribed",
-    "visual_check": false
+    "lean": [
+      "HMX.Statement.theorem5"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "corollary2",
@@ -348,9 +426,13 @@
     "pdf_page": 48,
     "source_excerpt": "Corollary 2 Let X be a sound and coherent constraint system. Let true, Γ ` e : σ\n\nbe a valid closed typing judgment in HM(X). If η |= Γ then [[e]]η 6= W.",
     "scope": "core",
-    "lean": [],
-    "status": "not_transcribed",
-    "visual_check": false
+    "lean": [
+      "HMX.Statement.corollary2"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition12",
@@ -363,8 +445,10 @@
     "lean": [
       "HMX.ConstraintTheory.StronglySound"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition13",
@@ -377,8 +461,10 @@
     "lean": [
       "HMX.ConstraintTheory.StronglySound"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma8",
@@ -391,8 +477,10 @@
     "lean": [
       "HMX.Statement.lemma8Printed"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "conjecture1",
@@ -405,9 +493,11 @@
     "lean": [
       "HMX.Statement.conjecture1"
     ],
-    "status": "draft",
+    "status": "transcribed",
     "visual_check": false,
-    "category": "conjecture_not_theorem"
+    "category": "conjecture_not_theorem",
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma9",
@@ -417,9 +507,13 @@
     "pdf_page": 54,
     "source_excerpt": "Lemma 9 Given a sound and coherent constraint system X. Given a constraint C,\n\ntype schemes σ, σ 0 and a substitution φ such that φσ, φσ 0 closed, φ consistent in σ, σ 0 ,\n\nC `i σ \u0016 σ 0 and `e φC. Then [[φσ]] ⊆ [[φσ 0 ]].",
     "scope": "core",
-    "lean": [],
-    "status": "not_transcribed",
-    "visual_check": false
+    "lean": [
+      "HMX.Statement.lemma9"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma10",
@@ -432,8 +526,10 @@
     "lean": [
       "HMX.Statement.lemma10"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma11",
@@ -446,8 +542,10 @@
     "lean": [
       "HMX.Statement.lemma11"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition14",
@@ -460,8 +558,10 @@
     "lean": [
       "HMX.EnvironmentInstance"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition15",
@@ -474,8 +574,10 @@
     "lean": [
       "HMX.ConstrainedEnvironmentInstance"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition16",
@@ -488,8 +590,10 @@
     "lean": [
       "HMX.Realizable"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition17",
@@ -504,8 +608,10 @@
       "HMX.ConstraintTheory.ConsistentScheme",
       "HMX.ConstraintTheory.ConsistentEnvironment"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma12",
@@ -518,8 +624,10 @@
     "lean": [
       "HMX.Statement.lemma12"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma13",
@@ -532,9 +640,11 @@
     "lean": [
       "HMX.Statement.lemma13Printed"
     ],
-    "status": "draft",
+    "status": "transcribed",
     "visual_check": false,
-    "category": "explicitly_rejected_claim"
+    "category": "explicitly_rejected_claim",
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma14",
@@ -547,8 +657,10 @@
     "lean": [
       "HMX.Statement.lemma14"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma15",
@@ -561,8 +673,10 @@
     "lean": [
       "HMX.Statement.lemma15"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma16",
@@ -575,8 +689,10 @@
     "lean": [
       "HMX.Statement.lemma16"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma17",
@@ -589,8 +705,10 @@
     "lean": [
       "HMX.Statement.lemma17"
     ],
-    "status": "draft",
-    "visual_check": true
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma18",
@@ -603,8 +721,10 @@
     "lean": [
       "HMX.Statement.lemma18"
     ],
-    "status": "draft",
-    "visual_check": true
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem6",
@@ -614,9 +734,13 @@
     "pdf_page": 80,
     "source_excerpt": "Theorem 6 (Projection in Solved Form) Given a let–realizable judgment C, Γ `\n\ne : τ where constraints appearing in Γ are projection–free. Then one can derive\n\nC 0 , Γ ` e : τ such that C 0 , Γ ` e : τ is projection–free and C 0 =e C for some\n\nconstraint C 0 .",
     "scope": "core",
-    "lean": [],
-    "status": "not_transcribed",
-    "visual_check": false
+    "lean": [
+      "HMX.Statement.theorem6"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "corollary3",
@@ -626,9 +750,13 @@
     "pdf_page": 81,
     "source_excerpt": "Corollary 3 Given an instance X of the HM(X) framework where S denotes the\n\nset of solved forms. We denote by S ∃ the smallest superset of S that is closed under\n\nprojection. We consider a variation of X , denoted by X ∃ where the set of solved\n\nforms equals S ∃ . Then X and X ∃ type the same set of let–realizable programs.",
     "scope": "core",
-    "lean": [],
-    "status": "not_transcribed",
-    "visual_check": false
+    "lean": [
+      "HMX.Statement.corollary3"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition23",
@@ -639,11 +767,13 @@
     "source_excerpt": "Definition 23 Let X be a term constraint system over a term algebra T and S be\n\nthe set of solved constraints in X. Let C ∈ S and D ∈ X be constraints and let φ,ψ\n\nbe substitutions such that (D, φ) is a constraint problem. Then (C, ψ) is a normal\n                        0\nform of (D, φ) iff φ ≤φ ψ, C `e φ0 D and ψC = C.\n                                                                                        0\n   (C, ψ) is principal if for all normal forms (C 0 , ψ 0 ) of (D, φ) it holds that ψ ≤φ ψ 0\n\nand C 0 `e φ0 C.",
     "scope": "core",
     "lean": [
-      "HMX.Problem.NormalForm",
-      "HMX.Problem.Principal"
+      "HMX.Problem.NormalFormPage73",
+      "HMX.Problem.PrincipalPage73"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition25",
@@ -656,8 +786,10 @@
     "lean": [
       "HMX.ConstraintTheory.PrincipalConstraintProperty"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition18",
@@ -671,8 +803,10 @@
       "HMX.Approximates",
       "HMX.EnvironmentApproximates"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem7",
@@ -685,8 +819,10 @@
     "lean": [
       "HMX.Statement.theorem7"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "corollary4",
@@ -699,8 +835,10 @@
     "lean": [
       "HMX.Statement.corollary4"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem8",
@@ -713,8 +851,10 @@
     "lean": [
       "HMX.Statement.theorem8"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma19",
@@ -727,8 +867,10 @@
     "lean": [
       "HMX.Statement.lemma19"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma20",
@@ -741,8 +883,10 @@
     "lean": [
       "HMX.Statement.lemma20"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma21",
@@ -755,8 +899,10 @@
     "lean": [
       "HMX.Statement.lemma21"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition19",
@@ -769,8 +915,10 @@
     "lean": [
       "HMX.ConstraintTheory.Regular"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition20",
@@ -789,8 +937,10 @@
       "HMX.ConstraintTheory.SubstitutionMoreGeneral",
       "HMX.ConstraintTheory.EquallyGeneral"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition21",
@@ -803,8 +953,10 @@
     "lean": [
       "HMX.ConstraintTheory.Unitary"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition22",
@@ -819,8 +971,10 @@
       "HMX.Problem.Combines",
       "HMX.Problem.MoreGeneral"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma22",
@@ -830,9 +984,13 @@
     "pdf_page": 99,
     "source_excerpt": "Lemma 22 Given a constraint system X over a term algebra T such that X enjoys\n\nunitary unification. Then (CP, ≤) is a complete lower semi–lattice where least upper\n\nbounds exist.\n\n\n   Normalization means then computation of a normal form of a constraint prob-\n\nlem (C, ψ).",
     "scope": "core",
-    "lean": [],
-    "status": "not_transcribed",
-    "visual_check": false
+    "lean": [
+      "HMX.Statement.lemma22"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition23",
@@ -846,8 +1004,10 @@
       "HMX.Problem.NormalForm",
       "HMX.Problem.Principal"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma23",
@@ -860,8 +1020,10 @@
     "lean": [
       "HMX.Statement.lemma23"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition24",
@@ -874,8 +1036,10 @@
     "lean": [
       "HMX.ConstraintTheory.SyntacticallyUnique"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma24",
@@ -885,9 +1049,13 @@
     "pdf_page": 101,
     "source_excerpt": "Lemma 24 (Syntactic Uniqueness) Given a set S of solved forms such S satis-\n\nfies the syntactic uniqueness property, a constraint problem (D, φ) and two principal\n\nnormal forms (C, ψ) and (C 0 , ψ 0 ) of (D, φ). Then (C 0 , ψ) can be retrieved from (C, ψ)\n\nsimply by variable renaming.\n\n   Please note, checking whether a set of solved forms satisfies the syntactic unique-\n\nness property is a non–trivial task. It requires a decidable entailment test. For\n\ninstance, in case of subtyping, it is not know yet whether entailment is decidable or\n\nnot [Pot98].\n\n   The property of having a principal normal form extends to constraint systems.",
     "scope": "core",
-    "lean": [],
-    "status": "not_transcribed",
-    "visual_check": false
+    "lean": [
+      "HMX.Statement.lemma24Printed"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition25",
@@ -900,8 +1068,10 @@
     "lean": [
       "HMX.ConstraintTheory.PrincipalConstraintProperty"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition26",
@@ -914,8 +1084,10 @@
     "lean": [
       "HMX.ConstraintTheory.EquationFree"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma25",
@@ -928,8 +1100,10 @@
     "lean": [
       "HMX.Statement.lemma25Printed"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma26",
@@ -942,8 +1116,10 @@
     "lean": [
       "HMX.Statement.lemma26"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma27",
@@ -956,8 +1132,10 @@
     "lean": [
       "HMX.Statement.lemma27"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma28",
@@ -970,8 +1148,10 @@
     "lean": [
       "HMX.Statement.lemma28"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem9",
@@ -984,8 +1164,10 @@
     "lean": [
       "HMX.Statement.theorem9"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition27",
@@ -998,8 +1180,10 @@
     "lean": [
       "HMX.ConstraintPresentation.ProjectionFree"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition28",
@@ -1016,8 +1200,10 @@
       "HMX.ConstraintTheory.LiftingNormalForms",
       "HMX.ConstraintTheory.LiftingWitnesses"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "remark3",
@@ -1027,9 +1213,13 @@
     "pdf_page": 105,
     "source_excerpt": "Remark 3 Condition (2.) states that the set of solved forms only property is being\n\nequation–free (being satisfiable is always implicitly assumed). In case of the Hind-\n\nley/Milner system, this would allow the constraint ∃α.(α = β) (which is equation–\n\nfree) being in solved form. Obviously, such constraints are redundant. Lifting still\n\napplies if the set of solved forms satisfies the syntactic uniqueness property, see Def-\n\ninition 24.\n\n   The next two lemmas are the key lemmas to lift normalization procedures on\n\nprojection–free constraints to the general case.",
     "scope": "core",
-    "lean": [],
-    "status": "annotation_pending",
-    "visual_check": true
+    "lean": [
+      "HMX.SourceRemark.remark3"
+    ],
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma29",
@@ -1042,8 +1232,10 @@
     "lean": [
       "HMX.Statement.lemma29"
     ],
-    "status": "draft",
-    "visual_check": true
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma30",
@@ -1056,8 +1248,10 @@
     "lean": [
       "HMX.Statement.lemma30"
     ],
-    "status": "draft",
-    "visual_check": true
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma29",
@@ -1070,8 +1264,10 @@
     "lean": [
       "HMX.Statement.lemma29"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem10",
@@ -1084,8 +1280,10 @@
     "lean": [
       "HMX.Statement.theorem10"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem11",
@@ -1098,8 +1296,10 @@
     "lean": [
       "HMX.Statement.theorem11"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma31",
@@ -1112,8 +1312,10 @@
     "lean": [
       "HMX.Statement.lemma31"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem12",
@@ -1126,8 +1328,10 @@
     "lean": [
       "HMX.Statement.theorem12"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem13",
@@ -1140,8 +1344,10 @@
     "lean": [
       "HMX.Statement.theorem13"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition29",
@@ -1154,8 +1360,10 @@
     "lean": [
       "HMX.Statement.principalTypeProperty"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "corollary5",
@@ -1168,8 +1376,10 @@
     "lean": [
       "HMX.Statement.corollary5"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "definition24",
@@ -1182,8 +1392,10 @@
     "lean": [
       "HMX.ConstraintTheory.SyntacticallyUnique"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem14",
@@ -1196,8 +1408,10 @@
     "lean": [
       "HMX.Statement.theorem14"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem15",
@@ -1210,8 +1424,10 @@
     "lean": [
       "HMX.Statement.theorem15"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "corollary6",
@@ -1224,8 +1440,10 @@
     "lean": [
       "HMX.Statement.corollary6"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem16",
@@ -1238,8 +1456,10 @@
     "lean": [
       "HMX.Statement.theorem16"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem17",
@@ -1252,8 +1472,10 @@
     "lean": [
       "HMX.Statement.theorem17"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "corollary7",
@@ -1266,8 +1488,10 @@
     "lean": [
       "HMX.Statement.corollary7"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem18",
@@ -1280,8 +1504,10 @@
     "lean": [
       "HMX.Statement.theorem18"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma7",
@@ -1291,9 +1517,13 @@
     "pdf_page": 194,
     "source_excerpt": "Lemma 7 Given a sound constraint system X and a closed type scheme σ. Then\n\nW 6∈ [[σ]].",
     "scope": "appendix",
-    "lean": [],
-    "status": "not_transcribed",
-    "visual_check": false
+    "lean": [
+      "HMX.Statement.lemma7"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem5",
@@ -1303,9 +1533,13 @@
     "pdf_page": 195,
     "source_excerpt": "Theorem 5 (Type Soundness) Let C, Γ ` e : σ be a valid typing judgment in\n\nHM(X), where X is a sound and coherent constraint system. Let φ be a substitution\n\nsuch that φΓ and φσ are closed and such that `e φC and φ is consistent in Γ. Let\n\nη be a variable environment such that η |= φΓ. Then\n\n\n                                        (1) W 6∈ [[φσ]]\n\n                                        (2) [[e]]η ∈ [[φσ]]",
     "scope": "appendix",
-    "lean": [],
-    "status": "not_transcribed",
-    "visual_check": false
+    "lean": [
+      "HMX.Statement.theorem5"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma10",
@@ -1318,8 +1552,10 @@
     "lean": [
       "HMX.Statement.lemma10"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma11",
@@ -1332,8 +1568,10 @@
     "lean": [
       "HMX.Statement.lemma11"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma17",
@@ -1346,8 +1584,10 @@
     "lean": [
       "HMX.Statement.lemma17"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma18",
@@ -1360,8 +1600,10 @@
     "lean": [
       "HMX.Statement.lemma18"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem7",
@@ -1374,8 +1616,10 @@
     "lean": [
       "HMX.Statement.theorem7"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem8",
@@ -1388,8 +1632,10 @@
     "lean": [
       "HMX.Statement.theorem8"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma20",
@@ -1402,8 +1648,10 @@
     "lean": [
       "HMX.Statement.lemma20"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma21",
@@ -1416,8 +1664,10 @@
     "lean": [
       "HMX.Statement.lemma21"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma26",
@@ -1430,8 +1680,10 @@
     "lean": [
       "HMX.Statement.lemma26"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma27",
@@ -1444,8 +1696,10 @@
     "lean": [
       "HMX.Statement.lemma27"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma28",
@@ -1458,8 +1712,10 @@
     "lean": [
       "HMX.Statement.lemma28"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma29",
@@ -1472,8 +1728,10 @@
     "lean": [
       "HMX.Statement.lemma29"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma30",
@@ -1486,8 +1744,10 @@
     "lean": [
       "HMX.Statement.lemma30"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem12",
@@ -1500,8 +1760,10 @@
     "lean": [
       "HMX.Statement.theorem12"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma33",
@@ -1514,8 +1776,10 @@
     "lean": [
       "HMX.Statement.lemma33"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "remark6",
@@ -1525,9 +1789,13 @@
     "pdf_page": 221,
     "source_excerpt": "Remark 6 The proof of the previous lemma relies on the fact that X is regular. For\n\nX in X c I only need a restricted version of this lemma. Therefore, I still can achieve\n\ncomplete type inference for X in X c .\n\n   The next lemma is similar to the previous one, except that it compares types\n\ninstead of constraints.",
     "scope": "appendix",
-    "lean": [],
-    "status": "annotation_pending",
-    "visual_check": false
+    "lean": [
+      "HMX.SourceRemark.remark6"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma34",
@@ -1540,8 +1808,10 @@
     "lean": [
       "HMX.Statement.lemma34"
     ],
-    "status": "draft",
-    "visual_check": true
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma35",
@@ -1554,8 +1824,10 @@
     "lean": [
       "HMX.Statement.lemma35Printed"
     ],
-    "status": "draft",
-    "visual_check": true
+    "status": "transcribed",
+    "visual_check": true,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma36",
@@ -1568,8 +1840,10 @@
     "lean": [
       "HMX.Statement.lemma36Printed"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma37",
@@ -1582,8 +1856,10 @@
     "lean": [
       "HMX.Statement.lemma37"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem25",
@@ -1596,8 +1872,10 @@
     "lean": [
       "HMX.Statement.theorem25"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma38",
@@ -1610,8 +1888,10 @@
     "lean": [
       "HMX.Statement.lemma38"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma39",
@@ -1624,8 +1904,10 @@
     "lean": [
       "HMX.Statement.lemma39"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "remark7",
@@ -1635,9 +1917,13 @@
     "pdf_page": 232,
     "source_excerpt": "Remark 7 Both original lemmas can only be proven for non–regular theories. But it\n\nis interesting to point that both lemmas hold for arbitrary theories if the substitution\n\nψ is equal to the identity substitution. In the previous proof I showed that γ 6∈ fv(ψΓ).",
     "scope": "appendix",
-    "lean": [],
-    "status": "annotation_pending",
-    "visual_check": false
+    "lean": [
+      "HMX.SourceRemark.remark7"
+    ],
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "lemma40",
@@ -1650,8 +1936,10 @@
     "lean": [
       "HMX.Statement.lemma40"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem26",
@@ -1664,8 +1952,10 @@
     "lean": [
       "HMX.Statement.theorem26"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem13",
@@ -1678,8 +1968,10 @@
     "lean": [
       "HMX.Statement.theorem13"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem16",
@@ -1692,8 +1984,10 @@
     "lean": [
       "HMX.Statement.theorem16"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem17",
@@ -1706,8 +2000,10 @@
     "lean": [
       "HMX.Statement.theorem17"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   },
   {
     "id": "theorem18",
@@ -1720,7 +2016,9 @@
     "lean": [
       "HMX.Statement.theorem18"
     ],
-    "status": "draft",
-    "visual_check": false
+    "status": "transcribed",
+    "visual_check": false,
+    "validation": "Statement only; no proof or consistency certification.",
+    "transcription_note": "原文の位置と式を source_excerpt に保持。Lean の命題・定義を対応付ける。原文の誤記候補・省略の扱いは ambiguities.json を参照。"
   }
 ]
