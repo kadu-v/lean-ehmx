@@ -1,1658 +1,487 @@
-\documentclass[a4paper,11pt]{ltjsarticle}
+\documentclass[a4paper,10pt]{ltjsarticle}
 \usepackage[margin=20mm]{geometry}
-\usepackage{fix-cm,amsmath,amssymb,mathtools,amsthm,booktabs,longtable,array}
+\usepackage{amsmath,amssymb,mathtools,booktabs,longtable,array}
 \usepackage[hidelinks]{hyperref}
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{3pt}
-\setlength{\emergencystretch}{2em}
-\allowdisplaybreaks[1]
-\newcommand{\supp}{\operatorname{supp}}
+\setlength{\parskip}{4pt}
+\setlength{\emergencystretch}{3em}
+\allowdisplaybreaks
 \newcommand{\FV}{\operatorname{FV}}
-\newcommand{\Sat}{\operatorname{Sat}}
-\newcommand{\eval}[1]{\langle #1\rangle}
-\newcommand{\arr}[3]{#1\xrightarrow{#2}#3}
-\newcommand{\dom}{\operatorname{dom}}
-\newcommand{\Gen}{\mathcal A}
-\newcommand{\Proj}{\mathcal P}
-\newcommand{\Chk}{\operatorname{Check}}
-\newcommand{\Real}{\operatorname{Real}}
 \newcommand{\Adm}{\operatorname{Adm}}
-\newcommand{\GReal}{\operatorname{GReal}}
-\newcommand{\ground}[1]{\lfloor #1\rfloor}
-\newcommand{\Sol}{\operatorname{Sol}}
-\newcommand{\Scope}{\operatorname{Scope}}
-\newcommand{\Inst}{\operatorname{Inst}}
-\newcommand{\Closed}{\operatorname{Closed}}
-\newcommand{\Solved}{\operatorname{SolvedSubst}}
-\newcommand{\Fin}{\operatorname{FinInst}}
-\newcommand{\Inf}{\mathcal I}
-\newcommand{\key}[1]{\texttt{#1}}
-\newtheorem{theorem}{定理}[section]
-\newtheorem{lemma}[theorem]{補題}
-\renewcommand{\proofname}{証明}
+\newcommand{\Sat}{\operatorname{Sat}}
+\newcommand{\dom}{\operatorname{dom}}
+\newcommand{\arr}[3]{#1\xrightarrow{#2}#3}
+\newcommand{\key}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\ty}[5]{#1;#2\vdash #3:#4\mathbin{!}#5}
+\newcommand{\gen}[5]{\mathcal G_S(#1,#2,#3;#4,#5)}
 \begin{document}
 \begin{center}
-{\Large\bfseries EHM(X): 制約生成と solver の合成}\\[2mm]
-型付け・算法・健全性・主要性・条件付き完全性
+{\Large\bfseries EHM(X)：構文・定義・定理のステートメント}\\[2mm]
+原典との対応と，承認済みの拡張 / 2026年10月16日
 \end{center}
 
-\section{構文とパラメータ}
-\[
-\begin{aligned}
-e&::=i\mid n\mid b\mid\lambda.e\mid e\,e\\
- &\quad\mid\mathbf{let}\ e\ \mathbf{in}\ e
- \mid\mathbf{perform}\ o\ e\mid\mathbf{handle}_o(e,e_r,e_o),\\
-v&::=i\mid n\mid b\mid\lambda.e,\qquad i,o\in\mathbb N,\\
-\epsilon&=(L,M)\in\mathcal P_f(\mathbb N)^2,
- \quad\eval\epsilon_\rho=L\cup\bigcup_{\mu\in M}\rho_E(\mu),\\
-A&=(A_T,A_E)\in\mathcal P_f(\mathbb N)^2,
-\\ \rho&=(\rho_T:\mathbb N\to V,\rho_E:\mathbb N\to\mathcal P_f(\mathbb N)).
-\end{aligned}
-\]
-項変数は de Bruijn 添字．操作節：$0=k,\ 1=x$．
-\[
-\begin{gathered}
-T:\text{型式},\quad V\ne\varnothing,\quad
-\alpha_i,\ \mathrm{Int},\ \mathrm{Bool},\ \arr t\epsilon u\in T,\quad
-\leq\ \subseteq V^2,\\
- a\leq a,\qquad (a\leq b\land b\leq c)\Rightarrow a\leq c,\qquad
- (a\leq b\land b\leq a)\Rightarrow a=b,\\
- a'\leq a\land b\leq b'\Rightarrow
- \arr aE b\leq\arr{a'}E{b'}.
-\end{gathered}
-\]
-$T$ の構成子の網羅性・単射性は仮定しない．
-\[
-\begin{aligned}
-\eval{\alpha_i}_\rho&=\rho_T(i),&\eval{\mathrm{lit}(b)}_\rho&=\mathrm{groundLit}(b),\\
-\eval{\arr a\epsilon b}_\rho&=\operatorname{groundArrow}(\eval a_\rho,\eval\epsilon_\rho,\eval b_\rho),\\
-\eval{\operatorname{rename}(f,g,t)}_\rho&=\eval t_{(\rho_T\circ f,\rho_E\circ g)},&\theta\alpha_i&=\theta_T(i).
-\end{aligned}
-\]
-\[
-\frac{\forall i.\ A\cap\supp(\theta_T(i))=\varnothing\quad
-      \forall j.\ A_E\cap\FV_E(\theta_E(j))=\varnothing}
- {A\cap\supp(\theta t)=\varnothing}
-\]
-
-\[
-\begin{aligned}
-\theta^*\rho&=(i\mapsto\eval{\theta_T(i)}_\rho,
-                     j\mapsto\eval{\theta_E(j)}_\rho),&\dom\theta&\text{：有限},\\
-\eval{\theta t}_\rho&=\eval t_{\theta^*\rho},&
-\rho\models\theta C&\iff\theta^*\rho\models C,\\
-\rho=_{\supp t}\nu&\Rightarrow\eval t_\rho=\eval t_\nu,&
-\rho=_{\supp C}\nu&\Rightarrow(\rho\models C\iff\nu\models C),\\
-\theta|_{\supp t}=\mathrm{id}&\Rightarrow\theta t=t,&
-\supp(\alpha_i)&=(\{i\},\varnothing).
-\end{aligned}
-\]
-\[
-\begin{aligned}
-\rho\models\exists A.C&\iff\exists\nu.\ \nu=_{\overline A}\rho\land\nu\models C,\\
-\rho\models\forall B.\exists J.C&\iff
- \forall\nu=_{\overline B}\rho.\ \exists\omega=_{\overline J}\nu.\ \omega\models C,\\
-C\models_X D&\iff\forall\rho.\ (\rho\models C\Rightarrow\rho\models D),\\
-C\equiv_X D&\iff C\models_X D\land D\models_X C,
-&\Sat(C)&\iff\exists\rho.\ \rho\models C,\\
-i\in\FV_T(C)&\iff\exists\{i\}_T.C\not\equiv_X C,
-&\FV(C)&\subseteq\supp C.
-\end{aligned}
-\]
-$C,D\in\mathcal C_X$．$\top,\land,=,\leq,\subseteq,o\notin\epsilon$ は各意味値で解釈する．
-
-\clearpage
-\section{宣言的型付け}
-\[
-\sigma::=t\mid\forall A.D\Rightarrow t,\qquad
-\Gamma::=[]\mid\sigma::\Gamma,\qquad
-\supp(\forall A.D\Rightarrow t)=(\supp D\cup\supp t)\setminus A.
-\]
-$C$ が共通の前提では省略する．
-\[
-\frac{\Gamma[i]=\sigma}{\Gamma\vdash i:\sigma!\varnothing}
-\qquad
-\frac{}{\Gamma\vdash n:\mathrm{Int}!\varnothing}
-\qquad
-\frac{}{\Gamma\vdash b:\mathrm{Bool}!\varnothing}
-\]
-\[
-\frac{a::\Gamma\vdash e:b!\eta}{\Gamma\vdash\lambda.e:(\arr a\eta b)!\varnothing}
-\qquad
-\frac{\Gamma\vdash f:(\arr a\eta b)!\epsilon_f\quad\Gamma\vdash x:a!\epsilon_x}
- {\Gamma\vdash f\,x:b!(\epsilon_f\cup\epsilon_x\cup\eta)}
-\]
-\[
-\frac{\operatorname{Value}(v)\quad\Gamma\vdash v:\sigma!\varnothing\quad
- \sigma::\Gamma\vdash e:t!\epsilon}
- {\Gamma\vdash\mathbf{let}\ v\ \mathbf{in}\ e:t!\epsilon}
-\]
-\[
-\frac{\neg\operatorname{Value}(u)\quad\Gamma\vdash u:a!\eta\quad a::\Gamma\vdash e:t!\epsilon}
- {\Gamma\vdash\mathbf{let}\ u\ \mathbf{in}\ e:t!(\eta\cup\epsilon)}
-\]
-\[
-\frac{C;\Gamma\vdash e:a!\epsilon\quad C\models_X a\leq b}{C;\Gamma\vdash e:b!\epsilon}
-\qquad
-\frac{C;\Gamma\vdash e:\sigma!\epsilon\quad C\models_X\epsilon=\eta}
- {C;\Gamma\vdash e:\sigma!\eta}
-\]
-\[
-\frac{\operatorname{Value}(v)\quad A\cap\FV(C,\Gamma)=\varnothing\quad
- C\land D;\Gamma\vdash v:t!\varnothing}
- {C\land\exists A.D;\Gamma\vdash v:(\forall A.D\Rightarrow t)!\varnothing}
-\]
-\[
-\frac{C;\Gamma\vdash e:(\forall A.D\Rightarrow t)!\epsilon\quad
- \dom\theta\subseteq A\quad C\models_X\theta D}
- {C;\Gamma\vdash e:\theta t!\epsilon}
-\]
-\[
-\frac{C;\Gamma\vdash e:\sigma!\epsilon\quad A\cap\FV(\Gamma,\sigma,\epsilon)=\varnothing}
- {\exists A.C;\Gamma\vdash e:\sigma!\epsilon}
-\qquad
-\frac{C;\Gamma\vdash e:\sigma!\epsilon\quad D\models_X C}{D;\Gamma\vdash e:\sigma!\epsilon}
-\]
-\[
-\frac{C;\Gamma\vdash e:\sigma!\epsilon\quad\sigma\equiv_\alpha\sigma'}
- {C;\Gamma\vdash e:\sigma'!\epsilon}
-\]
-\[
-\begin{aligned}
-\Adm_S(C)&\iff\exists R.\ S(R)\land C\equiv_X R,\\
-\Adm_S(t)&\iff\top,&\Adm_S(\forall A.D\Rightarrow t)&\iff\Adm_S(D),\\
-\Adm_S(\Gamma)&\iff\forall\sigma\in\Gamma.\ \Adm_S(\sigma),\\
-\operatorname{Typing}_S(C,\Gamma,e,\sigma,\epsilon)
- &\iff\exists\mathcal D:(C;\Gamma\vdash e:\sigma!\epsilon).\ \operatorname{Valid}_S(\mathcal D).
-\end{aligned}
-\]
-$\operatorname{Valid}_S$ は導出の全節点を検査する．以下 $S=\Sat$．
-\[
-\frac{\mathcal D:(C;\Gamma\vdash e:\sigma!\epsilon)\quad\Sat(C)\quad\Adm_{\Sat}(\Gamma)}
- {\operatorname{Valid}_{\Sat}(\mathcal D)}
-\]
-
-\clearpage
-\section{操作・handler・環境}
-\[
-\Sigma(o)=(B,a,b),\qquad \Closed(\Sigma)\iff
- \forall o,(B,a,b)=\Sigma(o).\ \supp(a,b)\subseteq B.
-\]
-\[
-\frac{\Sigma(o)=(B,a,b)\quad\Closed(B,a,b)\quad\dom\theta\subseteq B\quad
- C;\Gamma\vdash u:\theta a!\eta}
- {C;\Gamma\vdash\mathbf{perform}\ o\ u:\theta b!(\{o\}\cup\eta)}
-\]
-\[
-\operatorname{Split}_o(\eta,\delta)
- =\delta\subseteq\eta\land\eta\subseteq\{o\}\cup\delta\land o\notin\delta.
-\]
-操作宣言の新鮮な改名を $(B,a,b)$ とする．
-\[
-\frac{\begin{gathered}
- C;\Gamma\vdash e:t_i!\epsilon_i\qquad
- C;t_i::\Gamma\vdash e_r:t!\epsilon_r\\
- D;(\arr b\chi t)::a::\Gamma\vdash e_o:t_o!\epsilon_o\\
- C\models_X\forall B.\exists J.(D\land t_o\leq t\land\epsilon_o\subseteq\chi)\\
- C\models_X\operatorname{Split}_o(\epsilon_i,\delta)
-       \land\delta\subseteq\chi\land\epsilon_r\subseteq\chi\\
- \Scope(B,J;C,\Gamma,t_i,t,a,b,\epsilon_i,\epsilon_r,\delta,\chi)
-\end{gathered}}
- {C;\Gamma\vdash\mathbf{handle}_o(e,e_r,e_o):t!\chi}
-\]
-\[
-\Scope\iff
-\begin{cases}
- B\cap\FV(\Gamma)=\varnothing,\\
- B\cap\supp(t_i,t)=\varnothing,\\
- B_E\cap\FV_E(\epsilon_i,\epsilon_r,\delta,\chi)=\varnothing,\\
- J\cap\bigl(\supp\Gamma\cup\supp(t_i,t,a,b)\cup B\bigr)=\varnothing,\\
- J\cap\FV(C)=\varnothing,\\
- J_E\cap\FV_E(\epsilon_i,\epsilon_r,\delta,\chi)=\varnothing.
-\end{cases}
-\]
-\[
-\frac{C\models_X a\leq b}{C\vdash a\preceq b}
-\qquad
-\frac{\dom\theta\subseteq A\quad C\models_X\theta D\quad C\vdash\theta t\preceq\sigma}
- {C\vdash(\forall A.D\Rightarrow t)\preceq\sigma}
-\]
-\[
-\frac{A\cap\FV(C,\sigma)=\varnothing\quad C\land D\vdash\sigma\preceq t}
- {C\land\exists A.D\vdash\sigma\preceq(\forall A.D\Rightarrow t)}
-\quad
-\frac{C\equiv_X D\quad C\vdash\sigma\preceq\tau}{D\vdash\sigma\preceq\tau}
-\]
-$\preceq$ は左右の $\alpha$ 同値で閉じる．
-\[
-\begin{aligned}
-\Inst_\rho(t)&=\{u\mid\eval t_\rho\leq u\},\\
-\Inst_\rho(\forall A.D\Rightarrow t)&=
- \{u\mid\exists\nu=_{\overline A}\rho.\ \nu\models D\land\eval t_\nu\leq u\},\\
-\ground\Gamma_\rho&=\operatorname{map}(\Inst_\rho,\Gamma),\\
-\GReal(\Gamma,\rho)&\iff\forall\sigma\in\Gamma.\ \Inst_\rho(\sigma)\ne\varnothing,\\
-\Real_C(\Gamma)&\iff\forall\sigma\in\Gamma.\ \exists t.\ C\vdash\sigma\preceq t.
-\end{aligned}
-\]
-\[
-\frac{\Real_C(\Gamma)\quad\rho\models C}{\GReal(\Gamma,\rho)}
-\qquad
-\frac{C;\Gamma\vdash e:t!\epsilon\quad\rho\models C\quad\GReal(\Gamma,\rho)}
- {\ground\Gamma_\rho\vdash_g e:\eval t_\rho!\eval\epsilon_\rho}
-\]
-\[
-\Gamma'=\theta\Gamma\quad\text{（意味的環境代入）}\quad\iff\quad
- \forall\rho.\ \ground{\Gamma'}_\rho=\ground\Gamma_{\theta^*\rho}.
-\]
-
-\clearpage
-\section{固定した制約生成算法}
-$N$ は簡約器：$N(D)\equiv_X D$．$\Gen(e,\Gamma,t,\epsilon;F)$ は部分関数．
-\[
-\begin{aligned}
-f_T^F(i)&=1+\max(F_T\cup\{0\})+i,&
-f_E^F(i)&=1+\max(F_E\cup\{0\})+i,\\
-P(\Gamma,t,\epsilon)&=\supp\Gamma\cup\supp t\cup(\varnothing,\FV_E\epsilon),\\
-\Chk(D,a,t,\eta,\epsilon)&=\top\land D\land(a\leq t)\land(\eta=\epsilon),\\
-\operatorname{gen}_\Gamma(D,a)&=\forall A.D\Rightarrow a,
-&A&=(\supp D\cup\supp a)\setminus\supp\Gamma.
-\end{aligned}
-\]
-各再帰呼出しが成功したとき，以下の制約を返す．未定義な変数・操作では $\mathsf{missing}$．
-\[
-\begin{aligned}
-\Gen(i,\Gamma,t,\epsilon;F)&=
-\begin{cases}
- \Chk(\top,a,t,\varnothing,\epsilon)&\Gamma[i]=a,\\
- \Chk(\theta D,\theta a,t,\varnothing,\epsilon)&\Gamma[i]=\forall A.D\Rightarrow a,
-\end{cases}\\
-&\quad\theta=[A\mapsto f^{F\cup\supp\top}(A)],\\
-\Gen(n,\Gamma,t,\epsilon;F)&=\Chk(\top,\mathrm{Int},t,\varnothing,\epsilon),\\
-\Gen(b,\Gamma,t,\epsilon;F)&=\Chk(\top,\mathrm{Bool},t,\varnothing,\epsilon).
-\end{aligned}
-\]
-\[
-\begin{gathered}
-a=\alpha_{f_T^F(0)},\quad b=\alpha_{f_T^F(1)},\quad\eta=\mu_{f_E^F(0)},\\
-F'=F\cup P(a::\Gamma,b,\eta)\cup(\{f_T^F(0),f_T^F(1)\},\{f_E^F(0)\}),\\
-D=\Gen(e,a::\Gamma,b,\eta;F'),\\
-\boxed{\Gen(\lambda.e,\Gamma,t,\epsilon;F)=\Chk(D,\arr a\eta b,t,\varnothing,\epsilon)}.
-\end{gathered}
-\]
-\[
-\begin{gathered}
-a=\alpha_{f_T^F(0)},\quad b=\alpha_{f_T^F(1)},\quad
-(\eta_f,\eta_x,\eta)=(\mu_{f_E^F(0)},\mu_{f_E^F(1)},\mu_{f_E^F(2)}),\\
-K=F\cup P(\Gamma,a,\eta_f)\cup P(\Gamma,b,\eta_x)\cup(\varnothing,\FV_E\eta),\\
-D_f=\Gen(f,\Gamma,a,\eta_f;K),\quad
-D_x=\Gen(x,\Gamma,b,\eta_x;K\cup\supp D_f),\\
-\boxed{\Gen(f\,x,\Gamma,t,\epsilon;F)=
- \top\land D_f\land D_x\land a\leq\arr b\eta t\land\eta_f\cup\eta_x\cup\eta=\epsilon}.
-\end{gathered}
-\]
-\[
-\begin{gathered}
-\operatorname{Value}(v),\quad a=\alpha_{f_T^F(0)},\quad
-D_v=\Gen(v,\Gamma,a,\varnothing;F\cup P(\Gamma,a,\varnothing)),\\
-\sigma=\operatorname{gen}_\Gamma(N(D_v),a),\quad
-A=(\supp N(D_v)\cup\supp a)\setminus\supp\Gamma,\quad Q=\exists A.N(D_v),\\
-D_b=\Gen(e,\sigma::\Gamma,t,\epsilon;F\cup P(\sigma::\Gamma,t,\epsilon)\cup\supp Q),\\
-\boxed{\Gen(\mathbf{let}\ v\ \mathbf{in}\ e,\Gamma,t,\epsilon;F)=\top\land Q\land D_b}.
-\end{gathered}
-\]
-\[
-\begin{gathered}
-\neg\operatorname{Value}(v),\quad a=\alpha_{f_T^F(0)},\quad
-(\eta_v,\eta_b)=(\mu_{f_E^F(0)},\mu_{f_E^F(1)}),\\
-K=F\cup P(\Gamma,a,\eta_v)\cup P(a::\Gamma,t,\eta_b),\\
-D_v=\Gen(v,\Gamma,a,\eta_v;K),\quad D_b=\Gen(e,a::\Gamma,t,\eta_b;K\cup\supp D_v),\\
-\boxed{\Gen(\mathbf{let}\ v\ \mathbf{in}\ e,\Gamma,t,\epsilon;F)=
- \top\land D_v\land D_b\land(\eta_v\cup\eta_b=\epsilon)}.
-\end{gathered}
-\]
-
-\clearpage
-\section{操作の生成と射影}
-\[
-\begin{gathered}
-\Sigma(o)=(B,a,b),\quad\theta=[B\mapsto f^F(B)],\quad
-K=F\cup\supp(\theta a,\theta b),\quad\eta=\mu_{f_E^K(0)},\\
-D=\Gen(u,\Gamma,\theta a,\eta;K\cup P(\Gamma,\theta a,\eta)),\\
-\boxed{\Gen(\mathbf{perform}\ o\ u,\Gamma,t,\epsilon;F)=
- \Chk(D\land\theta a\leq\theta a,\theta b,t,\{o\}\cup\eta,\epsilon)}.
-\end{gathered}
-\]
-\textbf{Handler}
-\[
-\begin{aligned}
-t_i&=\alpha_{f_T^F(0)},&t_r&=\alpha_{f_T^F(1)},\\
-(\epsilon_i,\epsilon_r,\delta)&=(\mu_{f_E^F(0)},\mu_{f_E^F(1)},\mu_{f_E^F(2)}),\\
-K&=F\cup\supp(t_i,t_r)\cup(\varnothing,\FV_E(\epsilon_i,\epsilon_r,\delta)),\\
-D_i&=\Gen(e,\Gamma,t_i,\epsilon_i;K),\\
-K_r&=K\cup\supp D_i,&D_r&=\Gen(e_r,t_i::\Gamma,t_r,\epsilon_r;K_r),\\
-K_o&=K_r\cup\supp D_r,&(B,a,b)&=\operatorname{rename}_{f^{K_o}}(\Sigma(o)),\\
-\Gamma_o&=(\arr b\chi{t_r})::a::\Gamma,\\
-F_o&=K_o\cup P(\Gamma_o,t_r,\chi)\cup\supp(a,b)\cup B,\\
-\epsilon_o&=\mu_{f_E^{F_o}(0)},&D_o&=\Gen(e_o,\Gamma_o,t_r,\epsilon_o;F_o\cup P(\Gamma_o,t_r,\epsilon_o)),\\
-J&=(\supp D_o\cup(\varnothing,\FV_E\epsilon_o))\setminus F_o.
-\end{aligned}
-\]
-\[
-\begin{aligned}
-H={}&\top\land D_i\land D_r\land t_r\leq t_r\\
- &\land\bigl(\forall B.\exists J.(D_o\land t_r\leq t_r\land\epsilon_o\subseteq\chi)\bigr)\\
- &\land\operatorname{Split}_o(\epsilon_i,\delta)\land\delta\subseteq\chi\land\epsilon_r\subseteq\chi,\\
-\Gen(\mathbf{handle}_o(e,e_r,e_o),\Gamma,t,\chi;F)
- ={}&\Chk(H,t_r,t,\chi,\chi).
-\end{aligned}
-\]
-\textbf{外側の射影と solver 呼出し}
-\[
-\begin{aligned}
-F&=P(\Gamma,t,\epsilon)\cup\supp\top,\quad D=\Gen(e,\Gamma,t,\epsilon;F),\\
-\Proj(\Gamma,e,t,\epsilon)&=\exists(\supp D\setminus F).D,\\
-\Inf^{\mathrm{at}}_{N,S}(\Gamma,e,t,\epsilon)&=S(\top,\Proj(\Gamma,e,t,\epsilon)),\\
-p&=f_T^{\supp\Gamma}(0),\quad q=f_E^{\supp\Gamma}(0),\\
-\Inf_{N,S}(\Gamma,e)&=\Inf^{\mathrm{at}}_{N,S}(\Gamma,e,\alpha_p,\mu_q).
-\end{aligned}
-\]
-$\mathsf{missing}$ は後続へ伝播する．$\mathsf{solved}(R,\theta)$ の結果は
-\[
-(R,\theta\Gamma,\theta\alpha_p,\theta\mu_q).
-\]
-閉環境では $\operatorname{generalize}(\Gamma,R,\theta\alpha_p,\theta\mu_q)$ を返す型スキームとする．
-
-\clearpage
-\section{solver の契約}
-\[
-\begin{gathered}
-S:\mathcal C_X\times\mathcal C_X\longrightarrow
- \mathsf{solved}(R,\theta)\mid\mathsf{unresolved}(R)\mid\mathsf{inconsistent},\\
-[\theta]=\bigwedge_{i\in\dom_T\theta}(\alpha_i=\theta_T(i))
- \land\bigwedge_{j\in\dom_E\theta}(\mu_j=\theta_E(j)),\\
-\Solved(\theta)\iff\begin{cases}
-\forall i\in\dom_T\theta.\ \dom\theta\cap\supp(\theta_T(i))=\varnothing,\\
-\forall j\in\dom_E\theta.\ \dom_E\theta\cap\FV_E(\theta_E(j))=\varnothing.
-\end{cases}
-\end{gathered}
-\]
-\textbf{部分 solver}（S1・S2・P1 型の契約 \cite{OutsideIn}）
-\[
-S(G,W)=\mathsf{solved}(R,\theta)\Longrightarrow
-\begin{cases}
- \Solved(\theta),\\
- \dom\theta\cap\FV(G,R)=\varnothing,\\
- G\land R\models_X\theta W,\\
- G\land W\models_X R\land[\theta],\\
- \Sat(G\land R).
-\end{cases}
-\]
-\[
-\begin{aligned}
-S(G,W)=\mathsf{unresolved}(R)&\Rightarrow G\land R\equiv_X G\land W,\\
-S(G,W)=\mathsf{inconsistent}&\Rightarrow\neg\Sat(G\land W).
-\end{aligned}
-\]
-\textbf{完全性の追加契約}
-\[
-\boxed{\operatorname{Complete}(S)\iff
- \forall G,W.\ \Sat(G\land W)\Rightarrow\exists R,\theta.\ S(G,W)=\mathsf{solved}(R,\theta)}.
-\]
-$W$ は handler の量化制約も含む．$R=\top$ は要求しない．
-\begin{lemma}[解集合の保存]
-\[
- S(G,W)=\mathsf{solved}(R,\theta)
- \Longrightarrow G\land W\equiv_X G\land R\land[\theta].
-\]
-\end{lemma}
-\begin{proof}
-\[
-\begin{aligned}
-\rho\models G\land W&\Rightarrow\rho\models R\land[\theta],\\
-\rho\models G\land R\land[\theta]
- &\Rightarrow\theta^*\rho\models W\ \land\ \theta^*\rho=\rho
- \Rightarrow\rho\models W.
-\end{aligned}
-\]
-\end{proof}
-\textbf{契約のモデル}
-\[
-\begin{aligned}
-S_{?}(G,W)&=\mathsf{unresolved}(W),\\
-S_{\mathrm{sem}}(G,W)&=
- \begin{cases}\mathsf{solved}(W,\mathrm{id})&\Sat(G\land W),\\
- \mathsf{inconsistent}&\neg\Sat(G\land W).
- \end{cases}
-\end{aligned}
-\]
-\[
-\operatorname{PartialSolver}(S_?)\qquad
-\operatorname{PartialSolver}(S_{\mathrm{sem}})\land\operatorname{Complete}(S_{\mathrm{sem}}).
-\]
-$S_{\mathrm{sem}}$ は非計算的なモデル．計算的構成は後述の $\operatorname{SatDecider}(X)$ を用いる．
-
-\clearpage
-\section{生成と合成の定理}
-この節の健全性では $\Closed(\Sigma)$ を仮定する．
-\begin{theorem}[固定した生成算法]
-\[
-\begin{gathered}
-P(\Gamma,t,\epsilon)\subseteq F,\quad\Gen(e,\Gamma,t,\epsilon;F)=D\\
-\Longrightarrow\quad\top;\Gamma\vdash_N e:t!\epsilon\Rightarrow D,\\[1mm]
-\exists\rho.\ \ground\Gamma_\rho\vdash_g e:\eval t_\rho!\eval\epsilon_\rho\\
-\Longrightarrow\quad\exists D.\ \Gen(e,\Gamma,t,\epsilon;F)=D\ \land\\
-\forall\rho.\ \ground\Gamma_\rho\vdash_g e:\eval t_\rho!\eval\epsilon_\rho
- \Rightarrow\exists\nu=_{F}\rho.\ \nu\models D.
-\end{gathered}
-\]
-\end{theorem}
-\begin{proof}
-$e$ に関する構造帰納法．
-\[
-\begin{aligned}
-\lambda,\mathrm{app},\mathrm{let},\mathrm{perform}:&\quad
- \rho\xmapsto{\mathrm{fresh}(F)}\rho_0\xmapsto{\mathrm{IH}_1}\rho_1
- \xmapsto{\mathrm{IH}_2}\rho_2,\\
- &\rho_{i+1}=_{F\cup\supp D_1\cup\cdots\cup\supp D_i}\rho_i;\\
-\mathrm{handler}:&\quad
- \forall\rho_B.\ \exists\rho_J.\ \rho_J\models D_o\land t_r\leq t_r\land\epsilon_o\subseteq\chi,\\
- &J\cap F_o=\varnothing,\quad B\cap K_o=\varnothing,
- \quad\Scope(B,J;H,\ldots).
-\end{aligned}
-\]
-\end{proof}
-\begin{theorem}[射影後の正確性]
-\[
-\Proj(\Gamma,e,t,\epsilon)=D\land\GReal(\Gamma,\rho)
-\Longrightarrow
-\bigl(\rho\models D\iff\ground\Gamma_\rho\vdash_g e:\eval t_\rho!\eval\epsilon_\rho\bigr).
-\]
-\end{theorem}
-\begin{proof}
-$(\Rightarrow)$：生成健全性と導出の意味解釈．
-$(\Leftarrow)$：$\nu=_{F}\rho$ を前定理で得て，
-$\omega=\rho[\supp D_{\mathrm{raw}}\setminus F\mapsto\nu]$ を存在証人とする．
-\end{proof}
-\begin{theorem}[成功時の健全性]
-\[
-\begin{gathered}
-\Inf^{\mathrm{at}}_{N,S}(\Gamma,e,t,\epsilon)=\mathsf{solved}(R,\theta),\quad
-\rho\models R,\quad\GReal(\Gamma,\theta^*\rho)\\
-\Longrightarrow\quad
-\ground\Gamma_{\theta^*\rho}\vdash_g e:\eval{\theta t}_\rho!\eval{\theta\epsilon}_\rho.
-\end{gathered}
-\]
-\[
-\Gamma'=\theta\Gamma,\quad\Real_\top(\Gamma),\quad\Adm_{\Sat}(\Gamma')
-\quad\Longrightarrow\quad
-\operatorname{Typing}_{\Sat}(R,\Gamma',e,\theta t,\theta\epsilon).
-\]
-\end{theorem}
-\begin{proof}
-$\rho\models R\Rightarrow\theta^*\rho\models D\Rightarrow
-\ground\Gamma_{\theta^*\rho}\vdash_g e:\eval t_{\theta^*\rho}!\eval\epsilon_{\theta^*\rho}$．
-$\Sat(R)$ と \key{Typing.of\_ground} により再構成する．
-\end{proof}
-\begin{theorem}[solver の契約を仮定した完全性]
-\[
-\boxed{\operatorname{Complete}(S)\land\Real_C(\Gamma)\land
- \operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\epsilon)
- \Rightarrow\exists R,\theta.\ \Inf_{N,S}(\Gamma,e)=\mathsf{solved}(R,\theta)}.
-\]
-\end{theorem}
-\begin{proof}
-$\rho\models C\Rightarrow\ground\Gamma_\rho\vdash_g e:u!E$．
-新鮮な結果名に $(u,E)$ を割り当てる．生成完全性より $\Sat(D)$，
-$\operatorname{Complete}(S)$ より $S(\top,D)=\mathsf{solved}(R,\theta)$．
-\end{proof}
-
-\clearpage
-\section{実際の出力の主要性}
-\[
-\frac{A\cap\FV(\Gamma)=\varnothing\quad\Adm_{\Sat}(\exists A.C)\quad
- \operatorname{Typing}_{\Sat}(C,\Gamma,e,t,\epsilon)}
- {\operatorname{ComputationTyping}_{\Sat}(\exists A.C,\Gamma,e,\forall A.C\Rightarrow(t!\epsilon))}
-\]
-$\operatorname{ComputationTyping}$ は許容される制約への強化で閉じる．
-
-\[
-\begin{aligned}
-\operatorname{generalize}(\Gamma,R,t,\epsilon)&=\forall A.R\Rightarrow(t!\epsilon),\\
-A&=(\supp R\cup\supp t\cup(\varnothing,\FV_E\epsilon))\setminus\supp\Gamma,\\
-s&=\forall A.R\Rightarrow(t!\epsilon),\\
-\Fin(s;C,u,\eta)&\iff\exists\phi\text{（有限）}.\ \dom\phi\subseteq A\ \land\\
- &\qquad\forall\rho\models C.\ \phi^*\rho\models R\land
- \eval t_{\phi^*\rho}\leq\eval u_\rho\land\eval\epsilon_{\phi^*\rho}=\eval\eta_\rho.
-\end{aligned}
-\]
-\begin{theorem}[開環境の有限因子]
-\[
-\begin{gathered}
-\Inf^{\mathrm{at}}_{N,S}(\Gamma,e,t,\epsilon)=\mathsf{solved}(R,\theta),\qquad
-\Gamma'=\sigma\Gamma,\quad\Real_C(\Gamma'),\\
-\operatorname{Typing}_{\Sat}(C,\Gamma',e,\sigma t,\sigma\epsilon)\\
-\Longrightarrow\quad
-\exists\phi\text{（有限）}.\ \forall\rho\models C.\
- \phi^*\rho\models R\land\theta^*(\phi^*\rho)=\sigma^*\rho.
-\end{gathered}
-\]
-\end{theorem}
-\begin{proof}
-$\phi=\sigma$ とする．
-\[
-\rho\models C\Rightarrow\sigma^*\rho\models D
- \Rightarrow\sigma^*\rho\models R\land[\theta]
- \Rightarrow\theta^*(\sigma^*\rho)=\sigma^*\rho.
-\]
-\end{proof}
-\begin{theorem}[閉環境の主要計算型・主要値型]
-\[
-\begin{gathered}
-\Closed(\Sigma),\quad\supp\Gamma=\varnothing,\quad
-\Real_\top(\Gamma),\quad\Adm_{\Sat}(\Gamma),\\
-\Inf_{N,S}(\Gamma,e)=\mathsf{solved}(R,\theta),\quad
-p=f_T^{\supp\Gamma}(0),\quad q=f_E^{\supp\Gamma}(0),\\
-s=\operatorname{generalize}(\Gamma,R,\theta\alpha_p,\theta\mu_q)\\
-\Longrightarrow\quad
-\operatorname{ComputationTyping}_{\Sat}(\top,\Gamma,e,s)\ \land\\
-\forall C,t,\epsilon.\ \operatorname{Typing}_{\Sat}(C,\Gamma,e,t,\epsilon)
- \Rightarrow\Fin(s;C,t,\epsilon).
-\end{gathered}
-\]
-$s=\forall A.R\Rightarrow(u!\eta)$ と書く．値なら $(\top,\forall A.R\Rightarrow u)$ は主要対で，即時効果は空．
-\end{theorem}
-\begin{proof}
-生成制約を $D$ とする．$\Sat(R)\land R\models\theta D\Rightarrow\Sat(D)$．
-生成の主要性と実行結果の一意性から，実際の $D$ の有限被覆を得る．
-\[
-\begin{aligned}
-\rho\models C&\Rightarrow\sigma^*\rho\models D
- \land\eval{\alpha_p}_{\sigma^*\rho}\leq\eval t_\rho
- \land\eval{\mu_q}_{\sigma^*\rho}=\eval\epsilon_\rho,\\
-D\equiv_X R\land[\theta]&\Rightarrow
- \sigma^*\rho\models R\land\theta^*(\sigma^*\rho)=\sigma^*\rho.
-\end{aligned}
-\]
-$\sigma$ を $s$ の束縛名へ制限し，同じ有限因子を全ての $\rho\models C$ に用いる．
-値の場合は \key{ComputationTyping.}\allowbreak\key{principal\_value} を適用する．
-\end{proof}
-\[
-\begin{aligned}
-\Inf^{\mathrm{at}}_{N,S}(\Gamma,e,t,\epsilon)=\mathsf{inconsistent}
- &\Rightarrow\neg\exists\rho.\ \ground\Gamma_\rho\vdash_g e:\eval t_\rho!\eval\epsilon_\rho,\\
-\Inf^{\mathrm{at}}_{N,S}(\Gamma,e,t,\epsilon)=\mathsf{unresolved}(R)
- &\Rightarrow\exists D.\ \Proj(\Gamma,e,t,\epsilon)=D\land R\equiv_X D.
-\end{aligned}
-\]
-
-\clearpage
-\section{抽象 X の完全性：HM(X) との対応}
-比較対象：\cite[\S4.4.1, 定理14・15・系6]{Sulzmann2000}．
-現行の型付け・生成は値制限付き．型項再構成（\S4.4.2）は次節で区別する．
-実行時の型・効果安全性は未証明．
-
-\small
-\begin{tabular}{@{}p{.34\linewidth}p{.63\linewidth}@{}}\toprule
-前提 & 現行パラメータ・条件\\\midrule
-型代数・代入・有限台 & \key{TypeDomain}，\key{Constraints.holds\_subst}，\key{holds\_support}\\
-論理演算・射影 & \key{holds\_top}，\key{holds\_and}，\key{holds\_exists}\\
-比較・効果 & \key{TypeOrder}，\key{holds\_le}，\key{holds\_effectLe}，\key{holds\_lacks}\\
-同値簡約 & $N(C)\equiv_X C$（\key{Simplifier}）\\
-解決済み集合 & $\mathcal S=\{C\mid\Sat_X(C)\}$\\
-環境 & $\Real_C(\Gamma)$，$\Adm_{\Sat}(\Gamma)$\\
-操作宣言 & $\Closed(\Sigma)$（健全性）\\
-handler の拡張 & \key{holds\_clause}：$\forall B.\exists J.D$\\\bottomrule
-\end{tabular}\normalsize
-\[
-\begin{aligned}
-\Real_C(\Gamma)&\iff\forall\sigma\in\Gamma.\ \exists t.\ C\vdash_i\sigma\succeq t,\\
-\Adm_{\Sat}(C)&\iff\Sat_X(C),\\
-\Sat_X(\exists A.C)&\iff\Sat_X(C),\\
-\operatorname{Value}(v)&\Rightarrow\text{値 let の一般化},\qquad
-\neg\operatorname{Value}(e)\Rightarrow\text{単相 let}.
-\end{aligned}
-\]
-\textbf{制約を保持する主要正規形}
-充足可能な $D$ に対して $(D,\mathrm{id})$ は，後述する残余制約下の比較で主要である．
-競合する $(Q,\theta)$ には，有限因子 $\phi=\theta$ を使う．
-正規形の健全性から $Q\models\theta D$ が成立する．
-\key{ScopedPrincipalNormalizer.satisfiable} はこの非計算的な存在モデルであり，
-充足可能性判定器ではない．$S=\Sat_X$ の射影閉性も判定器なしで成立する．
-\[
-\begin{aligned}
-s&=\forall A.R\Rightarrow(t!\eta),\quad
- \operatorname{valuePart}(s)=\forall A.R\Rightarrow t,\\
-\operatorname{CInst}_\rho(s)&=\{(u,E)\mid\exists\nu=_{\overline A}\rho.
- \ \nu\models R\land\eval t_\nu\leq u\land\eval\eta_\nu=E\},\\
-\operatorname{PrincipalComp}(\Gamma,e,s)&\iff
- \operatorname{ComputationTyping}_{\Sat}(\top,\Gamma,e,s)\ \land\\
- &\quad\forall C,u,\epsilon.\ \operatorname{Typing}_{\Sat}(C,\Gamma,e,u,\epsilon)
- \Rightarrow\forall\rho\models C.\ (\eval u_\rho,\eval\epsilon_\rho)\in\operatorname{CInst}_\rho(s),\\
-\operatorname{PrincipalPair}(\Gamma,e,C,\sigma)&\iff
- \operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\varnothing)\ \land\\
- &\quad\forall D,\tau.\ \operatorname{Typing}_{\Sat}(D,\Gamma,e,\tau,\varnothing)
- \Rightarrow D\models C\land D\vdash_i\sigma\succeq\tau.
-\end{aligned}
-\]
-\begin{theorem}[判定器なしの生成主要性：系6との対応]
-\[
-\begin{gathered}
-\supp\Gamma=\varnothing,\quad\Real_\top(\Gamma),\quad
-\operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\epsilon)\\
-\Longrightarrow\quad\exists D.\ \Proj(\Gamma,e,\alpha_0,\mu_0)=D\land\Sat_X(D)\land\\
-\operatorname{PrincipalComp}(\Gamma,e,s_D)\land
- \forall C',t',\eta'.\ \operatorname{Typing}_{\Sat}(C',\Gamma,e,t',\eta')
- \Rightarrow\Fin(s_D;C',t',\eta'),\\
-s_D=\forall(\{\alpha_0\},\{\mu_0\}).D\Rightarrow(\alpha_0!\mu_0).
-\end{gathered}
-\]
-\end{theorem}
-\key{Typing.principal\_computation\_run}．値の主要対は \key{Typing.principal\_value}．
-閉環境の系は \key{Typing.principal\_closed\_from\_open} でも導く．
-
-\clearpage
-\textbf{開環境の出力と比較}
-\[
-\begin{aligned}
-s&=\operatorname{gen}(\Gamma,D,\alpha,\mu)=\forall A.D\Rightarrow(\alpha!\mu),\\
-A&=(\supp D\cup\supp\alpha\cup\supp\mu)\setminus\supp\Gamma,
-\qquad P_s=\exists A.D,\qquad V_s=\forall A.D\Rightarrow\alpha,\\
-\operatorname{Cover}(\Gamma,e,s)\iff{}&
- \forall C,\sigma,\epsilon.\
- \bigl(\operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\epsilon)
- \land\Real_C(\Gamma)\bigr)\\
- &\qquad\Rightarrow C\models P_s\ \land\ C\vdash_i V_s\succeq\sigma,\\
-\operatorname{FinCover}(\Gamma,e,s)\iff{}&
- \forall C,u,\epsilon.\
- \bigl(\operatorname{Typing}_{\Sat}(C,\Gamma,e,u,\epsilon)
- \land\Real_C(\Gamma)\bigr)\\
- &\qquad\Rightarrow\Fin(s;C,u,\epsilon).
-\end{aligned}
-\]
-\begin{theorem}[開環境の生成完全性・一般性：定理15との対応]
-\[
-\begin{gathered}
-\operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\epsilon),\quad\Real_C(\Gamma),\quad
- \alpha,\mu\notin\supp\Gamma\\
-\Longrightarrow\exists D.\ \Proj(\Gamma,e,\alpha,\mu)=D\land\Sat_X(D)\ \land\\
- \operatorname{Typing}_{\Sat}(D,\Gamma,e,\alpha,\mu)\ \land\\
- \operatorname{ComputationTyping}_{\Sat}(P_s,\Gamma,e,s)\ \land
- \operatorname{Cover}(\Gamma,e,s)\land\operatorname{FinCover}(\Gamma,e,s).
-\end{gathered}
-\]
-\[
- C\models P_s,\qquad C\vdash_i V_s\succeq\sigma,\qquad
- \sigma=u\Rightarrow\Fin(s;C,u,\epsilon).
-\]
-\end{theorem}
-\key{Typing.principal\_computation\_open\_at}, \key{Typing.inference\_complete\_scheme}．
-\begin{proof}
-\[
-\begin{aligned}
-\rho\models C&\Rightarrow\exists\nu=_{\overline{\{\alpha,\mu\}}}\rho.
- \ \nu\models D\Rightarrow\rho\models P_s,\\
-\theta_{u,\eta}&=[\alpha\mapsto u,\mu\mapsto\eta],\qquad
- \ground\Gamma_{\theta_{u,\eta}^*\rho}=\ground\Gamma_\rho,\\
-\Real_{C'}(\Gamma),\ C',\Gamma\vdash e:u!\eta&\Rightarrow
- \forall\rho\models C'.\ \theta_{u,\eta}^*\rho\models D
- \Rightarrow\Fin(s;C',u,\eta).
-\end{aligned}
-\]
-qualified 型：新鮮化・単相化・$\forall$ 右規則．
-\end{proof}
-\begin{theorem}[開環境の値の主要対]
-\[
-\begin{gathered}
-\operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\epsilon),\quad\Real_\top(\Gamma),\quad
- \operatorname{Value}(e)\\
-\Longrightarrow\exists s.\ \operatorname{PrincipalPair}(\Gamma,e,P_s,V_s).
-\end{gathered}
-\]
-\end{theorem}
-\key{Typing.principal\_value\_open}．
-
-\textbf{外側条件の保持}
-\[
-\begin{gathered}
-C=(\alpha_0=\mathrm{Int}),\quad
- \Gamma=[x:\forall(\{\alpha_1\},\{\mu_1\}).C\Rightarrow\alpha_1],\quad e=x,\\
-\Real_C(\Gamma),\quad\neg\Real_\top(\Gamma),\quad
- P_s\equiv_X C,\quad\top\not\models P_s.
-\end{gathered}
-\]
-\key{OpenExamples.qualified\_outer\_condition}．
-
-\clearpage
-\textbf{抽象的な充足可能性判定器}
-\[
-\boxed{\operatorname{SatDecider}(X)=
- \left\{d:\mathcal C_X\to\mathbb B\ \middle|\
- \forall C.\ d(C)=\mathsf{true}\iff\Sat_X(C)\right\}.}
-\]
-$d$ は停止する計算可能な実装を与える．型クラス・単一化方式は固定しない．
-\[
-S_d(G,W)=
-\begin{cases}
-\mathsf{solved}(W,\mathrm{id})&d(G\land W)=\mathsf{true},\\
-\mathsf{inconsistent}&d(G\land W)=\mathsf{false}.
-\end{cases}
-\]
-\begin{theorem}[判定器からの完全な solver]
-\[
-\begin{gathered}
-d\in\operatorname{SatDecider}(X)\Rightarrow
- \operatorname{PartialSolver}(S_d)\land\operatorname{Complete}(S_d),\\
-S_d(G,W)=\mathsf{solved}(R,\theta)
- \iff\Sat_X(G\land W)\land(R,\theta)=(W,\mathrm{id}),\\
-S_d(G,W)=\mathsf{inconsistent}\iff\neg\Sat_X(G\land W),\\
-\forall G,W,R.\ S_d(G,W)\ne\mathsf{unresolved}(R).
-\end{gathered}
-\]
-\end{theorem}
-\begin{proof}
-$d(G\land W)=\mathsf{true}\iff\Sat_X(G\land W)$ と恒等代入の契約による．
-\end{proof}
-\begin{theorem}[合成した完全性・主要性]
-\[
-\begin{gathered}
-d\in\operatorname{SatDecider}(X),\quad\Real_C(\Gamma),\quad
-\operatorname{Typing}_{\Sat}(C,\Gamma,e,\sigma,\epsilon)\\
-\Longrightarrow\quad\exists n.\
- \Inf_{N,S_d}(\Gamma,e)=\mathsf{solved}(n)\ \land\\
- \operatorname{ComputationTyping}_{\Sat}(P_s,\Gamma,e,s)\ \land
- \operatorname{Cover}(\Gamma,e,s)\land\operatorname{FinCover}(\Gamma,e,s),\\
- s=\operatorname{inferredScheme}(\Gamma,n).
-\end{gathered}
-\]
-\[
-\begin{gathered}
-\Closed(\Sigma),\quad\supp\Gamma=\varnothing,\quad\Real_\top(\Gamma)\\
-\Longrightarrow\quad\operatorname{PrincipalComp}(\Gamma,e,s)\ \land\\
-\bigl(\forall C',t',\eta'.\ \operatorname{Typing}_{\Sat}(C',\Gamma,e,t',\eta')
- \Rightarrow\Fin(s;C',t',\eta')\bigr)\ \land\\
-\bigl(\operatorname{Value}(e)\Rightarrow
- \operatorname{PrincipalPair}(\Gamma,e,\top,\operatorname{valuePart}(s))\bigr).
-\end{gathered}
-\]
-\end{theorem}
-\key{SatDecider.infer\_principal\_open}, \key{infer\_complete\_scheme}．
-\[
-\Real_\top(\Gamma)\land\operatorname{Value}(e)
- \Rightarrow\operatorname{PrincipalPair}(\Gamma,e,P_s,V_s).
-\]
-\key{SatDecider.infer\_principal\_value\_open}．
-\[
-\operatorname{Typing}\xRightarrow{\text{生成完全性}}\Sat_X(D)
- \xRightarrow{d}\mathsf{solved}(D,\mathrm{id})
- \xRightarrow{\text{生成・solver の契約}}\text{健全性・主要性}.
-\]
-健全性（定理14との対応）：$\Closed(\Sigma),\Adm_{\Sat}(\Gamma)$ の下で
-\[
-\Inf^{\mathrm{at}}_{N,S_d}(\Gamma,e,t,\epsilon)=\mathsf{solved}(R,\theta)
- \Rightarrow\operatorname{Typing}_{\Sat}(R,\Gamma,e,t,\epsilon).
-\]
-\key{SatDecider.inferAt\_sound\_of\_admissible}．実現可能性は不要．
-
-\textbf{handler の条件}
-\[
-\rho\models\forall B.\exists J.D
- \iff\forall\nu=_{\overline B}\rho.\ \exists\omega=_{\overline J}\nu.\ \omega\models D.
-\]
-生成定理は handler を含む．$d$ の判定域もこの量化制約を含む．
-基底断片のみの判定器から全 $X$ の \key{SatDecider} は得られない．
-handler 固有の不完全性・判定不能性は主張しない．
-
-\clearpage
-\section{型項再構成：有限範囲の正規化}
-\[
-\begin{aligned}
-n&=(R,\psi),\qquad [n]=R\land[\psi],\\
-\operatorname{Normal}_S(D;n)
- &\iff S(R)\land\Solved(\psi)\land\psi R\equiv R\land[n]\models D,\\
-n\preceq_U m
- &\iff\exists\phi\text{（有限代入）}.\
-   \forall\rho\models Q.\ \psi^*(\phi^*\rho)=_U\theta^*\rho
-   \ \land\ \phi^*\rho\models R,\quad m=(Q,\theta),\\
-\operatorname{Principal}_S^U(D;n)
- &\iff\operatorname{Normal}_S(D;n)\land
-   \forall m.\ \operatorname{Normal}_S(D;m)\Rightarrow n\preceq_U m.
-\end{aligned}
-\]
-比較因子 $\phi$ は評価ごとに選ばず，全評価で共通の有限代入である．冪等性は要求しない．新しい出力パラメータは入力 $U$ と区別する．
-\[
-\begin{gathered}
-\FV(D)\subseteq U,\quad S\subseteq\Sat_X,\\
-\mathcal N(U,D)=\mathsf{some}(n)\Rightarrow
- \operatorname{Principal}_S^U(D;n),\\
-\mathcal N(U,D)=\mathsf{none}\iff
- \neg\exists n.\operatorname{Normal}_S(D;n).
-\end{gathered}
-\]
-\key{ScopedPrincipalNormalizer}．存在条件 \key{PrincipalNormalForms} と
-計算可能な $\mathcal N$ の実装を区別する．
-
-\textbf{解形式の閉性}（\key{SolvedClosure}）
-\[
-\begin{gathered}
-\Adm_S(C)\Rightarrow\Adm_S(pC)\quad(p:\text{有限置換}),\\
-\Adm_S(C)\land\Adm_S(D)\land\Sat(C\land D)\Rightarrow\Adm_S(C\land D),\\
-\Adm_S(C)\Rightarrow\Adm_S(\exists A.C).
-\end{gathered}
-\]
-主要正規形の契約からこれらの閉性は導出していない．$S=\Sat_X$ はこの三つの閉性を満たす．
-
-\begin{theorem}[新鮮化した比較正規形]
-$\Adm_S$ の改名閉性，$\FV(D)\subseteq U$ の下で，
-\[
-\begin{gathered}
-\Adm_S(C),\quad C\models\sigma D\\
-\Longrightarrow\quad\exists n,\phi.\
- \mathcal N(U,D)=\mathsf{some}(n)\ \land\\
- \forall\rho\models C.\ n_\theta^*(\phi^*\rho)=_U\sigma^*\rho,
- \qquad C\models\phi n_R.
-\end{gathered}
-\]
-\end{theorem}
-\key{ScopedPrincipalNormalizer.complete\_of\_substitution}．
-$\Solved(\sigma)$，$\sigma C\equiv C$，ground 値の型項表現は不要．
-
-\textbf{捕獲回避代入}
-\[
-\begin{gathered}
-\sigma(\forall A.C\Rightarrow t)
- =\forall f(A).\eta C\Rightarrow\eta t,
- \qquad
- \eta(i)=\begin{cases}f(i)&i\in A,\\\sigma(i)&i\notin A,\end{cases}\\
- f(A)\cap(\supp C\cup\supp t\cup\dom\sigma\cup\operatorname{range}(\sigma)\cup A)=\varnothing,\\
- \ground{\Gamma[\sigma]}_\rho=\ground\Gamma_{\sigma^*\rho},\qquad
- C\vdash_i s_1\succeq s_2\Rightarrow\sigma C\vdash_i s_1[\sigma]\succeq s_2[\sigma],\\
- \Real_C(\Gamma)\Rightarrow\Real_{\sigma C}(\Gamma[\sigma]).
-\end{gathered}
-\]
-\key{Instance.subst} は両辺が任意の qualified 型で成立し，solver や
-ground 値の型項表現を仮定しない．また
-$A\cap(\supp\Gamma\cup\operatorname{range}(\sigma))=\varnothing$ なら
-$\Gamma[\sigma]$ は $A$ を自由に含まない（\key{Context.subst\_avoids}）．
-
-\clearpage
-\textbf{近似と有限証人の基盤}
-\key{Context.Approximates} はスキーム近似のリスト上の持ち上げである．
-反射性は許容性と各評価での実例の存在から成立する．一つの代入をすべての評価で使えるという
-実現可能性までは必要ない（\key{refl\_of\_ground}）．
-推移性，lookup，qualified 対象を含む $S$ の変数規則も証明した．
-近似の構成と導出変換に使う追加条件・証明範囲を後の定理7の節に示す．
-
-\begin{lemma}[実現可能なスキームの解決済み有限証人]
-\[
-\begin{gathered}
-\Real_C(\forall A.D\Rightarrow t),\qquad A\cap\FV(C)=\varnothing\\
-\Longrightarrow\quad\exists\theta\text{（有限代入）}.\
-\Solved(\theta)\land\dom\theta\subseteq A\land C\models\theta D.
-\end{gathered}
-\]
-\end{lemma}
-\key{Scheme.Realizable.solved\_witness\_finite}．
-実現可能性が与える一様な代入の局所パラメータを，型については $A$ の外の
-新鮮な変数，効果については空効果で置き換える．
-ground 値を閉じた型項で表す \key{GroundRepresentation} は不要である．
-
-\begin{lemma}[実現可能性からの比較正規形]
-$P=C\land\exists A.D$ とおく．
-\[
-\begin{gathered}
-\Adm_S(P),\qquad A\cap\FV(C)=\varnothing,\qquad
-\Real_P(\forall A.D\Rightarrow t)\\
-\Longrightarrow\quad\exists m=(R,\theta).\
-\operatorname{Normal}_S(C\land D;m)\land
-\dom\theta\subseteq A\land R\equiv P.
-\end{gathered}
-\]
-\end{lemma}
-\key{NormalForm.exists\_of\_realizable\_finite}．
-この補題にも \key{GroundRepresentation} は不要であり，
-外側条件 $P$ の許容性とスキームの実現可能性は引き続き必要である．
-
-\textbf{導出変換との区別}
-スキームの実現可能性は，一般の型付け結果からは自動的に従わない．
-上記の補題だけで一般の多相 $\mathbf{let}$ や handler を含む導出全体の
-$\Sat_X\to S$ 変換は得られない．次節では追加条件を明示し，多相 let と一般化を含む13規則の導出変換を証明する．
-後の定理16では，生成導出に必要な単相射影・操作・handler への変換も証明する．
-
-\clearpage
-\textbf{定理7相当：明示した条件の下での導出変換}
-
-型領域は \key{equalityTypes}，型の順序 $O$ と制約系 $X$ はその上の任意のものとする．
-
-\key{ScopedPrincipalNormalizer} $P$ の解決済み集合を $S$ とし，
-\key{SolvedClosure} と恒真な解決済み制約
-$S(R_\top),\ \forall\rho.\rho\models R_\top$ を仮定する．
-さらに，次の十分条件を仮定する．
-\[
-\Adm_S(C)\land C\models\alpha=t\quad\Longrightarrow\quad t=\alpha.
-\]
-右辺は型項の構文的等号である．\key{VariableEqualityReflection} として明示し，
-効果等式は許す．効果専用の残余では証明済みだが，一般の $S$ に自動的に成立する条件ではない．
-加えて次の二条件を明示する．$\operatorname{graph}(\theta)$ は有限代入の等式制約である．
-\[
-\begin{gathered}
-\dom_T(\theta)=\varnothing,\quad
-\Adm_S(R),\quad\Sat(R\land\operatorname{graph}(\theta))\\
-\Longrightarrow\quad\Adm_S(R\land\operatorname{graph}(\theta)),\\[1mm]
-\Adm_S(\exists A.D)\quad\Longrightarrow\quad
-\exists\theta.\ \dom(\theta)\subseteq A\ \land\ \Adm_S(\theta D).
-\end{gathered}
-\]
-第一の条件は，整合する効果等式を残余制約に加える閉性である．
-第二は原典の定義28の条件④に対応する，許容性で述べた有限代入の条件である．
-この $\theta$ の解決済み性は要求しない．定義28全体を仮定してはいない．
-これらの条件を主要正規化だけから導いたとはしない．
-
-$\mu\subseteq\{op\}$ のような効果制約は残余に保持できる．
-\key{EffectResiduals} に残余集合を定義し，\key{TransformationExamples} では，充足可能で型変数の評価に依存しない
-残余の例について，この効果制約の主要正規形と効果等式の追加閉性を証明した．
-通常の型等式 $\alpha=\mathrm{Int}$ はこの残余集合に属さない．
-この局所的な例は，具体的 solver 全体が上の全前提を満たす証明ではない．
-
-\textbf{現行の型スキーム近似}
-\[
-\begin{aligned}
-C\vdash s\mapsto_S t\quad\iff\quad
- &\Adm_S(t)\land(C\vdash_i s\succeq t)\\
- &{}\land\forall u.\ \Adm_S(u)\land(C\vdash_i s\succeq u)
-       \Rightarrow(C\vdash_i t\succeq u).
-\end{aligned}
-\]
-両方の比較を外側制約 $C$ の下で行う現行の定義である．
-環境近似は，各位置でこの関係が成立することをいう．
-
-\textbf{対象とする導出}
-\key{Derivation.UsesHMXRules} は，導出の全節点が
-変数，整数，真偽値，関数，適用，値の let，単相 let，Sub，
-$\forall$ 導入，$\forall$ 除去，制約の強化，効果等式，$\alpha$ 改名の13規則からなることを表す．
-追加の \key{existsIntro}，\key{perform}，\key{handle} は含まない．
-原典の図3.1に独立した \key{existsIntro} はなく，これは EHM(X) で追加した
-外側制約の射影規則である．その変換の未完了部分を原典の規則の未証明と混同しない．
-値制限は現行のままであり，式に handler がないことだけではこの条件を満たさない．
-
-\begin{theorem}[定理7相当のスキーム・単相導出変換]
-上の全前提，$\Adm_S(C)$ と $C\vdash\Gamma\mapsto_S\Gamma'$ の下で，
-対象規則からなる導出 $C;\Gamma\vdash e:s!\epsilon$ があれば，
-\[
-\exists s'.\
- \operatorname{Typing}_S(C,\Gamma',e,s',\epsilon)
- \ \land\ C\vdash s\mapsto_S s'.
-\]
-特に $s$ が単相型 $t$ なら，
-\[
-\operatorname{Typing}_S(C,\Gamma',e,t,\epsilon).
-\]
-\end{theorem}
-\key{Derivation.theorem7\_core}，
-\key{Derivation.theorem7\_mono\_core}．
-Lean では規則に従う導出を直接引数に取り，元の導出の $\operatorname{Valid}_{\Sat}$ も要求しない．
-内部スキーム・環境の一様な実現可能性を追加前提にしない．
-
-\clearpage
-\textbf{定理7の証明：元の導出への帰納法}
-
-帰納仮定を，任意の有限代入 $\theta$，許容な外側制約 $D$ と環境 $\Gamma'$ に広げる．
-\[
-\begin{gathered}
-\Adm_S(D),\quad D\models\theta C,\quad
-D\vdash\Gamma[\theta]\mapsto_S\Gamma'\\
-\Longrightarrow\quad\exists s'.\
- \operatorname{Typing}_S(D,\Gamma',e,s',\theta\epsilon)
- \ \land\ D\vdash s[\theta]\mapsto_S s'.
-\end{gathered}
-\]
-\key{Derivation.transform\_to\_solved\_subst}．
-元の導出の子に，必要な代入を合成して帰納仮定を適用する．
-作り直した導出の長さが小さくなることは仮定しない．
-
-\textbf{一般化の場合}
-束縛変数を，外側制約・代入の値域・両環境に対して新鮮に選ぶ．
-射影から有限代入を得る条件を使って正規化の成功を導き，
-環境の自由変数を保護した主要正規形 $(R,\kappa)$ を構成する．
-効果への割当ては残余へ移し，$\kappa_E$ は恒等写像にする．
-新たな出力パラメータも含めて量化する名前 $B$ を選び，
-外側制約と $\exists B.R$ の同値性を得る．
-\key{SchemeApproximation.generalized\_approximation} は，
-元のスキームから $\forall B.R\Rightarrow\kappa t$ への近似を，
-任意の許容な qualified 対象について証明する．
-
-環境近似を外側制約から $R$ へ移す際には，
-外側制約と $\exists B.R$ の同値性と名前の新鮮さを使う．
-任意の強い制約への近似の保存を仮定しない．
-元の子導出へ合成した代入で帰納仮定を適用し，得られた本体を一般化する．
-\key{Derivation.forallIntro\_arbitrary\_substitution} がこの場合を閉じる．
-
-\textbf{多相 let の場合}
-値の子導出への帰納仮定から，許容なスキーム $s'$ と $s[\theta]\mapsto_S s'$ を得る．
-これで環境近似を $s[\theta]::\Gamma[\theta]$ と $s'::\Gamma'$ へ延長し，
-元の本体の子導出に帰納仮定を適用する．値であることは元の規則の証拠をそのまま使う．
-\[
-C\vdash s\mapsto_S t
-\quad\Longrightarrow\quad
-\bigl(\Real_C(s)\iff\Real_C(t)\bigr)
-\]
-という既存の結果とも整合し，近似によって実現可能性を得る方法は使わない．
-
-恒等代入では捕獲回避のため束縛名が変わるので，
-\key{Instance.subst\_identity\_iff} による構文的比較の対応を使って，
-上の帰納命題から元の制約・環境についての定理を取り出す．
-
-\textbf{検証と残る課題}
-公開定理の適用例として，入れ子の多相 let と特殊化，開環境と束縛名の衝突，
-空でない潜在効果の保存を検証する．
-旧比較・旧主要正規化器・変換用の互換補題は削除した．
-有限証人など比較に依存しない補題は維持し，定理7は新比較と上記の条件から直接証明する．
-生成される単相射影・操作・handler への拡張と定理16は以下で述べる．
-具体的制約系が全前提を満たす証明と，EHM(X) で追加した任意の qualified 型への
-射影変換は未証明である．定理17の qualified 比較と系7は以下の条件で証明した．
-
-\clearpage
-\textbf{再構成算法と証明範囲}
-\[
-\begin{gathered}
-\mathcal T^{\rm at}_{N,\mathcal N}(\Gamma,e,t,\epsilon):\quad
- D\leftarrow\Proj_N(\Gamma,e,t,\epsilon),\\
- U=\operatorname{Protected}(\Gamma,t,\epsilon)\cup\supp D,\\
- \mathcal T^{\rm at}_{N,\mathcal N}=\begin{cases}
-  \mathsf{reconstructed}(R,\psi)&\mathcal N(U,D)=\mathsf{some}(R,\psi),\\
-  \mathsf{unrepresented}(D)&\mathcal N(U,D)=\mathsf{none}.
- \end{cases}
-\end{gathered}
-\]
-\key{inferTerm} は $\Gamma$ に新鮮な型・効果変数を期待値に使う．
-$\mathsf{unrepresented}$ は $\neg\Sat(D)$ を意味しない．
-
-\begin{theorem}[制約形式での再構成健全性]
-\[
-\begin{gathered}
-\Closed(\Sigma),\quad\Real_\top(\Gamma),\quad
- \mathcal T^{\rm at}(\Gamma,e,t,\epsilon)=\mathsf{reconstructed}(R,\psi)\\
-\Longrightarrow\quad
- \operatorname{Typing}_{\Sat}(R,\Gamma[\psi],e,\psi t,\psi\epsilon).
-\end{gathered}
-\]
-\end{theorem}
-\key{inferTermAt\_sound\_constraint}．結論は $\operatorname{Typing}_S$ ではない．
-
-
-\clearpage
-\textbf{同じ正規化器による公開定理}
-$\widehat P=\operatorname{prepare}(P)$ と置く．この変換は主要性と $S$ を保ち，
-型内の効果注釈を変数にし，効果代入を恒等にする．効果等式の追加閉性を使用する．
-存在は \key{NormalFormShape.principal\_shape} で証明し，独立した仮定にはしない．
-構成は非計算的であり，実行可能なソルバーではない．公開定理
-\key{theorem16}, \key{theorem17}, \key{corollary7} は同じ $\widehat P$ と $S$ を用いる．
-
-\textbf{定理16相当：同じ解決済み集合での出力健全性}
-
-型領域を \key{equalityTypes} とし，定理7の節と同じ主要正規化・閉性・
-変数等式の追加条件・恒真な解決済み制約・効果等式の追加閉性・射影から代入を得る条件を仮定する．
-定義28全体を仮定するものではない．
-
-\begin{theorem}[一般の解決済み集合での条件付き出力健全性]
-上記の全前提の下で，
-\[
-\begin{gathered}
-\Closed(\Sigma),\quad \Real_\top(\Gamma),\quad \Adm_S(\Gamma[\theta]),\\
-\mathcal T^{\rm at}(\Gamma,e,t,\epsilon)=\mathsf{reconstructed}(R,\theta)\\
-\Longrightarrow\quad
-\operatorname{Typing}_S(R,\Gamma[\theta],e,\theta t,\theta\epsilon).
-\end{gathered}
-\]
-\end{theorem}
-\key{inferTermAt\_sound}．一般の $S$ について，代入後の環境の許容性は明示的な前提である．
-
-\textbf{効果だけに依存する残余制約}
-\[
-\begin{aligned}
-\operatorname{EffectOnly}(D)
-&\iff \forall\rho,\rho'.\
- \rho_E=\rho'_E\Rightarrow(\rho\models D\iff\rho'\models D),\\
-S_E(D)&\iff\Sat(D)\land\operatorname{EffectOnly}(D).
-\end{aligned}
-\]
-\key{EffectResiduals.Solved} はこの $S_E$ である．
-\[
-\Adm_{S_E}(\Gamma),\quad \Real_\top(\Gamma),\quad\Sat(R)
-\quad\Longrightarrow\quad
-R\vdash\Gamma[\theta]\mapsto_{S_E}\Gamma[\theta].
-\]
-\key{EffectResiduals.output\_environment\_self}．
-型・効果の名前の捕獲を避ける代入について，許容性と自己近似を構成する．
-
-\begin{theorem}[効果残余の場合の出力健全性]
-$P.\mathrm{solved}=S_E$ と上記の正規化等の前提の下で，
-\[
-\begin{gathered}
-\Closed(\Sigma),\quad\Adm_{S_E}(\Gamma),\quad\Real_\top(\Gamma),\\
-\mathcal T^{\rm at}(\Gamma,e,t,\epsilon)=\mathsf{reconstructed}(R,\theta)\\
-\Longrightarrow\quad
-\operatorname{Typing}_{S_E}(R,\Gamma[\theta],e,\theta t,\theta\epsilon).
-\end{gathered}
-\]
-\end{theorem}
-\key{inferTermAt\_sound\_effectOnly}．
-代入後の環境の許容性を入力環境の条件から導き，別の近似環境へ置き換えない．
-新鮮な出力変数を選ぶ \key{inferTerm} にも，
-\key{inferTerm\_sound} と \key{inferTerm\_sound\_effectOnly} が同じ保証を与える．
-
-\clearpage
-\textbf{定理16の証明：生成・導出変換・正規化の接続}
-
-\key{Derivation.UsesReconstructionRules} は全規則を許すが，
-\key{existsIntro} の結果を単相に限る．
-\key{Inference.sound\_reconstruction} は，任意の生成結果 $D$ について，
-この条件を満たす $D;\Gamma\vdash e:t!\epsilon$ の導出を構成する．
-多相 let の一般化は $\forall$ 導入で行うので，
-qualified 型への追加の存在射影は不要である．
-従って，公開した定理16には式に対する追加の規則制限はない．
-
-\key{Derivation.transform\_to\_solved\_subst\_reconstruction} は，
-任意の外側代入・許容な制約・近似環境について元の導出へ帰納法を適用する．
-既存の13規則の変換はこの拡張の系として維持する．
-
-\begin{itemize}
-\item 単相の存在射影：束縛名を外側代入の値域と環境から離して選び，
-子の制約を正規化する．合成した代入で元の子へ帰納仮定を適用し，
-外側の単相型・効果を保存して射影を戻す．
-\item 操作：外側代入と操作の実例の代入を合成し，閉じた操作宣言の
-束縛変数に制限する．入力型・出力型・効果の評価を保存して規則を再構成する．
-\item handler：剛体変数と証人を新鮮に改名し，節を正規化する．
-節の元の子導出へ帰納仮定を適用し，結果型・効果の比較，
-$\forall B.\exists W$ の条件と変数の非脱出をそろえて handler 規則を再構成する．
-\end{itemize}
-
-正規化の健全性から $S(R)$ と $R\models\theta D$ を得る．
-環境 $\Gamma[\theta]$ の自己近似を使って上の変換を適用し，
-結果の近似から正確な単相型 $\theta t$ の型付けを得る．
-効果は $\theta\epsilon$ のままであり，導出内部の制約・環境も同じ $S$ で妥当となる．
-
-\textbf{検証範囲と未完了部分}
-多相 let・perform・入れ子 handler を組み合わせた開いた式の生成と公開定理の適用，
-型・効果の代入先と束縛名の衝突を検証する．
-任意の qualified 型への \key{existsIntro} は変換対象外であり，
-その除外も確認する．具体的制約系が正規化等の全追加条件を満たす証明は別途必要である．
-この定理16の結果とは別に，定理17の qualified 比較を以下で証明する．
-この健全性と定理17の比較を用いた系7も以下で述べる．
-
-\clearpage
-\begin{theorem}[単相判断の完全性と有限因子]
-$\operatorname{SolvedClosure}(S)$ の下で，
-\[
-\begin{gathered}
-\operatorname{Typing}_S(C,\Gamma[\sigma],e,t,\epsilon),\quad\Real_C(\Gamma[\sigma])\\
-\Longrightarrow\quad\exists n,\phi.\quad
-\mathcal T(\Gamma,e)=\mathsf{reconstructed}(n),\quad C\models\phi n_R,\\
-\forall\rho\models C.\quad n_\theta^*(\phi^*\rho)=_{\supp\Gamma}\sigma^*\rho,\\
-\forall\rho\models C.\quad
-\eval{\tau}_{\phi^*\rho}=\eval{t}_\rho,\quad
-\eval{\epsilon_o}_{\phi^*\rho}=\eval{\epsilon}_\rho.
-\end{gathered}
-\]
-\end{theorem}
-\key{inferTerm\_complete\_mono}．$\tau,\epsilon_o$ は出力の型と効果である．
-
-\begin{theorem}[qualified 判断からの受理]
-$\operatorname{SolvedClosure}(S)$ の下で，
-\[
-\begin{gathered}
-\operatorname{Typing}_S(C,\Gamma[\sigma],e,s,\epsilon),\quad\Real_C(\Gamma[\sigma])\\
-\Longrightarrow\quad\exists n.\ \mathcal T(\Gamma,e)=\mathsf{reconstructed}(n).
-\end{gathered}
-\]
-\end{theorem}
-\key{inferTerm\_complete\_acceptance}．対象スキームの $\Real_C(s)$ は不要．
-
-\clearpage
-\textbf{再構成後の一般化：元の環境の変数の代入先を保持する}
-
-再構成結果を $n=(R,\psi,\tau,\epsilon_o)$ と書く．
-$\tau,\epsilon_o$ は代入済みの結果型・効果である．
-元の環境の support を $A=\supp\Gamma$ として，
-\[
-\begin{aligned}
-U_T&=\bigcup_{i\in A_T}\supp_T(\psi_T(i)),\\
-U_E&=\bigcup_{i\in A_T}\supp_E(\psi_T(i))
-       \ \cup\bigcup_{j\in A_E}\FV_E(\psi_E(j)),\\
-B&=(\supp R\cup\supp\tau\cup(\varnothing,\FV_E(\epsilon_o)))\setminus U,\\
-s_o&=\forall B.\ R\Rightarrow\tau,\qquad C_o=\exists B.R.
-\end{aligned}
-\]
-\key{Substitution.imageSupport} と
-\key{ComputationScheme.generalizeWithSupport} がこの構成を定義する．
-\key{reconstructedScheme} は $B,R,\tau,\epsilon_o$ を保持する計算スキームであり，
-その \key{valueScheme} が $s_o$，\key{outer} が $C_o$ である．
-
-制約の support は自由変数の上界であり，代入後に無関係な代入先を含む場合がある．
-そのため，$\supp(\Gamma[\psi])$ を一般化の禁止範囲として使うと，
-閉じた qualified 環境の下でも必要な量化を失うことがある．
-上の $U$ は元の環境で使う名前の代入先だけを集める．
-\[
-\Gamma[\psi]\text{ は }B\text{ を自由に含まない}.
-\]
-この性質により，\key{Typing.reconstructed\_computation} は
-$R;\Gamma[\psi]\vdash_S e:\tau!\epsilon_o$ を同じ $S$ の計算スキームへ一般化する．
-外側制約の許容性には \key{SolvedClosure.project} を使う．
-
-\textbf{比較時に量化変数が外へ出ないこと}
-新比較の因子の一致は $C$ の下でだけ成立する．全評価での一致から support の包含を導く証明は使わない．
-\key{ReconstructionFactor.repair\_factor\_avoids} は，出力の効果注釈の形式と
-\key{VariableEqualityReflection} を用い，$C$ の下で必要な評価を保つ一つの有限因子へ修正する．
-この因子が束縛変数を外へ出さないことを証明して qualified 型を再構成する．
-型領域は \key{equalityTypes} であり，任意の \key{TypeDomain} への拡張は主張しない．
-
-\clearpage
-\textbf{定理17相当：qualified 型までの再構成完全性}
-
-型領域を \key{equalityTypes} とし，型の順序と制約系 $X$ は抽象とする．
-
-主要正規化器 \key{ScopedPrincipalNormalizer} $P$ と
-\key{SolvedClosure}$(P.\mathrm{solved})$ を用いる．\par
-\key{VariableEqualityReflection} と
-効果等式の追加閉性を仮定する．$S=P.\mathrm{solved}$ とし，$\widehat P$ の出力を使う．
-
-\begin{theorem}[同じ代入による環境・型スキーム・外側制約の比較]
-\[
-\begin{gathered}
-\operatorname{Typing}_S(C,\Gamma[\sigma],e,s,\epsilon),\qquad
-\Real_C(\Gamma[\sigma])\\
-\Longrightarrow\quad\exists n,\phi.\quad
-\mathcal T(\Gamma,e)=\mathsf{reconstructed}(n),\\
-\forall\rho\models C.\ \psi^*(\phi^*\rho)=_{\supp\Gamma}\sigma^*\rho,\\
-C\vdash_i s_o[\phi]\succeq s,\qquad C\models\phi C_o,\\
-\forall\rho\models C.\ \eval{\epsilon_o}_{\phi^*\rho}=\eval\epsilon_\rho.
-\end{gathered}
-\]
-ここで $n=(R,\psi,\tau,\epsilon_o)$，$s_o,C_o$ は前頁の一般化による．
-\end{theorem}
-\key{inferTerm\_complete\_scheme}．
-環境の実現可能性は $C$ の下で要求する．$\Real_\top(\Gamma)$ や $\Real_C(s)$ は不要．
-定理16の lifting 条件と恒真な解決済み制約は要求しない．
-効果等式の追加閉性は出力形式の構成に使用する．
-
-\textbf{証明の構成}
-単相の場合，\key{inferTerm\_complete\_mono} が推論成功と一つの代入 $\phi$，
-残余制約の含意，環境・結果型・効果の一致を与える．
-\key{ComputationScheme.instance\_of\_factor} で型スキームの比較を得る．
-
-$s=\forall D.Q\Rightarrow t$ の場合，束縛名を $C,\Gamma,\sigma$ から離して改名する．
-対象導出と環境の実現可能性から $C\models\exists D.Q$ を得る．
-制約を $C\land Q$ に強めて単相の結果を適用し，前頁の非脱出の補題と
-\key{Instance.forallRight} により qualified 型へ戻す．
-最後に \key{ComputationScheme.outer\_of\_typing\_instance} が，
-型付けの ground 証人と得られた比較を使い，同じ $\phi$ で $C\models\phi C_o$ を導く．
-
-対象導出には qualified 型への \key{existsIntro}，多相 let，perform，handler を含む．
-任意の qualified 射影の\emph{導出変換}は未証明だが，この完全性の証明はその変換を使わない．
-
-\textbf{検証}
-閉じた qualified 環境の下の恒等関数について，実際の生成制約の局所主要正規形と
-一般化を確認した．対象スキームが実現可能でない例と，型・効果の名前衝突を伴う
-qualified 射影には，実在する $\Sat_X$ 正規化器を用いた生成完全性からの直接証明を適用した．
-$\Sat_X$ は変数等式の追加条件を一般には満たさず，新定理の前提のモデルとは扱わない．
-多相 let・perform・入れ子 handler の条件付き健全性出力にも，同じ $S$ で適用した．
-
-\clearpage
-\textbf{系7相当：実際の再構成結果の主要型}
-
-型領域は \key{equalityTypes} とし，定理16で明示した主要正規化・閉性・
-変数等式の追加条件・効果等式の追加閉性・lifting・恒真な解決済み制約を仮定する．
-操作宣言は閉じており，$\supp\Gamma=\varnothing$，$\Real_\top(\Gamma)$ とする．
-原典の系7との比較では，この追加条件と値制限を明示する．
-
-\begin{theorem}[閉環境での再構成された主要計算型・値の主要型]
-上記の前提の下で，$\operatorname{Typing}_S(\top,\Gamma,e,s,\epsilon)$ ならば，
-実際の算法の結果 $n$ が存在し，$q=\key{reconstructedScheme}(\Gamma,n)$ として，
-\[
-\begin{gathered}
-\mathcal T(\Gamma,e)=\mathsf{reconstructed}(n),\qquad q.\mathrm{outer}=_e\top,\\
-\operatorname{PrincipalComputationScheme}_S(\Gamma,e,q),\\
-\forall C,t,\eta.\quad\operatorname{Typing}_S(C,\Gamma,e,t,\eta)
- \Rightarrow \operatorname{FiniteInstance}(q,C,t,\eta),\\
-\forall C,s',\eta.\quad\operatorname{Typing}_S(C,\Gamma,e,s',\eta)
- \Rightarrow C\vdash_i q.\mathrm{valueScheme}\succeq s',\\
-\operatorname{Value}(e)\Rightarrow
- \operatorname{PrincipalPair}_S(\Gamma,e,\top,q.\mathrm{valueScheme}).
-\end{gathered}
-\]
-\end{theorem}
-\key{Typing.corollary7}．成功した出力を固定する形は
-\key{inferTerm\_principal\_closed} である．後者では入力環境の許容性を前提とし，
-前者では元の型付けからその許容性を取り出す．
-
-主要計算型は $\top;\Gamma$ で同じ $S$ の計算型付けを持ち，
-任意の対象単相型と効果を比較する．さらに \key{FiniteInstance} は，
-一つの有限代入で対象制約が成立する全評価について比較し，その代入の定義域を $q$ の量化変数に制限する．
-主要対は通常の型付けと任意の qualified 型への構文的比較を含む．
-非値の式を通常の多相型に一般化する規則は追加しない．
-
-比較対象には qualified な \key{existsIntro} を含む全導出を許す．
-対象型の実現可能性，代入後の環境の許容性，強い正規化器の契約は追加しない．
-環境の閉性を意味論的な自由変数だけで表す形や，任意の \key{TypeDomain} への拡張は
-ここでは主張しない．
-
-\clearpage
-\textbf{系7の証明と検証}
-
-\begin{enumerate}
-\item \key{Context.subst\_approximates\_closed} により
-$\Gamma[\psi]$ から元の $\Gamma$ への近似を構成する．
-捕獲回避代入で束縛名が変わるため，両環境の構文的な等号は仮定しない．
-定理16の証明を近似先の環境を指定できる形に分離し，出力の型付けを元の環境で得る．
-\item 定理17の単相比較の共通部分を
-\key{inferTerm\_complete\_mono\_of\_ground} として使う．
-\key{inferTerm\_finite\_closed} は，各対象判断から得られる推論結果を算法の
-一意性で同じ $n$ にそろえ，比較代入を一般化した変数に制限する．
-\item 閉環境では，残余制約・結果型・効果の support の全体が量化される．
-残余制約の充足可能性から $q.\mathrm{outer}=_e\top$ を導き，
-元の環境での計算型付けを $\top$ の下に戻す．
-\item 有限代入による単相比較を
-\key{Typing.instance\_of\_finite\_sameSolved} に渡し，任意の qualified 型との比較を得る．
-この補題の即時効果を任意に拡張した．
-
-値については
-\key{ComputationTyping.principal\_value\_sameSolved} が通常の主要対を与える．
-\end{enumerate}
-
-\textbf{実在するモデルでの確認}
-$S=\Sat_X$ の非計算的な正規化器では，生成完全性から直接，次を証明する．\par
-\key{inferTerm\_satisfiable\_open}，\par
-\key{inferTerm\_satisfiable\_closed}．
-新しい条件付き定理の変数等式の前提を満たすとは仮定しない．
-\begin{itemize}
-\item 空環境と空でない閉じた qualified 環境の恒等関数の主要型．
-\item 型・効果の代入先と束縛名の衝突，qualified 型への空でない存在射影．
-\item 実現可能でない対象型との比較．
-\item 多相 let・perform・入れ子 handler を一つに組み合わせた閉環境の主要計算型．
-\item 即時効果が空でない perform の有限代入による比較．
-\end{itemize}
-これは型等式を消去して効果専用の残余を返す具体的 solver の全条件の証明ではない．
-
-\textbf{HMXとの対応と残る課題}
-\begin{center}\small
-\begin{tabular}{@{}ll@{}}\toprule
-学位論文との対応 & 状態\\\midrule
-定理7：対象13規則の導出変換 & 明示した追加条件下で証明済み\\
-定理16：$\operatorname{Typing}_S$ での出力健全性 & 上記の追加条件・環境条件下で証明済み\\
-定理17：受理・単相判断の有限因子 & 上記の閉性条件下で証明済み\\
-定理17：qualified 型・外側条件の同時比較 & 上記の型領域・閉性条件下で証明済み\\
-系7：同じ $S$ 内での主要型 & 上記の追加条件・閉環境で証明済み\\\bottomrule
-\end{tabular}\end{center}
-handler の $\forall B.\exists J$ を含む生成は，完全性と条件付き出力健全性の対象．
-生成導出について内部の変換と量化・非脱出を保存する．
-任意の qualified 型への射影変換と，具体的制約系が全条件を満たす証明は未完了．
-次は具体的な型・効果の制約系について，主要正規化・閉性・lifting の前提を証明する．
-
-\clearpage
-\section{具体化：正則な型クラス制約}
-\[
-\begin{gathered}
-K=\{k_1,\ldots,k_n\},\quad\operatorname{arity}:K\to\mathbb N,
-\qquad\mathcal C=\{C_1,\ldots,C_m\},\\
-t::=\alpha\mid b\mid\arr t\epsilon t\mid k(t_1,\ldots,t_{\operatorname{arity}(k)}),
-\qquad V=\{t\mid\FV(t)=\varnothing\},\quad {\leq}={=},\\
-D::=\top\mid\bot\mid D\land D\mid t=u\mid C(t)\mid\epsilon\subseteq\eta
- \mid o\notin\epsilon\mid\exists A.D\mid\forall B.\exists J.D\mid\theta D.
-\end{gathered}
-\]
-$\theta D$ は遅延代入：$\rho\models\theta D\iff\theta^*\rho\models D$．
-\[
-\begin{gathered}
-\mathcal I_b\subseteq\mathcal C\times\mathrm{Base},\qquad
-\mathcal I(C,k)\in\{\bot\}\cup\prod_{j<\operatorname{arity}(k)}\mathcal P(\mathcal C),\\
-\mathcal I(C,k)=(P_j)_j\quad\equiv\quad
- \frac{\bigwedge_j\bigwedge_{D\in P_j}D(\alpha_j)}{C(k(\vec\alpha))}.
-\end{gathered}
-\]
-同一 head は一つ．前提は head の真部分型のみ．矢印型のインスタンスは置かない．
-\[
-\begin{aligned}
-\operatorname{covers}(P,Q)&\iff Q\subseteq\bigcup_{C\in P}(\{C\}\cup\operatorname{sup}(C)),\\
-\operatorname{WF}(\mathcal I)&\iff
- \bigl(D\in\operatorname{sup}(C)\Rightarrow
- D<C\land\operatorname{sup}(D)\subseteq\operatorname{sup}(C)\bigr)\ \land\\
- &\quad\bigl((C,b)\in\mathcal I_b\Rightarrow
- \forall D\in\operatorname{sup}(C).\ (D,b)\in\mathcal I_b\bigr)\ \land\\
- &\quad\bigl(\mathcal I(C,k)=(P_j)_j\Rightarrow
- \forall D\in\operatorname{sup}(C).\ \exists(Q_j)_j.\
- \mathcal I(D,k)=(Q_j)_j\land\forall j.\operatorname{covers}(P_j,Q_j)\bigr).
-\end{aligned}
-\]
-\[
-\operatorname{check}(\Delta)=\mathsf{some}(\mathcal I,\pi)
-\iff\operatorname{NoDuplicateHeads}(\Delta)\land\operatorname{WF}(\mathcal I),
-\quad\mathcal I=\operatorname{environment}(\Delta).
-\]
-\textbf{有限状態による存在判定}
-\[
-\begin{aligned}
-q(b)&=\{C\mid(C,b)\in\mathcal I_b\},& q(\arr uE v)&=\varnothing,\\
-\delta_k(q_1,\ldots,q_r)&=\{C\mid\mathcal I(C,k)=(P_j)_j\land\forall j.\ P_j\subseteq q_j\},\\
-q(k(\vec u))&=\delta_k(q(u_1),\ldots,q(u_r)),\\
-R_0&=\{\varnothing\}\cup\{q(b)\mid(C,b)\in\mathcal I_b\},\\
-R_{i+1}&=R_i\cup\{\delta_k(\vec q)\mid k\in K,\ \vec q\in R_i^{\operatorname{arity}(k)}\}.
-\end{aligned}
-\]
-\begin{theorem}
-\[
-\begin{gathered}
-\operatorname{WF}(\mathcal I)\Rightarrow
- (\mathcal I\vdash C(u)\iff C\in q(u)),\\
-R=\operatorname{lfp}(R_i),\qquad q\in R\iff\exists u\in V.\ q(u)=q,\\
-\operatorname{inhabited}(P)=\mathsf{true}
-\iff\exists q\in R.\ P\subseteq q
-\iff\exists u.\ \bigwedge_{C\in P}C\in q(u).
-\end{gathered}
-\]
-\end{theorem}
-\begin{proof}
-構造帰納法．飽和の測度は $2^m-|R_i|$．同一変数の述語は $P$ に集約する．
-\end{proof}
-
-\clearpage
-\section{効果判定・存在射影・実行結果}
-効果原子の連言を $F$，出現する名前・ラベルを $M,L$ とする．
-\[
-\begin{aligned}
-Q_0&=M\times L,& \rho_Q(\mu)&=\{o\mid(\mu,o)\in Q\},\\
-\operatorname{allow}_{\epsilon\subseteq\eta}(Q,\mu,o)
- &\iff\mu\in\FV_E(\epsilon)\Rightarrow o\in\eval\eta_{\rho_Q},\\
-\operatorname{allow}_{p\notin\epsilon}(Q,\mu,o)
- &\iff\mu\in\FV_E(\epsilon)\Rightarrow o\ne p,\\
-Q_{i+1}&=\{(\mu,o)\in Q_i\mid\forall f\in F.\operatorname{allow}_f(Q_i,\mu,o)\},\\
-Q_*&=\operatorname{gfp}(Q_i),&
-\operatorname{effectSat}(F)&=[\rho_{Q_*}\models F].
-\end{aligned}
-\]
-\begin{theorem}
-\[
-\operatorname{effectSat}(F)=\mathsf{true}\iff\exists\rho_E.\rho_E\models F.
-\]
-\end{theorem}
-\begin{proof}
-$\rho\models F\Rightarrow(\rho\cap L)\models F$．$Q_0$ 内の任意のモデルは各 $Q_i$ 以下．
-固定点では変数由来の包含・不在が成立し，残るリテラル条件はモデルの存在から従う．
-停止測度は $|Q_i|$．
-\end{proof}
-\textbf{射影}
-\[
-\begin{gathered}
-D\models\alpha=t,\quad\alpha\notin\FV_T(t),\quad\alpha\in A_T,\quad\theta=[\alpha\mapsto t]
-\quad\Longrightarrow\quad
- \exists A.D\equiv\exists(A\setminus\{\alpha\}).\theta D,\\
-D\models\mu=\epsilon,\quad\mu\notin\FV_E(\epsilon),\quad\mu\in A_E
-\quad\Longrightarrow\quad
- \exists A.D\equiv\exists(A\setminus\{\mu\}).[\mu\mapsto\epsilon]D,\\
-\supp D\subseteq A\quad\Longrightarrow\quad
- \rho\models\exists A.D\iff\Sat(D),\\
-N(\forall B.\exists J.D)=\operatorname{smartClause}(B,\varnothing,\operatorname{project}(J,N(D))),\\
-\boxed{N(D)\equiv D}.
-\end{gathered}
-\]
-型・効果の束縛をまたぐ未処理の代入は suspension として残す．
-\[
-\alpha\in\FV_T(t),\quad t\ne\alpha
-\ \Rightarrow\ |\rho_T(\alpha)|<|\eval t_\rho|
-\ \Rightarrow\ \neg\Sat(\alpha=t).
-\]
-\textbf{具体的 solver $S_{\rm tc}$}
-\[
-\begin{gathered}
-S_{\rm tc}(G,W)=\mathsf{solved}(R,\theta)\Rightarrow
- \Solved(\theta)\land\theta G\equiv G\land\theta R\equiv R\land\Sat(G\land R),\\
-G\land R\models\theta W,\qquad
-G\land W\models R\land[\theta],\\
-S_{\rm tc}(G,W)=\mathsf{unresolved}(R)\Rightarrow G\land R\equiv G\land W,\\
-S_{\rm tc}(G,W)=\mathsf{inconsistent}\Rightarrow\neg\Sat(G\land W).
-\end{gathered}
-\]
-$S_{\rm tc}$ は有限探索・構造再帰・上記の停止測度で計算する．意味的な充足可能性 oracle は用いない．
-健全性・主要性は前節の定理を $X_{\rm tc},N,S_{\rm tc}$ に適用する（同じ環境・宣言の前提）．
-
-\clearpage
-\section{完全性の証明範囲と具体的検証}
-\[
-\begin{aligned}
-F&::=\top\mid F\land F\mid C(\alpha)\mid\epsilon\subseteq\eta\mid o\notin\epsilon,\\
-\mathcal D&::=F\mid\exists A.\mathcal D.
-\end{aligned}
-\]
-$\operatorname{simplify}$ は構造的簡約，$N$ は存在射影を含む正規化．
-\begin{theorem}[具体的 solver の部分体系での完全性]
-\[
-\operatorname{simplify}(G\land N(W))\in\mathcal D\land\Sat(G\land W)
-\quad\Longrightarrow\quad\exists R,\theta.\ S_{\rm tc}(G,W)=\mathsf{solved}(R,\theta).
-\]
-\end{theorem}
-型等式の逐次消去も実装するが，全ての handler-free 生成制約が判定域へ到達する証明は未完了．
-全体系の $\operatorname{Complete}(S_{\rm tc})$，handler 固有の不完全性は主張しない．
-\[
-\begin{gathered}
-\operatorname{Eq}(\mathrm{Int}),\ \operatorname{Eq}(\mathrm{Bool}),\ \operatorname{Ord}(\mathrm{Int}),
-\quad\operatorname{Ord}(\alpha)\Rightarrow\operatorname{Eq}(\alpha),\\
-C(\alpha)\Rightarrow C(\operatorname{List}\alpha),\qquad
-C(\alpha)\land C(\beta)\Rightarrow C(\operatorname{Pair}(\alpha,\beta)),
-\quad C\in\{\operatorname{Eq},\operatorname{Ord}\}.
-\end{gathered}
-\]
-\begin{center}\small
-\begin{tabular}{@{}ll@{}}\toprule
-入力（$G=\top$） & 実行結果\\\midrule
-$\operatorname{Eq}(\operatorname{List}\mathrm{Bool})$ & $\mathsf{solved}$\\
-$\operatorname{Ord}(\operatorname{List}\mathrm{Bool})$ & $\mathsf{inconsistent}$\\
-$\operatorname{Eq}(\alpha)$ & $\mathsf{solved}(\operatorname{Eq}(\alpha),\mathrm{id})$\\
-$\exists\alpha.\operatorname{Eq}(\alpha)$ & $\mathsf{solved}(\top,\mathrm{id})$\\
-$\alpha=\mathrm{Int}$ & $\mathsf{solved}(\top,[\alpha\mapsto\mathrm{Int}])$\\
-$\alpha=\operatorname{List}\alpha$ & $\mathsf{inconsistent}$\\
-$\forall\alpha.\exists\beta.\alpha=\beta$ & $\mathsf{solved}$\\
-$\exists\beta.\forall\alpha.\alpha=\beta$ & $\mathsf{unresolved}$\\\bottomrule
-\end{tabular}\end{center}
-最後の式は偽であり，未解決は検出能力の制限を表す．量化順序の交換は行わない．
-\[
-\begin{gathered}
-\Sigma(o)=\forall\alpha.\alpha\to\alpha,\qquad
- e_h=\mathbf{handle}_o(\mathbf{perform}\ o\ 0_{\mathrm{int}},\;0,\;0\ 1),\\
-[]\vdash_g e_h:\mathrm{Int}!\varnothing,
-\qquad \Inf_{N,S_{\rm tc}}([],e_h)=\mathsf{solved}(R,\theta).
-\end{gathered}
-\]
-後者と多相 let・未使用の $\operatorname{Eq}$ 束縛・perform は実行検証．前者は Lean の型付け証明．
-\textbf{対応表}（名前空間 \key{EHMX.TypeClasses}）
-\small
-\begin{longtable}{@{}p{.40\linewidth}p{.57\linewidth}@{}}\toprule
-保証 & Lean\\\midrule
-宣言検査・クラス意味論 & \key{Declarations.check\_iff}, \key{holds\_iff}\\
-共同存在判定 & \key{reachable\_iff}, \key{inhabited\_iff}\\
-効果の完全な判定 & \key{propagationSat\_iff}\\
-平坦な制約の完全な判定 & \key{flatSat\_iff}\\
-型・効果の存在消去 & \key{eliminate\_bound}, \key{eliminate\_effect}\\
-同値正規化 & \key{normalize\_correct}\\
-具体的 solver の契約 & \key{solver}\\
-具体的推論の健全性・主要性 & \key{inferClasses\_sound}, \key{inferClasses\_principal}\\
-上記 $\mathcal D$ の完全性 & \key{solver\_complete\_fragment}\\
-具体的 handler の型付け & \key{Examples.resumeIdentity\_ground}\\
-実行検証 & \key{Examples.regressions}\\\bottomrule
-\end{longtable}\normalsize
-
-\clearpage
-\section{抽象定理の Lean 対応}
-\textbf{対応表}（名前空間 \key{EHMX.HMX}）
-\begingroup
-\renewcommand{\arraystretch}{0.94}
-\footnotesize
-\begin{longtable}{@{}p{.38\linewidth}p{.59\linewidth}@{}}
+\section*{範囲と状態}
+\textbf{定理7・16・17・系7は未証明である．}
+\key{Statements.lean} の宣言は命題を定義する \key{def ... : Prop} であり，
+証明でも公理でもない．今回の対象は構文・定義・条件・仮定・定理文の修正である．
+旧 \key{Constraints}，独立した意味論的代入作用，旧四定理，
+旧正規化と依存する具体 solver は削除した．
+
+参照は Martin Sulzmann, \emph{A General Framework for Hindley/Milner Type Systems
+with Constraints}, 2000, §§3--4, Appendix C.4 である．
+\href{https://www.researchgate.net/publication/213884919_A_General_Framework_for_HindleyMilner_Type_Systems_with_Constraints}{原典公開ページ}．
+
+\begin{longtable}{p{.25\linewidth}p{.66\linewidth}}
 \toprule
-数式・保証 & Lean\\\midrule
-再構成用の生成導出 & \key{Inference.sound\_reconstruction}\\
-生成導出の変換 & \key{Derivation.}\\
- & \key{transform\_to\_solved\_subst\_reconstruction}\\
-定理16：一般の $S$ & \key{theorem16}, \key{inferTerm\_sound}\\
-定理16：効果だけの残余 & \key{inferTermAt\_sound\_effectOnly},\\
- & \key{inferTerm\_sound\_effectOnly}\\
-代入後の環境の自己近似 & \key{EffectResiduals.output\_environment\_self}\\
-定理17：qualified 型までの完全性 & \key{theorem17}, \key{inferTerm\_complete\_scheme}\\
-系7：実際の出力の主要型 & \key{corollary7}, \key{Typing.corollary7}\\
-閉環境での有限代入による比較 & \key{inferTerm\_finite\_closed}\\
-元の閉環境への近似 & \key{Context.subst\_approximates\_closed}\\
-一般化で保持する名前 & \key{Substitution.imageSupport}\\
-同じ $S$ の計算スキームへの一般化 & \key{Typing.reconstructed\_computation}\\
-比較から外側条件の含意 & \key{ComputationScheme.outer\_of\_typing\_instance}\\
-$\Gen,\Proj,\Inf^{\mathrm{at}},\Inf$ & \key{generate}, \key{generateProjected}, \key{inferAt}, \key{infer}\\
-部分・完全 solver & \key{PartialSolver}, \key{PartialSolver.Complete}\\
-契約の非計算的モデル & \key{PartialSolver.semantic\_complete}\\
-充足可能性判定器 & \key{SatDecider}\\
-判定器から完全な solver & \key{SatDecider.solver\_complete}\\
-充足可能性と成功の同値 & \key{SatDecider.solver\_solved\_iff}\\
-不充足・未解決の排除 & \key{SatDecider.solver\_inconsistent\_iff},\\
- & \key{SatDecider.solver\_ne\_unresolved}\\
-射影閉性・主要正規形 & \key{Constraints.satisfiable\_exists\_iff},\\
- & \key{ScopedPrincipalNormalizer.satisfiable}\\
-固定した生成の健全性 & \key{generate\_sound}\\
-固定した生成の完全性 & \key{Inference.groundComplete}\\
-判定器なしの主要型の存在 & \key{Typing.principal\_computation\_run},\\
- & \key{Typing.principal\_value}\\
-射影後の正確性 & \key{generateProjected\_ground\_iff}\\
-開環境の成功時健全性 & \key{inferAt\_ground\_sound}, \key{inferAt\_sound}\\
-一般 solver の開環境有限因子 & \key{infer\_principal\_open}\\
-実際の結果の主要性 & \key{infer\_principal\_closed}\\
-期待型なしの条件付き完全性 & \key{infer\_complete}\\
-判定器からの合成完全性 & \key{SatDecider.infer\_complete}\\
-判定器からの合成健全性 & \key{SatDecider.infer\_sound\_of\_admissible}\\
-開環境の生成完全性 & \key{Typing.inference\_complete\_scheme}\\
-開環境の生成主要性 & \key{Typing.principal\_computation\_open\_at}\\
-qualified 型への比較 & \key{Typing.instance\_of\_finite\_realizable}\\
-開環境の値の主要対 & \key{Typing.principal\_value\_open}\\
-閉環境への特殊化 & \key{Typing.principal\_closed\_from\_open}\\
-開環境の合成完全性 & \key{SatDecider.infer\_complete\_scheme}\\
-開環境の合成主要性 & \key{SatDecider.infer\_principal\_open}\\
-開環境の値の主要出力 & \key{SatDecider.infer\_principal\_value\_open}\\
-外側条件の保持 & \key{OpenExamples.qualified\_outer\_condition}\\
-開環境の handler & \key{OpenExamples.open\_nested\_handler\_complete}\\
-型付け可能なら主要出力 & \key{SatDecider.infer\_principal}\\
-推論での未解決の排除 & \key{SatDecider.infer\_ne\_unresolved}\\
-不整合・未解決 & \key{inferAt\_inconsistent}, \key{inferAt\_unresolved}\\
-handler の具体例 & \key{AlgorithmExamples.resumeIdentity\_ground},\\
- & \key{resumeIdentity\_generated}, \key{resumeIdentity\_complete}, \key{resumeIdentity\_deferred}\\
-判定器を仮定した適用例 & \key{AlgorithmExamples.polymorphicLet\_principal\_of\_decider},\\
- & \key{resumeIdentity\_principal\_of\_decider},\\
- & \key{nestedHandler\_principal\_of\_decider}\\
-\bottomrule
+原典・対象 & Lean の対応\\\midrule
+定義2--5 & \key{ConstraintTheory}：含意，射影，自由変数，充足可能性．\\
+§3.2，定義6--7 & \key{TypeSignature}，\key{TypeTerm}，\key{Substitution}，\key{TermConstraintTheory}．\\
+§3.4，定義14--18 & スキーム同値，環境比較，整合性，\key{Generalizes}，\key{Scheme.Approximates}．\\
+図3.1と図3.4 & \key{Presentation.term/constraint}．解決済み集合 S とは別の添字．\\
+定義20，22--25 & 構文的な代入域，制約問題，全変数での主要性．\\
+定義26--28，注3 & 型の等式自由性，有限述語集合，有効な符号化，代表元の条件．\\
+図4.4 & 帰納的関係 \key{Generates} と \key{Reconstructs}，別に実装 \key{generate} と \key{inferTerm}．\\
+定理7，16，17，系7 & 原典に対応する関係の命題，EHMX 版，実装についての命題を分離．\\
+定義29 & \key{Statements.PrincipalPair}．計算結果の主要性とは別定義．\\\bottomrule
 \end{longtable}
-\normalsize
-\endgroup
-\clearpage
-\begin{thebibliography}{9}
-\bibitem{Sulzmann2000} M. Sulzmann.
-\emph{A General Framework for Hindley/Milner Type Systems with Constraints}.
-PhD thesis, 2000, \S\S4.2--4.4.
-\href{https://www.researchgate.net/publication/213884919_A_General_Framework_for_HindleyMilner_Type_Systems_with_Constraints}{原典}.
-\bibitem{OutsideIn} D. Vytiniotis, S. Peyton Jones, T. Schrijvers, M. Sulzmann.
-\emph{OutsideIn(X): Modular type inference with local assumptions}. JFP, 2011,
-\S\S3.6, 6.4.
-\href{https://simon.peytonjones.org/assets/pdfs/outsideinx.pdf}{原典}.
-\end{thebibliography}
+
+\section*{維持する差異}
+\begin{enumerate}
+\item 効果の名前と潜在効果，有限集合の効果項，\key{perform}，handler，値制限．
+\item 正規形比較は対象残余の下で一致を要求する．因子は全評価に共通の一つの有限代入．
+\item 定理17の環境・効果の一致も対象制約 C の下で述べる．
+\item 比較の全称右規則は結論 C を維持する．型付けの全称導入は射影のガードを維持する．
+\item 比較導出の各節点の解決済み条件を明示する（原典付録197ページの条件）．
+\item EHMX 版で使う lifting を明示し，等式自由性は型項だけに課して効果等式を許す．
+\end{enumerate}
+\key{existsIntro} 自体は図3.4に存在する．これを EHMX 独自規則とは呼ばない．
+式変数の de Bruijn 添字，有限保存範囲，明示的な同値関係は Lean の表現上の選択である．
+
+\newpage
+\section{制約系，型項，有限同時代入}
+\key{ConstraintTheory} の含意 $C\vdash_X D$ は独立した関係であり，
+一つの固定した解釈で定義しない．$\equiv_X$ は双方向の含意．
+反射性・推移性，$\top$，連言の導入・除去に加えて次を満たす．
+\[
+\begin{gathered}
+C\vdash_X\exists A.C,\quad
+C\vdash_XD\Longrightarrow\exists A.C\vdash_X\exists A.D,\\
+\exists A.(C\land\exists A.D)\equiv_X(\exists A.C)\land(\exists A.D),\\
+\exists A.\exists B.C\equiv_X\exists B.\exists A.C.
+\end{gathered}
+\]
+空集合と集合の和による射影は有限反復を表す．保存範囲外への射影は制約を変えない．
+\[
+\FV(C)=\{a\mid \exists a.C\not\equiv_X C\},\quad
+\Sat(C)\iff\top\vdash_X\exists\FV(C).C,\quad
+\Adm_S(C)\iff\exists D\in S.\ C\equiv_XD.
+\]
+\key{SolvedForms S} は $S\subseteq\Sat$ のみ．射影閉性や改名閉性は別命題であり，
+一律の連言閉性は要求しない．空の S を定義で排除しない．
+
+\subsection*{開いた型項と述語}
+\key{TypeSignature} は任意の構成子と型・効果引数の個数を指定する．
+\key{TypeTerm} は変数，効果付き矢印，その構成子からなる自由項代数．
+\key{TypeSyntax} はこれとの同型と，構文操作・自由変数の対応を持つ．
+閉じた型項の存在は要求しない．整数・真偽値などの定数の型は有限初期環境が与える．
+\[
+\begin{aligned}
+p&::=P(\bar t;\bar\epsilon)\mid t=u\mid t\preceq u
+ \mid\epsilon=\eta\mid\epsilon\subseteq\eta\mid\operatorname{lacks}(o,\epsilon),\\
+C&::=\top\mid p\mid C\land C\mid\exists A.C\mid\forall B.C.
+\end{aligned}
+\]
+全称射影と効果述語は EHMX 拡張．定義2の有限トークン集合は
+\key{ConstraintSyntax.TokenSet} とその連言として表せる．
+\key{ConstraintPresentation} は全制約を同値な構文に表すが，
+その符号化に連言などの\textbf{構文的一致}を要求しない．有限集合の連言を排除しないためである．
+
+\subsection*{代入は構文から一度だけ構成する}
+\key{FiniteSubstitution} は有限写像，\key{Substitution} はそのうち冪等なもの（定義6）．
+\key{Renaming} は有限置換．写像の合成や制限には冪等性を自動付与しない．
+\[
+\dom(\theta)=\{a\mid\theta a\ne a\}\quad\text{（構文的な不一致）},\qquad
+\operatorname{cod}(\theta)=\FV\{\theta a\mid a\in\dom(\theta)\}.
+\]
+保存範囲 \key{supportBound} は代入域とは異なる．
+述語引数には同時代入し，量化の下では束縛名を新鮮化してから再帰する．
+\key{Theory.subst} はこの構文的作用だけを使う．
+
+D1--D5 と，\textbf{述語 p に対する} D6 を条件に置く．
+\[
+[t/a]p\equiv_X\exists a.(p\land a=t)\quad(a\notin\FV(t)).
+\]
+D4 の異なる変数という慣習は $i\ne j$ と明記する．
+一般の制約への代入による含意保存・同値保存・表現独立性は
+\key{SubstitutionPreservesEntailment} 等の\textbf{未証明の命題}とし，追加の仮定にしない．
+型比較の REFL・ASYM・TRANS・CONTRA と効果に関する法則は \key{Theory} に記述する．
+
+\newpage
+\section{スキーム，環境，比較，一般化}
+\[
+s::=t\mid\forall A.C\Rightarrow t,\qquad
+\FV(\forall A.C\Rightarrow t)=(\FV(C)\cup\FV(t))\setminus A.
+\]
+図3.1は一層のスキームを使う（§3.4.5）．\key{Scheme.Equivalent} は
+束縛名の改名と条件の論理的同値を含み，型付けと比較にも同値の移送規則を置く．
+環境は，重複のない有限定数表と局所変数のリストである．
+自由変数，代入，許容性，環境比較は\textbf{両方}に作用する．
+
+\subsection*{比較関係 i}
+\[
+\frac{C\vdash_X t\preceq u}{C\vdash_i t\preceq u}\qquad
+\frac{\dom(\theta)\subseteq A\quad C\vdash_X\theta D\quad C\vdash_i\theta t\preceq s}
+ {C\vdash_i(\forall A.D\Rightarrow t)\preceq s}
+\]
+\[
+\frac{A\cap\FV(C,s)=\varnothing\quad C\land D\vdash_i s\preceq t}
+ {C\vdash_i s\preceq(\forall A.D\Rightarrow t)}.
+\]
+左規則の右辺 s は任意のスキーム．右規則の結論 C は承認済みの変更である．
+\key{Instance} はこの導出の存在．\key{SolvedInstance} は全節点の判断制約が
+$\Adm_S$ に属する導出の存在で，右規則の $C\land D$ も検査する．
+定義14の環境比較は同じ変数・定数ごとの比較，定義15の制約付き環境比較は
+$C\vdash_XD$ と $C\vdash_i\Gamma\preceq\Gamma'$ の組である．
+
+定義17の整合性は，代入後の制約・スキーム・環境が許容されること．
+\key{ConsistentConstraint}，\key{Scheme.Consistent}，\key{Context.Consistent} に分ける．
+スキームへの代入では先に束縛を新鮮化する．S の任意代入閉性は課さない．
+
+\subsection*{定義18：近似}
+$C\vdash s\mapsto_Ss'$ は，$s$ が $\Sat$ で許容され，C と $s'$ が S で許容され，
+\[
+\top\vdash_i s\preceq s',\qquad
+\forall u\text{ 許容}.\
+ (C\vdash_i s\preceq u)_{\mathrm{solved}}\Longrightarrow
+ (C\vdash_i s'\preceq u)_{\mathrm{solved}}
+\]
+を満たすこと．最初の比較は無条件である．環境近似は各要素の近似．
+実現可能性は $\exists t.\ C\vdash_i s\preceq t$ で，ground 値の表現可能性ではない．
+
+\subsection*{§3.4.4：一般化関係}
+\key{Generalizes S C Γ t Co so} を $\gen C\Gamma t{C_o}{s_o}$ と書く．
+C，$C_o$，$s_o$ が許容され，ある A，$C_1$，$C_2$ について
+\[
+\begin{gathered}
+C_o\equiv_X\exists A.C,\qquad C_o\equiv_X C_1\land\exists A.C_2,\\
+s_o\equiv\forall A.C_2\Rightarrow t,\qquad A\cap\FV(C_1,\Gamma)=\varnothing.
+\end{gathered}
+\]
+最大の A を返す関数に固定しない．原典にない $C\equiv_XC_1\land C_2$ を追加しない．
+閉環境，閉スキーム，閉判断は別定義であり，環境が閉じているだけでは判断全体は閉じない．
+
+\newpage
+\section{二つの型付け形式}
+\key{Derivation p fragment} の p は \key{term} または \key{constraint}．
+\key{Fragment.core/handlers} は操作規則を使えるかを指定する．
+\textbf{どちらの添字も導出全体に共通}であり，入力だけを制限しない．
+解決済み集合 S はこの二つとは独立である．
+\key{constraint} 形式の型の位置には変数と矢印だけを許す．制約内の述語引数は任意の型項を許す．
+
+式は変数，定数，ラムダ，適用，let，perform，handler．値は変数・定数・ラムダ．
+判断 $\ty C\Gamma e s\epsilon$ は以下の規則と許容性検査で定める．
+\[
+\frac{\Gamma(x)=s}{\ty C\Gamma x s\varnothing}\qquad
+\frac{\ty C{t::\Gamma}e u\epsilon}{\ty C\Gamma{\lambda e}{\arr t\epsilon u}\varnothing}
+\]
+定数も初期環境の検索によって同じ形で型付けする．
+\[
+\frac{\ty C\Gamma f{\arr t\eta u}{\epsilon_f}\quad\ty C\Gamma x t{\epsilon_x}}
+ {\ty C\Gamma{f\ x}u{\epsilon_f\cup\epsilon_x\cup\eta}}
+\]
+\[
+\frac{v\text{ は値}\quad\ty C\Gamma v s\varnothing\quad\ty C{s::\Gamma}e t\epsilon}
+ {\ty C\Gamma{\mathbf{let}\ v\ \mathbf{in}\ e}t\epsilon}
+\]
+非値の let は単相型 t で束縛し，二つの即時効果を合併する．Sub は型比較だけを行う．
+\[
+\frac{e\text{ は値}\quad A\cap\FV(C,\Gamma)=\varnothing\quad
+ \ty{C\land D}\Gamma e t\varnothing}
+ {\ty{C\land\exists A.D}\Gamma e{\forall A.D\Rightarrow t}\varnothing}
+\]
+\subsection*{全称除去を分ける}
+term 形式の \key{forallElimSubst}：
+\[
+\frac{\ty C\Gamma e{\forall A.D\Rightarrow t}\epsilon\quad
+ \dom(\theta)\subseteq A\quad C\vdash_X\theta D}
+ {\ty C\Gamma e{\theta t}\epsilon}.
+\]
+constraint 形式の \key{forallElimConstraint}（図3.4）：
+\[
+\frac{\ty C\Gamma e{\forall A.D\Rightarrow t}\epsilon\quad C\vdash_X\exists A.D}
+ {\ty{C\land D}\Gamma e t\epsilon}.
+\]
+同じ constraint 形式の \key{existsIntro}：
+\[
+\frac{A\cap\FV(\Gamma,s,\epsilon)=\varnothing\quad\ty C\Gamma e s\epsilon}
+ {\ty{\exists A.C}\Gamma e s\epsilon}.
+\]
+最後の効果の非脱出は EHMX の追加条件．s は qualified スキームでもよい．
+
+制約の弱化，スキーム・環境の同値移送，論理的な効果等式による変更も持つ．
+\key{Derivation.Valid} は\textbf{各節点}の制約・環境・結論スキームの許容性と，
+型項の提示形式を検査する．両形式の対応は \key{presentationCorrespondence} という
+別の未証明命題であり，S を $\Sat$ に選ぶことと混同しない．
+
+\newpage
+\section{EHMX の操作と handler}
+操作宣言 $o:\forall B.\ t_{\mathrm{in}}\Rightarrow t_{\mathrm{out}}$ は
+$\FV(t_{\mathrm{in}},t_{\mathrm{out}})\subseteq B$ を満たす．
+\[
+\frac{\dom(\theta)\subseteq B\quad\ty C\Gamma e{\theta t_{\mathrm{in}}}\epsilon}
+ {\ty C\Gamma{\mathbf{perform}\ o\ e}{\theta t_{\mathrm{out}}}{\{o\}\cup\epsilon}}.
+\]
+\key{Operation.FreshInstance} は宣言の束縛名の単射な改名を指定する．
+handler の本体・戻り節・操作節は
+\[
+\begin{gathered}
+\ty C\Gamma e{t_b}{\epsilon_b},\qquad
+\ty C{t_b::\Gamma}r{t_r}{\epsilon_r},\\
+\ty D{(\arr{t_{\mathrm{out}}}{\epsilon_o}{t_r})::t_{\mathrm{in}}::\Gamma}
+ h{t_h}{\epsilon_h}.
+\end{gathered}
+\]
+操作節の継続は第0変数，操作引数は第1変数．handler の条件は
+\[
+\begin{gathered}
+C\vdash_X\forall B.\exists W.
+ (D\land t_h\preceq t_r\land\epsilon_h\subseteq\epsilon_o),\\
+C\vdash_X\operatorname{split}(o,\epsilon_b,\rho),\quad
+C\vdash_X\rho\subseteq\epsilon_o,\quad C\vdash_X\epsilon_r\subseteq\epsilon_o,
+\end{gathered}
+\]
+ここで
+\[
+\operatorname{split}(o,\epsilon_b,\rho)=
+ (\rho\subseteq\epsilon_b)\land(\epsilon_b\subseteq\{o\}\cup\rho)
+ \land\operatorname{lacks}(o,\rho).
+\]
+結論は $\ty C\Gamma{\mathbf{handle}\ e\ o\ r\ h}{t_r}{\epsilon_o}$．
+型の Sub と効果の任意拡大を一つの規則にはしない．
+
+\subsection*{名前の条件}
+\key{Operation.Scoped} は次を明示する．
+\begin{itemize}
+\item B は環境，本体・結果型，外側の即時効果から新鮮である．
+\item W は環境，本体・結果型，操作入出力型，B から新鮮である．
+\item W は外側の制約 C と即時効果に自由出現しない．
+\end{itemize}
+宣言が閉じていることとこれらの条件は別である．操作節自身の導出にも
+\key{Derivation.Valid} を再帰適用し，その条件 D の許容性を検査する．
+
+\subsection*{一般化した計算結果}
+\key{ComputationScheme} は $R=(A,C,t,\epsilon)$．型部分は
+$\forall A.C\Rightarrow t$，外側の制約は $\exists A.C$．A を最大集合に固定する関数は設けない．
+\[
+\begin{aligned}
+R\mathrel{\operatorname{FiniteInstance}}(D,u,\eta)\iff
+\exists\theta.\;&\dom(\theta)\subseteq A\land D\vdash_X\theta C\\
+&{}\land D\vdash_X\theta t\preceq u\land D\vdash_X\theta\epsilon=\eta.
+\end{aligned}
+\]
+同じ一つの有限代入を使う．比較は従来どおり対象制約 D の下で行う．
+\key{PrincipalComputationScheme} は，条件 C の下での単相型付けと環境への非脱出を持ち，
+全ての単相型・効果の競合結果をこの関係で包含すること．
+これは非値の let を多相にする規則ではなく，系7の原典に対応する結論とも別の命題である．
+
+\newpage
+\section{図4.4：制約生成と再構成}
+\key{Generates} は帰納的関係．$\Gamma\vdash e\leadsto_i(t,\epsilon;C)$ と書く．
+結果型は常に新鮮な型変数 $t=\alpha$．以下の内部名は環境・出力から新鮮で，
+同じ規則内の別の型変数・効果変数はそれぞれ異なる．
+表示では $\top$ との連言を省略する（Lean の補助関数 \key{checked} はこれを明記する）．
+
+\begin{longtable}{p{.14\linewidth}p{.77\linewidth}}
+\toprule
+規則 & 子の推論と生成制約\\\midrule
+変数・定数 & 環境の $\forall A.D\Rightarrow t$ を新鮮化し，
+$\exists A.(D\land t=\alpha\land\varnothing=\epsilon)$．単相なら射影なし．\\[1mm]
+ラムダ & 子は $a::\Gamma\vdash e\leadsto_i(b,\mu;D)$．
+$\exists a,b,\mu.(D\land(\arr a\mu b)=\alpha\land\varnothing=\epsilon)$．\\[1mm]
+適用 & 子は $(a,\mu;C_f)$ と $(b,\nu;C_x)$．
+$\exists a,b,\mu,\nu,\rho.(C_f\land C_x\land a\preceq\arr b\rho\alpha
+\land\mu\cup\nu\cup\rho=\epsilon)$．\\[1mm]
+値 let & 値の子は $(a,\varnothing;C_v)$．
+$\forall a.C_v\Rightarrow a$ を束縛して本体を推論し，結果は
+$(\exists a.C_v)\land C_b$．内部で既に射影した変数を全称一般化しない．\\[1mm]
+非値 let & 単相 a を束縛．子は $(a,\mu;C_v)$ と $(\alpha,\nu;C_b)$．
+$\exists a,\mu,\nu.(C_v\land C_b\land\mu\cup\nu=\epsilon)$．\\[1mm]
+Equ & $C\equiv_XD$ なら生成結果の C を D に変更する．段階を限定しない．\\\bottomrule
+\end{longtable}
+
+perform の子には要求型 $t_{\mathrm{in}}$ と別の新鮮型 a を与え，
+$C_a\land a\preceq t_{\mathrm{in}}\land t_{\mathrm{out}}=\alpha
+\land\{o\}\cup\mu=\epsilon$ を生成する．宣言の新鮮名と a，$\mu$ は射影する．
+handler は本体型 a，結果型 b，戻り節型 r，操作節型 k を区別する．
+生成条件には $r\preceq b$ と，$\forall B.\exists k,\omega.(C_h\land k\preceq b
+\land\omega\subseteq\epsilon_o)$ を含む．本体・結果・戻り節と外側の補助効果は外で射影する．
+子の型と要求型を同一にして自明な比較に置き換えない．
+
+\subsection*{再構成関係と実装を分ける}
+\key{Reconstructs.finish} は生成制約 C と恒等代入の問題を主要正規化し，
+出力 $(D,\theta)$ から次を返す．
+\[
+\psi=\theta|_{\FV(\Gamma)},\qquad D,\quad\theta\alpha,\quad\theta\epsilon.
+\]
+帰納的関係は特定の計算関数を呼ばない．
+\key{generate} は保存範囲の上方から新鮮名を割り当てる一つの戦略で，
+値 let の条件に選んだ同値簡約器 N を適用する．\key{generateProjected} は出力外の名前を隠す．
+\key{inferTerm} は最後に一度だけ，同じ \key{PrincipalNormalizer} P を呼ぶ．
+変数・操作がなければ \key{none}，正規形がなければ \key{unrepresented} を返す．
+
+この実装と帰納的関係の対応は \key{implementationGeneration} 等の未証明課題．
+関係の定理を記述しただけで，実装の定理が得られたとはしない．
+
+\newpage
+\section{正規形と定義28}
+制約問題 $p=(C,\sigma)$ は冪等な有限代入を持ち，$\sigma C\equiv_XC$ を満たす．
+入力と出力に同じ型 \key{ConstraintProblem} を使う．
+\[
+\begin{aligned}
+n\succeq m\iff\exists\phi.\;&
+ \forall a.\ C_m\vdash_X (\phi\circ\theta_n)a=\theta_m a\\
+&{}\land C_m\vdash_X\phi C_n.
+\end{aligned}
+\]
+等式は型・効果の各 sort で述べる．$\phi$ は有限・冪等で，一つを全変数・全評価に使う．
+\textbf{対象残余 $C_m$ の下で一致する点は原典からの承認済み変更}である．
+\[
+\begin{aligned}
+\operatorname{Normal}_S(p,n)&\iff
+ p,n\text{ が問題}\land C_n\in S\land p\succeq n,\\
+\operatorname{Principal}_S(p,n)&\iff
+ \operatorname{Normal}_S(p,n)\land
+ \forall m.\operatorname{Normal}_S(p,m)\Longrightarrow n\succeq m.
+\end{aligned}
+\]
+\key{PrincipalNormalForms}（定義25）は「正規形があれば主要正規形がある」．
+\key{PrincipalNormalizer} は実際の関数と，成功の主要性，失敗と正規形不在の同値を持つ．
+\key{ofExistence} は古典選択による非計算的な実装で，計算可能性は主張しない．
+
+\subsection*{四条件は分けて記述する}
+\begin{enumerate}
+\item 定義28(i)：\key{ProjectionFreeProcedure}．入力は有限の原始述語集合と代入
+（\key{PrimitiveProblem}）．自然数コードから入力・出力を復号する
+\key{SolverEncoding} と，計算可能なコード上の関数を持つ．
+全入力の符号化可能性，成功時の主要性，失敗条件を要求する．
+抽象的な有限写像全体に \key{Primcodable} を仮定しない．
+\item 定義28(ii)：\key{AllTypeEquationFree}．文字どおり
+\[
+C\in S\iff\Sat(C)\land
+ \forall t,u.(C\vdash_Xt=u\Longrightarrow\top\vdash_Xt=u).
+\]
+型項だけに適用し，効果の等式は許す．
+注3の代表元方式は別の \key{EquationFreeRepresentatives}：
+上の左辺を $\Adm_S(C)$ に置き換え，同値な S の要素の構文的一意性を加える．
+両方式を同一視しない．
+\item 定義28(iii)：\key{ExactResidual}．\textbf{全ての}正規形 $(D,\theta)$ について
+$D\equiv_X\theta C$．選ばれた一出力だけではない．
+\item 定義28(iv)：\key{Lifting}．
+\[
+\exists A.C\in S\Longrightarrow
+ \exists\theta.\dom(\theta)\subseteq A\land\theta C\in S.
+\]
+\end{enumerate}
+\key{AdmissibleLifting} は最後の両方の所属を $\Adm_S$ に換えた別条件．
+EHMX の命題で使うのはこちらであり，代表元に関する条件と自動的に同じとは扱わない．
+\key{LiftingProperty} は四条件の組だが，四つの型推論定理全体の共通仮定にはしない．
+
+\newpage
+\section{四定理のステートメント}
+以下はすべて \key{Statements} 内の未証明命題．HMX 対応の主張にも承認済みの値制限と
+効果・比較の変更が残る．core は操作規則を含まず，handlers はそれを含む．
+
+\subsection*{定理7：導出変換}
+\key{Transformation p fragment} の二つの結論は，同じ p と fragment を使う．
+入力は S を $\Sat$ とした型付け．$C\in\Adm_S$ と環境近似 $C\vdash\Gamma\mapsto_S\Gamma'$ の下で
+\[
+\begin{gathered}
+\ty C\Gamma e t\epsilon\Longrightarrow\ty C{\Gamma'}e t\epsilon,\\
+\ty C\Gamma e s\epsilon\land s\text{ が C で実現可能}\Longrightarrow
+ \exists s'.\ \ty C{\Gamma'}e{s'}\epsilon\land C\vdash s\mapsto_Ss'.
+\end{gathered}
+\]
+\key{theorem7} は $S\subseteq\Sat$，主要正規形の存在，射影閉性を前提に
+term/core の変換を主張する．\key{theorem7EHMX} は許容版 lifting と閉じた操作宣言を加え，
+両 p の handlers の変換を主張する．提示形式を S の選択と混同しない．
+
+\subsection*{定理16：健全性}
+再構成関係が $(\psi,D,t,\epsilon)$ を返し，入力環境が許容されるなら
+\[
+\ty D{\psi\Gamma}e t\epsilon,\quad
+ \psi D\equiv_XD,\quad\psi t=t,\quad\psi\epsilon=\epsilon.
+\]
+入力環境の $\top$ での実現可能性を加えない．出力の固定性は結論である．
+\key{theorem16} は $S\subseteq\Sat$，主要正規形，射影閉性を前提とする core 版．
+\key{theorem16EHMX} は許容版 lifting と閉じた操作宣言を追加する．
+
+\subsection*{定理17：完全性}
+$\ty C{\sigma\Gamma}e s\epsilon$ と $\sigma\Gamma$ の C での実現可能性から，
+再構成結果 $(\psi,D,t,\eta)$ と一般化結果 $C_o,s_o$ が存在し，
+\[
+\begin{gathered}
+\gen D{\psi\Gamma}t{C_o}{s_o},\qquad\exists\phi.\\
+ C\vdash_X(\phi\circ\psi)|_{\FV(\Gamma)}=\sigma|_{\FV(\Gamma)},\quad
+ (C\vdash_i\phi s_o\preceq s)_{\mathrm{solved}},\\
+ C\vdash_X\phi C_o,\qquad C\vdash_X\phi\eta=\epsilon.
+\end{gathered}
+\]
+環境の一致は各自由変数についての型・効果等式．全てを同じ因子 $\phi$ が満たす．
+\key{theorem17} の前提は $S\subseteq\Sat$ と主要正規形．射影・改名の全体閉性を加えない．
+\key{theorem17EHMX} は許容版 lifting と閉じた操作宣言を追加する．
+
+\subsection*{系7：閉環境の結果}
+$\FV(\Gamma)=\varnothing$，$\Gamma$ が $\top$ で実現可能，$\ty\top\Gamma e s\epsilon$ なら，
+再構成結果と $\gen D{\psi\Gamma}t\top{s_o}$ が存在し，
+$(\top\vdash_i s_o\preceq s)_{\mathrm{solved}}$ と $\top\vdash_X\eta=\epsilon$ を満たす．
+\key{corollary7} と \key{corollary7EHMX} の前提はそれぞれ定理17の対応版と同じ．
+これは一般化の外側を $\top$ にする原典対応の結論である．
+
+\newpage
+\section{実装についての命題と，残る証明}
+\subsection*{同じ簡約器・正規化器を使う}
+\key{implementationSoundness}，\key{implementationCompleteness}，
+\key{implementationCorollary7} は全て\textbf{同じ引数 N と P} に対する命題である．
+各命題は再構成関係の存在を \key{inferTerm sig X N P Γ e = some ...} に置き換え，
+出力 n から環境代入，型，効果を読む．一般化は関係のままである．
+成功時に別の正規化器へすり替えない．主要正規形の存在は P の成功・失敗仕様に含まれる．
+
+\key{implementationGeneration} は実装の生成出力を \key{Generates} へ接続する命題．
+完全性には逆方向に必要な十分性も確認する必要があり，この一方向だけで済んだとはしない．
+\key{implementationPrincipalComputation} は成功出力に対応する計算スキームの主要性と，
+値なら主要な値スキームであることを主張する\textbf{別の未証明命題}．
+
+\subsection*{定義29と EHMX の主要性を区別する}
+\key{PrincipalPair Γ e C s ε} は
+\[
+\ty C\Gamma e s\epsilon\ \land\
+\forall D,u.\ \ty D\Gamma e u\epsilon\Longrightarrow
+ (D\vdash_XC\land D\vdash_i s\preceq u).
+\]
+\key{PrincipalValue} は値，$\top$ での型付け，任意の許容な競合型への解決済み比較を要求する．
+
+\key{PrincipalComputationScheme} は即時効果も含めた
+\key{FiniteInstance} による主要性を要求する．これらを一つの定義にまとめない．
+
+\subsection*{検査の範囲}
+Lean の全体ビルドは命題の型と依存関係を検査する．
+\key{DefinitionChecks} は型・効果の捕獲回避，入れ子の量化，述語引数・潜在効果への代入と，
+新しい生成規則・多相 let・handler のインターフェースを検査する．
+\key{LogicalTheoryChecks.no_closed_type} は，閉型がなくても型構文を与えられる例を確認する．
+これらは定理7・16・17・系7の証明ではない．
+
+\subsection*{証明を再開する順序}
+\begin{enumerate}
+\item 述語への D6 と論理法則から，構成した代入の同値・含意保存と表現独立性を導く．
+これらを新しい仮定として追加しない．
+\item スキーム比較の移送と，定理7の一般化・多相 let の近似を構成する．
+無条件の最初の比較と，解決済み比較の最大性を区別する．
+\item 定理7と EHMX 版を証明する．constraint 形式と term 形式の対応，
+handler の量化と非脱出を別々に確認する．
+\item 定理16，定理17，系7の順に関係の命題を証明し，
+同じ N・P を使う実装の命題へ接続する．
+\item その後に Haskell 型クラスの具体的な X と solver を構築する．
+\end{enumerate}
+証明が閉じない場合は原因と必要条件を記録する．結論を仮定に移したり，
+型検査を「定理が証明された」と報告したりしない．
 \end{document}

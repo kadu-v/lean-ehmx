@@ -88,6 +88,12 @@ theorem Effect.subst_eq_self (ε : Effect) (θ : Nat → Effect)
   cases ε
   simp_all [Effect.subst]
 
+/-- Composition of finite effect expressions, before choosing any valuation. -/
+theorem Effect.subst_compose (ε : Effect) (σ θ : Nat → Effect) :
+    ε.subst (fun i => (θ i).subst σ) = (ε.subst θ).subst σ := by
+  apply congrArg₂ Effect.mk <;>
+    simp only [Effect.subst, Finset.biUnion_union, Finset.biUnion_biUnion, Finset.union_assoc]
+
 theorem Effect.eval_subst (ε : Effect) (θ : Nat → Effect)
     (ρ : Nat → Finset Op) :
     (ε.subst θ).eval ρ = ε.eval (fun i => (θ i).eval ρ) := by

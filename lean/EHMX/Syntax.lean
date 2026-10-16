@@ -2,14 +2,17 @@ import EHMX.Effect
 
 namespace EHMX
 
-inductive BaseTy where
-  | int | bool | other : Nat → BaseTy
+/-- Constants are typed by the finite initial environment, not by a mandatory
+collection of closed types in the abstract type algebra. -/
+inductive Constant where
+  | int : Int → Constant
+  | bool : Bool → Constant
+  | named : Nat → Constant
   deriving DecidableEq
 
 inductive Expr where
   | var : Nat → Expr
-  | int : Int → Expr
-  | bool : Bool → Expr
+  | const : Constant → Expr
   | lam : Expr → Expr
   | app : Expr → Expr → Expr
   | letE : Expr → Expr → Expr
@@ -19,12 +22,11 @@ inductive Expr where
 
 inductive Value : Expr → Prop where
   | var (i : Nat) : Value (.var i)
-  | int (n : Int) : Value (.int n)
-  | bool (b : Bool) : Value (.bool b)
+  | const (k : Constant) : Value (.const k)
   | lam (body : Expr) : Value (.lam body)
 
 def Value.isValue : Expr → Bool
-  | .var _ | .int _ | .bool _ | .lam _ => true
+  | .var _ | .const _ | .lam _ => true
   | _ => false
 
 @[simp] theorem Value.isValue_iff (e : Expr) : Value.isValue e = true ↔ Value e := by

@@ -1,14 +1,1 @@
-import EHMX.HMX.AlgorithmCorrectness
-import EHMX.HMX.AbstractInference
-import EHMX.HMX.AlgorithmExamples
-import EHMX.HMX.OpenExamples
-import EHMX.HMX.ReconstructionExamples
-import EHMX.HMX.ReconstructionSoundness
-import EHMX.HMX.ReconstructionCompleteness
-import EHMX.HMX.ReconstructionCompletenessExamples
-import EHMX.HMX.ReconstructionPrincipality
-import EHMX.HMX.ReconstructionPrincipalityExamples
-import EHMX.HMX.TransformationExamples
-import EHMX.TypeClasses.Examples
-import EHMX.HMX.ReconstructionTheorems
-import EHMX.HMX.ResidualComparisonExamples
+import EHMX.HMX.DefinitionChecks
