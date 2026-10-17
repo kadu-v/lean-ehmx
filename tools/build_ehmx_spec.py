@@ -84,6 +84,10 @@ EXCERPTS = [
     ("型付けの全規則", "EHMX/Typing.lean", "def JudgmentWF", "theorem typingWF"),
     ("継続と簡約", "EHMX/Operational.lean", "def Expr.resume", "theorem resumeValue"),
     ("制約生成", "EHMX/Inference.lean", "def resultConstraint", "end EHMX"),
+    ("証明済み：型・効果代入", "EHMX/Proofs/TypingTypeSubstitution.lean",
+     "theorem typingTypeEffectSubstitution", " := by"),
+    ("証明済み：スキーム値代入", "EHMX/Proofs/ValueSubstitution.lean",
+     "theorem schemeValueSubstitution", " := by"),
     ("最終目標の全前提と結論", "EHMX/Goals.lean", "def Assumptions", "end EHMX"),
 ]
 
@@ -126,7 +130,7 @@ def build() -> None:
         text = text.replace("**", "").replace("`", "").replace("\n", " ")
         story.append(Paragraph(prose(text), style))
 
-    story += [PageBreak(), Paragraph("付録 Lean ソースから取り込んだ定義", h1),
+    story += [PageBreak(), Paragraph("付録 Lean の定義と証明済み定理の型", h1),
               Paragraph("以下はコード表示のため記号を ASCII に置換したもの。"
                         "forall は全称、exists は存在、-&gt; は矢印、subset は包含、"
                         "empty は空集合、Delta と Gamma は文脈、eps は効果を表す。"

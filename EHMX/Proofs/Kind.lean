@@ -128,4 +128,16 @@ theorem kindAppend (h : Ty.HasKind S Δ T k) (ks : List Kind) :
       cases h with
       | con hf hs => exact .con hf (forall₂ImplMem hs (fun T hT k hk => ih T hT hk))
 
+theorem evalShift (T : Ty) (ρ : Assignment M) (bs vs : List M.Carrier) :
+    (T.shift vs.length 0).eval M ρ (vs ++ bs) = T.eval M ρ bs := by
+  induction T using tyInduction with
+  | hf X => simp [Ty.shift, Ty.eval]
+  | hb i =>
+      have hn : ¬ i + vs.length < vs.length := by omega
+      simp [Ty.shift, Ty.eval, List.getElem?_append, hn]
+  | hc f ts ih =>
+      simp only [Ty.shift, Ty.eval, List.map_map]
+      congr 1
+      exact List.map_congr_left (fun T hT => ih T hT)
+
 end EHMX

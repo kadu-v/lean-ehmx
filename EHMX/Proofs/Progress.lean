@@ -3,18 +3,6 @@ import EHMX.Proofs.Typing
 
 namespace EHMX
 
-theorem evalShift (T : Ty) (ρ : Assignment M) (bs vs : List M.Carrier) :
-    (T.shift vs.length 0).eval M ρ (vs ++ bs) = T.eval M ρ bs := by
-  induction T using tyInduction with
-  | hf X => simp [Ty.shift, Ty.eval]
-  | hb i =>
-      have hn : ¬ i + vs.length < vs.length := by omega
-      simp [Ty.shift, Ty.eval, List.getElem?_append, hn]
-  | hc f ts ih =>
-      simp only [Ty.shift, Ty.eval, List.map_map]
-      congr 1
-      exact List.map_congr_left (fun T hT => ih T hT)
-
 theorem unionKinds (h : Ty.HasKind S Δ (.union ε η) 1) :
     Ty.HasKind S Δ ε 1 ∧ Ty.HasKind S Δ η 1 := by
   cases h with

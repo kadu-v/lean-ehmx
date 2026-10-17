@@ -1,6 +1,6 @@
 # EHM(X)：HMX を基盤とする形式化
 
-System Fξ を参考に、`perform`・deep handler・値制限付き let を備える EHM(X) を証明するリポジトリです。**EHMX の構文・型付け・制約生成・評価と、効果付き進行性を実装しています。保存定理、推論の健全性・完全性・主要制約性、任意の到達状態の効果安全性は未証明です。**
+System Fξ を参考に、`perform`・deep handler・値制限付き let を備える EHM(X) を証明するリポジトリです。**EHMX の構文・型付け・制約生成・評価、効果付き進行性、スキーム値代入、β・let・return の保存を実装しています。保存定理、推論の健全性・完全性・主要制約性、任意の到達状態の効果安全性は未証明です。**
 
 基盤は『Advanced Topics in Types and Programming Languages』（ATTAPL）第10章 *The Essence of ML Type Inference* に基づく HM(X) の Lean 4 形式化です。抽象的な制約モデルをパラメータとする型付け・制約生成と、その健全性・完全性・主要制約性を扱います。
 
@@ -12,13 +12,17 @@ System Fξ を参考に、`perform`・deep handler・値制限付き let を備�
 
 EHMX は新しい名前空間・公開入口に追加し、HMX の定義と証明は維持しています。型・効果で多相な操作宣言、単一操作の deep handler、値だけを一般化する let と非値の単相 let を扱います。既存の `HMX.ValueRestricted` は EHMX の型付けの値制限として流用していません。
 
-EHMX の [仕様](docs/ehmx-spec.md)、[仕様PDF](output/pdf/ehmx-spec.pdf)、[補題TODO](docs/ehmx-todo.md) に、前提・結論・証明状況と次の使用箇所を記録しています。次の中心課題は型・効果代入の型付け保存、多相スキームを持つ値の代入、操作の量化変数の作用域を保った継続の型付けです。
+EHMX の [仕様](docs/ehmx-spec.md)、[仕様PDF](output/pdf/ehmx-spec.pdf)、[補題TODO](docs/ehmx-todo.md) に、前提・結論・証明状況と次の使用箇所を記録しています。型・効果代入と多相スキーム値代入は証明済みです。次の中心課題は、操作の量化変数の作用域を保った捕捉継続の型付けと操作簡約の保存です。
 
 ```lean
 import EHMX
 
 #check EHMX.progressEffectSafety
 #check EHMX.emptyEffectProgress
+#check EHMX.schemeValueSubstitution
+#check EHMX.betaPreservation
+#check EHMX.letPreservation
+#check EHMX.returnPreservation
 #check EHMX.generationWF
 #check EHMX.Concrete.framework
 ```
@@ -56,6 +60,7 @@ import HMX
 uv run tools/build_ehmx_spec.py
 uv run tools/build_ehmx_spec.py --check
 lake env lean tests/EHMXAxioms.lean
+lake env lean tests/EHMXGoals.lean
 ```
 
 ## モジュール構成

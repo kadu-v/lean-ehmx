@@ -2,6 +2,14 @@
 
 EHMX の操作・handler の参照先は `lean-system-f-xi` のコミット `9173a02d9c67eea0b0c665d3319d834e3947518f`、`SystemFXi.Poly` と対応する TeX です。型・効果で多相な操作宣言、単一操作の deep handler、効果付き進行性を参考にしています。EHMX は暗黙の let 多相性と制約生成を追加する別の体系です。参照先との翻訳・双模倣・型付け同値は未証明で、既存の System Fξ の安全性定理を直接適用したとは主張しません。EHMX の定義と証明状況は [仕様](ehmx-spec.md) を参照してください。
 
+## EHMX の代入・保存補題の移植
+
+参照先のコミットを上記に固定し、`EffectPolyTypingLemmas.lean` の `Typing.substKind_preserves` の「代入先の文脈と代入写像について帰納仮定を一般化し、量化の下で持ち上げる」構成を `typingTypeEffectSubstitution` に用いた。EHMX の型と効果は単一の kind 付き構文なので写像を一本化し、制約・スキーム・環境とその意味解釈を変換対象に加えた。項の型引数を変換する処理は不要である。
+
+`Typing.renameTerm_preserves` の環境拡張の場合を `typingWeakeningAt` に対応させ、EHMX 固有の let とスキームを扱った。`EvalCtx.replace` の文脈による持上げを `evalCtxReplacement` に対応させ、穴の変換を型文脈・制約・環境すべてに量化し、letPoly の値制限を明示した。値代入は HMX の `alternateTransform` の制約強化を扱う方針も参照し、`typingValueSubstitutionAux` では任意の強い制約を帰納仮定に含めた。
+
+`schemeValueSubstitution` と β・let・return の保存は EHMX 自身の定理として証明した。System Fξ の `Typing.resume_preserves`、`Typing.operation_preserves` と保存・多歩安全性の移植はまだ完了していない。別リポジトリへのビルド依存や翻訳による定理移送は追加していない。
+
 ## 参考PDF
 
 PDFの内容は変更していません。ATTAPL が形式化の原典であり、FreezeML は証明経路、Sulzmann の博士論文は型クラス具体例の参考資料です。以下のPDFは第三者の著作物であり、本リポジトリの MIT ライセンスの対象外です。
