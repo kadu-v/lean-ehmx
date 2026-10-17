@@ -1,6 +1,6 @@
 # EHM(X)：HMX を基盤とする形式化
 
-System Fξ の構文・型システムへ拡張し、`perform`・handler・値制限を備える EHM(X) を証明するためのリポジトリです。**現在は HMX 基盤を取り込んだ段階で、EHM(X) の拡張とその証明は未実装です。**
+System Fξ を参考に、`perform`・deep handler・値制限付き let を備える EHM(X) を証明するリポジトリです。**EHMX の構文・型付け・制約生成・評価と、効果付き進行性を実装しています。保存定理、推論の健全性・完全性・主要制約性、任意の到達状態の効果安全性は未証明です。**
 
 基盤は『Advanced Topics in Types and Programming Languages』（ATTAPL）第10章 *The Essence of ML Type Inference* に基づく HM(X) の Lean 4 形式化です。抽象的な制約モデルをパラメータとする型付け・制約生成と、その健全性・完全性・主要制約性を扱います。
 
@@ -10,7 +10,20 @@ System Fξ の構文・型システムへ拡張し、`perform`・handler・値�
 
 旧 HMX・EHMX 実装、旧 TeX・生成仕様PDF・監査資料・TODO は撤去しました。旧資産は本リポジトリの Git 履歴（置き換え前のコミット `1c6dec08b0cd1114e110fc389342d353cd040754`）に残っています。ルートの作業指示は維持しています。`docs/references/` のPDFは原典・参考資料であり、新しい EHM(X) の仕様書ではありません。
 
-次は System Fξ の原典と対象体系を確定し、EHM(X) の推論の健全性・完全性・主要性と型安全性の前提・結論を定めます。その結論から、値制限付き let と handler の規則に必要な証明義務を確認し、Lean と対応する仕様PDFを整備します。既存の `HMX.ValueRestricted` は操作的意味論に関する制限であり、EHM(X) の値制限付き型付け・推論を実装したものではありません。
+EHMX は新しい名前空間・公開入口に追加し、HMX の定義と証明は維持しています。型・効果で多相な操作宣言、単一操作の deep handler、値だけを一般化する let と非値の単相 let を扱います。既存の `HMX.ValueRestricted` は EHMX の型付けの値制限として流用していません。
+
+EHMX の [仕様](docs/ehmx-spec.md)、[仕様PDF](output/pdf/ehmx-spec.pdf)、[補題TODO](docs/ehmx-todo.md) に、前提・結論・証明状況と次の使用箇所を記録しています。次の中心課題は型・効果代入の型付け保存、多相スキームを持つ値の代入、操作の量化変数の作用域を保った継続の型付けです。
+
+```lean
+import EHMX
+
+#check EHMX.progressEffectSafety
+#check EHMX.emptyEffectProgress
+#check EHMX.generationWF
+#check EHMX.Concrete.framework
+```
+
+`progressEffectSafety` は、閉じた型付き項が値・簡約可能・効果に含まれる未処理操作のいずれかであることを証明します。`emptyEffectProgress` は現在の項の進行性であり、未証明の保存定理を必要とする多歩安全性とは区別します。`EHMX.Goals` の `...Goal` は命題の定義であり、証明ではありません。
 
 ## 引き継いだ証明の範囲
 
@@ -25,7 +38,7 @@ lake exe cache get
 lake build
 ```
 
-Lean は [lean-toolchain](lean-toolchain) の `leanprover/lean4:v4.34.1`、mathlib は [lakefile.toml](lakefile.toml) のコミット `d13f23b723b8a846827a245b89c10fc7d3f11612` に固定しています。推移的依存も [lake-manifest.json](lake-manifest.json) に固定しています。Lake のパッケージ名は `hmx`、ライブラリと既定ビルド対象は `HMX` です。
+Lean は [lean-toolchain](lean-toolchain) の `leanprover/lean4:v4.34.1`、mathlib は [lakefile.toml](lakefile.toml) のコミット `d13f23b723b8a846827a245b89c10fc7d3f11612` に固定しています。推移的依存も [lake-manifest.json](lake-manifest.json) に固定しています。Lake のパッケージ名は `hmx`、ライブラリと既定ビルド対象は `HMX` と `EHMX` です。
 
 ```lean
 import HMX
@@ -36,6 +49,14 @@ import HMX
 ```
 
 [CI](.github/workflows/lean.yml) は push・pull request 時に、[Lean Action](https://github.com/leanprover/lean-action) で固定ツールチェーンを準備し、mathlib キャッシュを取得して `lake build` を実行します。Lean 内の回帰例もビルド対象です。
+
+仕様PDFは [生成スクリプト](tools/build_ehmx_spec.py) で再生成します。Python の依存はスクリプト内に固定し、TeX は不要です。Lean の規則と最終目標の宣言を付録へ直接取り込みます。`--check` はソースとPDFのハッシュの対応を読み取り専用で検査します。
+
+```sh
+uv run tools/build_ehmx_spec.py
+uv run tools/build_ehmx_spec.py --check
+lake env lean tests/EHMXAxioms.lean
+```
 
 ## モジュール構成
 

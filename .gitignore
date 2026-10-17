@@ -12,3 +12,7 @@
 .env.*
 *.swp
 *~
+
+# PDF の描画確認用一時ファイル
+tmp/pdfs/
+__pycache__/
