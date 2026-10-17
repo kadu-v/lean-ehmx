@@ -49,13 +49,21 @@ ATTAPL §10.5 の保存（10.5.8）・型安全性（10.5.11）に対応する E
 ## 推論の健全性 完全性 主要制約性
 
 - [x] 全称制約と束縛された型・効果代入の意味的交換は `substBoundSemantics` で証明。これを使用する handlerGeneration 自体は未証明。
-- [ ] inferWF / inferScope。環境を付加した infer の整形式性と自由項識別子の消去。generationWF / generationScope だけでは完了にしない。
-- [ ] generationMonotone。要求型・評価効果の上界を広げる場合の含意。使用先は完全性の部分型分岐。handler の内部出力型・効果を外側の要求で置き換えない。
-- [ ] valueLetGeneration / monoLetGeneration。値の一般化と、非値で単相型を共有する生成規則の両方向の対応。使用先は健全性・完全性の let 分岐。
+- [x] `inferWF` / `inferScope` / `inferJudgmentWF`。環境を付加した infer の整形式性と自由項識別子の消去。`envLetInWF` / `envLetInFpi` を通じて、健全性の結論に必要な判断の整形式性を構成する。
+- [x] `generationMonotone` / `inferenceMonotone`。要求型と評価効果の上界を広げる場合の含意。完全性の `sub` 分岐に使う。handler の内部結果型・効果と全称操作節を保持する。
+- [x] `generationSubstitution` / `generationShift` / `generationShiftHolds`。操作宣言の局所引数を保った型・効果代入と持上げ。`exists_` 分岐に使う。
+- [x] `generationValuePure`。値に対する生成制約を空評価効果へ移す。値の右辺を持つ `letMono` の完全性で使う。
+- [x] `generationRebase` / `generationEvalCongruence`。要求型・効果の評価値が等しい割当て間で生成制約を移す。意味論の値の構文的表現可能性を仮定せず、スキーム比較で使う。
+- [x] `generatedSchemeWF` / `generatedSchemeScope` / `generatedSchemeDenote` / `valueLetGeneration`。値 let の生成スキームへ環境を取り込み、拡張環境の下での本体の推論と生成制約の同値を示す。
+- [x] `inferenceValueLet`。右辺・本体について一般化した局所的な帰納仮定から、値 let の健全性の分岐を構成する。全項の健全性定理ではない。
+- [ ] `monoLetGeneration`。非値で右辺・本体が同じ単相型を共有し、評価効果を合併する生成規則と型付けの対応。
 - [ ] performGeneration / handlerGeneration。宣言の具体化、入力効果包含、return 節、任意の型・効果変数に対する操作節の対応。使用先は健全性・完全性の新しい分岐。
-- [ ] syntaxDirectedTypingEquivalence。宣言的型付けから構文に沿う型付けへの変換と逆方向。一般化を値だけに制限する。使用先は完全性の帰納法。
-- [ ] environmentRealizabilityExtension。lambda、let、return、操作節の環境拡張で必要な実現可能性。使用先は完全性の各帰納仮定。
-- [ ] generatedSchemeComparison。値 let の宣言スキームと生成スキームの意味的包含。既存 HMX の completenessLet に対応する使用先を確認してから証明。
+新しい構文指向型付け体系は導入しない。完全性は既存の `Typing` に直接帰納法を適用し、各割当てで外側制約と環境実現可能性を前提とする `typingCompletenessHolds` を証明する。
+- [x] `envLetInHolds` / `envInterpretLookup` / `envPushExists` / `envExistsShift`。環境の実現可能性と本体の充足を分解し、右側優先の自由束縛と最近の束縛を先頭とする添字順序を保つ。
+- [x] `envLetInConjunction` / `envLetInExists` / `envLetInForall`。環境付加と連言・存在量化・全称量化の交換。全称量化では外側の環境実現可能性を残す。
+- [x] `constraintGroundIndependent` / `schemeGroundIndependent` / `groundMonotonicity` / `definitionMonotone`。項変数に依存しない閉じた制約・スキームの解釈と、スキーム包含に従う本体の移送。
+- [x] `inferenceVariable` / `variableCompletenessHolds`。変数分岐の健全性・完全性。`inferenceExistsCase` は存在束縛の内側で規則ごとの証明を行い、`Typing.exists_` で外側へ戻す。
+- [x] `generatedSchemeComparison`。右辺についての局所的な帰納仮定から、宣言スキームの解釈が生成スキームの解釈に含まれることを示す。完全性定理全体を前提としない。
 - [ ] inferenceSoundness。InferenceSoundnessGoal を証明。項の作用域と Expr.Declared を明示し、未宣言操作の拒否と区別する。
 - [ ] inferenceCompleteness。InferenceCompletenessGoal を証明。環境実現可能性を各分岐へ引き継ぐ。
 - [ ] constraintGenerationPrincipality。健全性と完全性を結合して PrincipalityGoal を証明。主要解・ソルバーの正当性は主張しない。
@@ -90,6 +98,10 @@ ATTAPL §10.5 の保存（10.5.8）・型安全性（10.5.11）に対応する E
 
 標準 `EHMX` import に新しい全証明と回帰例を含める。`tests/EHMXGoals.lean` は `ProgressGoal`、`SchemeValueSubstitutionGoal`、`OperationPreservationGoal`、`PreservationGoal`、`EffectSafetyGoal`、`EmptyEffectSafetyGoal` と、任意の Δ C Γ T ε に対する `preservationSteps` の完全な型を検査する。公理監査は標準の三公理以外を認めず、追加の安全性公理や sorry を認めない。
 
-検査結果：`lake build`（828 jobs）、`lake env lean tests/EHMXAxioms.lean`（782件の定理）、`lake env lean tests/EHMXGoals.lean`、`git diff --check` が成功。推論三定理は検査対象となる証明がまだなく、今回の保存・安全性の完成には含めない。PDF の更新・再生成・整合性検査は実施していない。
+追加の `InferenceRegression.lean` は開いた環境の自由変数遮蔽・三段の束縛参照、充足不能な環境での変数の健全性、変数を右辺とする値 let の健全性、混合 kind の操作を含む handler の整形式性・代入、全称制約と環境付加を検査する。`tests/EHMXInference.lean` はこれらと推論補題を標準 import から確認する。これらは最終三定理の適用検査の代わりではない。
 
-次の証明作業は `InferenceSoundnessGoal` に必要な `inferWF`・`inferScope`。既存の `generationWF`・`generationScope` を環境付きの infer へ接続し、各型付け判断の制約の整形式性と自由項識別子の消去を確保する。
+CI に Goal 型検査と推論補題の回帰を追加し、PDF 整合性検査を Lean 検証から外した。PDF の更新・再生成・整合性検査は実施しない。
+
+検査結果：`lake build`（832 jobs）、`tests/EHMXGoals.lean`、`tests/EHMXInference.lean`、`tests/EHMXAxioms.lean`（871件の定理宣言）、`git diff --check` が成功。三つの最終推論 Goal の証明はまだないため、その Goal 型の検査と全分岐への適用回帰は未実施。
+
+次の証明作業は健全性の lambda 分岐 `inferenceLambda`。`inferenceExistsCase` により `[0,1,0]` の内側へ入り、単相引数を追加した環境で本体の帰納仮定を適用し、`Typing.lam`・`Typing.sub`・`Typing.exists_` で元の要求型・効果に戻す。その後、適用・非値 let・操作・handler の分岐を統合して `inferenceSoundnessAux` を証明する。完全性の `typingCompletenessHolds` と三つの最終 Goal はまだ未証明であり、今回の補助補題を三定理の完成とは数えない。

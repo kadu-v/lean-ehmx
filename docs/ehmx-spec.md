@@ -58,7 +58,11 @@ generate sig e T eps は、要求型 T と評価効果上界 eps に対する制
 
 未宣言の perform と handler の生成結果は偽制約になる。健全性の目標には Expr.Declared を明記した。これは計画の「整形式の入力」に必要な操作の作用域条件を具体化したものである。未宣言操作について偽制約の下で型付けを構成できるとは主張しない。unknownPerformNotTypable は、未宣言操作は任意の制約の下でも型付けできないことを証明する。
 
-generationWF は生成制約の kind と束縛の整形式性を証明する。generationScope は、操作が宣言済みなら生成制約の自由項識別子が元の項の自由変数と一致することを証明する。これらは生成制約の充足と型付けの対応そのものではない。
+generationWF は生成制約の kind と束縛の整形式性を証明する。generationScope は、操作が宣言済みなら生成制約の自由項識別子が元の項の自由変数と一致することを証明する。`inferWF`・`inferScope`・`inferJudgmentWF` はこれらを環境付きの infer に拡張する。
+
+`envLetInHolds` は環境付加の意味を実現可能性と解釈後の本体の充足へ分解する。`envInterpretLookup` は自由変数の右側優先と束縛添字の順序を保ち、`envLetInExists`・`envLetInForall` は型・効果の量化との交換を示す。`generationSubstitution`・`generationMonotone`・`generationValuePure` は完全性の代入・部分型・値の評価効果の分岐で必要な性質を証明する。
+
+`generatedScheme` は右辺の生成スキームに環境を取り込む。`valueLetGeneration` はこのスキームを本体の環境に追加した推論との同値を示す。`generatedSchemeComparison` は右辺の局所的な帰納仮定からスキーム包含を導き、意味論の値の構文的表現可能性や完全性定理全体を仮定しない。`inferenceVariable` と `inferenceValueLet` は健全性の該当分岐を示すが、全項に対する最終推論定理はまだ未証明である。
 
 ## 7 証明済みの保証
 
@@ -80,12 +84,12 @@ operationClauseInstantiation は引数と継続の型を同じ型・効果引数
 
 Goals.lean の各 Goal は命題の定義であり、証明宣言ではない。OperationPreservationGoal、PreservationGoal、EffectSafetyGoal、EmptyEffectSafetyGoal には同じ型の証明がある。InferenceSoundnessGoal、InferenceCompletenessGoal、PrincipalityGoal は未証明である。完全性は環境実現可能性を要求する。主要制約性は要求型・効果を固定した含意の保証であり、ソルバーや主要解の存在ではない。
 
-次は推論の健全性に必要な inferWF・inferScope を証明する。環境を付加した infer の制約の整形式性と自由項識別子の消去を、既存の generationWF・generationScope から示す。
+次は健全性の lambda 分岐を証明する。inferenceExistsCase を使って内部の型・効果変数を存在束縛の内側に保ち、本体の帰納仮定と Typing.lam・sub を接続する。適用・非値 let・操作・handler の分岐と合わせた inferenceSoundnessAux、既存 Typing への帰納法による typingCompletenessHolds、および両者からの主要制約性は残る証明義務である。
 
 ソルバー、参照・ストア、組込み定数の簡約、複数操作節、shallow handler は対象外である。既存 HMX の証明や参照先リポジトリを変更していない。
 
 ## 9 再現と検証
 
-lake build は HMX、EHMX、回帰例を検査する。回帰例は実行・生成・型付けを区別する。handlerGenerationWF は生成制約の整形式性であり、handler 全体の推論健全性ではない。SafetyRegression.lean は実際の型付けに最終保存定理を適用し、混合引数、let 右辺の捕捉、継続の二回利用、開いた環境、同じ操作・異なる操作の handler、操作節からの再実行を検査する。存在量化された型引数を使い、exists_ / strengthen / sub を経由する捕捉も含む。tests/EHMXGoals.lean は完成した六つの Goal と任意の Δ C Γ T ε に対する多歩保存の型を直接検査し、tests/EHMXAxioms.lean は全 EHMX 定理の依存公理を監査する。
+lake build は HMX、EHMX、回帰例を検査する。回帰例は実行・生成・型付けを区別する。handlerGenerationWF は生成制約の整形式性であり、handler 全体の推論健全性ではない。SafetyRegression.lean は実際の型付けに最終保存定理を適用し、混合引数、let 右辺の捕捉、継続の二回利用、開いた環境、同じ操作・異なる操作の handler、操作節からの再実行を検査する。存在量化された型引数を使い、exists_ / strengthen / sub を経由する捕捉も含む。tests/EHMXGoals.lean は完成した六つの Goal と任意の Δ C Γ T ε に対する多歩保存の型を直接検査し、tests/EHMXAxioms.lean は全 EHMX 定理の依存公理を監査する。InferenceRegression.lean は開いた環境、遮蔽、束縛の複数段参照、充足不能な環境、値 let の局所的な健全性、混合 kind の操作と handler の生成補題を検査する。これらを最終推論三定理の検査とは扱わない。CI では tests/EHMXGoals.lean と tests/EHMXInference.lean も実行する。
 
-仕様PDFは tools/build_ehmx_spec.py でこの文書から生成する。付録の構文・モデル前提・型付け・簡約・生成規則・最終目標の Lean 宣言はソースから直接取り込む。PDF内のコード表示に限り、Unicode 記号を ASCII 表記へ置換する。ソースのハッシュとPDFのハッシュを manifest に記録し、--check で古いPDFを検出する。ハッシュの一致は説明の数学的正しさの証明ではないため、規則・前提・証明状況も読み合わせる。
+仕様PDFは tools/build_ehmx_spec.py でこの文書から生成する。付録の構文・モデル前提・型付け・簡約・生成規則・最終目標の Lean 宣言はソースから直接取り込む。PDF内のコード表示に限り、Unicode 記号を ASCII 表記へ置換する。ソースのハッシュとPDFのハッシュを manifest に記録し、--check で古いPDFを検出する。PDF の作業は明示的な依頼があった場合のみ行い、Lean 証明の変更時の更新・整合性検査は必須としない。

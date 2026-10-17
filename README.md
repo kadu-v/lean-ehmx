@@ -12,7 +12,7 @@ System Fξ を参考に、`perform`・deep handler・値制限付き let を備�
 
 EHMX は新しい名前空間・公開入口に追加し、HMX の定義と証明は維持しています。型・効果で多相な操作宣言、単一操作の deep handler、値だけを一般化する let と非値の単相 let を扱います。既存の `HMX.ValueRestricted` は EHMX の型付けの値制限として流用していません。
 
-EHMX の [仕様](docs/ehmx-spec.md) と [補題TODO](docs/ehmx-todo.md) に、前提・結論・証明状況と次の使用箇所を記録しています。保存と安全性は `Goals.lean` の命題をそのまま満たし、保存は開いた環境にも適用できます。次は推論の健全性に必要な `inferWF`・`inferScope` を証明し、環境を付加した生成制約の整形式性と作用域を確認します。既存の [仕様PDF](output/pdf/ehmx-spec.pdf) は今回更新していません。
+EHMX の [仕様](docs/ehmx-spec.md) と [補題TODO](docs/ehmx-todo.md) に、前提・結論・証明状況と次の使用箇所を記録しています。保存と安全性は `Goals.lean` の命題をそのまま満たし、保存は開いた環境にも適用できます。推論については `inferWF`・`inferScope`、環境の意味解釈、生成制約の代入・単調性、値 let のスキーム比較と局所的な健全性を証明しました。次は lambda の生成規則と型付けを結び付け、残る規則とともに健全性の帰納法へ統合します。三つの最終推論 Goal は未証明です。既存の [仕様PDF](output/pdf/ehmx-spec.pdf) は今回更新していません。
 
 ```lean
 import EHMX
@@ -28,7 +28,11 @@ import EHMX
 #check EHMX.preservationSteps
 #check EHMX.effectSafety
 #check EHMX.emptyEffectSafety
-#check EHMX.generationWF
+#check EHMX.inferWF
+#check EHMX.inferScope
+#check EHMX.generationMonotone
+#check EHMX.generatedSchemeComparison
+#check EHMX.inferenceValueLet
 #check EHMX.Concrete.framework
 ```
 
@@ -57,15 +61,14 @@ import HMX
 #check HMX.Proofs.constraintGenerationPrincipality_scoped
 ```
 
-[CI](.github/workflows/lean.yml) は push・pull request 時に、[Lean Action](https://github.com/leanprover/lean-action) で固定ツールチェーンを準備し、mathlib キャッシュを取得して `lake build` を実行します。Lean 内の回帰例もビルド対象です。
+[CI](.github/workflows/lean.yml) は push・pull request 時に、[Lean Action](https://github.com/leanprover/lean-action) で固定ツールチェーンを準備し、mathlib キャッシュを取得して `lake build` を実行します。Lean 内の回帰例もビルド対象です。Goal 型検査・推論補題の回帰・依存公理監査も実行します。PDF の生成・整合性検査は Lean 検証の必須処理には含めません。
 
-仕様PDFは [生成スクリプト](tools/build_ehmx_spec.py) で再生成します。Python の依存はスクリプト内に固定し、TeX は不要です。Lean の規則と最終目標の宣言を付録へ直接取り込みます。`--check` はソースとPDFのハッシュの対応を読み取り専用で検査します。
+仕様PDFの作業は明示的な依頼があった場合のみ行います。[生成スクリプト](tools/build_ehmx_spec.py) で再生成できます。Python の依存はスクリプト内に固定し、TeX は不要です。Lean の規則と最終目標の宣言を付録へ直接取り込みます。`--check` はソースとPDFのハッシュの対応を読み取り専用で検査します。
 
 ```sh
-uv run tools/build_ehmx_spec.py
-uv run tools/build_ehmx_spec.py --check
 lake env lean tests/EHMXAxioms.lean
 lake env lean tests/EHMXGoals.lean
+lake env lean tests/EHMXInference.lean
 ```
 
 ## モジュール構成

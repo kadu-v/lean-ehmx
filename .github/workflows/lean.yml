@@ -23,5 +23,7 @@ jobs:
           lint: false
       - name: EHMX の依存公理
         run: lake env lean tests/EHMXAxioms.lean
-      - name: EHMX 仕様PDFとソースの対応
-        run: python3 tools/build_ehmx_spec.py --check
+      - name: EHMX の最終命題の型
+        run: lake env lean tests/EHMXGoals.lean
+      - name: EHMX の推論補題の回帰
+        run: lake env lean tests/EHMXInference.lean
