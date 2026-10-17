@@ -1,6 +1,6 @@
 # EHMX の構文 型付け 制約生成と証明状況
 
-EHMX は、抽象的な制約モデル X に基づく HM(X) に、代数的効果の操作、deep handler、値制限付き let を加えた体系である。**効果付き進行性、型・効果代入、スキーム値代入、操作捕捉を含む一歩・多歩保存、任意の到達状態の効果安全性を証明した。推論の健全性・完全性・主要制約性は未証明である。**
+EHMX は、抽象的な制約モデル X に基づく HM(X) に、代数的効果の操作、deep handler、値制限付き let を加えた体系である。**効果付き進行性、型・効果代入、スキーム値代入、操作捕捉を含む一歩・多歩保存、任意の到達状態の効果安全性を証明した。推論の健全性・完全性・主要制約性も、既存の Goal の前提・結論を維持して証明した。**
 
 ## 1 目標と出典
 
@@ -62,7 +62,7 @@ generationWF は生成制約の kind と束縛の整形式性を証明する。g
 
 `envLetInHolds` は環境付加の意味を実現可能性と解釈後の本体の充足へ分解する。`envInterpretLookup` は自由変数の右側優先と束縛添字の順序を保ち、`envLetInExists`・`envLetInForall` は型・効果の量化との交換を示す。`generationSubstitution`・`generationMonotone`・`generationValuePure` は完全性の代入・部分型・値の評価効果の分岐で必要な性質を証明する。
 
-`generatedScheme` は右辺の生成スキームに環境を取り込む。`valueLetGeneration` はこのスキームを本体の環境に追加した推論との同値を示す。`generatedSchemeComparison` は右辺の局所的な帰納仮定からスキーム包含を導き、意味論の値の構文的表現可能性や完全性定理全体を仮定しない。`inferenceVariable` と `inferenceValueLet` は健全性の該当分岐を示すが、全項に対する最終推論定理はまだ未証明である。
+`generatedScheme` は右辺の生成スキームに環境を取り込む。`valueLetGeneration` はこのスキームを本体の環境に追加した推論との同値を示す。`generatedSchemeComparison` は右辺の局所的な帰納仮定からスキーム包含を導き、意味論の値の構文的表現可能性や完全性定理全体を仮定しない。`schemeExistsNonempty` と `valueLetCompletenessHolds` はスキーム包含に加えて生成スキームの実現可能性を証明する。`inferenceVariable`・`inferenceValueLet` と残る各分岐を `inferenceSoundnessAux` に統合し、全項の健全性を証明した。
 
 ## 7 証明済みの保証
 
@@ -80,16 +80,26 @@ operationClauseInstantiation は引数と継続の型を同じ型・効果引数
 
 その他の主要な証明済み補題は、operationInstantiation、kindShift、evalKind、evalShift、valuePure、closedValueLambda、evalCtxShiftPlug、schemeUpperSet、generationWF、generationScope である。各補題の使用箇所と残る証明義務は ehmx-todo.md に記録する。
 
-## 8 未証明の最終定理と次の証明
+## 8 推論三定理
 
-Goals.lean の各 Goal は命題の定義であり、証明宣言ではない。OperationPreservationGoal、PreservationGoal、EffectSafetyGoal、EmptyEffectSafetyGoal には同じ型の証明がある。InferenceSoundnessGoal、InferenceCompletenessGoal、PrincipalityGoal は未証明である。完全性は環境実現可能性を要求する。主要制約性は要求型・効果を固定した含意の保証であり、ソルバーや主要解の存在ではない。
+`Goals.lean` の Goal は命題の定義であり、それと同じ型の証明を別の宣言で与える。保存・安全性の Goal に加え、次の三定理を標準 `import EHMX` から公開する。
 
-次は健全性の lambda 分岐を証明する。inferenceExistsCase を使って内部の型・効果変数を存在束縛の内側に保ち、本体の帰納仮定と Typing.lam・sub を接続する。適用・非値 let・操作・handler の分岐と合わせた inferenceSoundnessAux、既存 Typing への帰納法による typingCompletenessHolds、および両者からの主要制約性は残る証明義務である。
+| 証明 | 元の命題 | 原典との対応 |
+| --- | --- | --- |
+| `inferenceSoundness` | `InferenceSoundnessGoal` | ATTAPL 10.4.4 の EHM(X) 拡張 |
+| `inferenceCompleteness` | `InferenceCompletenessGoal` | ATTAPL 10.4.8 の EHM(X) 拡張 |
+| `constraintGenerationPrincipality` | `PrincipalityGoal` | 429–430頁の主要制約性の EHM(X) 拡張 |
+
+`inferenceSoundnessAux` は項の構造に帰納法を適用し、Δ・制約・環境・要求型・効果を一般化する。`inferenceExistsCase` により型・効果の存在変数を型付け導出の内部に保つ。操作宣言の自己具体化は `declarationOpenSelf`、全称操作節への移動は `entailsForallOpen` が担う。
+
+`typingCompletenessHolds` は既存の `Typing` 導出に直接帰納法を適用する。割当てごとに外側制約と環境実現可能性を引き継ぐため、`strengthen` に不要な前提を追加しない。型・効果の評価値を存在証人として使い、`generationEvalCongruence` で生成側の束縛添字へ移す。handler の内部結果型・効果は保持し、任意の kind 適合引数列で操作節を検査する。値への `letMono` と多相 let も含む。
+
+完全性の環境実現可能性条件は維持している。充足可能性・`ArrowSeparated`・意味論の値の構文的表現可能性は三定理の前提に追加していない。主要制約性は健全性と完全性から構成し、環境・項・要求型・効果を固定した制約の含意を保証する。ソルバーや最汎代入の存在は主張しない。
 
 ソルバー、参照・ストア、組込み定数の簡約、複数操作節、shallow handler は対象外である。既存 HMX の証明や参照先リポジトリを変更していない。
 
 ## 9 再現と検証
 
-lake build は HMX、EHMX、回帰例を検査する。回帰例は実行・生成・型付けを区別する。handlerGenerationWF は生成制約の整形式性であり、handler 全体の推論健全性ではない。SafetyRegression.lean は実際の型付けに最終保存定理を適用し、混合引数、let 右辺の捕捉、継続の二回利用、開いた環境、同じ操作・異なる操作の handler、操作節からの再実行を検査する。存在量化された型引数を使い、exists_ / strengthen / sub を経由する捕捉も含む。tests/EHMXGoals.lean は完成した六つの Goal と任意の Δ C Γ T ε に対する多歩保存の型を直接検査し、tests/EHMXAxioms.lean は全 EHMX 定理の依存公理を監査する。InferenceRegression.lean は開いた環境、遮蔽、束縛の複数段参照、充足不能な環境、値 let の局所的な健全性、混合 kind の操作と handler の生成補題を検査する。これらを最終推論三定理の検査とは扱わない。CI では tests/EHMXGoals.lean と tests/EHMXInference.lean も実行する。
+lake build は HMX、EHMX、回帰例を検査する。回帰例は実行・生成・型付けを区別する。handlerGenerationWF は生成制約の整形式性であり、handler 全体の推論健全性ではない。SafetyRegression.lean は実際の型付けに最終保存定理を適用し、混合引数、let 右辺の捕捉、継続の二回利用、開いた環境、同じ操作・異なる操作の handler、操作節からの再実行を検査する。存在量化された型引数を使い、exists_ / strengthen / sub を経由する捕捉も含む。tests/EHMXGoals.lean は完成した九つの Goal と任意の Δ C Γ T ε に対する多歩保存の型を直接検査し、tests/EHMXAxioms.lean は全 EHMX 定理の依存公理を監査する。InferenceRegression.lean は開いた環境、遮蔽、束縛の複数段参照、充足不能な環境、値 let の局所的な健全性、混合 kind の操作と handler の生成補題を検査する。さらに InferenceTheoremRegression.lean は最終三定理を開いた環境・全項構成子・値への letMono・一つの let の異なる型と潜在効果での利用・充足不能な生成制約へ適用する。主要制約性から別の制約による含意も検査する。CI では tests/EHMXGoals.lean と tests/EHMXInference.lean も実行する。
 
 仕様PDFは tools/build_ehmx_spec.py でこの文書から生成する。付録の構文・モデル前提・型付け・簡約・生成規則・最終目標の Lean 宣言はソースから直接取り込む。PDF内のコード表示に限り、Unicode 記号を ASCII 表記へ置換する。ソースのハッシュとPDFのハッシュを manifest に記録し、--check で古いPDFを検出する。PDF の作業は明示的な依頼があった場合のみ行い、Lean 証明の変更時の更新・整合性検査は必須としない。

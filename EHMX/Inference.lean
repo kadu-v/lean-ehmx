@@ -2,7 +2,7 @@ import EHMX.Syntax
 
 /-! 構文に沿う制約生成。全称量化は操作節だけに導入する。
 全ての内部変数を添字で導入するので新鮮な自由名の選択は不要。
-この定義の健全性・完全性はまだ証明されていない。 -/
+この定義の健全性・完全性・主要制約性は Proofs/Inference*.lean で証明する。 -/
 namespace EHMX
 
 /-- Pair a type subtyping obligation with an evaluation-effect upper bound. -/

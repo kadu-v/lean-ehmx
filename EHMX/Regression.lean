@@ -3,7 +3,7 @@ import EHMX.Proofs.Generation
 import EHMX.Proofs.Progress
 import EHMX.Proofs.Reduction
 
-/-! 回帰例。実行・生成・型付けを区別し、未証明の推論定理は使わない。 -/
+/-! 回帰例。実行・生成・型付けを区別し、推論定理に依存しない導出を構成する。 -/
 namespace EHMX.Regression
 
 def identity : Expr := .lam (.ident (.bound 0))

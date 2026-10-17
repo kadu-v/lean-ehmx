@@ -7,9 +7,11 @@ import EHMX.Concrete
 import EHMX.Proofs.Typing
 import EHMX.Proofs.Generation
 import EHMX.Proofs.InferenceSupport
+import EHMX.Proofs.InferencePrincipality
 import EHMX.Proofs.Progress
 import EHMX.Proofs.Reduction
 import EHMX.Proofs.Preservation
 import EHMX.Regression
 import EHMX.InferenceRegression
 import EHMX.SafetyRegression
+import EHMX.InferenceTheoremRegression

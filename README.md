@@ -1,6 +1,6 @@
 # EHM(X)：HMX を基盤とする形式化
 
-System Fξ を参考に、`perform`・deep handler・値制限付き let を備える EHM(X) を証明するリポジトリです。**EHMX の効果付き進行性、スキーム値代入、操作捕捉を含む一歩・多歩保存、任意の到達状態の効果安全性を証明しています。推論の健全性・完全性・主要制約性は未証明です。**
+System Fξ を参考に、`perform`・deep handler・値制限付き let を備える EHM(X) を証明するリポジトリです。**EHMX の効果付き進行性、スキーム値代入、操作捕捉を含む一歩・多歩保存、任意の到達状態の効果安全性を証明しています。推論の健全性・完全性・主要制約性も、既存の Goal の前提・結論を維持して証明しました。**
 
 基盤は『Advanced Topics in Types and Programming Languages』（ATTAPL）第10章 *The Essence of ML Type Inference* に基づく HM(X) の Lean 4 形式化です。抽象的な制約モデルをパラメータとする型付け・制約生成と、その健全性・完全性・主要制約性を扱います。
 
@@ -12,11 +12,14 @@ System Fξ を参考に、`perform`・deep handler・値制限付き let を備�
 
 EHMX は新しい名前空間・公開入口に追加し、HMX の定義と証明は維持しています。型・効果で多相な操作宣言、単一操作の deep handler、値だけを一般化する let と非値の単相 let を扱います。既存の `HMX.ValueRestricted` は EHMX の型付けの値制限として流用していません。
 
-EHMX の [仕様](docs/ehmx-spec.md) と [補題TODO](docs/ehmx-todo.md) に、前提・結論・証明状況と次の使用箇所を記録しています。保存と安全性は `Goals.lean` の命題をそのまま満たし、保存は開いた環境にも適用できます。推論については `inferWF`・`inferScope`、環境の意味解釈、生成制約の代入・単調性、値 let のスキーム比較と局所的な健全性を証明しました。次は lambda の生成規則と型付けを結び付け、残る規則とともに健全性の帰納法へ統合します。三つの最終推論 Goal は未証明です。既存の [仕様PDF](output/pdf/ehmx-spec.pdf) は今回更新していません。
+EHMX の [仕様](docs/ehmx-spec.md) と [補題TODO](docs/ehmx-todo.md) に、前提・結論・証明状況を記録しています。保存と安全性に加え、`inferenceSoundness`・`inferenceCompleteness`・`constraintGenerationPrincipality` が `Goals.lean` の三つの推論命題をそのまま満たします。健全性は項の構造、完全性は既存の `Typing` 導出に帰納法を適用しています。完全性の環境実現可能性条件は維持し、充足可能性・`ArrowSeparated`・意味論の値の構文的表現可能性は追加していません。主要制約性は固定した要求型・効果に対する制約の含意を保証します。ソルバーや最汎代入の存在は対象外です。既存の [仕様PDF](output/pdf/ehmx-spec.pdf) は今回更新していません。
 
 ```lean
 import EHMX
 
+#check EHMX.inferenceSoundness
+#check EHMX.inferenceCompleteness
+#check EHMX.constraintGenerationPrincipality
 #check EHMX.progressEffectSafety
 #check EHMX.emptyEffectProgress
 #check EHMX.schemeValueSubstitution
@@ -61,7 +64,7 @@ import HMX
 #check HMX.Proofs.constraintGenerationPrincipality_scoped
 ```
 
-[CI](.github/workflows/lean.yml) は push・pull request 時に、[Lean Action](https://github.com/leanprover/lean-action) で固定ツールチェーンを準備し、mathlib キャッシュを取得して `lake build` を実行します。Lean 内の回帰例もビルド対象です。Goal 型検査・推論補題の回帰・依存公理監査も実行します。PDF の生成・整合性検査は Lean 検証の必須処理には含めません。
+[CI](.github/workflows/lean.yml) は push・pull request 時に、[Lean Action](https://github.com/leanprover/lean-action) で固定ツールチェーンを準備し、mathlib キャッシュを取得して `lake build` を実行します。Lean 内の回帰例もビルド対象です。Goal 型検査・推論三定理と補題の適用回帰・依存公理監査も実行します。PDF の生成・整合性検査は Lean 検証の必須処理には含めません。
 
 仕様PDFの作業は明示的な依頼があった場合のみ行います。[生成スクリプト](tools/build_ehmx_spec.py) で再生成できます。Python の依存はスクリプト内に固定し、TeX は不要です。Lean の規則と最終目標の宣言を付録へ直接取り込みます。`--check` はソースとPDFのハッシュの対応を読み取り専用で検査します。
 

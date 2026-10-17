@@ -9,14 +9,14 @@ namespace EHMX
 def Assumptions (S : Signature) (M : Model) (sig : OpSignature) : Prop :=
   EffectFramework S M ∧ OpSignature.WF S sig
 
-/-- ATTAPL 10.4.4 の作用域を明示した EHMX 版。未証明。 -/
+/-- ATTAPL 10.4.4 の作用域を明示した EHMX 版。`inferenceSoundness` が証明する。 -/
 def InferenceSoundnessGoal (S : Signature) (M : Model) (sig : OpSignature) : Prop :=
   Assumptions S M sig → ∀ Δ Γ e T ε,
     (∀ k ∈ Δ, k ∈ S.kinds) → Γ.WF S Δ → e.Scoped Γ → e.Declared sig →
     T.HasKind S Δ 0 → ε.HasKind S Δ 1 →
     Typing S M sig Δ (infer sig Γ e T ε) Γ e T ε
 
-/-- ATTAPL 10.4.8 に対応し、環境実現可能性を明示する。未証明。 -/
+/-- ATTAPL 10.4.8 に対応し、環境実現可能性を明示する。`inferenceCompleteness` が証明する。 -/
 def InferenceCompletenessGoal (S : Signature) (M : Model) (sig : OpSignature) : Prop :=
   Assumptions S M sig → ∀ Δ C Γ e T ε,
     (∀ k ∈ Δ, k ∈ S.kinds) → Entails S M Δ C Γ.exists_ →

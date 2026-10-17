@@ -1,6 +1,6 @@
 # 証明範囲と原典番号の対応
 
-この文書の件数と原典対応は既存の **HMX 基盤**についてのものです。追加した EHMX の効果付き進行性、型・効果代入、スキーム値代入、操作捕捉を含む保存・到達状態の安全性と、未証明の推論定理は [EHMX の証明 TODO](ehmx-todo.md) と [仕様](ehmx-spec.md) に分けて記録しています。
+この文書の件数と原典対応は既存の **HMX 基盤**についてのものです。追加した EHMX の効果付き進行性、型・効果代入、スキーム値代入、操作捕捉を含む保存・到達状態の安全性と、推論三定理の証明は [EHMX の証明 TODO](ehmx-todo.md) と [仕様](ehmx-spec.md) に分けて記録しています。
 
 EHMX では ATTAPL §10.5 の保存（10.5.8）・型安全性（10.5.11）に対応する拡張を証明しました。`operationElimination` は存在量化の内側で操作の型引数・継続・二値代入を扱い、`operationPreservation` は `OperationPreservationGoal` を満たします。[Preservation.lean](../EHMX/Proofs/Preservation.lean) の `preservation`、`preservationSteps`、`effectSafety`、`emptyEffectSafety` が一歩・多歩保存と到達状態の保証を与えます。これらは EHMX 固有の多相操作・deep handler・値制限付き let を含む定理であり、以下の HMX の未証明命題を証明済みに変更するものではありません。
 
