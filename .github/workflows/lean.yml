@@ -1,0 +1,23 @@
+name: Lean
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 固定ツールチェーン・mathlibキャッシュ・ビルド
+        uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          use-mathlib-cache: true
+          use-github-cache: false
+          build: true
+          test: false
+          lint: false

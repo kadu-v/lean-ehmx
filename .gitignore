@@ -1,9 +1,14 @@
-lean/.lake/
-tex/build/
-ehmx/target/
-*.aux
-*.fdb_latexmk
-*.fls
-*.log
-*.out
-*.synctex.gz
+# Lean / Lake の依存とビルド成果物
+.lake/
+*.olean
+*.ilean
+*.olean.private
+*.olean.server
+*.trace
+
+# ローカル環境・一時ファイル
+.DS_Store
+.env
+.env.*
+*.swp
+*~
