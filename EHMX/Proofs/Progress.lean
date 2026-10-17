@@ -112,7 +112,7 @@ theorem progressEffectSafety (S : Signature) (M : Model) (sig : OpSignature) :
   intro hA C e T ε ht ρ ι hρ hι hC
   exact progressGeneral hA.1.1 hρ hι ht rfl [] .nil hC
 
-/-- Immediate progress at empty effect. This is not yet safety of all reachable states. -/
+/-- 空効果での一状態の進行性。到達状態の保証は Preservation.lean の emptyEffectSafety で導く。 -/
 theorem emptyEffectProgress (hF : EffectFramework S M)
     (hsat : Satisfiable S M [] C) (ht : Typing S M sig [] C {} e T .empty) :
     Value e ∨ ∃ e', Step e e' := by

@@ -1,6 +1,6 @@
 # EHMX の構文 型付け 制約生成と証明状況
 
-EHMX は、抽象的な制約モデル X に基づく HM(X) に、代数的効果の操作、deep handler、値制限付き let を加えた体系である。**構文・型付け・制約生成・意味論・効果付き進行性と、型・効果代入、スキーム値代入、β・let・return の保存を実装した。保存定理、推論の健全性・完全性・主要制約性、任意の到達状態の効果安全性は未証明である。**
+EHMX は、抽象的な制約モデル X に基づく HM(X) に、代数的効果の操作、deep handler、値制限付き let を加えた体系である。**効果付き進行性、型・効果代入、スキーム値代入、操作捕捉を含む一歩・多歩保存、任意の到達状態の効果安全性を証明した。推論の健全性・完全性・主要制約性は未証明である。**
 
 ## 1 目標と出典
 
@@ -64,7 +64,7 @@ generationWF は生成制約の kind と束縛の整形式性を証明する。g
 
 progressGeneral は EffectFramework、型付け、空の項環境、kind を満たす割当て、および制約を実際に満たす割当てを前提とする。結論は、項が値であるか、一歩簡約できるか、解釈された評価効果に含まれる未処理操作を露出するかのいずれかである。
 
-progressEffectSafety はこの結果を ProgressGoal に適用する。emptyEffectProgress は空効果と充足可能な制約の下で、現在の項が値または簡約可能であることを示す。**到達したすべての状態の保証には保存定理が必要であり、まだ証明していない。**
+progressEffectSafety はこの結果を ProgressGoal に適用する。emptyEffectProgress は空効果と充足可能な制約の下で、現在の項が値または簡約可能であることを示す。preservationSteps と結合した effectSafety・emptyEffectSafety は、同じ保証を任意の到達状態に与える。
 
 typingTypeEffectSubstitution は、型・効果代入を制約・スキーム・環境・結果型・効果に同時に適用して型付けを保つ。substBoundSemantics と entailsSubstBound は存在量化・全称量化を含む意味解釈と含意の保存を示す。型文脈のすべての kind が宣言済みという前提や、意味論の存在証人を型構文で表せるという前提は追加していない。
 
@@ -72,20 +72,20 @@ schemeValueSubstitution は SchemeValueSubstitutionGoal の正確な前提・結
 
 betaPreservation、letPreservation、returnPreservation は、それぞれの簡約について型と効果の上界を保存する。let は単相・多相の両方を扱い、制約強化と存在量化を含む導出に適用できる。evalCtxReplacement は、すべての型文脈・制約・環境で成り立つ穴の型付け変換を、let 右辺を含む文脈全体へ持ち上げる。これらは閉項や具体モデルに限定した定理ではない。
 
-operationClauseInstantiation は引数と継続の型を同じ型・効果引数で具体化するが、捕捉継続自体の型付けと操作節の二値同時代入は未証明である。この区別を保ち、操作捕捉を含む一歩保存、多歩保存、到達状態の効果安全性を完成とは扱わない。
+operationClauseInstantiation は引数と継続の型を同じ型・効果引数で具体化する。ContextTyping の各補題は型文脈の拡張・制約強化・項束縛の追加の下で文脈を再構成し、resumeContextTyping・resumeTyping が継続の型付けを与える。exprOpenTwo・twoValueSubstitution は操作節の束縛順序 `[継続, 引数値]` を保つ。operationElimination は存在量化の作用域内で継続構成と代入を完了し、operationPreservation を導く。preservation は全簡約規則を統合し、preservationSteps は任意の Δ・C・Γ・型・効果上界を保つ。最終 Goal の追加前提や対象の限定は導入していない。
 
 その他の主要な証明済み補題は、operationInstantiation、kindShift、evalKind、evalShift、valuePure、closedValueLambda、evalCtxShiftPlug、schemeUpperSet、generationWF、generationScope である。各補題の使用箇所と残る証明義務は ehmx-todo.md に記録する。
 
 ## 8 未証明の最終定理と次の証明
 
-Goals.lean の InferenceSoundnessGoal、InferenceCompletenessGoal、PrincipalityGoal、PreservationGoal、EffectSafetyGoal、EmptyEffectSafetyGoal は命題の定義であり、証明宣言ではない。完全性は環境実現可能性を要求する。主要制約性は要求型・効果を固定した含意の保証であり、ソルバーや主要解の存在ではない。
+Goals.lean の各 Goal は命題の定義であり、証明宣言ではない。OperationPreservationGoal、PreservationGoal、EffectSafetyGoal、EmptyEffectSafetyGoal には同じ型の証明がある。InferenceSoundnessGoal、InferenceCompletenessGoal、PrincipalityGoal は未証明である。完全性は環境実現可能性を要求する。主要制約性は要求型・効果を固定した含意の保証であり、ソルバーや主要解の存在ではない。
 
-次は resumeTyping と OperationPreservationGoal を証明する。単相・多相の値代入は証明済みだが、捕捉継続の型付けを操作の同じ具体化に対応させる必要がある。handler では OperationPreservationGoal の型付け導出を、存在量化と部分型の規則も含めて反転する。操作の具体化引数を、それを束縛する存在量化の外へ取り出さず、その文脈の内側で継続の型付けを構成する。
+次は推論の健全性に必要な inferWF・inferScope を証明する。環境を付加した infer の制約の整形式性と自由項識別子の消去を、既存の generationWF・generationScope から示す。
 
 ソルバー、参照・ストア、組込み定数の簡約、複数操作節、shallow handler は対象外である。既存 HMX の証明や参照先リポジトリを変更していない。
 
 ## 9 再現と検証
 
-lake build は HMX、EHMX、回帰例を検査する。回帰例は実行・生成・型付けを区別する。handlerGenerationWF は生成制約の整形式性であり、handler 全体の推論健全性ではない。identityTyping と polymorphicLetTyping は、推論定理を仮定しない実際の型付け導出である。追加した回帰例では β・単相 let・多相 let・return の導出に各保存補題を適用し、exists_ / strengthen / sub の重なりと let 右辺の文脈簡約も検査する。mixedClauseTyping と mixedClauseInstantiated は混合引数の操作節の型付けと具体化を検査する。tests/EHMXGoals.lean は完成した ProgressGoal と SchemeValueSubstitutionGoal の型を検査する。
+lake build は HMX、EHMX、回帰例を検査する。回帰例は実行・生成・型付けを区別する。handlerGenerationWF は生成制約の整形式性であり、handler 全体の推論健全性ではない。SafetyRegression.lean は実際の型付けに最終保存定理を適用し、混合引数、let 右辺の捕捉、継続の二回利用、開いた環境、同じ操作・異なる操作の handler、操作節からの再実行を検査する。存在量化された型引数を使い、exists_ / strengthen / sub を経由する捕捉も含む。tests/EHMXGoals.lean は完成した六つの Goal と任意の Δ C Γ T ε に対する多歩保存の型を直接検査し、tests/EHMXAxioms.lean は全 EHMX 定理の依存公理を監査する。
 
 仕様PDFは tools/build_ehmx_spec.py でこの文書から生成する。付録の構文・モデル前提・型付け・簡約・生成規則・最終目標の Lean 宣言はソースから直接取り込む。PDF内のコード表示に限り、Unicode 記号を ASCII 表記へ置換する。ソースのハッシュとPDFのハッシュを manifest に記録し、--check で古いPDFを検出する。ハッシュの一致は説明の数学的正しさの証明ではないため、規則・前提・証明状況も読み合わせる。

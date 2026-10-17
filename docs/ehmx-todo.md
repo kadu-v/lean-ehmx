@@ -1,6 +1,6 @@
 # EHMX の証明 TODO
 
-最終目標は制約生成の健全性（ATTAPL 10.4.4の拡張）、完全性（10.4.8の拡張）、主要制約性（429–430頁の拡張）、保存・進行・到達状態の効果安全性である。**現時点では進行性、スキーム値代入、β・let・return の保存まで証明済みであり、操作捕捉の保存と計画全体は未完了。** チェックは名前を宣言しただけでは付けず、Lean の証明と依存を確認して付ける。
+最終目標は制約生成の健全性（ATTAPL 10.4.4の拡張）、完全性（10.4.8の拡張）、主要制約性（429–430頁の拡張）、保存・進行・到達状態の効果安全性である。**進行性、スキーム値代入、操作捕捉を含む一歩・多歩保存、到達状態の効果安全性は証明済み。推論の健全性・完全性・主要制約性は未証明。** チェックは名前を宣言しただけでは付けず、Lean の証明と依存を確認して付ける。
 
 ## 証明済み
 
@@ -15,7 +15,7 @@
 - [x] schemeUpperSet / monoInstance。スキーム解釈の上方閉性と単相スキームの自己具体化。変数型付けと将来の代入証明で使用。
 - [x] valuePure。型付き値は空効果で型付け可能。β、let、return、操作簡約の値代入で使用。
 - [x] closedValueLambda。閉じた値は lambda 抽象。進行性の適用分岐で使用。
-- [x] evalCtxShiftPlug / valueShift / resumeValue。文脈の持上げと穴埋めの交換、値の保存、継続が値であること。継続の型付け自体は未証明。
+- [x] evalCtxShiftPlug / valueShift / resumeValue。文脈の持上げと穴埋めの交換、値の保存、継続が値であること。継続の型付けは下記の resumeTyping で証明。
 - [x] generationWF / generationScope。生成制約の kind・束縛・自由項変数の性質。健全性の整形式条件で使用。
 - [x] typingDeclared / unknownPerformNotTypable。型付け可能な項の操作宣言の存在。健全性の入力条件を検証。
 - [x] progressGeneral / progressEffectSafety。充足する割当ての下で値・簡約・許された未処理操作の三場合を証明。
@@ -33,17 +33,18 @@
 - [x] `valueNoStep`、`evalCtxValue`、`evalCtxReplacement`。文脈内で簡約可能な穴は値ではなく、letPoly 分岐を除外できる。穴の置換を Δ・C・Γ・型・効果の全体について量化することで、exists_ を含む文脈の簡約に対応する。
 - [x] `lambdaApplication`、`betaPreservation`、`letPreservation`、`returnPreservation`。lambda の反転は制約強化と存在量化を含む。let は単相・多相の両方を扱い、閉項や具体モデルへの制限を加えていない。
 
-## 保存定理へ向けた次の作業
+## 操作保存・保存・到達状態の安全性
 
-次の中心課題は **`resumeTyping` と `operationPreservation`**。操作の導出をたどって得る具体化引数と、その型文脈・制約を保ち、同じ具体化の下で引数値と捕捉継続を型付けする。外側の Γ・制約・return 節・操作節も、途中の存在量化の内側へ持ち上げる必要がある。
+ATTAPL §10.5 の保存（10.5.8）・型安全性（10.5.11）に対応する EHMX 拡張を完成した。`Goals.lean` の前提・結論を維持し、閉項・具体モデルへの保存定理の限定や、操作保存を前提とした最終定理は導入していない。
 
-`evalCtxReplacement` は一様な穴の型付け変換から文脈簡約を導く補題である。これだけから、特定の操作の具体化に対応する継続の型付けを取り出せるとは扱わない。捕捉継続については、操作の型と効果の同じ具体化を保持する文脈の型付けを別途構成する必要がある。
+`ContextTyping` は任意の型文脈の拡張・制約強化・新しい項束縛の下で評価文脈を再構成する局所命題である。各評価文脈の構成子について元の導出から証明し、最終定理の追加前提にはしていない。`operationElimination` の帰納法では、外側の Γ・制約・操作節を存在量化の内側へ移し、同じ引数列から操作の入力型・結果型を具体化する。
 
-- [ ] 操作導出の分解と `resumeTyping`。存在量化の内側で継続を構成し、最後に Typing.exists_ と制約強化で元の判断へ戻す。外側に一律の型引数の存在を要求しない。
-- [ ] 操作節の `[継続, 引数値]` の型付き同時代入。`operationClauseInstantiation` と `valueSubstitution` を結び、順序と束縛の持上げを証明する。
-- [ ] `operationPreservation : OperationPreservationGoal S M sig`。
-- [ ] `preservation : PreservationGoal S M sig`。β・let・return・操作捕捉・文脈簡約を統合する。操作捕捉を仮定した命題を完成とは扱わない。
-- [ ] `preservationSteps`、`effectSafety`、`emptyEffectSafety`。一歩保存から多歩保存を証明し、既存の進行性と結合する。二つの SafetyGoal 全体を型検査する。
+- [x] `ContextTyping.appFun` / `appArg` / `letRhs` / `perform` / `handle`、`ContextTyping.shift` / `stronger` / `sub`、`operationClauseShift`。評価文脈の全構成子と型文脈・制約の移動を扱う。
+- [x] `operationElimination`、`resumeContextTyping`、`resumeTyping`。存在量化の内側で継続と代入結果を構成し、最後に Typing.exists_ と制約強化で元の判断へ戻す。外側に一律の型引数の存在を要求しない。letPoly の右辺は操作を含む項が非値であることから除外する。
+- [x] `exprOpenShiftSucc`、`exprOpenTwo`、`twoValueSubstitution`。操作節の `[継続, 引数値]` の順序で型付き同時代入を証明。開いた環境でも外側の項変数を保持し、一束縛・二束縛の構文を扱う。
+- [x] `operationPreservation : OperationPreservationGoal S M sig`。外側の sub / strengthen / exists_ も含む操作捕捉の保存。
+- [x] `preservation : PreservationGoal S M sig`。Step の帰納法で Δ・C・Γ・型・効果を一般化し、β・let・return・操作捕捉・文脈簡約を統合。
+- [x] `preservationSteps`、`effectSafety`、`emptyEffectSafety`。多歩保存は任意の Δ C Γ T ε を保持する。安全性は既存の進行性と結合し、二つの SafetyGoal 全体を満たす。
 
 ## 推論の健全性 完全性 主要制約性
 
@@ -67,13 +68,17 @@
 - [x] 未宣言操作の偽制約と型付け不能、非値 let が共有する単相型の生成構造、作用域外の型変数の kind 不成立。
 - [ ] 一つの let 多相値を異なる型・効果で同時に使う型付け例と非値での非導出。
 - [x] `mixedClauseTyping`、`mixedClauseInstantiated`、`returnHandlerTyping`。型・効果の混合引数を持つ操作節と、完全な return handler の型付け。操作捕捉の保存を適用する回帰ではない。
-- [ ] 操作を捕捉する handler に保存定理を適用する回帰、継続の複数回利用、型変数の逃走を試みるプログラムの非導出。
+- [x] `SafetyRegression.lean`。混合引数の操作捕捉、let 右辺、継続の二回利用とその多歩簡約、外側の項変数、同じ操作の内側 handler、異なる操作の通過、操作節からの再実行について、実際の型付けに最終保存定理を適用。
+- [x] `existentialOperationTyping`、`existentialCapturePreserved`。操作の具体化引数に存在束縛の型変数そのものを使い、操作への経路上で exists_ / strengthen / sub を重ねる。
+- [x] `resumedHandlerReachableSafe`、`emptyEffectMultistepSafety`、`nonemptyEffectReachableSafety`、`reperformAllowedUnhandled`。空効果の到達状態の安全性と、非空効果で許された再実行操作を検査。
+- [ ] 型変数の逃走を試みるプログラムの非導出。現在の回帰は kind の作用域外参照の拒否と、存在量化内での捕捉・保存を検査している。
 - [ ] 推論定理完成後、生成制約の充足と型付けの両方向を具体例に適用。
 - [x] `betaTypedReduction`、`monomorphicLetTypedReduction`、`polymorphicLetTypedReduction`、`returnTypedReduction`。実際の型付け導出に簡約別の保存を適用。
 - [x] `wrappedBetaTypedReduction`、`letRhsBetaTypedReduction`。exists_ / strengthen / sub を重ねた導出と let 右辺の文脈簡約に保存補題を適用。
 - [x] 既存 HMX を維持し、EHMX と回帰例を標準ビルド対象に追加。
 - [x] 仕様の日本語説明と Lean 宣言の直接取り込みによる仕様PDFの生成手順を追加。
-- [ ] 保存・推論の最終定理が通った時点で、全目標の依存公理と仕様PDFの証明状況を再確認する。
+- [x] 保存・安全性の最終定理を標準 import に含め、依存公理と正確な Goal 型を検査する。
+- [ ] 推論三定理の完成時に、その Goal 型と依存公理も検査する。PDF 作業は明示的な依頼があった場合のみ行う。
 
 ## 計画から具体化した点
 
@@ -83,6 +88,8 @@
 
 ## 今回の検査範囲
 
-標準 `EHMX` import に新しい全証明と回帰例を含める。`tests/EHMXGoals.lean` は完成した `ProgressGoal` と `SchemeValueSubstitutionGoal` の正確な型を検査する。保存・操作保存・到達状態の安全性は未証明であり、それらの最終型検査はまだ完了していない。公理監査は標準の三公理以外を認めず、追加の安全性公理や sorry を認めない。
+標準 `EHMX` import に新しい全証明と回帰例を含める。`tests/EHMXGoals.lean` は `ProgressGoal`、`SchemeValueSubstitutionGoal`、`OperationPreservationGoal`、`PreservationGoal`、`EffectSafetyGoal`、`EmptyEffectSafetyGoal` と、任意の Δ C Γ T ε に対する `preservationSteps` の完全な型を検査する。公理監査は標準の三公理以外を認めず、追加の安全性公理や sorry を認めない。
 
-検査結果：`lake build`（824 jobs）、`lake env lean tests/EHMXAxioms.lean`（687件）、`lake env lean tests/EHMXGoals.lean`、仕様PDFの `--check`、`git diff --check` が成功。仕様PDF全10ページをPNGへ描画し、文字・数式・コード・改ページを確認した。これらの成功は、未証明の最終 Goal の成立を意味しない。
+検査結果：`lake build`（828 jobs）、`lake env lean tests/EHMXAxioms.lean`（782件の定理）、`lake env lean tests/EHMXGoals.lean`、`git diff --check` が成功。推論三定理は検査対象となる証明がまだなく、今回の保存・安全性の完成には含めない。PDF の更新・再生成・整合性検査は実施していない。
+
+次の証明作業は `InferenceSoundnessGoal` に必要な `inferWF`・`inferScope`。既存の `generationWF`・`generationScope` を環境付きの infer へ接続し、各型付け判断の制約の整形式性と自由項識別子の消去を確保する。

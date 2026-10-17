@@ -1,6 +1,6 @@
 # EHM(X)：HMX を基盤とする形式化
 
-System Fξ を参考に、`perform`・deep handler・値制限付き let を備える EHM(X) を証明するリポジトリです。**EHMX の構文・型付け・制約生成・評価、効果付き進行性、スキーム値代入、β・let・return の保存を実装しています。保存定理、推論の健全性・完全性・主要制約性、任意の到達状態の効果安全性は未証明です。**
+System Fξ を参考に、`perform`・deep handler・値制限付き let を備える EHM(X) を証明するリポジトリです。**EHMX の効果付き進行性、スキーム値代入、操作捕捉を含む一歩・多歩保存、任意の到達状態の効果安全性を証明しています。推論の健全性・完全性・主要制約性は未証明です。**
 
 基盤は『Advanced Topics in Types and Programming Languages』（ATTAPL）第10章 *The Essence of ML Type Inference* に基づく HM(X) の Lean 4 形式化です。抽象的な制約モデルをパラメータとする型付け・制約生成と、その健全性・完全性・主要制約性を扱います。
 
@@ -12,7 +12,7 @@ System Fξ を参考に、`perform`・deep handler・値制限付き let を備�
 
 EHMX は新しい名前空間・公開入口に追加し、HMX の定義と証明は維持しています。型・効果で多相な操作宣言、単一操作の deep handler、値だけを一般化する let と非値の単相 let を扱います。既存の `HMX.ValueRestricted` は EHMX の型付けの値制限として流用していません。
 
-EHMX の [仕様](docs/ehmx-spec.md)、[仕様PDF](output/pdf/ehmx-spec.pdf)、[補題TODO](docs/ehmx-todo.md) に、前提・結論・証明状況と次の使用箇所を記録しています。型・効果代入と多相スキーム値代入は証明済みです。次の中心課題は、操作の量化変数の作用域を保った捕捉継続の型付けと操作簡約の保存です。
+EHMX の [仕様](docs/ehmx-spec.md) と [補題TODO](docs/ehmx-todo.md) に、前提・結論・証明状況と次の使用箇所を記録しています。保存と安全性は `Goals.lean` の命題をそのまま満たし、保存は開いた環境にも適用できます。次は推論の健全性に必要な `inferWF`・`inferScope` を証明し、環境を付加した生成制約の整形式性と作用域を確認します。既存の [仕様PDF](output/pdf/ehmx-spec.pdf) は今回更新していません。
 
 ```lean
 import EHMX
@@ -23,11 +23,16 @@ import EHMX
 #check EHMX.betaPreservation
 #check EHMX.letPreservation
 #check EHMX.returnPreservation
+#check EHMX.operationPreservation
+#check EHMX.preservation
+#check EHMX.preservationSteps
+#check EHMX.effectSafety
+#check EHMX.emptyEffectSafety
 #check EHMX.generationWF
 #check EHMX.Concrete.framework
 ```
 
-`progressEffectSafety` は、閉じた型付き項が値・簡約可能・効果に含まれる未処理操作のいずれかであることを証明します。`emptyEffectProgress` は現在の項の進行性であり、未証明の保存定理を必要とする多歩安全性とは区別します。`EHMX.Goals` の `...Goal` は命題の定義であり、証明ではありません。
+`progressEffectSafety` は、閉じた型付き項が値・簡約可能・効果に含まれる未処理操作のいずれかであることを証明します。`effectSafety` は多歩保存を使い、この保証を任意の到達状態に適用します。`emptyEffectSafety` は充足可能な制約と空効果の下で、到達状態が値または簡約可能であることを示します。`EHMX.Goals` の `...Goal` は命題の定義であり、対応する証明は別の `theorem` 宣言です。
 
 ## 引き継いだ証明の範囲
 

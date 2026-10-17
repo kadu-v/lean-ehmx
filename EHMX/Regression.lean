@@ -152,8 +152,8 @@ theorem clauseCannotEscapeKind : ¬ Ty.HasKind Concrete.signature [] (.bound 0) 
   intro h
   cases h with | bound hi _ => simp at hi
 
-/-- These regressions apply proved reduction lemmas to actual typing derivations.
-They do not assert preservation of operation capture, which remains unproved. -/
+/-- 簡約別の保存補題を実際の型付け導出へ適用する。
+操作捕捉と最終安全性定理の回帰は SafetyRegression.lean にある。 -/
 def emptyTriple : Effect := .union (.union .empty .empty) .empty
 
 theorem betaTyping : Typing Concrete.signature Concrete.model signature [] .truth {}
