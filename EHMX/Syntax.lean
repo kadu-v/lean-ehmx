@@ -164,27 +164,6 @@ def Expr.subst (x : Nat) (v : Expr) : Expr → Expr
   | .perform op t => .perform op (Expr.subst x v t)
   | .handle t op r c => .handle (Expr.subst x v t) op (Expr.subst x v r) (Expr.subst x v c)
 
-structure OpDecl where
-  kinds : List Kind
-  input : Ty
-  output : Ty
-  deriving BEq, Repr
-abbrev OpSignature := Op → Option OpDecl
-
-/-- Static operation scope, independent of type/effect inference. -/
-def Expr.Declared (sig : OpSignature) : Expr → Prop
-  | .ident _ => True
-  | .lam t => t.Declared sig
-  | .app t u | .letE t u => t.Declared sig ∧ u.Declared sig
-  | .perform op t => sig op ≠ none ∧ t.Declared sig
-  | .handle t op r c => sig op ≠ none ∧ t.Declared sig ∧ r.Declared sig ∧ c.Declared sig
-
-/-- Operation declarations have no free type/effect variables. -/
-def OpSignature.WF (S : Signature) (sig : OpSignature) : Prop :=
-  ∀ op d, sig op = some d →
-    (∀ k ∈ d.kinds, k ∈ S.kinds) ∧ d.input.HasKind S d.kinds 0 ∧
-    d.output.HasKind S d.kinds 0 ∧ d.input.fv = ∅ ∧ d.output.fv = ∅
-
 inductive Predicate where
   | equal : Kind → Predicate
   | sub : Kind → Predicate
@@ -209,10 +188,11 @@ inductive Constraint where
   | def_ : Scheme → Constraint → Constraint
   | defFree : Nat → Scheme → Constraint → Constraint
   | inst : PVar → Ty → Constraint
-  deriving Repr
+  | implies : Constraint → Constraint → Constraint
+  deriving BEq, Repr
 inductive Scheme where
   | all : List Kind → Constraint → Ty → Scheme
-  deriving Repr
+  deriving BEq, Repr
 end
 
 def Constraint.le (k : Kind) (T U : Ty) := Constraint.atom (.sub k) [T,U]
@@ -226,10 +206,37 @@ def Constraint.letFree (x : Nat) (s : Scheme) (C : Constraint) : Constraint :=
   .conj s.exists_ (.defFree x s C)
 
 mutual
+def Constraint.fpi : Constraint → Finset Nat
+  | .truth | .falsity | .atom _ _ => ∅
+  | .conj C D | .implies C D => C.fpi ∪ D.fpi
+  | .exists_ _ C | .forall_ _ C => C.fpi
+  | .def_ s C => s.fpi ∪ C.fpi
+  | .defFree x s C => s.fpi ∪ C.fpi.erase x
+  | .inst (.free x) _ => {x}
+  | .inst (.bound _) _ => ∅
+def Scheme.fpi : Scheme → Finset Nat
+  | .all _ C _ => C.fpi
+end
+
+mutual
+/-- Free type and effect variables, including those in locally defined schemes. -/
+def Constraint.fv : Constraint → Finset TVar
+  | .truth | .falsity => ∅
+  | .atom _ ts => (ts.map Ty.fv).foldr (· ∪ ·) ∅
+  | .conj C D | .implies C D => C.fv ∪ D.fv
+  | .exists_ _ C | .forall_ _ C => C.fv
+  | .def_ s C | .defFree _ s C => s.fv ∪ C.fv
+  | .inst _ T => T.fv
+def Scheme.fv : Scheme → Finset TVar
+  | .all _ C T => C.fv ∪ T.fv
+end
+
+mutual
 def Constraint.WF (S : Signature) (Δ : List Kind) (n : Nat) : Constraint → Prop
   | .truth | .falsity => True
   | .atom p ts => p.WF S ∧ List.Forall₂ (Ty.HasKind S Δ) ts (p.kinds S)
   | .conj C D => C.WF S Δ n ∧ D.WF S Δ n
+  | .implies P D => P.WF S Δ 0 ∧ P.fpi = ∅ ∧ D.WF S Δ n
   | .exists_ ks C | .forall_ ks C =>
       (∀ k ∈ ks, k ∈ S.kinds) ∧ C.WF S (ks ++ Δ) n
   | .def_ s C => s.WF S Δ n ∧ C.WF S Δ (n + 1)
@@ -248,6 +255,7 @@ def Constraint.shift (n d : Nat) : Constraint → Constraint
   | .falsity => .falsity
   | .atom p ts => .atom p (ts.map (Ty.shift n d))
   | .conj C D => .conj (C.shift n d) (D.shift n d)
+  | .implies P D => .implies (P.shift n d) (D.shift n d)
   | .exists_ ks C => .exists_ ks (C.shift n (d + ks.length))
   | .forall_ ks C => .forall_ ks (C.shift n (d + ks.length))
   | .def_ s C => .def_ (s.shift n d) (C.shift n d)
@@ -257,18 +265,61 @@ def Scheme.shift (n d : Nat) : Scheme → Scheme
   | .all ks C T => .all ks (C.shift n (d + ks.length)) (T.shift n (d + ks.length))
 end
 
+abbrev BoundSubst := Nat → Ty
+
+def Ty.substBound (σ : BoundSubst) : Ty → Ty
+  | .free X => .free X
+  | .bound i => σ i
+  | .con f ts => .con f (ts.map (Ty.substBound σ))
+
+def BoundSubst.lift (n : Nat) (σ : BoundSubst) : BoundSubst :=
+  fun i => if i < n then .bound i else (σ (i - n)).shift n 0
+
 mutual
-def Constraint.fpi : Constraint → Finset Nat
-  | .truth | .falsity | .atom _ _ => ∅
-  | .conj C D => C.fpi ∪ D.fpi
-  | .exists_ _ C | .forall_ _ C => C.fpi
-  | .def_ s C => s.fpi ∪ C.fpi
-  | .defFree x s C => s.fpi ∪ C.fpi.erase x
-  | .inst (.free x) _ => {x}
-  | .inst (.bound _) _ => ∅
-def Scheme.fpi : Scheme → Finset Nat
-  | .all _ C _ => C.fpi
+def Constraint.substBound (σ : BoundSubst) : Constraint → Constraint
+  | .truth => .truth
+  | .falsity => .falsity
+  | .atom p ts => .atom p (ts.map (Ty.substBound σ))
+  | .conj C D => .conj (C.substBound σ) (D.substBound σ)
+  | .implies P D => .implies (P.substBound σ) (D.substBound σ)
+  | .exists_ ks C => .exists_ ks (C.substBound (σ.lift ks.length))
+  | .forall_ ks C => .forall_ ks (C.substBound (σ.lift ks.length))
+  | .def_ s C => .def_ (s.substBound σ) (C.substBound σ)
+  | .defFree x s C => .defFree x (s.substBound σ) (C.substBound σ)
+  | .inst x T => .inst x (T.substBound σ)
+def Scheme.substBound (σ : BoundSubst) : Scheme → Scheme
+  | .all ks C T => .all ks (C.substBound (σ.lift ks.length))
+      (T.substBound (σ.lift ks.length))
 end
+
+/-- Remove precisely the initial block, leaving all outer variables in scope. -/
+def BoundSubst.many (args : List Ty) : BoundSubst := fun i =>
+  match args[i]? with
+  | some U => U
+  | none => .bound (i - args.length)
+
+structure OpDecl where
+  kinds : List Kind
+  input : Ty
+  output : Ty
+  condition : Constraint := .truth
+  deriving BEq, Repr
+abbrev OpSignature := Op → Option OpDecl
+
+/-- Static operation scope, independent of type/effect inference. -/
+def Expr.Declared (sig : OpSignature) : Expr → Prop
+  | .ident _ => True
+  | .lam t => t.Declared sig
+  | .app t u | .letE t u => t.Declared sig ∧ u.Declared sig
+  | .perform op t => sig op ≠ none ∧ t.Declared sig
+  | .handle t op r c => sig op ≠ none ∧ t.Declared sig ∧ r.Declared sig ∧ c.Declared sig
+
+/-- Operation declarations have no free type/effect variables. -/
+def OpSignature.WF (S : Signature) (sig : OpSignature) : Prop :=
+  ∀ op d, sig op = some d →
+    (∀ k ∈ d.kinds, k ∈ S.kinds) ∧ d.input.HasKind S d.kinds 0 ∧
+    d.output.HasKind S d.kinds 0 ∧ d.input.fv = ∅ ∧ d.output.fv = ∅ ∧
+    d.condition.WF S d.kinds 0 ∧ d.condition.fpi = ∅ ∧ d.condition.fv = ∅
 
 /-- Bound schemes are nearest-first; free bindings are rightmost-wins. -/
 structure Env where

@@ -104,9 +104,9 @@ theorem typingWeakeningAt (ht : Typing S M sig Δ C Γ e T ε) :
       simp only [List.length_map] at hr'
       have hb' := ihb (.all ks D A :: pre) post s (by simp [Env.push, hΓ]) hs
       exact .letPoly (judgmentInsertAfter hw hΓ hs) (valueShift hv _ _) hr' he hb'
-  | perform hw hl ha ht ih =>
+  | perform hw hl ha hp ht ih =>
       intro pre post s hΓ hs
-      exact .perform (judgmentInsertAfter hw hΓ hs) hl ha (ih _ _ _ hΓ hs)
+      exact .perform (judgmentInsertAfter hw hΓ hs) hl ha hp (ih _ _ _ hΓ hs)
   | @handle Δ C Γ body op ret clause B εout decl A εin hw hl hb he hr hc ihb ihr ihc =>
       intro pre post s hΓ hs
       have hr' := ihr (.mono A :: pre) post s (by simp [Env.push, hΓ]) hs

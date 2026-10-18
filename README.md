@@ -10,7 +10,7 @@ System Fξ を参考に、`perform`・deep handler・値制限付き let を備�
 
 旧 HMX・EHMX 実装、旧 TeX・生成仕様PDF・監査資料・TODO は撤去しました。旧資産は本リポジトリの Git 履歴（置き換え前のコミット `1c6dec08b0cd1114e110fc389342d353cd040754`）に残っています。ルートの作業指示は維持しています。`docs/references/` のPDFは原典・参考資料であり、新しい EHM(X) の仕様書ではありません。
 
-EHMX は新しい名前空間・公開入口に追加し、HMX の定義と証明は維持しています。型・効果で多相な操作宣言、単一操作の deep handler、値だけを一般化する let と非値の単相 let を扱います。既存の `HMX.ValueRestricted` は EHMX の型付けの値制限として流用していません。
+EHMX は新しい名前空間・公開入口に追加し、HMX の定義と証明は維持しています。述語条件付きの多相操作宣言 `op : ∀β. P ⇒ A → B`、単一操作の deep handler、値だけを一般化する let と非値の単相 let を扱います。既存の `HMX.ValueRestricted` は EHMX の型付けの値制限として流用していません。
 
 EHMX の [仕様](docs/ehmx-spec.md) と [補題TODO](docs/ehmx-todo.md) に、前提・結論・証明状況を記録しています。保存と安全性に加え、`inferenceSoundness`・`inferenceCompleteness`・`constraintGenerationPrincipality` が `Goals.lean` の三つの推論命題をそのまま満たします。健全性は項の構造、完全性は既存の `Typing` 導出に帰納法を適用しています。完全性の環境実現可能性条件は維持し、充足可能性・`ArrowSeparated`・意味論の値の構文的表現可能性は追加していません。主要制約性は固定した要求型・効果に対する制約の含意を保証します。ソルバーや最汎代入の存在は対象外です。既存の [仕様PDF](output/pdf/ehmx-spec.pdf) は今回更新していません。
 
@@ -47,6 +47,8 @@ import EHMX
 ```
 
 `progressEffectSafety` は、閉じた型付き項が値・簡約可能・効果に含まれる未処理操作のいずれかであることを証明します。`effectSafety` は多歩保存を使い、この保証を任意の到達状態に適用します。`emptyEffectSafety` は充足可能な制約と空効果の下で、到達状態が値または簡約可能であることを示します。`EHMX.Goals` の `...Goal` は命題の定義であり、対応する証明は別の `theorem` 宣言です。
+
+操作宣言の `condition` は通常のスキームと同じ `Constraint` で、省略時は `truth` です。操作の矢印に効果欄はなく、`∅` の指定も不要です。呼出側は具体化した条件を満たし、操作節は宣言条件を仮定できます。`ConditionalOperationsRegression.lean` では `op : ∀β. Eq β ⇒ β → β` の操作節 `let _ = eq z z in k z`、handler 全体の空効果、推論三定理、Int による充足可能性、実際の捕捉の保存を検査しています。これは EHM(X) 固有の拡張です。実装計画と検査結果は [todo.md](todo.md) に記録しています。
 
 ## 引き継いだ証明の範囲
 
@@ -97,6 +99,7 @@ lake env lean tests/EHMXInference.lean
 | [TypeClasses](HMX/TypeClasses.lean) | HMX の単一引数クラス・スーパークラス・条件付きインスタンスの固定モデル |
 | [EHMX.TypeClasses](EHMX/TypeClasses.lean) | HMX と宣言を共有し、潜在効果を保持する型木とクラス所属 |
 | [EHMX.Proofs.TypeClasses](EHMX/Proofs/TypeClasses.lean) | モデル法則、規則の含意、HMX 所属との対応、推論三定理の特殊化 |
+| [EHMX.ConditionalOperationsRegression](EHMX/ConditionalOperationsRegression.lean) | 条件付き呼出し、宣言条件を使う節、存在引数の捕捉、偽条件・不正宣言の拒否 |
 | [EHMX.TypeClassesRegression](EHMX/TypeClassesRegression.lean) | 所属・否定例、メソッド利用、多相操作の handler、生成制約の充足可能性 |
 
 ## 主要な証明

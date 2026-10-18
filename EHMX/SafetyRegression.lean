@@ -120,7 +120,7 @@ private theorem performIdentity
   have hi : mixed.input.openAt 0 [base, .empty] = identityType := by
     simp [mixed, identityType, Ty.arrow, Ty.openAt]
   have ho : mixed.output.openAt 0 [base, .empty] = identityType := hi
-  have h := Typing.perform (sig := safetySignature) (decl := mixed) (args := [base, .empty])
+  have h := Typing.performTruth rfl (sig := safetySignature) (decl := mixed) (args := [base, .empty])
     (op := op) (ε := .empty)
     (show JudgmentWF Concrete.signature Δ .truth Γ (.perform op v)
       (mixed.output.openAt 0 [base, .empty]) (.union (.singleton op) .empty) from
@@ -139,7 +139,7 @@ private theorem handleIdentity
     Typing Concrete.signature Concrete.model safetySignature Δ .truth Γ
       (.handle body op (.ident (.bound 0)) clause) identityType εout := by
   have hr := raiseEffect (zeroTyping (typingWF ht).2.2.1 identityKind) hε
-  exact .handle ⟨trivial, rfl, (typingWF ht).2.2.1,
+  exact .handleTruth rfl ⟨trivial, rfl, (typingWF ht).2.2.1,
     scopedHandle (typingWF ht).2.2.2.1 (typingWF hr).2.2.2.1 (typingWF hc).2.2.2.1,
     identityKind, hε⟩ rfl ht he hr (by simpa only [mixed, List.length_cons,
       List.length_nil, Constraint.shift, identityTypeShift] using hc)
@@ -206,7 +206,7 @@ theorem openHandlerTyping :
   have hb := performIdentity hv 0
   have hr := typingWeakening hv (monoWF identityKind)
   have hc := resumeClauseGeneral (typingWF hv).2.2.1 (emptyKind Concrete.framework.signature)
-  apply Typing.handle (S := Concrete.signature) (C := .truth) (decl := mixed)
+  apply Typing.handleTruth rfl (S := Concrete.signature) (C := .truth) (decl := mixed)
     ⟨trivial, rfl, (typingWF hv).2.2.1,
       scopedHandle (typingWF hb).2.2.2.1 (typingWF hr).2.2.2.1 (typingWF hc).2.2.2.1,
       identityKind, emptyKind Concrete.framework.signature⟩ rfl hb
@@ -357,7 +357,7 @@ theorem existentialOperationTyping :
     simp [mixed, A, Ty.arrow, Ty.openAt]
   have hop : Typing Concrete.signature Concrete.model safetySignature [0] .truth {}
       (.perform 0 identity) A (.union (.singleton 0) .empty) := by
-    have ht := Typing.perform (S := Concrete.signature) (C := .truth) (sig := safetySignature)
+    have ht := Typing.performTruth rfl (S := Concrete.signature) (C := .truth) (sig := safetySignature)
       (decl := mixed) (args := [.bound 0, .empty]) (op := 0) (ε := .empty) (arg := identity)
       ⟨trivial, rfl, (typingWF hid).2.2.1, (typingWF hid).2.2.2.1, hi ▸ hA,
         unionKind (singletonKind 0) (emptyKind Concrete.framework.signature)⟩

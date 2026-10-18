@@ -34,6 +34,7 @@ inductive Typing (S : Signature) (M : Model) (sig : OpSignature) :
   | perform : JudgmentWF S Δ C Γ (.perform op arg)
         (decl.output.openAt 0 args) (.union (.singleton op) ε) →
       sig op = some decl → List.Forall₂ (Ty.HasKind S Δ) args decl.kinds →
+      Entails S M Δ C (decl.condition.substBound (BoundSubst.many args)) →
       Typing S M sig Δ C Γ arg (decl.input.openAt 0 args) ε →
       Typing S M sig Δ C Γ (.perform op arg)
         (decl.output.openAt 0 args) (.union (.singleton op) ε)
@@ -42,7 +43,7 @@ inductive Typing (S : Signature) (M : Model) (sig : OpSignature) :
       Typing S M sig Δ C Γ body A εin →
       Entails S M Δ C (.le 1 εin (.union (.singleton op) εout)) →
       Typing S M sig Δ C (Γ.push (.mono A)) ret B εout →
-      Typing S M sig (decl.kinds ++ Δ) (C.shift decl.kinds.length 0)
+      Typing S M sig (decl.kinds ++ Δ) (.conj (C.shift decl.kinds.length 0) decl.condition)
         (((Γ.shift decl.kinds.length).push (.mono decl.input)).push
           (.mono (.arrow decl.output (εout.shift decl.kinds.length 0)
             (B.shift decl.kinds.length 0))))
@@ -60,5 +61,43 @@ inductive Typing (S : Signature) (M : Model) (sig : OpSignature) :
 
 theorem typingWF (h : Typing S M sig Δ C Γ e T ε) : JudgmentWF S Δ C Γ e T ε := by
   cases h <;> assumption
+
+/-- Keep a local condition while strengthening the surrounding constraint. -/
+theorem typingConjStronger (ht : Typing S M sig Δ (.conj C P) Γ e T ε)
+    (hD : D.WF S Δ 0) (hf : D.fpi = ∅) (he : Entails S M Δ D C) :
+    Typing S M sig Δ (.conj D P) Γ e T ε := by
+  have hw := typingWF ht
+  have hp : P.fpi = ∅ := (Finset.union_eq_empty.mp hw.2.1).2
+  exact .strengthen ⟨⟨hD, hw.1.2⟩, by simp [Constraint.fpi, hf, hp], hw.2.2⟩ ht
+    (fun ρ bs ι hρ hbs hι h => ⟨he ρ bs ι hρ hbs hι h.1, h.2⟩)
+
+/-- Unconditional declarations retain the former perform rule. -/
+theorem Typing.performTruth {decl : OpDecl} (hcondition : decl.condition = .truth)
+    (hw : JudgmentWF S Δ C Γ (.perform op arg)
+      (decl.output.openAt 0 args) (.union (.singleton op) ε))
+    (hs : sig op = some decl) (ha : List.Forall₂ (Ty.HasKind S Δ) args decl.kinds)
+    (ht : Typing S M sig Δ C Γ arg (decl.input.openAt 0 args) ε) :
+    Typing S M sig Δ C Γ (.perform op arg) (decl.output.openAt 0 args)
+      (.union (.singleton op) ε) :=
+  .perform hw hs ha (by simp [hcondition, Constraint.substBound, Entails, Constraint.Holds]) ht
+
+theorem Typing.withConjTruth (ht : Typing S M sig Δ C Γ e T ε) :
+    Typing S M sig Δ (.conj C .truth) Γ e T ε :=
+  .strengthen ⟨⟨(typingWF ht).1, trivial⟩,
+    by simpa only [Constraint.fpi, Finset.union_empty] using (typingWF ht).2.1,
+    (typingWF ht).2.2⟩ ht (fun _ _ _ _ _ _ h => h.1)
+
+/-- A truth condition gives precisely the former operation-clause obligation. -/
+theorem Typing.handleTruth {decl : OpDecl} (hcondition : decl.condition = .truth)
+    (hw : JudgmentWF S Δ C Γ (.handle body op ret clause) B εout)
+    (hs : sig op = some decl) (hb : Typing S M sig Δ C Γ body A εin)
+    (he : Entails S M Δ C (.le 1 εin (.union (.singleton op) εout)))
+    (hr : Typing S M sig Δ C (Γ.push (.mono A)) ret B εout)
+    (hc : Typing S M sig (decl.kinds ++ Δ) (C.shift decl.kinds.length 0)
+      (((Γ.shift decl.kinds.length).push (.mono decl.input)).push
+        (.mono (.arrow decl.output (εout.shift decl.kinds.length 0) (B.shift decl.kinds.length 0))))
+      clause (B.shift decl.kinds.length 0) (εout.shift decl.kinds.length 0)) :
+    Typing S M sig Δ C Γ (.handle body op ret clause) B εout :=
+  .handle hw hs hb he hr (by rw [hcondition]; exact hc.withConjTruth)
 
 end EHMX

@@ -33,11 +33,11 @@ def generate (sig : OpSignature) : Expr → Ty → Effect → Constraint
       match sig op with
       | none => .falsity
       | some decl =>
-        .exists_ (decl.kinds ++ [1]) (.conj
+        .exists_ (decl.kinds ++ [1]) (.conj decl.condition (.conj
           (generate sig arg decl.input (.bound decl.kinds.length))
           (resultConstraint decl.output (T.shift (decl.kinds.length + 1) 0)
             (.union (.singleton op) (.bound decl.kinds.length))
-            (ε.shift (decl.kinds.length + 1) 0)))
+            (ε.shift (decl.kinds.length + 1) 0))))
   | .handle body op ret clause, T, ε =>
       match sig op with
       | none => .falsity
@@ -49,9 +49,9 @@ def generate (sig : OpSignature) : Expr → Ty → Effect → Constraint
           (.conj (.le 1 (.bound 1) (.union (.singleton op) η))
           (.conj (.def_ (.mono (.bound 0)) (generate sig ret B η))
           (.conj (.forall_ decl.kinds
-            (.def_ (.mono decl.input)
+            (.implies decl.condition (.def_ (.mono decl.input)
               (.def_ (.mono (.arrow decl.output (η.shift n 0) (B.shift n 0)))
-                (generate sig clause (B.shift n 0) (η.shift n 0)))))
+                (generate sig clause (B.shift n 0) (η.shift n 0))))))
             (resultConstraint B (T.shift 4 0) η (ε.shift 4 0))))))
 
 def infer (sig : OpSignature) (Γ : Env) (e : Expr) (T : Ty) (ε : Effect) : Constraint :=

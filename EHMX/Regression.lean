@@ -12,7 +12,7 @@ def identityType : Ty := .arrow base .empty base
 
 /-- A declaration with both a type and an effect argument. -/
 def mixed : OpDecl := ⟨[0,1], .arrow (.bound 0) (.bound 1) (.bound 0),
-  .arrow (.bound 0) (.bound 1) (.bound 0)⟩
+  .arrow (.bound 0) (.bound 1) (.bound 0), .truth⟩
 def signature : OpSignature := fun op => if op = 0 then some mixed else none
 
 theorem signatureWF : OpSignature.WF Concrete.signature signature := by
@@ -23,7 +23,7 @@ theorem signatureWF : OpSignature.WF Concrete.signature signature := by
     have ha : Ty.HasKind Concrete.signature [0,1] (.bound 0) 0 := .bound rfl (by simp [Concrete.signature])
     have he : Ty.HasKind Concrete.signature [0,1] (.bound 1) 1 := .bound rfl (by simp [Concrete.signature])
     exact ⟨by simp [mixed, Concrete.signature], arrowKind ha he ha,
-      arrowKind ha he ha, by simp [mixed, Ty.fv, Ty.arrow], by simp [mixed, Ty.fv, Ty.arrow]⟩
+      arrowKind ha he ha, by simp [mixed, Ty.fv, Ty.arrow], by simp [mixed, Ty.fv, Ty.arrow, Constraint.WF, Constraint.fpi, Constraint.fv]⟩
   · cases h
 
 theorem baseKind : Ty.HasKind Concrete.signature Δ base 0 := .con (by trivial) .nil
@@ -236,12 +236,13 @@ theorem mixedClauseTyping : Typing Concrete.signature Concrete.model signature [
 theorem mixedClauseInstantiated : Typing Concrete.signature Concrete.model signature [] .truth
     ((({} : Env).push (.mono identityType)).push (.mono (.arrow identityType .empty identityType)))
     (.app (.ident (.bound 0)) (.ident (.bound 1))) identityType .empty := by
-  have h := operationClauseInstantiation Concrete.framework signatureWF (ks := [0,1])
+  have h := operationClauseInstantiation Concrete.framework signatureWF (ks := [0,1]) (P := .truth) trivial rfl
     (Δ := []) (C := .truth) (Γ := {}) (A := mixed.input) (R := mixed.output)
     (B := identityType) (ε := .empty)
     (by simpa [Constraint.shift, Env.shift, identityType, base, Ty.arrow, Ty.empty,
-      Ty.shift] using mixedClauseTyping)
+      Ty.shift] using mixedClauseTyping.withConjTruth)
     (args := [base, .empty]) (.cons baseKind (.cons (emptyKind Concrete.framework.signature) .nil))
+    (fun _ _ _ _ _ _ _ => trivial)
   simpa [mixed, identityType, base, Ty.arrow, Ty.openAt, Ty.shift, Ty.empty] using h
 
 theorem returnHandlerTyping : Typing Concrete.signature Concrete.model signature [] .truth {}
@@ -250,7 +251,7 @@ theorem returnHandlerTyping : Typing Concrete.signature Concrete.model signature
   have hI : Ty.HasKind Concrete.signature [] identityType 0 :=
     arrowKind baseKind (emptyKind Concrete.framework.signature) baseKind
   have hid := identityTyping (sig := signature) Concrete.framework (baseKind (Δ := []))
-  apply Typing.handle (decl := mixed) (A := identityType) (εin := .empty)
+  apply Typing.handleTruth rfl (decl := mixed) (A := identityType) (εin := .empty)
   · exact ⟨trivial, rfl, by simp [Env.WF], by
       simp [Expr.Scoped, Expr.LCAt, Expr.fv, Env.dpi, identity], hI,
       emptyKind Concrete.framework.signature⟩

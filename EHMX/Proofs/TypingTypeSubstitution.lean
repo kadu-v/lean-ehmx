@@ -110,7 +110,7 @@ theorem typingTypeEffectSubstitution (hF : EffectFramework S M)
       have hb' := ihb _ _ hσ
       simp only [envSubstBoundPush, Scheme.substBound] at hb'
       exact .letPoly (judgmentSubstBound hw hσ) hv hr' he' hb'
-  | @perform Δ C Γ op arg ε decl args hw hs ha ht ih =>
+  | @perform Δ C Γ op arg ε decl args hw hs ha hp ht ih =>
       intro Δ' σ hσ
       have hd := hsig op decl hs
       have ht' := ih _ _ hσ
@@ -118,15 +118,20 @@ theorem typingTypeEffectSubstitution (hF : EffectFramework S M)
       have hw' := judgmentSubstBound hw hσ
       rw [declarationOpenSubstBound hd.2.2.1 ha] at hw' ⊢
       simp only [Ty.union, Ty.singleton, Ty.substBound, List.map_cons, List.map_nil] at hw' ⊢
+      have hpc := (hsig op decl hs).2.2.2.2.2.1
+      have hpw := (substBoundWF S).1 _ _ _ (constraintAppendWF hpc Δ) _ _ (BoundSubst.validMany ha)
+      have hp' := entailsSubstBound hF hσ hw.1 hpw hp
+      rw [declarationConditionOpenSubstBound hpc ha] at hp'
       exact .perform hw' hs
-        (List.forall₂_map_left_iff.mpr (forall₂ImplMem ha (fun _ _ _ h => kindSubstBound h hσ))) ht'
+        (List.forall₂_map_left_iff.mpr (forall₂ImplMem ha (fun _ _ _ h => kindSubstBound h hσ))) hp' ht'
   | @handle Δ C Γ body op ret clause B εout decl A εin hw hs hb he hr hc ihb ihr ihc =>
       intro Δ' σ hσ
       have hd := hsig op decl hs
       have hr' := ihr _ _ hσ
       simp only [envSubstBoundPush, monoSubstBound] at hr'
       have hc' := ihc _ _ (BoundSubst.validLift hσ decl.kinds)
-      simp only [constraintShiftLiftSubst, envSubstBoundPush, monoSubstBound,
+      simp only [Constraint.substBound, declarationConditionSubstBound hd.2.2.2.2.2.1,
+        constraintShiftLiftSubst, envSubstBoundPush, monoSubstBound,
         envShiftLiftSubst, Ty.arrow, Ty.substBound, List.map_cons, List.map_nil,
         declarationSubstBound hd.2.1, declarationSubstBound hd.2.2.1,
         tyShiftLiftSubst] at hc'
@@ -168,18 +173,25 @@ This is type/effect instantiation only; substitution of the two term values and
 reconstruction of the captured continuation remain separate proof obligations. -/
 theorem operationClauseInstantiation {Γ : Env} (hF : EffectFramework S M)
     (hsig : OpSignature.WF S sig)
-    (ht : Typing S M sig (ks ++ Δ) (C.shift ks.length 0)
+    (hC : C.WF S Δ 0) (hCf : C.fpi = ∅)
+    (ht : Typing S M sig (ks ++ Δ) (.conj (C.shift ks.length 0) P)
       (((Γ.shift ks.length).push (.mono A)).push
         (.mono (.arrow R (ε.shift ks.length 0) (B.shift ks.length 0))))
       clause (B.shift ks.length 0) (ε.shift ks.length 0))
-    (hargs : List.Forall₂ (Ty.HasKind S Δ) args ks) :
+    (hargs : List.Forall₂ (Ty.HasKind S Δ) args ks)
+    (hp : Entails S M Δ C (P.substBound (BoundSubst.many args))) :
     Typing S M sig Δ C
       ((Γ.push (.mono (A.openAt 0 args))).push
         (.mono (.arrow (R.openAt 0 args) ε B))) clause B ε := by
   have h := typingTypeEffectSubstitution hF hsig ht Δ _ (BoundSubst.validMany hargs)
   have hlen := hargs.length_eq
-  simpa only [← hlen, constraintShiftMany, envSubstBoundPush, monoSubstBound,
+  have ht' : Typing S M sig Δ (.conj C (P.substBound (BoundSubst.many args)))
+      ((Γ.push (.mono (A.openAt 0 args))).push
+        (.mono (.arrow (R.openAt 0 args) ε B))) clause B ε := by
+    simpa only [Constraint.substBound, ← hlen, constraintShiftMany, envSubstBoundPush, monoSubstBound,
     envShiftMany, Ty.arrow, Ty.substBound, List.map_cons, List.map_nil,
     tyShiftMany, tyOpenMany] using h
+  exact .strengthen ⟨hC, hCf, (typingWF ht').2.2⟩ ht'
+    (fun ρ bs ι hρ hbs hι hc => ⟨hc, hp ρ bs ι hρ hbs hι hc⟩)
 
 end EHMX

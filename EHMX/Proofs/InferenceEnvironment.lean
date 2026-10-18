@@ -6,38 +6,6 @@ namespace EHMX
 
 variable {S : Signature} {Δ : List Kind} {Γ : Env} {C : Constraint}
 
-/-- Increasing the available term-variable depth preserves well-formedness. -/
-theorem termDepthWF :
-    (∀ C : Constraint, ∀ Δ n m, C.WF S Δ n → n ≤ m → C.WF S Δ m) ∧
-    (∀ s : Scheme, ∀ Δ n m, s.WF S Δ n → n ≤ m → s.WF S Δ m) := by
-  have hc : ∀ C : Constraint, ∀ Δ n m, C.WF S Δ n → n ≤ m → C.WF S Δ m := by
-    apply Constraint.rec
-      (motive_1 := fun C => ∀ Δ n m, C.WF S Δ n → n ≤ m → C.WF S Δ m)
-      (motive_2 := fun s => ∀ Δ n m, s.WF S Δ n → n ≤ m → s.WF S Δ m)
-    · intros; trivial
-    · intros; trivial
-    · intros; assumption
-    · intro C D ihC ihD Δ n m h hnm
-      exact ⟨ihC _ _ _ h.1 hnm, ihD _ _ _ h.2 hnm⟩
-    · intro ks C ih Δ n m h hnm
-      exact ⟨h.1, ih _ _ _ h.2 hnm⟩
-    · intro ks C ih Δ n m h hnm
-      exact ⟨h.1, ih _ _ _ h.2 hnm⟩
-    · intro s C ihs ihC Δ n m h hnm
-      exact ⟨ihs _ _ _ h.1 hnm, ihC _ _ _ h.2 (by omega)⟩
-    · intro x s C ihs ihC Δ n m h hnm
-      exact ⟨ihs _ _ _ h.1 hnm, ihC _ _ _ h.2 hnm⟩
-    · intro x T Δ n m h hnm
-      refine ⟨h.1, ?_⟩
-      cases x with
-      | free _ => trivial
-      | bound i => exact Nat.lt_of_lt_of_le h.2 hnm
-    · intro ks C T ih Δ n m h hnm
-      exact ⟨h.1, ih _ _ _ h.2.1 hnm, h.2.2⟩
-  refine ⟨hc, ?_⟩
-  rintro ⟨ks, C, T⟩ Δ n m h hnm
-  exact ⟨h.1, hc _ _ _ _ h.2.1 hnm, h.2.2⟩
-
 theorem envLetInWF (hΓ : Γ.WF S Δ) (hC : C.WF S Δ Γ.bound.length) :
     (Γ.letIn C).WF S Δ 0 := by
   have hb : ∀ (ss : List Scheme) (D : Constraint) n,
@@ -119,16 +87,16 @@ theorem inferWF (hS : S.WF) (hsig : OpSignature.WF S sig)
     (infer sig Γ e T ε).WF S Δ 0 :=
   envLetInWF hΓ (generationWF hS hsig he.1 hT hε)
 
-theorem inferScope (hΓ : Γ.WF S Δ) (he : e.Scoped Γ) (hd : e.Declared sig) :
+theorem inferScope (hsig : OpSignature.WF S sig) (hΓ : Γ.WF S Δ) (he : e.Scoped Γ) (hd : e.Declared sig) :
     (infer sig Γ e T ε).fpi = ∅ := by
-  rw [infer, envLetInFpi hΓ, generationScope hd]
+  rw [infer, envLetInFpi hΓ, generationScope hsig hd]
   exact Finset.sdiff_eq_empty_iff_subset.mpr he.2
 
 theorem inferJudgmentWF (hS : S.WF) (hsig : OpSignature.WF S sig)
     (hΓ : Γ.WF S Δ) (he : e.Scoped Γ) (hd : e.Declared sig)
     (hT : T.HasKind S Δ 0) (hε : ε.HasKind S Δ 1) :
     JudgmentWF S Δ (infer sig Γ e T ε) Γ e T ε :=
-  ⟨inferWF hS hsig hΓ he hT hε, inferScope hΓ he hd, hΓ, he, hT, hε⟩
+  ⟨inferWF hS hsig hΓ he hT hε, inferScope hsig hΓ he hd, hΓ, he, hT, hε⟩
 
 /-- Interpret free bindings from left to right and bound bindings from the outside
 inwards. This is the same order as `Env.letIn`. -/
@@ -233,6 +201,10 @@ theorem groundAgreement :
       cases x with
       | free x => rw [show ι.lookup (.free x) = κ.lookup (.free x) from ha.1 x (by simp [Constraint.fpi])]
       | bound i => rw [ha.2 i hw.2]
+    · intro P D ihP ihD Δ n hw ρ bs ι κ ha
+      exact imp_congr
+        (ihP _ _ hw.1 _ _ _ _ ⟨by simp [hw.2.1], by simp⟩)
+        (ihD _ _ hw.2.2 _ _ _ _ ⟨fun x hx => ha.1 x (Finset.mem_union_right _ hx), ha.2⟩)
     · intro ks D T ih Δ n hw ρ bs ι κ ha
       ext v
       change (_ ∧ ∃ vs, KindValues M ks vs ∧ _ ∧ _) ↔
@@ -561,65 +533,68 @@ theorem envLetInForall (hΓ : Env.WF S Δ Γ) (ks : List Kind)
     simpa only [← hv.length_eq, envInterpretShift hΓ] using hD
 
 
-/-- All constraint forms are positive in the ground environment, including
-universal handler clauses and schemes nested inside definitions. -/
+/-- Well-formed implications have environment-independent antecedents. -/
 def GroundEnv.Included (ι κ : GroundEnv M) : Prop :=
   ∀ x, ι.lookup x ⊆ κ.lookup x
 
 theorem groundMonotonicity (M : Model) :
-    (∀ (D : Constraint) (ρ : Assignment M) bs ι κ,
+    (∀ (D : Constraint) Δ n, D.WF S Δ n → ∀ (ρ : Assignment M) bs ι κ,
       GroundEnv.Included ι κ → D.Holds M ρ bs ι → D.Holds M ρ bs κ) ∧
-    (∀ (s : Scheme) (ρ : Assignment M) bs ι κ,
+    (∀ (s : Scheme) Δ n, s.WF S Δ n → ∀ (ρ : Assignment M) bs ι κ,
       GroundEnv.Included ι κ → s.denote M ρ bs ι ⊆ s.denote M ρ bs κ) := by
-  have hc : ∀ (D : Constraint) (ρ : Assignment M) bs ι κ,
+  have hc : ∀ (D : Constraint) Δ n, D.WF S Δ n → ∀ (ρ : Assignment M) bs ι κ,
       GroundEnv.Included ι κ → D.Holds M ρ bs ι → D.Holds M ρ bs κ := by
     apply Constraint.rec
-      (motive_1 := fun D => ∀ (ρ : Assignment M) bs ι κ,
+      (motive_1 := fun D => ∀ Δ n, D.WF S Δ n → ∀ (ρ : Assignment M) bs ι κ,
         GroundEnv.Included ι κ → D.Holds M ρ bs ι → D.Holds M ρ bs κ)
-      (motive_2 := fun s => ∀ (ρ : Assignment M) bs ι κ,
+      (motive_2 := fun s => ∀ Δ n, s.WF S Δ n → ∀ (ρ : Assignment M) bs ι κ,
         GroundEnv.Included ι κ → s.denote M ρ bs ι ⊆ s.denote M ρ bs κ)
     · intros; trivial
     · intros; contradiction
     · intros; assumption
-    · intro D E ihD ihE ρ bs ι κ hi h
-      exact ⟨ihD _ _ _ _ hi h.1, ihE _ _ _ _ hi h.2⟩
-    · intro ks D ih ρ bs ι κ hi h
+    · intro D E ihD ihE Δ n hw ρ bs ι κ hi h
+      exact ⟨ihD _ _ hw.1 _ _ _ _ hi h.1, ihE _ _ hw.2 _ _ _ _ hi h.2⟩
+    · intro ks D ih Δ n hw ρ bs ι κ hi h
       obtain ⟨vs, hv, hD⟩ := h
-      exact ⟨vs, hv, ih _ _ _ _ hi hD⟩
-    · intro ks D ih ρ bs ι κ hi h
-      exact fun vs hv => ih _ _ _ _ hi (h vs hv)
-    · intro s D ihs ihD ρ bs ι κ hi h
-      apply ihD _ _ _ _ _ h
+      exact ⟨vs, hv, ih _ _ hw.2 _ _ _ _ hi hD⟩
+    · intro ks D ih Δ n hw ρ bs ι κ hi h
+      exact fun vs hv => ih _ _ hw.2 _ _ _ _ hi (h vs hv)
+    · intro s D ihs ihD Δ n hw ρ bs ι κ hi h
+      apply ihD _ _ hw.2 _ _ _ _ _ h
       intro x
       cases x with
       | free x => exact hi (.free x)
       | bound i =>
         cases i with
-        | zero => exact ihs _ _ _ _ hi
+        | zero => exact ihs _ _ hw.1 _ _ _ _ hi
         | succ i => exact hi (.bound i)
-    · intro x s D ihs ihD ρ bs ι κ hi h
-      apply ihD _ _ _ _ _ h
+    · intro x s D ihs ihD Δ n hw ρ bs ι κ hi h
+      apply ihD _ _ hw.2 _ _ _ _ _ h
       intro y
       cases y with
       | bound i => exact hi (.bound i)
       | free y =>
           by_cases hy : y = x
-          · simpa [GroundEnv.lookup, GroundEnv.bind, hy] using ihs _ _ _ _ hi
+          · simpa [GroundEnv.lookup, GroundEnv.bind, hy] using ihs _ _ hw.1 _ _ _ _ hi
           · simpa [GroundEnv.lookup, GroundEnv.bind, hy] using hi (.free y)
-    · intro x T ρ bs ι κ hi h
+    · intro x T Δ n hw ρ bs ι κ hi h
       exact hi x h
-    · intro ks D T ih ρ bs ι κ hi v h
+    · intro P D _ ihD Δ n hw ρ bs ι κ hi h hP
+      exact ihD _ _ hw.2.2 _ _ _ _ hi
+        (h ((constraintGroundIndependent hw.1 hw.2.1 ρ bs ι κ).mpr hP))
+    · intro ks D T ih Δ n hw ρ bs ι κ hi v h
       obtain ⟨hk, vs, hv, hD, hTv⟩ := h
-      exact ⟨hk, vs, hv, ih _ _ _ _ hi hD, hTv⟩
+      exact ⟨hk, vs, hv, ih _ _ hw.2.1 _ _ _ _ hi hD, hTv⟩
   refine ⟨hc, ?_⟩
-  rintro ⟨ks, D, T⟩ ρ bs ι κ hi v ⟨hk, vs, hv, hD, hTv⟩
-  exact ⟨hk, vs, hv, hc _ _ _ _ _ hi hD, hTv⟩
+  rintro ⟨ks, D, T⟩ Δ n hw ρ bs ι κ hi v ⟨hk, vs, hv, hD, hTv⟩
+  exact ⟨hk, vs, hv, hc _ _ _ hw.2.1 _ _ _ _ hi hD, hTv⟩
 
 /-- This is the body obligation after comparing declared and generated schemes. -/
-theorem definitionMonotone (hs : s.denote M ρ bs ι ⊆ t.denote M ρ bs ι)
+theorem definitionMonotone (hD : D.WF S Δ n)
+    (hs : s.denote M ρ bs ι ⊆ t.denote M ρ bs ι)
     (h : (Constraint.def_ s D).Holds M ρ bs ι) :
     (Constraint.def_ t D).Holds M ρ bs ι := by
-  apply (groundMonotonicity M).1 D ρ bs _ _ _ h
+  apply (groundMonotonicity M).1 D _ _ hD ρ bs _ _ _ h
   intro x
   cases x with
   | free x => exact Set.Subset.refl _
@@ -627,5 +602,19 @@ theorem definitionMonotone (hs : s.denote M ρ bs ι ⊆ t.denote M ρ bs ι)
       cases i with
       | zero => exact hs
       | succ i => exact Set.Subset.refl _
+
+/-- The environment must remain feasible even when the condition is false. -/
+theorem envLetInImplication {P : Constraint} (hP : P.WF S Δ 0) (hf : P.fpi = ∅)
+    (Γ : Env) (D : Constraint) (ρ : Assignment M) (bs : List M.Carrier) (ι : GroundEnv M) :
+    (Γ.letIn (.implies P D)).Holds M ρ bs ι ↔
+      Γ.exists_.Holds M ρ bs ι ∧ (P.Holds M ρ bs ι → (Γ.letIn D).Holds M ρ bs ι) := by
+  rw [envLetInHolds]
+  constructor
+  · rintro ⟨hr, h⟩
+    exact ⟨hr, fun hp => (envLetInHolds Γ D ρ bs ι).mpr ⟨hr,
+      h ((constraintGroundIndependent hP hf ρ bs ι _).mp hp)⟩⟩
+  · rintro ⟨hr, h⟩
+    exact ⟨hr, fun hp => ((envLetInHolds Γ D ρ bs ι).mp
+      (h ((constraintGroundIndependent hP hf ρ bs _ ι).mp hp))).2⟩
 
 end EHMX

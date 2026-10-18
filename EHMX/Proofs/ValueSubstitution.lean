@@ -290,24 +290,28 @@ theorem typingValueSubstitutionAux (hF : EffectFramework S M)
       apply Typing.letPoly (judgmentOpenOne hw hΓ hscope hD hDf)
         (valueOpening hval (by simpa using hv) _) ?_ (entailsTrans hDC he) hb'
       simpa [Env.removeAfter, Env.shift, E] using ht'
-  | perform hw hs ha ht ih =>
+  | perform hw hs ha hp ht ih =>
       intro D pre post s v hΓ hD hDf hDC hv hscope hr
-      exact .perform (judgmentOpenOne hw hΓ hscope hD hDf) hs ha
+      exact .perform (judgmentOpenOne hw hΓ hscope hD hDf) hs ha (entailsTrans hDC hp)
         (ih _ _ _ _ _ hΓ hD hDf hDC hv hscope hr)
   | @handle Δ C Γ body op ret clause B εout decl A εin hw hs hb he ht hc ihb iht ihc =>
       intro D pre post s v hΓ hD hDf hDC hv hscope hr
       have ht' := iht D (.mono A :: pre) post s v (by simp [Env.push, hΓ])
         hD hDf hDC hv hscope hr
-      have hD' := constraintShiftWF hD decl.kinds
-      have hDf' := (constraintShiftFpi D decl.kinds.length 0).trans hDf
+      have hD' : (Constraint.conj (D.shift decl.kinds.length 0) decl.condition).WF S (decl.kinds ++ Δ) 0 :=
+        ⟨constraintShiftWF hD decl.kinds, (typingWF hc).1.2⟩
+      have hPf := (Finset.union_eq_empty.mp (typingWF hc).2.1).2
+      have hDf' : (Constraint.conj (D.shift decl.kinds.length 0) decl.condition).fpi = ∅ := by
+        simp [Constraint.fpi, constraintShiftFpi, hDf, hPf]
       have hr' := realizesSchemeShift hF hr hD hD'
-        (entailsRefl (S := S) (M := M))
-      have hc' := ihc (D.shift decl.kinds.length 0)
+        (fun _ _ _ _ _ _ h => h.1)
+      have hc' := ihc (.conj (D.shift decl.kinds.length 0) decl.condition)
         (.mono (.arrow decl.output (εout.shift decl.kinds.length 0) (B.shift decl.kinds.length 0)) ::
           .mono decl.input :: pre.map (Scheme.shift decl.kinds.length 0))
         (post.map (Scheme.shift decl.kinds.length 0)) (s.shift decl.kinds.length 0) v
         (by simp [Env.push, Env.shift, hΓ]) hD' hDf'
-        (entailsShift hF decl.kinds hD hw.1 hDC) hv
+        (fun ρ bs ι hρ hbs hι h =>
+          ⟨entailsShift hF decl.kinds hD hw.1 hDC ρ bs ι hρ hbs hι h.1, h.2⟩) hv
         (by simpa [Expr.Scoped, Env.shift, Env.push, Env.dpi, List.map_map, Function.comp_def] using hscope)
         (by simpa [Env.shift, Env.push] using hr')
       exact .handle (judgmentOpenOne hw hΓ hscope hD hDf) hs

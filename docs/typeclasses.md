@@ -73,3 +73,20 @@ Emptyはインスタンスも入ってくるスーパークラス辺も持ちま
 両方の直接導出に対して、`eqLambdaInferenceSoundness`・`eqLambdaInferenceCompleteness`・`eqLambdaPrincipalConstraint` と、対応する `handledMethod...` を証明しています。`eqLambdaGeneratedSatisfiable`・`handledMethodGeneratedSatisfiable` は具体的な Int の割当てから生成制約の充足可能性を示します。標準 import からの公開入口も `tests/EHMXInference.lean` の `example` で適用検査しています。
 
 この範囲の証明義務は完了しています。辞書変換、メソッド本体の実行意味や法則、インスタンス探索器、GHC 拡張、Haskell 全体との同値性、ソルバーの存在は対象外です。
+
+## 述語条件付き操作
+
+通常の資格付きスキームと同じ Constraint を操作の条件にも指定できる。次の宣言は `op : ∀β. Eq β ⇒ β → β` を表す。
+
+```lean
+{ kinds := [0]
+  input := .bound 0
+  output := .bound 0
+  condition := TypeClasses.classAtom 0 (.bound 0) }
+```
+
+操作の矢印に効果欄は設けず、`∅` の指定も不要である。perform の効果は操作名から与える。呼出側は入力型・結果型と同じ引数で具体化した Eq 条件を満たす必要がある。操作節は任意の β について検査され、その際に宣言の Eq β を仮定できる。通常の関数型を操作登録に使う方式や辞書変換は導入しない。
+
+`EHMX.ConditionalOperationsRegression.clauseFromCondition` は、外側制約が truth の下でも `let _ = eq z z in k z` を宣言条件から型付けする。同名前空間の `handledMethodTyping` は `eq (perform op x) y` を処理し、空効果での直接導出・推論三定理・Int 割当てによる生成制約の充足可能性を検査する。`existentialArgumentCapturePreserved` は、存在束縛の型引数と Eq 条件を保った実際の捕捉に保存定理を適用する。
+
+Int・Bool・条件付きリスト・Ord からの条件充足を検査し、未充足クラスと false 条件の呼出しでは生成制約の充足不能性を証明する。false 条件の宣言自体は整形式であり、handler の操作節はその条件を仮定して検査する。条件の充足可能性やクラス探索器を推論定理の新しい前提にはしていない。この操作条件の機能は EHM(X) 固有の拡張である。

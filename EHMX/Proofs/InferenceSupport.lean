@@ -88,7 +88,7 @@ theorem inferenceExistsCase (hF : EffectFramework S M) (hsig : OpSignature.WF S 
     Typing S M sig Δ C Γ e T ε := by
   have hg := generationWF hF.signature hsig hw.2.2.2.1.1 hw.2.2.2.2.1 hw.2.2.2.2.2
   rw [hgen] at hg
-  have hscope := generationScope (T := T) (ε := ε) hd
+  have hscope := generationScope (T := T) (ε := ε) hsig hd
   rw [hgen] at hscope
   change D.fpi = e.fv at hscope
   have hΓ := envShiftWF hw.2.2.1 ks
@@ -127,7 +127,7 @@ theorem inferenceValueLet (hF : EffectFramework S M) (hsig : OpSignature.WF S si
   let s := generatedScheme sig Γ rhs
   let D := infer sig (Γ.shift 1) rhs (.bound 0) .empty
   have hsw : s.WF S Δ 0 := generatedSchemeWF hF.signature hsig hw.2.2.1 hr
-  have hsf : s.fpi = ∅ := generatedSchemeScope hw.2.2.1 hr hd
+  have hsf : s.fpi = ∅ := generatedSchemeScope hsig hw.2.2.1 hr hd
   have hDf : D.fpi = ∅ := hsf
   have hp : Env.WF S Δ (Γ.push s) := by
     refine ⟨hw.2.2.1.1, ?_⟩

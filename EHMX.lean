@@ -18,3 +18,4 @@ import EHMX.InferenceTheoremRegression
 import EHMX.TypeClasses
 import EHMX.Proofs.TypeClasses
 import EHMX.TypeClassesRegression
+import EHMX.ConditionalOperationsRegression

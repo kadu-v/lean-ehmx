@@ -1,5 +1,7 @@
 # EHMX の証明 TODO
 
+述語条件付き操作の拡張作業は [ルートの実装計画](../todo.md) で追跡する。以下は拡張前の証明状況を保持する。
+
 最終目標は制約生成の健全性（ATTAPL 10.4.4の拡張）、完全性（10.4.8の拡張）、主要制約性（429–430頁の拡張）、保存・進行・到達状態の効果安全性である。**進行性、スキーム値代入、操作捕捉を含む一歩・多歩保存、到達状態の効果安全性は証明済み。推論の健全性・完全性・主要制約性も、既存の Goal の前提・結論のまま証明済み。** チェックは名前を宣言しただけでは付けず、Lean の証明と依存を確認して付ける。
 
 ## 証明済み
@@ -132,3 +134,19 @@ ATTAPL §10.5 の保存（10.5.8）・型安全性（10.5.11）に対応する E
 検査結果：`lake build`（839 jobs）、既存 Goal 型検査、推論回帰、全 EHMX 定理の公理監査（1098宣言）が成功。許容公理は `propext`・`Classical.choice`・`Quot.sound` のみで、sorry・追加公理はない。既存の Assumptions・Goal・構文・型付け規則・生成規則・HMX 定義は変更していない。
 
 この固定モデルと適用の完了条件に残る証明義務はない。次に必要なモデル補題もない。辞書変換、メソッド本体の実行意味や法則、インスタンス探索器、GHC 拡張、Haskell 全体との同値性、ソルバーの存在は対象外であり、完成した保証とは区別する。PDF の更新・再生成・整合性検査は行っていない。
+
+## 述語条件付き操作の拡張（2026-10-18）
+
+目標は `op : ∀β. P ⇒ A → B` を追加し、ATTAPL 10.4.4・10.4.8・429–430頁に対応する推論三定理と、EHM(X) の操作捕捉を含む保存・進行・効果安全性を維持すること。操作条件は EHM(X) 固有の拡張である。上記の過去の証明記録を保持し、詳細な完了チェックリストを [todo.md](../todo.md) に置いた。
+
+- [x] OpDecl.condition、制約の含意、Constraint / Scheme の自由型効果変数集合と構造的比較。条件の内部量化・局所スキーム定義を許し、外側の項変数・自由型効果変数を拒否。
+- [x] `declarationConditionSubstBound`・`declarationConditionOpenSubstBound`・`conditionDeclarationAppend`。操作節の具体化と生成の代入に使う条件の保存。
+- [x] `groundMonotonicity` を整形式制約・スキームに修正し、`definitionMonotone` と多相 let 完全性を更新。前件の環境非依存を使い、無制限の含意の単調性を主張しない。
+- [x] perform の条件充足と handler の `shift C ∧ P`。`operationClauseInstantiation`、`operationClauseShift`、`ContextTyping`、`operationElimination` を更新し、最終保存・進行・効果安全性を維持。
+- [x] perform の生成連言、handler の条件付き全称制約、`envLetInImplication`。環境実現可能性を含意の外に保持し、健全性・完全性・主要制約性と型クラス特殊化を証明。
+- [x] `ConditionalOperationsRegression.lean`。宣言条件によるメソッド利用、handler 全体、推論三定理、Int での充足可能性、存在引数を使う捕捉の保存、truth 互換性、false・不正宣言の拒否。
+- [x] 標準 import、公開入口の推論回帰、README・仕様・型クラス説明を更新。
+
+検査結果：`lake build`（840 jobs）、`tests/EHMXGoals.lean`、`tests/EHMXInference.lean`、`tests/EHMXAxioms.lean`（1195定理宣言）、`git diff --check` が成功。許容公理は propext・Classical.choice・Quot.sound のみ。追加公理・sorry はない。
+
+本拡張の計画に未証明部分はない。EffectFramework・最終 Goal の前提と結論・HMX・実行時構文と簡約規則は維持した。上記の過去の追加回帰 TODO は本拡張とは別である。次に必要な証明義務はない。パーサー・辞書変換・インスタンス探索器・ソルバーは対象外とし、PDF 作業は実施していない。

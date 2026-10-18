@@ -97,16 +97,16 @@ theorem evalCtxReplacement (hnv : ¬ Value e₀)
       · cases h
       · cases h; exact False.elim (hnv (evalCtxValue _ hv))
       all_goals cases h
-  | perform hw hs ha ht ih =>
+  | perform hw hs ha hp ht ih =>
       intro E h
       cases E <;> simp only [EvalCtx.plug] at h
-      · subst h; exact hreplace _ _ _ _ _ (.perform hw hs ha ht)
+      · subst h; exact hreplace _ _ _ _ _ (.perform hw hs ha hp ht)
       · cases h
       · cases h
       · cases h
       · cases h
         have ht' := ih _ rfl
-        exact .perform (judgmentWithScope hw (typingWF ht').2.2.2.1) hs ha ht'
+        exact .perform (judgmentWithScope hw (typingWF ht').2.2.2.1) hs ha hp ht'
       · cases h
   | handle hw hs hb he hr hc ihb ihr ihc =>
       intro E h

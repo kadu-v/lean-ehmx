@@ -147,10 +147,11 @@ theorem valueLetCompletenessHolds (hF : EffectFramework S M) (hsig : OpSignature
     (hse : (Scheme.all ks D A).exists_.Holds M ρ bs ι)
     (ih : ∀ vs, KindValues M ks vs → D.Holds M ρ (vs ++ bs) ι →
       (infer sig (Γ.shift ks.length) rhs A .empty).Holds M ρ (vs ++ bs) ι)
+    (hwbody : (generate sig body T ε).WF S Δ (Γ.bound.length + 1))
     (hbody : (infer sig (Γ.push (.all ks D A)) body T ε).Holds M ρ bs ι) :
     (infer sig Γ (.letE rhs body) T ε).Holds M ρ bs ι := by
   have hsw := generatedSchemeWF hF.signature hsig hΓ hr
-  have hsf' := generatedSchemeScope hΓ hr hd
+  have hsf' := generatedSchemeScope hsig hΓ hr hd
   have hinc := generatedSchemeComparison hF hsig hΓ hr hs.2.2 hρ hbs hι hΓe ih
   have hreal : (generatedScheme sig Γ rhs).exists_.Holds M ρ bs ι := by
     obtain ⟨a, ha⟩ := (schemeExistsNonempty hF hs hρ hbs).mp hse
@@ -161,7 +162,7 @@ theorem valueLetCompletenessHolds (hF : EffectFramework S M) (hsig : OpSignature
   rw [envInterpretPush hsw hsf']
   have hg := ((envLetInHolds _ _ _ _ _).mp hbody).2
   rw [envInterpretPush hs hsf] at hg
-  apply (groundMonotonicity M).1 _ _ _ _ _ _ hg
+  apply (groundMonotonicity M).1 _ _ _ hwbody _ _ _ _ _ hg
   intro x
   cases x with
   | free x => exact Set.Subset.refl _
@@ -205,6 +206,7 @@ theorem generationPerformHolds (hF : EffectFramework S M) (hsig : OpSignature.WF
     (hs : sig op = some decl) (hsc : arg.LCAt n)
     (hargs : List.Forall₂ (Ty.HasKind S Δ) args decl.kinds) (hε : Ty.HasKind S Δ ε 1)
     (hρ : Assignment.Valid S M ρ) (hbs : KindValues M Δ bs)
+    (hp : (decl.condition.substBound (BoundSubst.many args)).Holds M ρ bs ι)
     (hg : (generate sig arg (decl.input.openAt 0 args) ε).Holds M ρ bs ι) :
     (generate sig (.perform op arg) (decl.output.openAt 0 args) (.union (.singleton op) ε)).Holds M ρ bs ι := by
   have hd := hsig op decl hs
@@ -228,7 +230,11 @@ theorem generationPerformHolds (hF : EffectFramework S M) (hsig : OpSignature.WF
   have hEshift : ((Ty.union (.singleton op) ε).shift (decl.kinds.length + 1) 0).eval M ρ (vs ++ bs) =
       (Ty.union (.singleton op) ε).eval M ρ bs := by simpa only [hn] using evalShift (.union (.singleton op) ε) ρ bs vs
   simp only [generate, hs]
-  refine ⟨vs, hv, (generationEvalCongruence hF.signature hsig hsc ρ bs (vs ++ bs) _ hin.symm he.symm).mp hg, ?_⟩
+  have hp' : decl.condition.Holds M ρ (vs ++ bs) ι := by
+    simp only [vs, List.append_assoc]
+    apply (conditionDeclarationAppend hd.2.2.2.2.2.1 hu.length_eq ρ ([ε.eval M ρ bs] ++ bs) ι).mpr
+    exact (conditionDeclarationOpen hd.2.2.2.2.2.1 hargs ρ bs ι).mp hp
+  refine ⟨vs, hv, hp', (generationEvalCongruence hF.signature hsig hsc ρ bs (vs ++ bs) _ hin.symm he.symm).mp hg, ?_⟩
   have hkB := evalKind hF hρ hbs (operationInstantiation hd.2.2.1 hargs)
   have hkE := evalKind hF hρ hbs (unionKind (singletonKind op) hε)
   have hreflB : (Constraint.le 0 (decl.output.openAt 0 args) (decl.output.openAt 0 args)).Holds M ρ bs ι :=
@@ -249,7 +255,7 @@ theorem generationHandleHolds (hF : EffectFramework S M) (hsig : OpSignature.WF 
     (hbody : (generate sig body A εin).Holds M ρ bs ι)
     (he : (Constraint.le 1 εin (.union (.singleton op) εout)).Holds M ρ bs ι)
     (hret : (Constraint.def_ (.mono A) (generate sig ret B εout)).Holds M ρ bs ι)
-    (hclause : ∀ us, KindValues M decl.kinds us →
+    (hclause : ∀ us, KindValues M decl.kinds us → decl.condition.Holds M ρ (us ++ bs) ι →
       (Constraint.def_ (.mono decl.input)
         (.def_ (.mono (.arrow decl.output (εout.shift decl.kinds.length 0) (B.shift decl.kinds.length 0)))
           (generate sig clause (B.shift decl.kinds.length 0) (εout.shift decl.kinds.length 0)))).Holds M ρ (us ++ bs) ι) :
@@ -270,7 +276,7 @@ theorem generationHandleHolds (hF : EffectFramework S M) (hsig : OpSignature.WF 
     rw [monoDenoteCongruence (A := .bound 0) (B := A) (bs' := bs) (κ := ι) (by simp [vs, Ty.eval])]
     exact (generationEvalCongruence hF.signature hsig hrscope ρ bs (vs ++ bs) _
       (by simp [vs, Ty.eval]) (by simp [vs, Ty.eval])).mp hret
-  · intro us hu
+  · intro us hu hp
     have hBn : ((Ty.bound 2).shift decl.kinds.length 0).eval M ρ (us ++ (vs ++ bs)) = B.eval M ρ bs := by
       calc
         _ = (Ty.bound 2).eval M ρ (vs ++ bs) := by simpa only [hu.length_eq] using evalShift (.bound 2) ρ (vs ++ bs) us
@@ -294,7 +300,8 @@ theorem generationHandleHolds (hF : EffectFramework S M) (hsig : OpSignature.WF 
     change (generate sig clause _ _).Holds M ρ _ ((ι.push _).push _)
     rw [monoDenoteCongruence (κ := ι) hinput, monoDenoteCongruence (κ := ι.push _) harr]
     exact (generationEvalCongruence hF.signature hsig hcscope ρ (us ++ bs) (us ++ (vs ++ bs)) _
-      (hBo.trans hBn.symm) (hEo.trans hEn.symm)).mp (hclause us hu)
+      (hBo.trans hBn.symm) (hEo.trans hEn.symm)).mp (hclause us hu ((conditionDeclarationAppend hd.2.2.2.2.2.1 hu.length_eq ρ bs ι).mpr
+        ((conditionDeclarationAppend hd.2.2.2.2.2.1 hu.length_eq ρ (vs ++ bs) ι).mp hp)))
   · have hkB := evalKind hF hρ hbs hB
     have hkE := evalKind hF hρ hbs ho
     have hrB : (Constraint.le 0 B B).Holds M ρ bs ι := ⟨hkB, hkB, hF.belowRefl 0 hF.signature.1 _ hkB⟩
@@ -353,7 +360,8 @@ theorem typingCompletenessHolds (hF : EffectFramework S M) (hsig : OpSignature.W
               intro vs hvs _
               have heq : vs = [] := List.length_eq_zero_iff.mp hvs.length_eq
               subst vs
-              simpa only [List.length_nil, List.nil_append, envShiftZero] using hpure) hgb
+              simpa only [List.length_nil, List.nil_append, envShiftZero] using hpure)
+              (generationWF hF.signature hsig hbw.2.2.2.1.1 hbw.2.2.2.2.1 hbw.2.2.2.2.2) hgb
           have hg := ((envLetInHolds _ _ _ _ _).mp hlet).2
           exact (envLetInHolds _ _ _ _ _).mpr ⟨hΓe,
             generationMonotone hF _ (envInterpretValid hF hw.2.2.1 hρ hbs hι)
@@ -373,12 +381,19 @@ theorem typingCompletenessHolds (hF : EffectFramework S M) (hsig : OpSignature.W
         · refine ⟨?_, hD⟩
           simpa only [← hvs.length_eq] using (constraintShiftHolds hw.1 ρ bs vs ι).mpr hC
         · simpa only [← hvs.length_eq] using (envExistsShift hw.2.2.1 ρ bs vs ι).mpr hΓe
+      · exact generationWF hF.signature hsig (typingWF hb).2.2.2.1.1
+          (typingWF hb).2.2.2.2.1 (typingWF hb).2.2.2.2.2
       · exact ihb ρ bs ι hρ hbs hι hC ((envPushExists hsw.1 hsw.2 ρ bs ι).mpr ⟨hΓe, hse⟩)
-  | perform hw hs hargs ht ih =>
+  | perform hw hs hargs hp ht ih =>
       intro ρ bs ι hρ hbs hι hC hΓe
       exact (envLetInHolds _ _ _ _ _).mpr ⟨hΓe,
         generationPerformHolds hF hsig hs (typingWF ht).2.2.2.1.1 hargs (typingWF ht).2.2.2.2.2
-          hρ hbs ((envLetInHolds _ _ _ _ _).mp (ih ρ bs ι hρ hbs hι hC hΓe)).2⟩
+          hρ hbs ((constraintGroundIndependent
+            ((substBoundWF S).1 _ _ _ (constraintAppendWF (hsig _ _ hs).2.2.2.2.2.1 _) _ _
+              (BoundSubst.validMany hargs))
+            ((substBoundFpi.1 _ _).trans (hsig _ _ hs).2.2.2.2.2.2.1) ρ bs ι _).mp
+              (hp ρ bs ι hρ hbs hι hC))
+          ((envLetInHolds _ _ _ _ _).mp (ih ρ bs ι hρ hbs hι hC hΓe)).2⟩
   | @handle Δ C Γ body op ret clause B εout decl A εin hw hs hb he hr hc ihb ihr ihc =>
       intro ρ bs ι hρ hbs hι hC hΓe
       have hbw := typingWF hb
@@ -392,7 +407,7 @@ theorem typingCompletenessHolds (hF : EffectFramework S M) (hsig : OpSignature.W
       · have hh := (envLetInMono Γ A _).2 ρ bs ι hρ hbs hι
           (ihr ρ bs ι hρ hbs hι hC (envPushMonoExists hA hΓe))
         exact ((envLetInHolds _ _ _ _ _).mp hh).2
-      · intro us hu
+      · intro us hu hp
         have hbs' := List.rel_append hu hbs
         have hΓe' : (Γ.shift decl.kinds.length).exists_.Holds M ρ (us ++ bs) ι := by
           simpa only [← hu.length_eq] using (envExistsShift hw.2.2.1 ρ bs us ι).mpr hΓe
@@ -401,7 +416,9 @@ theorem typingCompletenessHolds (hF : EffectFramework S M) (hsig : OpSignature.W
         have hin := kindAppend hd.2.1 Δ
         have hk := arrowKind (kindAppend hd.2.2.1 Δ)
           (kindShift hw.2.2.2.2.2 decl.kinds) (kindShift hw.2.2.2.2.1 decl.kinds)
-        have hg := ihc ρ (us ++ bs) ι hρ hbs' hι hC'
+        have hp' : decl.condition.Holds M ρ (us ++ bs) ι :=
+          (constraintGroundIndependent hd.2.2.2.2.2.1 hd.2.2.2.2.2.2.1 ρ (us ++ bs) _ ι).mp hp
+        have hg := ihc ρ (us ++ bs) ι hρ hbs' hι ⟨hC', hp'⟩
           (envPushMonoExists hk (envPushMonoExists hin hΓe'))
         have hh := (envLetInMono _ _ _).2 ρ (us ++ bs) ι hρ hbs' hι hg
         have hh' := (envLetInMono _ _ _).2 ρ (us ++ bs) ι hρ hbs' hι hh

@@ -53,6 +53,7 @@ def Constraint.Holds (M : Model) (ρ : Assignment M) (bs : List M.Carrier)
   | .falsity => False
   | .atom p ts => p.eval M (ts.map (Ty.eval M ρ bs))
   | .conj C D => C.Holds M ρ bs ι ∧ D.Holds M ρ bs ι
+  | .implies P D => (P.Holds M ρ bs ι → D.Holds M ρ bs ι)
   | .exists_ ks C => ∃ vs, KindValues M ks vs ∧ C.Holds M ρ (vs ++ bs) ι
   | .forall_ ks C => ∀ vs, KindValues M ks vs → C.Holds M ρ (vs ++ bs) ι
   | .def_ s C => C.Holds M ρ bs (ι.push (s.denote M ρ bs ι))

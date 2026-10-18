@@ -124,7 +124,7 @@ def eqConstraint : Constraint := classAtom 0 alpha
 
 def eqLambda : Expr := .lam (.lam (.app (.app (.ident (.free 0)) (.ident (.bound 1))) (.ident (.bound 0))))
 
-def operation : OpDecl := ⟨[0], .bound 0, .bound 0⟩
+def operation : OpDecl := ⟨[0], .bound 0, .bound 0, .truth⟩
 def operations : OpSignature := fun op => if op = 0 then some operation else none
 
 theorem operationsWF : operations.WF (signature exampleEnv) := by
@@ -133,7 +133,7 @@ theorem operationsWF : operations.WF (signature exampleEnv) := by
   split at hd
   · cases hd
     exact ⟨by simp [operation, signature], .bound rfl (by simp [signature]),
-      .bound rfl (by simp [signature]), by simp [operation, Ty.fv], by simp [operation, Ty.fv]⟩
+      .bound rfl (by simp [signature]), by simp [operation, Ty.fv], by simp [operation, Ty.fv, Constraint.WF, Constraint.fpi, Constraint.fv]⟩
   · cases hd
 
 theorem alphaKind : alpha.HasKind (signature exampleEnv) Δ 0 := .free (by simp [signature])
@@ -283,7 +283,7 @@ theorem handledMethodTyping : Typing (signature exampleEnv) (model exampleEnv) o
     (by simp [argumentEnv, initialEnv, Env.push, Expr.Scoped, Expr.LCAt, Expr.fv])
   have hp : Typing (signature exampleEnv) (model exampleEnv) operations [] eqConstraint argumentEnv
       (.perform 0 (.ident (.bound 1))) alpha (.union (.singleton 0) .empty) := by
-    have ht := Typing.perform (S := signature exampleEnv) (M := model exampleEnv) (sig := operations)
+    have ht := Typing.performTruth rfl (S := signature exampleEnv) (M := model exampleEnv) (sig := operations)
       (decl := operation) (args := [alpha])
       (show JudgmentWF (signature exampleEnv) [] eqConstraint argumentEnv
         (.perform 0 (.ident (.bound 1))) (operation.output.openAt 0 [alpha]) (.union (.singleton 0) .empty) from
@@ -306,7 +306,7 @@ theorem handledMethodTyping : Typing (signature exampleEnv) (model exampleEnv) o
     intro ρ bs ι _ _ _ _
     simp [Constraint.le, Constraint.Holds, Predicate.eval, Ty.union, Ty.empty, Ty.singleton,
       Ty.eval, constructor, kind, below]
-  apply Typing.handle (decl := operation) (A := boolTy) (εin := .singleton 0)
+  apply Typing.handleTruth rfl (decl := operation) (A := boolTy) (εin := .singleton 0)
   · exact ⟨eqConstraintWF, rfl, hΓ, by
       simp [argumentEnv, initialEnv, Env.push, Env.dpi, Expr.Scoped, Expr.LCAt, Expr.fv],
       boolKind, hem⟩

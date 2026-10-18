@@ -99,7 +99,7 @@ theorem operationElimination (hF : EffectFramework S M) (hsig : OpSignature.WF S
     ∀ D (F : EvalCtx) decl clause B η,
       D.WF S Δ 0 → D.fpi = ∅ → Entails S M Δ D C → sig op = some decl →
       B.HasKind S Δ 0 → η.HasKind S Δ 1 →
-      Typing S M sig (decl.kinds ++ Δ) (D.shift decl.kinds.length 0)
+      Typing S M sig (decl.kinds ++ Δ) (.conj (D.shift decl.kinds.length 0) decl.condition)
         (((Γ.shift decl.kinds.length).push (.mono decl.input)).push
           (.mono (.arrow decl.output (η.shift decl.kinds.length 0) (B.shift decl.kinds.length 0))))
         clause (B.shift decl.kinds.length 0) (η.shift decl.kinds.length 0) →
@@ -145,7 +145,7 @@ theorem operationElimination (hF : EffectFramework S M) (hsig : OpSignature.WF S
           cases h
           have hn := evalCtxValue E hval
           simp [Value, Expr.isValue] at hn
-  | @perform Δ C Γ op₀ arg ε decl₀ args hw hs₀ ha ht ih =>
+  | @perform Δ C Γ op₀ arg ε decl₀ args hw hs₀ ha hp ht ih =>
       intro E op v h hv D F decl clause B η hD hDf hDC hs hB hη hc hctx
       cases E with
       | hole =>
@@ -155,12 +155,12 @@ theorem operationElimination (hF : EffectFramework S M) (hsig : OpSignature.WF S
           have hv' := valuePure hF (typingStronger ht hD hDf hDC) hv
           have hk := resumeContextTyping hF hD hDf hw.2.2.1
             hw.2.2.2.2.1 hw.2.2.2.2.2 hB hη hctx
-          have hc' := operationClauseInstantiation hF hsig hc ha
+          have hc' := operationClauseInstantiation hF hsig hD hDf hc ha (entailsTrans hDC hp)
           simpa only [evalCtxCompHole] using
             twoValueSubstitution hF hsig (show Value (.lam _) from rfl) hv hk hv' hc'
       | perform op₁ E =>
           cases h
-          have hframe := (ContextTyping.perform hF hsig hw hs₀ ha).stronger hF hw.1 hD hDC
+          have hframe := (ContextTyping.perform hF hsig hw hs₀ ha hp).stronger hF hw.1 hD hDC
           simpa only [evalCtxCompAssoc, EvalCtx.comp] using
             ih E op v rfl hv D _ decl clause B η hD hDf hDC hs hB hη hc (hctx.comp hframe)
       | appFun | appArg | letRhs | handle => cases h
@@ -192,7 +192,7 @@ theorem operationElimination (hF : EffectFramework S M) (hsig : OpSignature.WF S
         simp [K, Constraint.fpi, constraintShiftFpi, hDf, (typingWF ht).2.1]
       have hKD : Entails S M (ks ++ Δ) K (D.shift ks.length 0) := fun _ _ _ _ _ _ h => h.1
       have hc' := operationClauseShift hF hsig hs hc ks
-      have hc'' := typingStronger hc' (constraintShiftWF hK decl.kinds)
+      have hc'' := typingConjStronger hc' (constraintShiftWF hK decl.kinds)
         ((constraintShiftFpi _ _ _).trans hKf)
         (entailsShift hF decl.kinds hK (constraintShiftWF hD ks) hKD)
       have hout := ih E op v h hv K F decl clause (B.shift ks.length 0) (η.shift ks.length 0)

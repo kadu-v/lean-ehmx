@@ -89,3 +89,32 @@ example : PrincipalConstraint (TypeClasses.signature exampleEnv) (TypeClasses.mo
 example : Satisfiable (TypeClasses.signature exampleEnv) (TypeClasses.model exampleEnv) []
     (infer operations argumentEnv handledMethod boolTy .empty) := handledMethodGeneratedSatisfiable
 end TypeClassesPublic
+
+namespace ConditionalOperationsPublic
+open EHMX.TypeClasses EHMX.TypeClasses.Regression
+local notation "ops" => EHMX.ConditionalOperationsRegression.operations
+local notation "program" => EHMX.ConditionalOperationsRegression.handledMethod
+
+example : Typing (TypeClasses.signature exampleEnv) (TypeClasses.model exampleEnv) ops [] eqConstraint
+    argumentEnv program boolTy .empty := EHMX.ConditionalOperationsRegression.handledMethodTyping
+
+example : Typing (TypeClasses.signature exampleEnv) (TypeClasses.model exampleEnv) ops []
+    (infer ops argumentEnv program boolTy .empty) argumentEnv program boolTy .empty :=
+  EHMX.ConditionalOperationsRegression.handledMethodInferenceSoundness
+
+example : Entails (TypeClasses.signature exampleEnv) (TypeClasses.model exampleEnv) [] eqConstraint
+    (infer ops argumentEnv program boolTy .empty) :=
+  EHMX.ConditionalOperationsRegression.handledMethodInferenceCompleteness
+
+example : PrincipalConstraint (TypeClasses.signature exampleEnv) (TypeClasses.model exampleEnv) ops []
+    argumentEnv program boolTy .empty (infer ops argumentEnv program boolTy .empty) :=
+  EHMX.ConditionalOperationsRegression.handledMethodPrincipalConstraint
+
+example : Satisfiable (TypeClasses.signature exampleEnv) (TypeClasses.model exampleEnv) []
+    (infer ops argumentEnv program boolTy .empty) :=
+  EHMX.ConditionalOperationsRegression.handledMethodGeneratedSatisfiable
+
+example : Typing (TypeClasses.signature exampleEnv) (TypeClasses.model exampleEnv) ops [] eqConstraint
+    argumentEnv EHMX.ConditionalOperationsRegression.captured boolTy .empty :=
+  EHMX.ConditionalOperationsRegression.existentialArgumentCapturePreserved
+end ConditionalOperationsPublic

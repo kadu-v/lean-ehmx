@@ -14,16 +14,6 @@ EHMX では型と効果が同一の kind 付き構文なので、代入は一本
 -/
 namespace EHMX
 
-abbrev BoundSubst := Nat → Ty
-
-def Ty.substBound (σ : BoundSubst) : Ty → Ty
-  | .free X => .free X
-  | .bound i => σ i
-  | .con f ts => .con f (ts.map (Ty.substBound σ))
-
-def BoundSubst.lift (n : Nat) (σ : BoundSubst) : BoundSubst :=
-  fun i => if i < n then .bound i else (σ (i - n)).shift n 0
-
 def BoundSubst.Valid (S : Signature) (Δ Δ' : List Kind) (σ : BoundSubst) : Prop :=
   ∀ i k, Δ[i]? = some k →
     (∃ j, σ i = .bound j ∧ Δ'[j]? = some k) ∨ (σ i).HasKind S Δ' k
@@ -35,22 +25,6 @@ theorem BoundSubst.imageKind (hσ : BoundSubst.Valid S Δ Δ' σ)
   rcases hσ i k hi with ⟨j, hj, hlookup⟩ | h
   · rw [hj]; exact .bound hlookup hk
   · exact h
-
-mutual
-def Constraint.substBound (σ : BoundSubst) : Constraint → Constraint
-  | .truth => .truth
-  | .falsity => .falsity
-  | .atom p ts => .atom p (ts.map (Ty.substBound σ))
-  | .conj C D => .conj (C.substBound σ) (D.substBound σ)
-  | .exists_ ks C => .exists_ ks (C.substBound (σ.lift ks.length))
-  | .forall_ ks C => .forall_ ks (C.substBound (σ.lift ks.length))
-  | .def_ s C => .def_ (s.substBound σ) (C.substBound σ)
-  | .defFree x s C => .defFree x (s.substBound σ) (C.substBound σ)
-  | .inst x T => .inst x (T.substBound σ)
-def Scheme.substBound (σ : BoundSubst) : Scheme → Scheme
-  | .all ks C T => .all ks (C.substBound (σ.lift ks.length))
-      (T.substBound (σ.lift ks.length))
-end
 
 def Env.substBound (σ : BoundSubst) (Γ : Env) : Env :=
   ⟨Γ.free.map (fun p => (p.1, p.2.substBound σ)), Γ.bound.map (Scheme.substBound σ)⟩
@@ -143,6 +117,19 @@ theorem tyShiftLiftSubst (T : Ty) (n : Nat) (σ : BoundSubst) :
       congr 1
       exact List.map_congr_left (fun T hT => ih T hT)
 
+/-- Substitution cannot introduce free term identifiers into constraints. -/
+theorem substBoundFpi :
+    (∀ (C : Constraint) σ, (C.substBound σ).fpi = C.fpi) ∧
+    (∀ (s : Scheme) σ, (s.substBound σ).fpi = s.fpi) := by
+  have hc : ∀ (C : Constraint) σ, (C.substBound σ).fpi = C.fpi := by
+    apply Constraint.rec
+      (motive_1 := fun C => ∀ σ, (C.substBound σ).fpi = C.fpi)
+      (motive_2 := fun s => ∀ σ, (s.substBound σ).fpi = s.fpi)
+    all_goals intros; simp_all [Constraint.substBound, Scheme.substBound,
+      Constraint.fpi, Scheme.fpi]
+    case inst x T σ => cases x <;> rfl
+  exact ⟨hc, fun s σ => by cases s; exact hc _ _⟩
+
 /-- Simultaneous preservation for constraints and schemes. In particular, both
 existential and universal binders use the lifted induction hypothesis. -/
 theorem substBoundWF (S : Signature) :
@@ -174,6 +161,9 @@ theorem substBoundWF (S : Signature) :
       exact ⟨ihs _ _ h.1 _ _ hσ, ihC _ _ h.2 _ _ hσ⟩
     · intro x T Δ n h Δ' σ hσ
       exact ⟨kindSubstBound h.1 hσ, h.2⟩
+    · intro P D ihP ihD Δ n h Δ' σ hσ
+      exact ⟨ihP _ _ h.1 _ _ hσ, (substBoundFpi.1 P σ).trans h.2.1,
+        ihD _ _ h.2.2 _ _ hσ⟩
     · intro ks C T ih Δ n h Δ' σ hσ
       exact ⟨h.1, ih _ _ h.2.1 _ _ (BoundSubst.validLift hσ ks),
         kindSubstBound h.2.2 (BoundSubst.validLift hσ ks)⟩
@@ -183,19 +173,6 @@ theorem substBoundWF (S : Signature) :
   | all ks C T =>
       exact ⟨h.1, hc C _ _ h.2.1 _ _ (BoundSubst.validLift hσ ks),
         kindSubstBound h.2.2 (BoundSubst.validLift hσ ks)⟩
-
-/-- Substitution cannot introduce free term identifiers into constraints. -/
-theorem substBoundFpi :
-    (∀ (C : Constraint) σ, (C.substBound σ).fpi = C.fpi) ∧
-    (∀ (s : Scheme) σ, (s.substBound σ).fpi = s.fpi) := by
-  have hc : ∀ (C : Constraint) σ, (C.substBound σ).fpi = C.fpi := by
-    apply Constraint.rec
-      (motive_1 := fun C => ∀ σ, (C.substBound σ).fpi = C.fpi)
-      (motive_2 := fun s => ∀ σ, (s.substBound σ).fpi = s.fpi)
-    all_goals intros; simp_all [Constraint.substBound, Scheme.substBound,
-      Constraint.fpi, Scheme.fpi]
-    case inst x T σ => cases x <;> rfl
-  exact ⟨hc, fun s σ => by cases s; exact hc _ _⟩
 
 theorem envSubstBoundWF (h : Env.WF S Δ Γ) (hσ : BoundSubst.Valid S Δ Δ' σ) :
     Env.WF S Δ' (Γ.substBound σ) := by
@@ -308,6 +285,8 @@ theorem substBoundSemantics (M : Model) :
       exact ihC _ _ h.2 _ _ _ _ _ hσ
     · intro x T Δ n h ρ bs bs' σ ι hσ
       simp only [Constraint.substBound, Constraint.Holds, evalSubstBound h.1 hσ]
+    · intro P D ihP ihD Δ n h ρ bs bs' σ ι hσ
+      exact imp_congr (ihP _ _ h.1 _ _ _ _ _ hσ) (ihD _ _ h.2.2 _ _ _ _ _ hσ)
     · intro ks C T ih Δ n h ρ bs bs' σ ι hσ
       ext v
       change (_ ∧ ∃ vs, KindValues M ks vs ∧ _ ∧ _) ↔
@@ -518,12 +497,6 @@ theorem substBoundId :
     case atom p ts => exact (List.map_congr_left (fun T _ => tySubstBoundId T)).trans (List.map_id ts)
   exact ⟨hc, fun s => by cases s; simp [Scheme.substBound, hc]⟩
 
-/-- Remove precisely the initial block, leaving all outer variables in scope. -/
-def BoundSubst.many (args : List Ty) : BoundSubst := fun i =>
-  match args[i]? with
-  | some U => U
-  | none => .bound (i - args.length)
-
 theorem BoundSubst.validMany (hargs : List.Forall₂ (Ty.HasKind S Δ) args ks) :
     BoundSubst.Valid S (ks ++ Δ) Δ (BoundSubst.many args) := by
   intro i k hi
@@ -586,5 +559,173 @@ theorem schemeShiftWF (hs : Scheme.WF S Δ n s) (ks : List Kind) :
 theorem schemeShiftFpi (s : Scheme) (n d : Nat) : (s.shift n d).fpi = s.fpi := by
   rw [shiftSubstBound.2]
   exact substBoundFpi.2 _ _
+
+/-- A well-kinded type observes only bound variables in its context. -/
+theorem tySubstBoundCongruence (hT : Ty.HasKind S Δ T k)
+    (hστ : ∀ i, i < Δ.length → σ i = τ i) : T.substBound σ = T.substBound τ := by
+  induction T using tyInduction generalizing k with
+  | hf X => simp [Ty.substBound]
+  | hb i =>
+      cases hT with
+      | bound hi _ => simpa only [Ty.substBound] using hστ i (List.getElem?_eq_some_iff.mp hi).1
+  | hc f ts ih =>
+      cases hT with
+      | con _ hs =>
+          simp only [Ty.substBound]
+          congr 1
+          apply List.map_congr_left
+          intro T ht
+          obtain ⟨k, _, hk⟩ := forall₂MemLeft hs ht
+          exact ih T ht hk
+
+theorem BoundSubst.liftCongruence {σ τ : BoundSubst} {n m : Nat} (h : ∀ i, i < n → σ i = τ i) :
+    ∀ i, i < m + n → σ.lift m i = τ.lift m i := by
+  intro i hi
+  by_cases hm : i < m
+  · simp [BoundSubst.lift, hm]
+  · simp [BoundSubst.lift, hm, h (i - m) (by omega)]
+
+theorem substBoundCongruence :
+    (∀ (C : Constraint) Δ n, C.WF S Δ n → ∀ σ τ,
+      (∀ i, i < Δ.length → σ i = τ i) → C.substBound σ = C.substBound τ) ∧
+    (∀ (s : Scheme) Δ n, s.WF S Δ n → ∀ σ τ,
+      (∀ i, i < Δ.length → σ i = τ i) → s.substBound σ = s.substBound τ) := by
+  have hc : ∀ (C : Constraint) Δ n, C.WF S Δ n → ∀ σ τ,
+      (∀ i, i < Δ.length → σ i = τ i) → C.substBound σ = C.substBound τ := by
+    apply Constraint.rec
+      (motive_1 := fun C => ∀ Δ n, C.WF S Δ n → ∀ σ τ,
+        (∀ i, i < Δ.length → σ i = τ i) → C.substBound σ = C.substBound τ)
+      (motive_2 := fun s => ∀ Δ n, s.WF S Δ n → ∀ σ τ,
+        (∀ i, i < Δ.length → σ i = τ i) → s.substBound σ = s.substBound τ)
+    · intros; rfl
+    · intros; rfl
+    · intro p ts Δ n hw σ τ h
+      simp only [Constraint.substBound]
+      congr 1
+      apply List.map_congr_left
+      intro T ht
+      obtain ⟨k, _, hk⟩ := forall₂MemLeft hw.2 ht
+      exact tySubstBoundCongruence hk h
+    · intro C D ihC ihD Δ n hw σ τ h
+      exact congrArg₂ Constraint.conj (ihC _ _ hw.1 _ _ h) (ihD _ _ hw.2 _ _ h)
+    · intro ks C ih Δ n hw σ τ h
+      exact congrArg (Constraint.exists_ ks)
+        (ih _ _ hw.2 _ _ (by simpa only [List.length_append] using BoundSubst.liftCongruence h))
+    · intro ks C ih Δ n hw σ τ h
+      exact congrArg (Constraint.forall_ ks)
+        (ih _ _ hw.2 _ _ (by simpa only [List.length_append] using BoundSubst.liftCongruence h))
+    · intro s C ihs ihC Δ n hw σ τ h
+      exact congrArg₂ Constraint.def_ (ihs _ _ hw.1 _ _ h) (ihC _ _ hw.2 _ _ h)
+    · intro x s C ihs ihC Δ n hw σ τ h
+      exact congrArg₂ (Constraint.defFree x) (ihs _ _ hw.1 _ _ h) (ihC _ _ hw.2 _ _ h)
+    · intro x T Δ n hw σ τ h
+      exact congrArg (Constraint.inst x) (tySubstBoundCongruence hw.1 h)
+    · intro P D ihP ihD Δ n hw σ τ h
+      exact congrArg₂ Constraint.implies (ihP _ _ hw.1 _ _ h) (ihD _ _ hw.2.2 _ _ h)
+    · intro ks C T ih Δ n hw σ τ h
+      have hl : ∀ i, i < (ks ++ Δ).length → σ.lift ks.length i = τ.lift ks.length i :=
+        by simpa only [List.length_append] using BoundSubst.liftCongruence h
+      exact congrArg₂ (Scheme.all ks) (ih _ _ hw.2.1 _ _ hl)
+        (tySubstBoundCongruence hw.2.2 hl)
+  refine ⟨hc, ?_⟩
+  rintro ⟨ks, C, T⟩ Δ n hw σ τ h
+  have hl : ∀ i, i < (ks ++ Δ).length → σ.lift ks.length i = τ.lift ks.length i :=
+    by simpa only [List.length_append] using BoundSubst.liftCongruence h
+  exact congrArg₂ (Scheme.all ks) (hc _ _ _ hw.2.1 _ _ hl)
+    (tySubstBoundCongruence hw.2.2 hl)
+
+/-- Outer substitution leaves a locally closed declaration condition unchanged. -/
+theorem declarationConditionSubstBound {P : Constraint} (hP : P.WF S ks n) (σ : BoundSubst) :
+    P.substBound (σ.lift ks.length) = P := by
+  calc
+    _ = P.substBound Ty.bound := by
+      apply substBoundCongruence.1 P _ _ hP
+      intro i hi
+      simp [BoundSubst.lift, hi]
+    _ = P := substBoundId.1 P
+
+/-- Adding outer kind binders preserves locally closed constraints and schemes. -/
+theorem constraintAppendWF {P : Constraint} (hP : P.WF S ks n) (Δ : List Kind) : P.WF S (ks ++ Δ) n := by
+  rw [← substBoundId.1 P]
+  apply (substBoundWF S).1 P _ _ hP
+  intro i k hi
+  exact Or.inl ⟨i, rfl, by
+    simpa only [List.getElem?_append, (List.getElem?_eq_some_iff.mp hi).1, ite_true] using hi⟩
+
+/-- A declaration condition reads only the values of its local binders. -/
+theorem conditionDeclarationAppend {P : Constraint} {vs : List M.Carrier} (hP : P.WF S ks n)
+    (hn : vs.length = ks.length) (ρ : Assignment M) (bs : List M.Carrier) (ι : GroundEnv M) :
+    P.Holds M ρ (vs ++ bs) ι ↔ P.Holds M ρ vs ι := by
+  have hr : BoundSubst.Realizes M ks ρ vs (vs ++ bs) Ty.bound := by
+    intro i k hi
+    have hv : i < vs.length := by rw [hn]; exact (List.getElem?_eq_some_iff.mp hi).1
+    simp [Ty.eval, List.getElem?_append, hv]
+  simpa only [substBoundId.1] using (substBoundSemantics M).1 P _ _ hP ρ vs (vs ++ bs) Ty.bound ι hr
+
+/-- Instantiation of a condition commutes with substitution of its argument list. -/
+theorem declarationConditionOpenSubstBound {P : Constraint} (hP : P.WF S ks n)
+    (hargs : List.Forall₂ (Ty.HasKind S Δ) args ks) (σ : BoundSubst) :
+    (P.substBound (BoundSubst.many args)).substBound σ =
+      P.substBound (BoundSubst.many (args.map (Ty.substBound σ))) := by
+  rw [substBoundComp.1]
+  apply substBoundCongruence.1 P _ _ hP
+  intro i hi
+  have ha : i < args.length := by rw [hargs.length_eq]; exact hi
+  simp [BoundSubst.many, List.getElem?_eq_getElem ha, List.getElem?_map]
+
+/-- Increasing the available term-variable depth preserves well-formedness. -/
+theorem termDepthWF :
+    (∀ C : Constraint, ∀ Δ n m, C.WF S Δ n → n ≤ m → C.WF S Δ m) ∧
+    (∀ s : Scheme, ∀ Δ n m, s.WF S Δ n → n ≤ m → s.WF S Δ m) := by
+  have hc : ∀ C : Constraint, ∀ Δ n m, C.WF S Δ n → n ≤ m → C.WF S Δ m := by
+    apply Constraint.rec
+      (motive_1 := fun C => ∀ Δ n m, C.WF S Δ n → n ≤ m → C.WF S Δ m)
+      (motive_2 := fun s => ∀ Δ n m, s.WF S Δ n → n ≤ m → s.WF S Δ m)
+    · intros; trivial
+    · intros; trivial
+    · intros; assumption
+    · intro C D ihC ihD Δ n m h hnm
+      exact ⟨ihC _ _ _ h.1 hnm, ihD _ _ _ h.2 hnm⟩
+    · intro ks C ih Δ n m h hnm
+      exact ⟨h.1, ih _ _ _ h.2 hnm⟩
+    · intro ks C ih Δ n m h hnm
+      exact ⟨h.1, ih _ _ _ h.2 hnm⟩
+    · intro s C ihs ihC Δ n m h hnm
+      exact ⟨ihs _ _ _ h.1 hnm, ihC _ _ _ h.2 (by omega)⟩
+    · intro x s C ihs ihC Δ n m h hnm
+      exact ⟨ihs _ _ _ h.1 hnm, ihC _ _ _ h.2 hnm⟩
+    · intro x T Δ n m h hnm
+      refine ⟨h.1, ?_⟩
+      cases x with
+      | free _ => trivial
+      | bound i => exact Nat.lt_of_lt_of_le h.2 hnm
+    · intro P D _ ihD Δ n m h hnm
+      exact ⟨h.1, h.2.1, ihD _ _ _ h.2.2 hnm⟩
+    · intro ks C T ih Δ n m h hnm
+      exact ⟨h.1, ih _ _ _ h.2.1 hnm, h.2.2⟩
+  refine ⟨hc, ?_⟩
+  rintro ⟨ks, C, T⟩ Δ n m h hnm
+  exact ⟨h.1, hc _ _ _ _ h.2.1 hnm, h.2.2⟩
+
+/-- Semantic interpretation of the same argument list used for input and output. -/
+theorem conditionDeclarationOpen {P : Constraint} (hP : P.WF S ks n)
+    (hargs : List.Forall₂ (Ty.HasKind S Δ) args ks)
+    (ρ : Assignment M) (bs : List M.Carrier) (ι : GroundEnv M) :
+    (P.substBound (BoundSubst.many args)).Holds M ρ bs ι ↔
+      P.Holds M ρ (args.map (Ty.eval M ρ bs)) ι := by
+  apply (substBoundSemantics M).1 P _ _ hP
+  intro i k hi
+  obtain ⟨U, hU, _⟩ := forall₂Lookup hargs hi
+  simp [BoundSubst.many, hU, List.getElem?_map]
+
+/-- Opening a declaration with its own bound arguments is the identity. -/
+theorem conditionDeclarationOpenSelf {P : Constraint} (hP : P.WF S ks n) :
+    P.substBound (BoundSubst.many ((List.range ks.length).map Ty.bound)) = P := by
+  calc
+    _ = P.substBound Ty.bound := by
+      apply substBoundCongruence.1 P _ _ hP
+      intro i hi
+      simp [BoundSubst.many, List.getElem?_map, List.getElem?_range hi]
+    _ = P := substBoundId.1 P
 
 end EHMX

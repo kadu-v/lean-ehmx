@@ -184,7 +184,7 @@ theorem inferencePerform (hF : EffectFramework S M) (hsig : OpSignature.WF S sig
       have ht := ih _ _ _ _ _ ⟨hw'.1, hw'.2.1, hw'.2.2.1, hw'.2.2.2.1, ha, hη⟩ (by
         intro ρ bs ι _ _ _ h
         have hh := (envLetInHolds _ _ _ _ _).mp h
-        exact (envLetInHolds _ _ _ _ _).mpr ⟨hh.1, hh.2.1⟩)
+        exact (envLetInHolds _ _ _ _ _).mpr ⟨hh.1, hh.2.2.1⟩)
       have hargs := boundArgumentsKind (Δ := [1] ++ Δ) hdecl.1
       rw [← List.append_assoc] at hargs
       have hi := declarationOpenSelf hdecl.2.1
@@ -195,13 +195,18 @@ theorem inferencePerform (hF : EffectFramework S M) (hsig : OpSignature.WF S sig
           decl.output (.union (.singleton op) (.bound decl.kinds.length)) :=
         ⟨hw'.1, hw'.2.1, hw'.2.2.1, hw'.2.2.2.1, hb, unionKind (singletonKind op) hη⟩
       nth_rw 2 [← ho] at hwop
-      have hop := Typing.perform hwop hs hargs ht'
+      have hop := Typing.perform hwop hs hargs (by
+        rw [conditionDeclarationOpenSelf hdecl.2.2.2.2.2.1]
+        intro ρ bs ι _ _ _ h
+        exact (constraintGroundIndependent
+          (by simpa only [List.append_assoc] using constraintAppendWF hdecl.2.2.2.2.2.1 ([1] ++ Δ))
+          hdecl.2.2.2.2.2.2.1 ρ bs _ ι).mp ((envLetInHolds _ _ _ _ _).mp h).2.1) ht'
       rw [ho] at hop
       apply Typing.sub hw' hop
       · intro ρ bs ι _ _ _ h
-        simpa only [List.length_append, List.length_cons, List.length_nil, Constraint.le, Constraint.Holds] using ((envLetInHolds _ _ _ _ _).mp h).2.2.1
+        simpa only [List.length_append, List.length_cons, List.length_nil, Constraint.le, Constraint.Holds] using ((envLetInHolds _ _ _ _ _).mp h).2.2.2.1
       · intro ρ bs ι _ _ _ h
-        simpa only [List.length_append, List.length_cons, List.length_nil, Constraint.le, Constraint.Holds] using ((envLetInHolds _ _ _ _ _).mp h).2.2.2
+        simpa only [List.length_append, List.length_cons, List.length_nil, Constraint.le, Constraint.Holds] using ((envLetInHolds _ _ _ _ _).mp h).2.2.2.2
 
 /-- A universal premise can be used under the same newly bound variables. -/
 theorem entailsForallOpen (hw : Constraint.WF S Δ 0 C)
@@ -217,6 +222,11 @@ theorem entailsForallOpen (hw : Constraint.WF S Δ 0 C)
     simpa only [hn, heq] using hC
   simpa only [heq] using he ρ _ ι hρ hb hι hc _ hv
 
+
+theorem entailsForallImplicationOpen (hw : Constraint.WF S Δ 0 C)
+    (he : Entails S M Δ C (.forall_ ks (.implies P D))) :
+    Entails S M (ks ++ Δ) (.conj (C.shift ks.length 0) P) D :=
+  fun ρ bs ι hρ hbs hι h => entailsForallOpen hw he ρ bs ι hρ hbs hι h.1 h.2
 
 theorem inferenceHandle (hF : EffectFramework S M) (hsig : OpSignature.WF S sig)
     (hw : JudgmentWF S Δ C Γ (.handle body op ret clause) T ε)
@@ -264,16 +274,20 @@ theorem inferenceHandle (hF : EffectFramework S M) (hsig : OpSignature.WF S sig)
         · intro x hx
           simpa only [Env.dpi, Env.push, Env.shift, List.map_map, Function.comp_def] using
             hw'.2.2.2.1.2 (Finset.mem_union_right _ hx)
-      have htc := ihc _ _ _ _ _
-        ⟨constraintShiftWF hw'.1 decl.kinds, by rw [constraintShiftFpi, hw'.2.1],
+      have hpw := constraintAppendWF hdecl.2.2.2.2.2.1 ([0,1,0,1] ++ Δ)
+      have hpf := hdecl.2.2.2.2.2.2.1
+      have htc := ihc _ (.conj _ decl.condition) _ _ _
+        ⟨⟨constraintShiftWF hw'.1 decl.kinds, hpw⟩,
+          Finset.union_eq_empty.mpr ⟨(constraintShiftFpi _ _ _).trans hw'.2.1, hpf⟩,
           hcw, hcs, kindShift hb _, kindShift heo _⟩ (by
         apply entailsTrans _ (envLetInMono _ _ _).1
         apply entailsTrans _ (envLetInMono _ _ _).1
-        apply entailsForallOpen hw'.1
-        intro ρ bs ι _ _ _ h
+        apply entailsForallImplicationOpen hw'.1
+        intro ρ bs ι _ _ _ h us hu
         have hh := (envLetInHolds _ _ _ _ _).mp h
-        exact ((envLetInForall hw'.2.2.1 _ _ ρ bs ι).mp
-          ((envLetInHolds _ _ _ _ _).mpr ⟨hh.1, hh.2.2.2.2.1⟩)).2)
+        have hg := ((envLetInForall hw'.2.2.1 _ _ ρ bs ι).mp
+          ((envLetInHolds _ _ _ _ _).mpr ⟨hh.1, hh.2.2.2.2.1⟩)).2 us hu
+        exact ((envLetInImplication hpw hpf _ _ ρ (us ++ bs) ι).mp hg).2)
       have ht := Typing.handle
         ⟨hw'.1, hw'.2.1, hw'.2.2.1, hw'.2.2.2.1, hb, heo⟩ hs htb
         (fun _ _ _ _ _ _ h => ((envLetInHolds _ _ _ _ _).mp h).2.2.1) htr htc

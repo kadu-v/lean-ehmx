@@ -64,7 +64,7 @@ theorem progressGeneral (hF : EffectFramework S M)
         · simp [EvalCtx.plug, he]
         · rw [effectsUnion hF hρ hbs hw.2.2.2.2.2]; exact Or.inl hm
   | letPoly _ hv => intro _ _ _ _; exact Or.inr (Or.inl ⟨_, .letValue hv⟩)
-  | @perform Δ C Γ op arg decl args ε hw _ _ ha ih =>
+  | @perform Δ C Γ op arg decl args ε hw _ _ hp ha ih =>
       intro hΓ bs hbs hC
       have hout := effectsUnion hF hρ hbs hw.2.2.2.2.2
       rcases ih hΓ bs hbs hC with hv | ⟨arg', hs⟩ | ⟨op', ⟨E, v, he, hv, hop⟩, hm⟩

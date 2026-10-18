@@ -39,12 +39,12 @@ theorem typingShiftStronger (hF : EffectFramework S M) (hsig : OpSignature.WF S 
 theorem operationClauseShift {C : Constraint} {Γ : Env} {B ε : Ty}
     (hF : EffectFramework S M) (hsig : OpSignature.WF S sig)
     (hs : sig op = some decl)
-    (hc : Typing S M sig (decl.kinds ++ Δ) (C.shift decl.kinds.length 0)
+    (hc : Typing S M sig (decl.kinds ++ Δ) (.conj (C.shift decl.kinds.length 0) decl.condition)
       (((Γ.shift decl.kinds.length).push (.mono decl.input)).push
         (.mono (.arrow decl.output (ε.shift decl.kinds.length 0) (B.shift decl.kinds.length 0))))
       clause (B.shift decl.kinds.length 0) (ε.shift decl.kinds.length 0)) (ks : List Kind) :
     Typing S M sig (decl.kinds ++ (ks ++ Δ))
-      ((C.shift ks.length 0).shift decl.kinds.length 0)
+      (.conj ((C.shift ks.length 0).shift decl.kinds.length 0) decl.condition)
       ((((Γ.shift ks.length).shift decl.kinds.length).push (.mono decl.input)).push
         (.mono (.arrow decl.output ((ε.shift ks.length 0).shift decl.kinds.length 0)
           ((B.shift ks.length 0).shift decl.kinds.length 0))))
@@ -53,7 +53,8 @@ theorem operationClauseShift {C : Constraint} {Γ : Env} {B ε : Ty}
   have hd := hsig op decl hs
   have h := typingTypeEffectSubstitution hF hsig hc _ _
     (BoundSubst.validLift (BoundSubst.validShift ks) decl.kinds)
-  simp only [constraintShiftLiftSubst, envSubstBoundPush, monoSubstBound,
+  simp only [Constraint.substBound, declarationConditionSubstBound hd.2.2.2.2.2.1,
+    constraintShiftLiftSubst, envSubstBoundPush, monoSubstBound,
     envShiftLiftSubst, Ty.arrow, Ty.substBound, List.map_cons, List.map_nil,
     declarationSubstBound hd.2.1, declarationSubstBound hd.2.2.1,
     tyShiftLiftSubst] at h
@@ -128,10 +129,11 @@ theorem ContextTyping.letRhs (hF : EffectFramework S M) (hsig : OpSignature.WF S
     scopedLet (typingWF ht).2.2.2.1 (typingWF hb''').2.2.2.1,
     kindShift hw.2.2.2.2.1 ks, hε⟩ ht hb'''
 
-theorem ContextTyping.perform (_hF : EffectFramework S M) (hsig : OpSignature.WF S sig)
+theorem ContextTyping.perform (hF : EffectFramework S M) (hsig : OpSignature.WF S sig)
     (hw : JudgmentWF S Δ C Γ (.perform op arg) (decl.output.openAt 0 args)
       (.union (.singleton op) ε))
-    (hs : sig op = some decl) (ha : List.Forall₂ (Ty.HasKind S Δ) args decl.kinds) :
+    (hs : sig op = some decl) (ha : List.Forall₂ (Ty.HasKind S Δ) args decl.kinds)
+    (hp : Entails S M Δ C (decl.condition.substBound (BoundSubst.many args))) :
     ContextTyping S M sig Δ C Γ (.perform op .hole) (decl.input.openAt 0 args) ε
       (decl.output.openAt 0 args) (.union (.singleton op) ε) := by
   intro ks D U e hD hDf he hU ht
@@ -146,8 +148,12 @@ theorem ContextTyping.perform (_hF : EffectFramework S M) (hsig : OpSignature.WF
   rw [ho] at hT ⊢
   simp only [Ty.union, Ty.singleton, Ty.shift, Ty.substBound, List.map_cons, List.map_nil] at hε ⊢
   simp only [tyShiftSubstBound, Nat.not_lt_zero, ↓reduceIte] at hε
+  have hpw := (substBoundWF S).1 _ _ _ (constraintAppendWF hd.2.2.2.2.2.1 Δ) _ _
+    (BoundSubst.validMany ha)
+  have hp' := entailsTrans he (entailsShift hF ks hw.1 hpw hp)
+  rw [shiftSubstBound.1, declarationConditionOpenSubstBound hd.2.2.2.2.2.1 ha] at hp'
   exact .perform ⟨hD, hDf, (typingWF ht).2.2.1, (typingWF ht).2.2.2.1, hT, hε⟩ hs
-    (List.forall₂_map_left_iff.mpr (forall₂ImplMem ha (fun _ _ _ h => kindSubstBound h hσ))) ht
+    (List.forall₂_map_left_iff.mpr (forall₂ImplMem ha (fun _ _ _ h => kindSubstBound h hσ))) hp' ht
 
 theorem scopedHandle (hb : body.Scoped Γ) (hr : ret.Scoped (Γ.push s))
     (hc : clause.Scoped (((Γ.shift n).push t).push u)) :
@@ -162,7 +168,7 @@ theorem ContextTyping.handle (hF : EffectFramework S M) (hsig : OpSignature.WF S
     (hs : sig op = some decl) (hεin : Ty.HasKind S Δ εin 1)
     (heff : Entails S M Δ C (.le 1 εin (.union (.singleton op) εout)))
     (hr : Typing S M sig Δ C (Γ.push (.mono A)) ret B εout)
-    (hc : Typing S M sig (decl.kinds ++ Δ) (C.shift decl.kinds.length 0)
+    (hc : Typing S M sig (decl.kinds ++ Δ) (.conj (C.shift decl.kinds.length 0) decl.condition)
       (((Γ.shift decl.kinds.length).push (.mono decl.input)).push
         (.mono (.arrow decl.output (εout.shift decl.kinds.length 0) (B.shift decl.kinds.length 0))))
       clause (B.shift decl.kinds.length 0) (εout.shift decl.kinds.length 0)) :
@@ -177,7 +183,7 @@ theorem ContextTyping.handle (hF : EffectFramework S M) (hsig : OpSignature.WF S
       (ret.shift 1 1) (B.shift ks.length 0) (εout.shift ks.length 0) := by
     simpa [Env.insertAfter, Env.shift, Env.push] using hr''
   have hc' := operationClauseShift hF hsig hs hc ks
-  have hc'' := typingStronger hc' (constraintShiftWF hD decl.kinds)
+  have hc'' := typingConjStronger hc' (constraintShiftWF hD decl.kinds)
     ((constraintShiftFpi _ _ _).trans hDf)
     (entailsShift hF decl.kinds hD (constraintShiftWF hw.1 ks) he)
   have hc''' := typingWeakeningAt hc''
@@ -185,7 +191,7 @@ theorem ContextTyping.handle (hF : EffectFramework S M) (hsig : OpSignature.WF S
       ((B.shift ks.length 0).shift decl.kinds.length 0)), .mono decl.input]
     ((Γ.shift ks.length).shift decl.kinds.length).bound
     (.mono (U.shift decl.kinds.length 0)) rfl (monoWF (kindShift hU decl.kinds))
-  have hcFinal : Typing S M sig (decl.kinds ++ (ks ++ Δ)) (D.shift decl.kinds.length 0)
+  have hcFinal : Typing S M sig (decl.kinds ++ (ks ++ Δ)) (.conj (D.shift decl.kinds.length 0) decl.condition)
       (((((Γ.shift ks.length).push (.mono U)).shift decl.kinds.length).push (.mono decl.input)).push
         (.mono (.arrow decl.output ((εout.shift ks.length 0).shift decl.kinds.length 0)
           ((B.shift ks.length 0).shift decl.kinds.length 0))))

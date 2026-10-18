@@ -41,7 +41,8 @@ theorem generationSubstitution (hsig : OpSignature.WF S sig) (e : Expr)
       · rename_i decl hd
         have hw := hsig op decl hd
         simp only [Constraint.substBound, resultConstraint, Constraint.le, List.map_cons, List.map_nil]
-        rw [ih, declarationSubstBound (kindAppend hw.2.1 [1]),
+        rw [declarationConditionSubstBound (constraintAppendWF hw.2.2.2.2.2.1 [1]),
+          ih, declarationSubstBound (kindAppend hw.2.1 [1]),
           declarationSubstBound (kindAppend hw.2.2.1 [1])]
         simp [Ty.union, Ty.singleton, Ty.substBound, BoundSubst.lift,
           tyShiftLiftSubst]
@@ -55,7 +56,7 @@ theorem generationSubstitution (hsig : OpSignature.WF S sig) (e : Expr)
           resultConstraint, Constraint.le, Ty.substBound, List.map_cons,
           List.map_nil, List.length_cons, List.length_nil]
         rw [ihb, ihr, ihc]
-        simp only [BoundSubst.liftZero, declarationSubstBound hw.2.1,
+        simp only [BoundSubst.liftZero, declarationConditionSubstBound hw.2.2.2.2.2.1, declarationSubstBound hw.2.1,
           Ty.arrow, Ty.substBound, List.map_cons, List.map_nil,
           declarationSubstBound hw.2.2.1, tyShiftLiftSubst]
         simp [Ty.union, Ty.singleton, Ty.substBound, BoundSubst.lift]
@@ -204,7 +205,7 @@ theorem generationMonotone (hF : EffectFramework S M) (e : Expr)
       split <;> simp only [*] at h
       · exact h
       · rename_i decl hd
-        obtain ⟨vs, hv, ha, ht, he⟩ := h
+        obtain ⟨vs, hv, hp, ha, ht, he⟩ := h
         have hn := hv.length_eq
         simp only [List.length_append, List.length_cons, List.length_nil] at hn
         have ht' : (Constraint.le 0 (T.shift (decl.kinds.length + 1) 0)
@@ -217,7 +218,7 @@ theorem generationMonotone (hF : EffectFramework S M) (e : Expr)
           simpa only [Constraint.le, Constraint.Holds, Predicate.eval, List.map_cons,
             List.map_nil, List.length_append, List.length_cons, List.length_nil, ← hn,
             evalShift] using hεη
-        exact ⟨vs, hv, ha,
+        exact ⟨vs, hv, hp, ha,
           ⟨ht.1, ht'.2.1, hF.belowTrans 0 hF.signature.1 _ _ _ ht.1 ht.2.1 ht'.2.1 ht.2.2 ht'.2.2⟩,
           ⟨he.1, he'.2.1, hF.belowTrans 1 hF.signature.2.1 _ _ _ he.1 he.2.1 he'.2.1 he.2.2 he'.2.2⟩⟩
   | handle body op ret clause ihb ihr ihc =>
@@ -268,9 +269,9 @@ theorem generatedSchemeWF (hS : S.WF) (hsig : OpSignature.WF S sig)
   · exact .bound rfl hS.1
   · exact emptyKind hS
 
-theorem generatedSchemeScope (hΓ : Env.WF S Δ Γ) (he : Expr.Scoped Γ rhs)
+theorem generatedSchemeScope (hsig : OpSignature.WF S sig) (hΓ : Env.WF S Δ Γ) (he : Expr.Scoped Γ rhs)
     (hd : rhs.Declared sig) : (generatedScheme sig Γ rhs).fpi = ∅ := by
-  apply inferScope (envShiftWF hΓ [0]) _ hd
+  apply inferScope hsig (envShiftWF hΓ [0]) _ hd
   simpa [Expr.Scoped, Env.shift, Env.dpi, List.map_map, Function.comp_def] using he
 
 /-- Closing a generated scheme preserves its interpretation whenever the outer
@@ -322,7 +323,7 @@ theorem valueLetGeneration (hS : S.WF) (hsig : OpSignature.WF S sig)
       (infer sig (Γ.push (generatedScheme sig Γ rhs)) body T ε) := by
   change rhs.isValue = true at hv
   have hs := generatedSchemeWF hS hsig hΓ hr
-  have hsf := generatedSchemeScope hΓ hr hd
+  have hsf := generatedSchemeScope hsig hΓ hr hd
   have heq : ∀ (ρ : Assignment M) bs ι,
       (infer sig Γ (.letE rhs body) T ε).Holds M ρ bs ι ↔
         (infer sig (Γ.push (generatedScheme sig Γ rhs)) body T ε).Holds M ρ bs ι := by

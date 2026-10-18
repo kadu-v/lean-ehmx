@@ -1,5 +1,5 @@
 import EHMX.Inference
-import EHMX.Proofs.Kind
+import EHMX.Proofs.TypeSubstitution
 
 namespace EHMX
 
@@ -67,7 +67,7 @@ theorem generationWF (hS : S.WF) (hsig : OpSignature.WF S sig)
         have ha := kindAppend hdecl.2.1 ([1] ++ Δ)
         have hb := kindAppend hdecl.2.2.1 ([1] ++ Δ)
         simp only [Constraint.WF, List.append_assoc] at hη ⊢
-        refine ⟨?_, ih he ha hη, resultWF hS hb ?_ (unionKind (singletonKind op) hη) ?_⟩
+        refine ⟨?_, termDepthWF.1 _ _ 0 n (constraintAppendWF hdecl.2.2.2.2.2.1 _) (Nat.zero_le _), ih he ha hη, resultWF hS hb ?_ (unionKind (singletonKind op) hη) ?_⟩
         · simp only [List.mem_append, List.mem_singleton]
           intro k hk; rcases hk with hk | rfl
           exact hdecl.1 k hk
@@ -94,12 +94,12 @@ theorem generationWF (hS : S.WF) (hsig : OpSignature.WF S sig)
         exact ⟨by simp [hS.1, hS.2.1], ihb he.1 ha hei,
           leWF hS.2.1 hei (unionKind (singletonKind op) heo),
           ⟨monoWF ha, ihr he.2.1 hb heo⟩,
-          ⟨hdecl.1, monoWF hopa,
+          ⟨hdecl.1, constraintAppendWF hdecl.2.2.2.2.2.1 _, hdecl.2.2.2.2.2.2.1, monoWF hopa,
             monoWF (arrowKind hopb (kindShift heo _) (kindShift hb _)),
             ihc he.2.2 (kindShift hb _) (kindShift heo _)⟩,
           resultWF hS hb (kindShift hT _) heo (kindShift hε _)⟩
 
-theorem generationScope (hd : e.Declared sig) :
+theorem generationScope (hsig : OpSignature.WF S sig) (hd : e.Declared sig) :
     (generate sig e T ε).fpi = e.fv := by
   induction e generalizing T ε with
   | ident x => cases x <;> simp [generate, Constraint.fpi, Expr.fv, Constraint.le]
@@ -116,13 +116,13 @@ theorem generationScope (hd : e.Declared sig) :
       cases hs : sig op with
       | none => exact False.elim (hd.1 hs)
       | some decl =>
-          simp [generate, hs, resultConstraint, Constraint.le, Constraint.fpi,
+          simp [generate, hs, (hsig op decl hs).2.2.2.2.2.2.1, resultConstraint, Constraint.le, Constraint.fpi,
             ih hd.2, Expr.fv]
   | handle body op ret clause ihb ihr ihc =>
       cases hs : sig op with
       | none => exact False.elim (hd.1 hs)
       | some decl =>
-          simp [generate, hs, resultConstraint, Constraint.le, Constraint.fpi,
+          simp [generate, hs, (hsig op decl hs).2.2.2.2.2.2.1, resultConstraint, Constraint.le, Constraint.fpi,
             Scheme.fpi, Scheme.mono, ihb hd.2.1, ihr hd.2.2.1, ihc hd.2.2.2,
             Expr.fv, Finset.union_assoc]
 
