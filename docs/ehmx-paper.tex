@@ -1,0 +1,4187 @@
+% Compile from the repository root; see docs/ehmx-paper-build.txt.
+\documentclass[a4paper,11pt]{article}
+\usepackage[margin=25mm,headheight=15pt]{geometry}
+\usepackage{fontspec,xeCJK}
+\setmainfont{texgyretermes-regular.otf}[BoldFont=texgyretermes-bold.otf,ItalicFont=texgyretermes-italic.otf,BoldItalicFont=texgyretermes-bolditalic.otf]
+\setmonofont{lmmono10-regular.otf}[Scale=0.86]
+\setCJKmainfont{HaranoAjiMincho-Regular.otf}[BoldFont=HaranoAjiMincho-Bold.otf]
+\setCJKsansfont{HaranoAjiGothic-Medium.otf}
+\setCJKmonofont{HaranoAjiMincho-Regular.otf}
+\usepackage{amsmath,amssymb,amsthm,mathtools,mathpartir,stmaryrd}
+\usepackage{booktabs,longtable,array,enumitem,fancyhdr}
+\usepackage[unicode,colorlinks=true,linkcolor=black,urlcolor=black,citecolor=black]{hyperref}
+\usepackage{bookmark}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{corollary}[definition]{Corollary}
+\newtheorem{example}[definition]{Example}
+\newenvironment{Case}[1]{\par\smallskip\noindent\textbf{Case #1.}\enspace\ignorespaces}{\par}
+\renewcommand{\proofname}{Proof}
+\newcommand{\FV}{\operatorname{fv}}
+\newcommand{\FTV}{\operatorname{ftv}}
+\newcommand{\FPI}{\operatorname{fpi}}
+\newcommand{\dom}{\operatorname{dom}}
+\newcommand{\kind}{\operatorname{kind}}
+\newcommand{\eff}{\operatorname{eff}}
+\newcommand{\op}{\mathsf{op}}
+\newcommand{\ops}{\mathcal O}
+\newcommand{\emp}{\varnothing}
+\newcommand{\arr}[3]{#1\xrightarrow{#2}#3}
+\newcommand{\jj}[6]{#1;#2;#3\vdash #4:#5\,!\,#6}
+\newcommand{\J}[3]{\jj{\Delta}{C}{\Gamma}{#1}{#2}{#3}}
+\newcommand{\ent}[2]{#1\models_{\Delta}#2}
+\newcommand{\den}[1]{\llbracket #1\rrbracket}
+\newcommand{\gen}[3]{\mathcal G(#1:#2\,!\,#3)}
+\newcommand{\infers}[4]{\mathcal I(#1,#2,#3,#4)}
+\newcommand{\inst}[2]{#1\preccurlyeq #2}
+\newcommand{\Def}[3]{\mathsf{def}\ #1:#2\ \mathsf{in}\ #3}
+\newcommand{\Let}[3]{\mathsf{let}\ #1:#2\ \mathsf{in}\ #3}
+\newcommand{\lete}[3]{\mathsf{let}\ #1=#2\ \mathsf{in}\ #3}
+\newcommand{\perform}[2]{\mathsf{perform}\ #1\ #2}
+\newcommand{\handle}[2]{\mathsf{handle}\ #1\ \mathsf{with}\ #2}
+\newcommand{\mono}[1]{\underline{#1}}
+\newcommand{\Feas}{\operatorname{Feas}}
+\newcommand{\Val}{\operatorname{Value}}
+\newcommand{\Unhandled}{\operatorname{Unhandled}}
+\newcommand{\WF}{\operatorname{WF}}
+\ExplSyntaxOn
+\cs_new_protected:Npn \leanbreak #1 {
+ \tl_set:Nx \l_tmpa_tl { \tl_to_str:n {#1} }
+ \regex_replace_all:nnN { ([a-z0-9])([A-Z]) } { \1\c{allowbreak}\2 } \l_tmpa_tl
+ \regex_replace_all:nnN { ([./_:]) } { \1\c{allowbreak} } \l_tmpa_tl
+ \tl_use:N \l_tmpa_tl
+}
+\ExplSyntaxOff
+\newcommand{\lean}[1]{\ifmmode\text{\texttt{\leanbreak{#1}}}\else\texttt{\leanbreak{#1}}\fi}
+\newcommand{\A}{\mathsf A}
+\newcommand{\AS}{\mathsf A_{\mathrm s}}
+\newcommand{\Rule}[1]{\textsc{#1}}
+\usepackage{needspace}
+\newcommand{\proofspace}{\Needspace{16\baselineskip}}
+\allowdisplaybreaks[2]
+\setlength{\parindent}{1em}
+\setlength{\parskip}{3pt}
+\setlist{nosep,leftmargin=2em}
+\emergencystretch=2em
+\pagestyle{fancy}
+\fancyhf{}\fancyhead[L]{\small EHM($X$): 定義と証明}\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\title{EHM($X$) の定義・型システム・意味論と証明\\[4pt]\large 述語条件付き多相操作と deep handler}
+\author{Lean 実装に基づく数学的記述}
+\date{2026年10月18日}
+\begin{document}
+\maketitle
+\begin{abstract}
+制約領域 $X$ を引数とする値制限付き多相型システムに、評価効果、
+述語条件付き多相操作、deep handler を加える。構文に沿う制約生成の健全性・完全性・
+主要制約性、一歩・多歩保存、進行、到達状態の効果安全性を示す。
+完全性では環境実現可能性を、進行では実際の充足割当てを明示する。
+主要性は環境・項・要求型・効果を固定した制約の主要性である。
+証明は現行 \lean{EHMX} の宣言を名前付き記法で記述したものであり、
+この記法と実装の間の翻訳定理を新たに機械検証したものではない。
+\end{abstract}
+
+\noindent\textbf{範囲と原典.}
+HM($X$) の対応箇所は ATTAPL 第10章\cite{attapl}の健全性 10.4.4、
+完全性 10.4.8、主要制約の議論（429--430頁）、保存 10.5.8、型安全性 10.5.11 である。
+本書の番号は独立である。操作、条件 $P$、効果、多相操作節は EHM($X$) 固有の拡張であり、
+原典の定理そのものとは区別する。FreezeML 論文\cite{freeze}は数式・規則中心の
+一段組の参考とする。FreezeML の凍結構文やソルバーは導入しない。
+
+\clearpage
+\tableofcontents
+\newpage
+\section{記法・構文・整形式性}
+\label{sec:syntax}
+\noindent\textbf{判断（judgment）の読み方.}
+判断は「ある環境や仮定の下で、対象がある性質を持つ」という主張である。
+$\vdash$ の左側に環境・仮定、右側に検査する対象とその性質を書く。
+セミコロンは種類の異なる環境を区切る記号であり、論理積ではない。
+推論規則の横線の上は前提、下は結論である。前提をすべて満たすとき、
+その規則で結論を導ける。以下では判断を導入するたびに、その読み方を示す。
+
+\begin{definition}[名前と束縛]
+項変数を $x,y,z,k$、型変数を $\alpha,\beta$、効果変数を $\eta$ とする。
+kind の集合 $K\subseteq\mathbb N$ は $0$（型）と $1$（効果）を含む。
+$\Delta$ は局所型・効果変数と kind の有限列である。
+別に、kind を持つ大域的な自由変数の名前集合を固定する。
+$\Delta\vdash t:\kappa$ は「$\Delta$ の下で式 $t$ の kind は $\kappa$ である」
+と読む。$\Delta$ は局所変数の宣言を与え、固定した大域変数の kind と
+構成子シグネチャ $S$ も用いる。例えば
+$\alpha:0,\eta:1\vdash\arr\alpha\eta\alpha:0$ は、
+型変数 $\alpha$ と効果変数 $\eta$ から作った関数型が単相型であることを表す。
+同じ字 $\alpha$ を任意の kind の変数に用いる場合は kind を添える。
+$\bar\alpha:\bar\kappa$ と $\bar\tau:\bar\kappa$ は対応する有限列を表す。
+\end{definition}
+
+\begin{definition}[型・効果・項]
+シグネチャ $S$ は kind、型構成子 $f:\bar\kappa\to\kappa$、
+述語 $p:\bar\kappa$ の宣言を持つ。専用構成子の kind は
+$\mathsf{arrow}:(0,1,0)\to0$、$\emp,\{\op\}:1$、$\cup:(1,1)\to1$ である。
+型と効果の式は、変数と構成子の適用から作る。
+\[
+ t::=\alpha\mid f(t_1,\ldots,t_n).
+\]
+ここで $\alpha$ は任意の kind の変数を表し、構成子の引数と結果の kind は
+$S$ の宣言に従う。式の kind に応じて、記号を次のように使い分ける。
+\[
+\begin{array}{lll}
+ \tau & \text{単相型（kind $0$）} & \text{例：}\ \arr{\tau_1}{\epsilon}{\tau_2},\\
+ \epsilon & \text{効果（kind $1$）} & \text{例：}\ \eta,\ \emp,\ \{\op\},\ \epsilon_1\cup\epsilon_2.
+\end{array}
+\]
+型スキームには別の記号 $\sigma$ を用い、後の「制約とスキーム」で定義する。
+項と handler の構文は次のとおりである。
+\begin{align*}
+ v&::=x\mid\lambda x.e,\\
+ e&::=x\mid\lambda x.e\mid e_1\,e_2\mid\lete{x}{e_1}{e_2}
+       \mid\perform{\op}{e}\mid\handle{e}{h},\\
+ h&=\{\mathsf{return}\ x\mapsto r;\ \op(x,k)\mapsto c\}.
+\end{align*}
+$\arr{\tau_1}{\epsilon}{\tau_2}$ は関数型、$\emp$ は空効果、
+$\epsilon_1\cup\epsilon_2$ は効果の合併である。
+handler は一つの操作を扱い、$x$ は return 節 $r$ に束縛される。
+操作節 $c$ では引数 $x$ と継続 $k$ を束縛する。
+\end{definition}
+
+\begin{definition}[自由変数・新鮮性・代入]
+$\FV(e)$ は通常の自由項変数集合、$\FTV(t)$ は自由型・効果変数集合である。
+例えば
+\begin{align*}
+\FV(\lambda x.e)&=\FV(e)\setminus\{x\},\\
+\FV(\lete{x}{e_1}{e_2})&=\FV(e_1)\cup(\FV(e_2)\setminus\{x\}),\\
+\FV(\handle e h)&=\FV(e)\cup(\FV(r)\setminus\{x\})
+                         \cup(\FV(c)\setminus\{x,k\}).
+\end{align*}
+制約の自由項変数 $\FPI$ は $\inst{x}{\tau}$ から得られ、
+$\FPI(\Def{x}{\sigma}{D})=\FPI(\sigma)\cup(\FPI(D)\setminus\{x\})$。
+型・効果束縛は $\FTV$ から束縛名を除く。環境の自由変数は各スキームの和集合である。
+$a\#X$ は $a$ が $X$ の該当する自由変数集合に属さないことを表す。
+
+束縛名の一貫した新鮮な改名で得られる構文を $\alpha$ 同値とする。
+$e[\bar v/\bar x]$、$\theta t$、$\theta C$、$\theta\sigma$ は捕獲回避同時代入である。
+束縛名は代入の定義域・像と周囲の自由名から新鮮にしてから代入する。
+$\theta:\Delta\to\Delta'$ は局所変数を代入し大域自由変数を固定する。
+各局所変数 $\alpha:\kappa$ の像は、$\Delta'$ の同じ kind の変数、または
+$\Delta'$ で kind $\kappa$ を持つ整形式の型・効果式とする。
+これを有効な代入と呼ぶ。項には型注釈がないので $\theta e=e$。
+以降、束縛名は常にこの規約に従い、式は $\alpha$ 同値を除いて読む。
+\end{definition}
+
+\begin{definition}[制約とスキーム]
+\begin{align*}
+ C,D,P::={}&\top\mid\bot\mid p(\bar\tau)\mid t=_\kappa t'
+       \mid t\leq_\kappa t'\mid C\land D\mid P\Rightarrow D\\
+       &\mid\exists\bar\alpha:\bar\kappa.C
+       \mid\forall\bar\alpha:\bar\kappa.C
+       \mid\Def{x}{\sigma}{D}\mid\inst{x}{\tau},\\
+ \sigma::={}&\forall\bar\alpha:\bar\kappa.C\Rightarrow\tau.
+\end{align*}
+述語引数の $\bar\tau$ は宣言に合う kind の列を許す。
+$\mono\tau=\forall\emp.\top\Rightarrow\tau$ とおく。
+$\sigma=\forall\bar\alpha.C\Rightarrow\tau$ に対し
+\begin{align*}
+ \Feas(\sigma)&=\exists\bar\alpha.C,\\
+ \inst{\sigma}{\tau'}&=\exists\bar\alpha.(C\land\tau\leq_0\tau')
+       &&(\bar\alpha\#\tau'),\\
+ \Let{x}{\sigma}{D}&=\Feas(\sigma)\land\Def{x}{\sigma}{D}.
+\end{align*}
+$\inst{x}{\tau'}$ は環境の集合への所属、$\inst{\sigma}{\tau'}$ は上の存在制約の略記である。
+\end{definition}
+
+\begin{definition}[整形式性]
+$\Delta;\Xi\vdash C\ \mathsf{wf}$ は「型・効果変数の宣言 $\Delta$ と、
+利用可能な項名の集合 $\Xi$ の下で、制約 $C$ が整形式である」と読む。
+$\mathsf{wf}$ は well-formed の略で、変数の作用域と kind が正しいことを表す。
+これは $C$ の成立を主張しない。例えば $\bot$ も整形式の制約である。
+$\Delta;\Xi\vdash\sigma\ \mathsf{wf}$ も同様に、スキームの整形式性を表す。
+$\Xi=\emp$ は外側の項名を利用しないという指定であり、
+型・効果変数まで使えないという意味ではない。
+$\top,\bot$ は整形式、原子の引数は宣言の kind に一致する。
+連言は両辺、量化は宣言済み kind の新鮮な変数を $\Delta$ に加えた本体を検査する。
+$\inst{x}{\tau}$ は $x\in\Xi$ と $\Delta\vdash\tau:0$ を要する。
+$\Def{x}{\sigma}{D}$ は $\Delta;\Xi\vdash\sigma\ \mathsf{wf}$ と
+$\Delta;\Xi\cup\{x\}\vdash D\ \mathsf{wf}$ を要する。
+スキームの検査では $\bar\alpha:\bar\kappa$ を加え、制約と結果型の kind $0$ を検査する。
+含意には特に
+\[
+ \frac{\Delta;\emp\vdash P\ \mathsf{wf}\qquad
+       \Delta;\Xi\vdash D\ \mathsf{wf}}
+      {\Delta;\Xi\vdash P\Rightarrow D\ \mathsf{wf}}
+\]
+を課す。$P$ 内の局所定義は許すが、$P$ は外側の項環境を参照できない。
+
+$\Gamma$ は項名とスキームの有限列で、検索は最後の同名束縛を選ぶ。
+全エントリのスキームは $\Delta;\emp$ で整形式である。
+判断 $\jj\Delta C\Gamma e\tau\epsilon$ は、$C$ が $\Delta;\emp$ で整形式、
+$\Gamma$ が整形式、$\FV(e)\subseteq\dom\Gamma$、
+$\Delta\vdash\tau:0$、$\Delta\vdash\epsilon:1$ を含む。
+型付け規則はすべて結論のこの条件を暗黙の前提とする。
+\end{definition}
+
+\begin{definition}[操作シグネチャ]
+\[
+ \ops(\op)=\forall\bar\beta:\bar\kappa.\ P\Rightarrow\tau_1\to\tau_2.
+\]
+$\bar\beta$ は宣言済み kind を持ち、$\tau_1,\tau_2$ はその下で kind $0$。
+条件 $P$ には次の整形式性判断を要求する。
+\[
+ \bar\beta:\bar\kappa;\emp\vdash P\ \mathsf{wf}.
+\]
+左側の $\bar\beta:\bar\kappa$ は操作宣言で束縛した型・効果変数、
+$\emp$ は利用可能な外側の項名がないことを表す。
+さらに $P,\tau_1,\tau_2$ の自由型・効果変数は $\bar\beta$ に限る。
+従って $P$ は宣言の型・効果引数に依存できるが、呼出し側の項変数には依存しない。
+$P$ 自身の内部で変数を束縛することは許す。
+例えば述語 $\mathrm{Eq}$ の引数の kind が $0$ なら
+$\beta:0;\emp\vdash\mathrm{Eq}(\beta)\ \mathsf{wf}$ である。
+これは $\mathrm{Eq}(\beta)$ の成立を仮定する判断ではない。
+操作の矢印に効果欄はない。呼出しの効果には $\{\op\}$ を加える。
+$\operatorname{Declared}_{\ops}(e)$ は $e$ のすべての呼出し・handler の操作が宣言済みであることを表す。
+\end{definition}
+
+\section{制約モデル・スキームの意味・充足関係}
+\label{sec:model}
+\begin{definition}[効果制約モデル]
+$M$ は集合 $|M|$、kind 写像、既定要素、構成子解釈 $f^M$、述語解釈 $p^M$、
+順序 $\leq^M_\kappa$、効果集合写像 $\eff:|M|\to\mathcal P(\mathrm{Op})$ を持つ。
+$M_\kappa=\{a\mid\kind(a)=\kappa\}$ とする。
+\lean{EffectFramework} の全条件は次の通りである。
+\begin{enumerate}
+\item $S$ は整形式であり、各 $\kappa\in K$ に対して $M_\kappa\ne\emp$。
+\item 宣言済み構成子は入力 kind から指定の結果 kind への写像である。
+\item $\leq^M_\kappa$ は $M_\kappa$ 上の反射的・推移的・反対称な関係である。
+\item $a,b\in M_1$ なら
+$ a\leq^M_1 b\ \Longleftrightarrow\ \eff(a)\subseteq\eff(b)$。
+各 $\eff(a)$ は有限である。
+\item $\eff(\emp^M)=\emp$、$\eff(\{\op\}^M)=\{\op\}$、
+$\eff(a\cup^M b)=\eff(a)\cup\eff(b)$（$a,b\in M_1$）。
+\item kind の合う $a,b,a',b'\in M_0$ と $u,u'\in M_1$ について
+\[
+ \arr a u b\leq^M_0\arr{a'}{u'}{b'}
+ \ \Longleftrightarrow\ a'\leq^M_0 a\ \land\ u\leq^M_1 u'\ \land\ b\leq^M_0 b'.
+\]
+ここだけの矢印は $M$ の構成子解釈を表す。
+\end{enumerate}
+その他の構成子の単調性や述語の決定可能性は要求しない。
+\end{definition}
+
+\begin{definition}[割当てと解釈]
+$\nu$ は大域自由変数と $\Delta$ の局所変数を各 kind の意味値に写す有効割当て。
+$\iota$ は項名を $M_0$ の上方閉集合に写す有効環境である。
+空集合も上方閉であり許される。
+$\den\alpha_\nu=\nu(\alpha)$、
+$\den{f(\bar\tau)}_\nu=f^M(\den{\bar\tau}_\nu)$ とする。
+充足判断 $\nu;\iota\models C$ は「割当て $\nu$ と環境 $\iota$ において
+制約 $C$ が成り立つ」と読む。ここで $\nu$ は型・効果変数の意味値を、
+$\iota$ は項名に対応する型の集合を与える。$\iota$ は実行時の値の環境ではない。
+構文の整形式性を表す $\vdash\cdots\mathsf{wf}$ と、
+意味の成立を表す $\models$ を区別する。
+制約とスキームは相互に次で解釈する。
+\begin{align*}
+ \nu;\iota\models\top&\ \Longleftrightarrow\ \mathsf{true},&
+ \nu;\iota\models\bot&\ \Longleftrightarrow\ \mathsf{false},\\
+ \nu;\iota\models p(\bar\tau)&\ \Longleftrightarrow\ p^M(\den{\bar\tau}_\nu),\\
+ \nu;\iota\models t\leq_\kappa t'&\ \Longleftrightarrow\
+ \den t_\nu,\den{t'}_\nu\in M_\kappa\ \land\ \den t_\nu\leq^M_\kappa\den{t'}_\nu,\\
+ \nu;\iota\models t=_\kappa t'&\ \Longleftrightarrow\
+ \den t_\nu,\den{t'}_\nu\in M_\kappa\ \land\ \den t_\nu=\den{t'}_\nu,\\
+ \nu;\iota\models C\land D&\ \Longleftrightarrow\
+ (\nu;\iota\models C)\land(\nu;\iota\models D),\\
+ \nu;\iota\models P\Rightarrow D&\ \Longleftrightarrow\
+ (\nu;\iota\models P)\Rightarrow(\nu;\iota\models D),\\
+ \nu;\iota\models\exists\bar\alpha:\bar\kappa.C&\ \Longleftrightarrow\
+ \exists\bar a\in M_{\bar\kappa}.\ \nu[\bar\alpha\mapsto\bar a];\iota\models C,\\
+ \nu;\iota\models\forall\bar\alpha:\bar\kappa.C&\ \Longleftrightarrow\
+ \forall\bar a\in M_{\bar\kappa}.\ \nu[\bar\alpha\mapsto\bar a];\iota\models C,\\
+ \nu;\iota\models\Def{x}{\sigma}{D}&\ \Longleftrightarrow\
+ \nu;\iota[x\mapsto\den\sigma_{\nu,\iota}]\models D,\\
+ \nu;\iota\models\inst{x}{\tau}&\ \Longleftrightarrow\ \den\tau_\nu\in\iota(x).
+\end{align*}
+\begin{align*}
+ \den{\forall\bar\alpha.C\Rightarrow\tau}_{\nu,\iota}
+ &=\{b\in M_0\mid\exists\bar a\in M_{\bar\kappa}.\
+      (\nu';\iota\models C)\land\den\tau_{\nu'}\leq^M_0 b\}.
+\end{align*}
+ここでスキームの式の $\nu'=\nu[\bar\alpha\mapsto\bar a]$ とする。
+スキームは具体化の\textbf{上方閉集合}である。式に $\forall$ があっても、
+その集合への所属証人は存在量化される。全称制約の意味とは異なる。
+\end{definition}
+
+\begin{definition}[含意・実現可能性]
+$\ent C D$ は「$\Delta$ の下で、制約 $C$ は制約 $D$ を意味的に含意する」
+と読む。すべての有効な $\nu,\iota$ について
+$\nu;\iota\models C$ なら $\nu;\iota\models D$ であること。
+一つの割当てでの充足とは異なり、$C$ を満たすすべての割当てを対象とする。
+$C\equiv_\Delta D$ は相互含意。$\operatorname{Sat}_\Delta(C)$ は
+$C$ の整形式性と、その有効な充足割当ての存在を表す。
+\begin{align*}
+ \mathsf{let}\ \emp\ \mathsf{in}\ D&=D,\\
+ \mathsf{let}\ (x:\sigma,\Gamma)\ \mathsf{in}\ D
+   &=\Let{x}{\sigma}{(\mathsf{let}\ \Gamma\ \mathsf{in}\ D)},\\
+ \Feas(\Gamma)&=\mathsf{let}\ \Gamma\ \mathsf{in}\ \top.
+\end{align*}
+最初の式は空環境での略記である。
+$\Gamma$ の全スキームは項環境に依存しないため、
+$\Feas(\Gamma)$ は全エントリの $\Feas(\sigma)$ の連言と同値である。
+遮蔽されたエントリの実現可能性も含む。
+$\Gamma_\nu(\iota)$ は列順に $\iota$ の名前を $\den\sigma_\nu$ で上書きした環境とする。
+\end{definition}
+
+\begin{definition}[定理の共通前提]
+\[
+ \A=(\lean{EffectFramework}\ S\ M)\land\WF(\ops),\qquad
+ \AS=\A\land\lean{ArrowSeparated}\ S\ M.
+\]
+$\lean{ArrowSeparated}$ は、結果 kind $0$ の任意の通常構成子 $f$ と kind の合う引数について
+\[
+ \neg\bigl(f^M(\bar a)\leq^M_0\arr b u c\bigr)
+\]
+を要求する。推論三定理は $\A$ のみを用いる。
+公開されている保存・進行・安全性 Goal は $\AS$ を前提とするので本書でも保持する。
+ただし現行の補助証明はこの分離条件を使用していない。
+この言語では閉じた値は構文上 lambda に限られるためである。
+\end{definition}
+
+\section{型付け規則・操作的意味論}
+\label{sec:typing}
+\subsection{宣言的型付け}
+\noindent\textbf{型付け判断の読み方.}
+\[
+ \jj\Delta C\Gamma e\tau\epsilon.
+\]
+これは「型・効果変数の宣言 $\Delta$、制約の仮定 $C$、項の型環境 $\Gamma$ の下で、
+項 $e$ は型 $\tau$ を持ち、その評価の効果は $\epsilon$ で上から抑えられる」と読む。
+$\Gamma$ は各項変数 $x$ に型スキーム $\sigma$ を割り当てる。
+整形式性判断の $\Xi$ が利用可能な名前だけを記録するのに対し、
+$\Gamma$ はその名前をどの型で使えるかも記録する。
+$!$ は結果の型と評価効果の区切りであり、否定ではない。
+例えば
+\[
+ \jj{\alpha:0}{\top}{\emp}{\lambda x.x}{\arr\alpha\emp\alpha}\emp
+\]
+は、項変数を仮定せず、恒等関数が $\arr\alpha\emp\alpha$ 型を持つことを表す。
+外側の $!\emp$ は関数値を作る評価が純粋であること、
+矢印の上の $\emp$ はその関数を適用したときの効果が空であることを表す。
+一般にはこの二つの効果は異なる。
+
+以下の各規則に結論の整形式性を加える。制約中の $\leq$ は kind が明らかなとき添字を省く。
+\begin{mathpar}
+\inferrule*[right=Var]{\Gamma(x)=\sigma\\\ent C{\inst\sigma\tau}}
+ {\J x\tau\emp}
+\qquad
+\inferrule*[right=Lam]{\jj\Delta C{\Gamma,x:\mono{\tau_1}}e{\tau_2}\eta}
+ {\J{\lambda x.e}{(\arr{\tau_1}\eta{\tau_2})}\emp}
+\end{mathpar}
+\begin{mathpar}
+\inferrule*[right=App]{\J{e_1}{(\arr{\tau_1}\eta{\tau_2})}{\epsilon_1}\\
+ \J{e_2}{\tau_1}{\epsilon_2}}
+ {\J{e_1\,e_2}{\tau_2}{(\epsilon_1\cup\epsilon_2)\cup\eta}}
+\end{mathpar}
+\begin{mathpar}
+\inferrule*[right=Let-Mono]{\J{e_1}{\tau_1}{\epsilon_1}\\
+ \jj\Delta C{\Gamma,x:\mono{\tau_1}}{e_2}{\tau_2}{\epsilon_2}}
+ {\J{\lete{x}{e_1}{e_2}}{\tau_2}{\epsilon_1\cup\epsilon_2}}
+\end{mathpar}
+\begin{equation}\label{rule:poly}
+\inferrule*[right=Let-Poly]{
+ \Val(v)\\ \bar\alpha\#(\Delta,C,\Gamma)\\
+ \jj{\Delta,\bar\alpha:\bar\kappa}{C\land D}\Gamma v{\tau_1}\emp\\
+ \ent C{\exists\bar\alpha.D}\\
+ \jj\Delta C{\Gamma,x:\forall\bar\alpha.D\Rightarrow\tau_1}{e_2}{\tau_2}\epsilon}
+ {\J{\lete{x}{v}{e_2}}{\tau_2}\epsilon}.
+\end{equation}
+\Rule{Let-Mono} は値にも適用できる。生成側は右辺が値なら必ず多相の式を使うため、
+完全性の証明では両者を区別する。
+
+操作宣言を $\ops(\op)=\forall\bar\beta:\bar\kappa.P\Rightarrow\tau_1\to\tau_2$ と固定する。
+\begin{equation}\label{rule:perform}
+\inferrule*[right=Perform]{\Delta\vdash\bar\tau:\bar\kappa\\
+ \ent C{P[\bar\tau/\bar\beta]}\\
+ \J e{\tau_1[\bar\tau/\bar\beta]}\epsilon}
+ {\J{\perform\op e}{\tau_2[\bar\tau/\bar\beta]}{\{\op\}\cup\epsilon}}.
+\end{equation}
+handler の前提を長い一行にせず、操作節を独立した判断として置く。
+\begin{align}
+ \mathsf{Clause}(\Delta,C,\Gamma,h,\tau,\epsilon)
+ \quad\Longleftrightarrow\quad
+ &\jj{\Delta,\bar\beta:\bar\kappa}{C\land P}
+ {\Gamma,x:\mono{\tau_1},k:\mono{\arr{\tau_2}\epsilon\tau}}
+ c\tau\epsilon,
+ \label{eq:clause}
+\end{align}
+ここで $\bar\beta\#(\Delta,C,\Gamma,\tau,\epsilon)$。
+\begin{equation}\label{rule:handle}
+\inferrule*[right=Handle]{
+ \J e{\tau_0}{\epsilon_0}\\\ent C{\epsilon_0\leq\{\op\}\cup\epsilon}\\
+ \jj\Delta C{\Gamma,x:\mono{\tau_0}}r\tau\epsilon\\
+ \mathsf{Clause}(\Delta,C,\Gamma,h,\tau,\epsilon)}
+ {\J{\handle e h}\tau\epsilon}.
+\end{equation}
+\begin{mathpar}
+\inferrule*[right=Sub]{\J e\tau\epsilon\\\ent C{\tau\leq\tau'}\\\ent C{\epsilon\leq\epsilon'}}
+ {\J e{\tau'}{\epsilon'}}
+\end{mathpar}
+\begin{mathpar}
+\inferrule*[right=Strengthen]{\J e\tau\epsilon\\\ent D C}
+ {\jj\Delta D\Gamma e\tau\epsilon}
+\end{mathpar}
+\begin{equation}\label{rule:exists}
+\inferrule*[right=Exists]{\jj{\Delta,\bar\alpha:\bar\kappa}D\Gamma e\tau\epsilon\\
+ \bar\alpha\#(\Gamma,\tau,\epsilon)}
+ {\jj\Delta{\exists\bar\alpha.D}\Gamma e\tau\epsilon}.
+\end{equation}
+新鮮性により $\bar\alpha$ は結論から逃走しない。$D$ は $\bar\alpha$ に依存してよい。
+
+\subsection{値呼びの簡約}
+\begin{definition}[評価文脈]
+\[
+ E::=[\ ]\mid E\,e\mid v\,E\mid\lete x E e
+       \mid\perform\op E\mid\handle E h.
+\]
+$E[e]$ は穴埋め、$E\circ F$ は $E[F[\ ]]$。
+$\operatorname{handled}(E)$ は穴から外側へ通る handler の操作の集合であり、
+他のフレームでは変わらず、$\operatorname{handled}(\handle E h)
+=\operatorname{handled}(E)\cup\{\op\}$。
+\end{definition}
+\begin{definition}[一歩・多歩簡約]
+$h=\{\mathsf{return}\ x\mapsto r;\op(x,k)\mapsto c\}$ とする。
+\begin{align*}
+ (\lambda x.e)\,v&\longrightarrow e[v/x],& &\Rule{Beta},\\
+ \lete x v e&\longrightarrow e[v/x],& &\Rule{Let-Value},\\
+ \handle v h&\longrightarrow r[v/x],& &\Rule{Return},\\
+ \handle{E[\perform\op v]}h
+ &\longrightarrow c[v/x,K/k],& &\Rule{Operation},\\
+ K&=\lambda z.\handle{E[z]}h,
+ & &z\#(E,h,v),\quad\op\notin\operatorname{handled}(E).
+\end{align*}
+各 $v$ は値である。さらに $e\longrightarrow e'$ なら
+$E[e]\longrightarrow E[e']$（\Rule{Context}）。
+$e\longrightarrow e'$ は「$e$ が一回の評価ステップで $e'$ に簡約する」という判断である。
+$\longrightarrow^*$ は反射推移閉包で、$e\longrightarrow^*e'$ は
+零回以上の評価ステップで $e'$ に到達することを表す。
+$\Unhandled(e,\op)$ は、ある $E,v$ について
+$e=E[\perform\op v]$、$\Val(v)$、$\op\notin\operatorname{handled}(E)$ であること。
+\end{definition}
+継続 $K$ は handler を再設置する。操作節 $c$ 自体には handler を自動的には置かない。
+したがって節の中で同じ操作を再実行すると、その効果は出力効果に残り得る。
+型・効果引数と述語の証拠は実行時には渡さない。
+
+\section{制約生成・健全性・完全性・主要制約性}
+\label{sec:inference}
+\subsection{生成式}
+$R(\tau_1,\tau_2,\epsilon_1,\epsilon_2)
+=(\tau_1\leq\tau_2)\land(\epsilon_1\leq\epsilon_2)$。
+以下で導入する変数は周囲に新鮮で、$\alpha,\beta:0$、$\eta,\eta_i:1$ とする。
+\begin{align}
+ \gen x\tau\epsilon
+ &=\inst x\tau\land\emp\leq\epsilon,\label{g:var}\\
+ \gen{\lambda x.e}\tau\epsilon
+ &=\exists\alpha,\eta,\beta.\bigl(
+   (\Def x{\mono\alpha}{\gen e\beta\eta})
+   \land R(\arr\alpha\eta\beta,\tau,\emp,\epsilon)\bigr),\label{g:lam}\\
+ \gen{e_1\,e_2}\tau\epsilon
+ &=\exists\alpha,\eta,\eta_1,\eta_2.\bigl(
+   \gen{e_1}{(\arr\alpha\eta\tau)}{\eta_1}
+   \land\gen{e_2}\alpha{\eta_2}\notag\\[-2pt]
+ &\hspace{39mm}\land(\eta\cup\eta_1)\cup\eta_2\leq\epsilon\bigr).\label{g:app}
+\end{align}
+値と非値の let は別の式を使う。
+\begin{align}
+ \gen{\lete x v{e_2}}\tau\epsilon
+ &=\Let x{\forall\alpha.\gen v\alpha\emp\Rightarrow\alpha}
+          {\gen{e_2}\tau\epsilon},\label{g:poly}\\
+ \gen{\lete x{e_1}{e_2}}\tau\epsilon
+ &=\exists\alpha,\eta_1,\eta_2.\bigl(
+   \gen{e_1}\alpha{\eta_1}
+   \land(\Def x{\mono\alpha}{\gen{e_2}\tau{\eta_2}})
+   \notag\\
+ &\qquad\land\eta_1\cup\eta_2\leq\epsilon\bigr)
+   \quad(\neg\Val(e_1)).\label{g:mono}
+\end{align}
+宣言 $\ops(\op)=\forall\bar\beta:\bar\kappa.P\Rightarrow\tau_1\to\tau_2$ に対して
+\begin{align}
+ \gen{\perform\op e}\tau\epsilon
+ &=\exists\bar\beta:\bar\kappa,\eta:1.\bigl(
+ P\land\gen e{\tau_1}\eta
+ \land R(\tau_2,\tau,\{\op\}\cup\eta,\epsilon)\bigr).\label{g:perform}
+\end{align}
+handler では内部の結果型 $\beta$ と出力効果 $\eta$ を保持する。
+\begin{align}
+ H_c(\beta,\eta)
+ &=\forall\bar\beta:\bar\kappa.\left(
+ P\Rightarrow\Def x{\mono{\tau_1}}
+    {\bigl(\Def k{\mono{\arr{\tau_2}\eta\beta}}{\gen c\beta\eta}\bigr)}\right),
+ \label{g:clause}\\
+ \gen{\handle e h}\tau\epsilon
+ &=\exists\alpha,\eta_0,\beta,\eta.\bigl(
+ \gen e\alpha{\eta_0}\land\eta_0\leq\{\op\}\cup\eta\notag\\
+ &\qquad\land(\Def x{\mono\alpha}{\gen r\beta\eta})
+ \land H_c(\beta,\eta)\land R(\beta,\tau,\eta,\epsilon)\bigr).\label{g:handle}
+\end{align}
+$\bar\beta$ は単独の $\beta$ と別の新鮮な列である。
+未宣言操作の perform と handle の生成結果は $\bot$。
+環境付き生成は
+\begin{equation}\label{eq:infer}
+ \infers\Gamma e\tau\epsilon
+ =\mathsf{let}\ \Gamma\ \mathsf{in}\ \gen e\tau\epsilon.
+\end{equation}
+
+\subsection{健全性}
+\label{sec:sound}
+\proofspace
+\begin{samepage}
+\begin{theorem}[健全性]\label{thm:sound}
+$\A$ を仮定する。$\Delta$ の kind はすべて宣言済み、$\Gamma$ は整形式、
+$\FV(e)\subseteq\dom\Gamma$、$\operatorname{Declared}_\ops(e)$、
+$\Delta\vdash\tau:0$、$\Delta\vdash\epsilon:1$ なら
+\[
+ \jj\Delta{\infers\Gamma e\tau\epsilon}\Gamma e\tau\epsilon.
+\]
+対応する Lean 宣言は \lean{inferenceSoundness : InferenceSoundnessGoal S M sig}。
+充足可能性、環境実現可能性、$\lean{ArrowSeparated}$ は追加しない。
+\end{theorem}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:thm:sound}
+次の強い命題を $e$ の構造に帰納して示す。
+\[
+ \forall\Delta,C,\Gamma,\tau,\epsilon.\quad
+ \WF(\Delta,C,\Gamma,e,\tau,\epsilon)\land\operatorname{Declared}_\ops(e)
+ \land\ent C{\infers\Gamma e\tau\epsilon}
+ \ \Longrightarrow\ \J e\tau\epsilon.
+\]
+以下、帰納仮定を IH と略記する。帰納仮定は各\textbf{真の部分項}について同じ全称命題。
+特に型文脈・項環境・外側制約を固定しない。
+
+
+\begin{Case}{Var}
+$\Gamma(x)=\sigma$ とする。環境の解釈とスキーム具体化の定義から
+\[
+ C\models_\Delta\mathcal I(\Gamma,x,\tau,\epsilon)
+ \equiv_\Delta\Feas(\Gamma)\land(\sigma\preccurlyeq\tau)\land(\emp\leq\epsilon).
+\]
+従って次の各前提が成立する。
+\[
+ \inferrule*[right=Var]{\Gamma(x)=\sigma\\C\models_\Delta\sigma\preccurlyeq\tau}
+ {\J x\tau\emp},\qquad
+ \inferrule*[right=Sub]{\J x\tau\emp\\C\models_\Delta\tau\leq\tau\\C\models_\Delta\emp\leq\epsilon}
+ {\J x\tau\epsilon}.
+\]
+\end{Case}
+\begin{Case}{Lam}
+新鮮な $\alpha,\eta,\beta$ を選び、存在量化の内側の環境と制約を次で定める。
+\begin{align*}
+ \Delta'&=\Delta,\alpha:0,\eta:1,\beta:0,
+ &\alpha,\eta,\beta&\#(\Delta,C,\Gamma,\tau,\epsilon),\\
+ B&=\gen e\beta\eta,\\
+ D&=(\Def x{\mono\alpha}B)
+       \land\underbrace{(\arr\alpha\eta\beta\leq\tau)
+                         \land(\emp\leq\epsilon)}_{R(\arr\alpha\eta\beta,\tau,\emp,\epsilon)},\\
+ L_\Gamma(Q)&=\mathsf{let}\ \Gamma\ \mathsf{in}\ Q,
+ &C'&=L_\Gamma(D).
+\end{align*}
+まず、本体への帰納仮定に渡す制約を取り出す。以下の同値は $\Delta'$ の下で成り立つ。
+\begin{align*}
+ C'
+ &=L_\Gamma\bigl((\Def x{\mono\alpha}B)\land R\bigr)\\
+ &\equiv L_\Gamma(\Def x{\mono\alpha}B)\land L_\Gamma(R)
+       &&\text{（式\eqref{env:and}）}\\
+ &\equiv L_{\Gamma,x:\mono\alpha}(B)\land\Feas(\Gamma)\land R
+       &&\text{（式\eqref{env:mono}、\eqref{env:holds}）}\\
+ &=\infers{\Gamma,x:\mono\alpha}e\beta\eta
+       \land\Feas(\Gamma)\land R
+       &&\text{（式\eqref{eq:infer}、$B$ の定義）}.
+\end{align*}
+ここで $R$ は上で展開した制約であり、項変数には依存しない。従って
+\begin{align*}
+ C'&\models_{\Delta'}\infers{\Gamma,x:\mono\alpha}e\beta\eta,\\
+ C'&\models_{\Delta'}\arr\alpha\eta\beta\leq\tau,\qquad
+ C'\models_{\Delta'}\emp\leq\epsilon.
+\end{align*}
+本体の作用域・宣言済み条件は元の $\lambda x.e$ の条件から、
+次の整形式性は補題\ref{lem:gen-wf}と新鮮な変数宣言から得る。
+\[
+ \WF(\Delta',C',(\Gamma,x:\mono\alpha),e,\beta,\eta),
+ \qquad\operatorname{Declared}_\ops(e).
+\]
+これらを前提として、本体 $e$ の帰納仮定と \Rule{Lam} を順に適用する。
+\[
+ \inferrule*[right=Lam]{
+   \inferrule*[right={$\mathrm{IH}(e)$}]{
+     C'\models_{\Delta'}\infers{\Gamma,x:\mono\alpha}e\beta\eta
+   }{\jj{\Delta'}{C'}{\Gamma,x:\mono\alpha}e\beta\eta}
+ }{\jj{\Delta'}{C'}\Gamma{\lambda x.e}{(\arr\alpha\eta\beta)}\emp}.
+\]
+要求された型 $\tau$ と効果 $\epsilon$ への移行は
+\[
+ \inferrule*[right=Sub]{
+   \jj{\Delta'}{C'}\Gamma{\lambda x.e}{(\arr\alpha\eta\beta)}\emp\\
+   C'\models_{\Delta'}\arr\alpha\eta\beta\leq\tau
+   \qquad C'\models_{\Delta'}\emp\leq\epsilon
+ }{\jj{\Delta'}{C'}\Gamma{\lambda x.e}\tau\epsilon}.
+\]
+最後に存在変数を閉じる。外側の仮定と式\eqref{g:lam}、\eqref{env:exists}から
+\begin{align*}
+ C&\models_\Delta\infers\Gamma{\lambda x.e}\tau\epsilon
+       &&\text{（強い帰納命題の前提）}\\
+ \infers\Gamma{\lambda x.e}\tau\epsilon
+ &=L_\Gamma(\exists\alpha,\eta,\beta.D)
+       &&\text{（式\eqref{g:lam}、\eqref{eq:infer}）}\\
+ &\equiv_\Delta\exists\alpha,\eta,\beta.C'
+       &&\text{（式\eqref{env:exists}、$C'$ の定義）}.
+\end{align*}
+従って、補題\ref{lem:exists-case}の適用を展開すると次の導出になる。
+\[
+ \inferrule*[right=Strengthen]{
+   \inferrule*[right=Exists]{
+     \jj{\Delta'}{C'}\Gamma{\lambda x.e}\tau\epsilon
+     \\ \alpha,\eta,\beta\#(\Gamma,\tau,\epsilon)
+   }{\jj\Delta{\exists\alpha,\eta,\beta.C'}\Gamma{\lambda x.e}\tau\epsilon}
+   \\ C\models_\Delta\exists\alpha,\eta,\beta.C'
+ }{\J{\lambda x.e}\tau\epsilon}.
+\]
+\end{Case}
+以下の存在生成式の各場合でも、$\bar a$ を新鮮な型・効果変数の列とし、
+$\Delta'=\Delta,\bar a$、$C'=L_\Gamma(D)$ と置く。
+$L_\Gamma(Q)=\mathsf{let}\ \Gamma\ \mathsf{in}\ Q$ である。
+補題\ref{lem:gen-wf}が各内部判断の整形式性を与える。各場合の末尾で使う
+補題\ref{lem:exists-case}の具体的な形は
+\[
+ \begin{gathered}
+ \inferrule*[right=Exists]{\jj{\Delta'}{C'}\Gamma e\tau\epsilon\\\bar a\#(\Gamma,\tau,\epsilon)}
+ {\jj\Delta{\exists\bar a.C'}\Gamma e\tau\epsilon},\\
+ C\models_\Delta\mathcal I(\Gamma,e,\tau,\epsilon)
+ \equiv_\Delta\exists\bar a.C'
+ \ \Longrightarrow\ \J e\tau\epsilon
+ \quad\text{(Strengthen)}.
+ \end{gathered}
+\]
+各場合で $\bar a,D,e$ を具体的に示す。
+
+\begin{Case}{App}
+$\bar a=(\alpha:0,\eta:1,\eta_1:1,\eta_2:1)$ とし、
+\[
+ D=\mathcal G(e_1:\alpha\xrightarrow\eta\tau\,!\,\eta_1)
+ \land\mathcal G(e_2:\alpha\,!\,\eta_2)
+ \land(\eta\cup\eta_1)\cup\eta_2\leq\epsilon.
+\]
+式\eqref{env:and}、\eqref{env:holds}から
+\begin{align*}
+ C'&\models_{\Delta'}\mathcal I(\Gamma,e_1,\alpha\xrightarrow\eta\tau,\eta_1),\\
+ C'&\models_{\Delta'}\mathcal I(\Gamma,e_2,\alpha,\eta_2),\\
+ C'&\models_{\Delta'}(\eta\cup\eta_1)\cup\eta_2\leq\epsilon.
+\end{align*}
+\[
+ \inferrule*[right=App]{
+ \jj{\Delta'}{C'}\Gamma{e_1}{(\alpha\xrightarrow\eta\tau)}{\eta_1}\ (\mathrm{IH}(e_1))\\
+ \jj{\Delta'}{C'}\Gamma{e_2}\alpha{\eta_2}\ (\mathrm{IH}(e_2))}
+ {\jj{\Delta'}{C'}\Gamma{e_1e_2}\tau{((\eta_1\cup\eta_2)\cup\eta)}}.
+\]
+補題\ref{lem:basic}による効果の集合解釈から
+\[
+ C'\models_{\Delta'}(\eta_1\cup\eta_2)\cup\eta
+ =_1(\eta\cup\eta_1)\cup\eta_2\leq\epsilon.
+\]
+Sub で $\jj{\Delta'}{C'}\Gamma{e_1e_2}\tau\epsilon$、上の Exists と Strengthen で
+$\J{e_1e_2}\tau\epsilon$ を得る。
+\end{Case}
+
+\begin{Case}{Let-Poly (value)}
+$D_v=\mathcal I(\Gamma,v,\alpha,\emp)$、
+$\sigma_v^\Gamma=\forall\alpha:0.D_v\Rightarrow\alpha$ とする。
+式\eqref{eq:valuelet}と\eqref{env:holds}から
+\begin{align*}
+ C&\models_\Delta\mathcal I(\Gamma,x:\sigma_v^\Gamma,e_2,\tau,\epsilon),\\
+ C&\models_\Delta\Feas(\Gamma,x:\sigma_v^\Gamma)
+ \models_\Delta\Feas(\sigma_v^\Gamma)=\exists\alpha.D_v,\\
+ C\land D_v&\models_{\Delta,\alpha:0}D_v
+ =\mathcal I(\Gamma,v,\alpha,\emp).
+\end{align*}
+本体と値の帰納仮定をそれぞれ具体化すると
+\[
+ \jj\Delta C{\Gamma,x:\sigma_v^\Gamma}{e_2}\tau\epsilon,
+ \qquad\jj{\Delta,\alpha:0}{C\land D_v}\Gamma v\alpha\emp.
+\]
+\[
+ \inferrule*[right=Let-Poly]{\Val(v)\\\alpha\#(\Delta,C,\Gamma)\\
+ \jj{\Delta,\alpha:0}{C\land D_v}\Gamma v\alpha\emp\\
+ C\models_\Delta\exists\alpha.D_v\\
+ \jj\Delta C{\Gamma,x:\sigma_v^\Gamma}{e_2}\tau\epsilon}
+ {\J{\lete x v{e_2}}\tau\epsilon}.
+\]
+\end{Case}
+
+\begin{Case}{Let-Mono (nonvalue)}
+$\bar a=(\alpha:0,\eta_1:1,\eta_2:1)$、
+\[
+ D=\mathcal G(e_1:\alpha\,!\,\eta_1)
+ \land\Def x{\mono\alpha}{\mathcal G(e_2:\tau\,!\,\eta_2)}
+ \land\eta_1\cup\eta_2\leq\epsilon.
+\]
+式\eqref{env:and}、\eqref{env:mono}から
+\[
+ C'\models_{\Delta'}\mathcal I(\Gamma,e_1,\alpha,\eta_1),\quad
+ C'\models_{\Delta'}\mathcal I(\Gamma,x:\mono\alpha,e_2,\tau,\eta_2),\quad
+ C'\models_{\Delta'}\eta_1\cup\eta_2\leq\epsilon.
+\]
+\[
+ \inferrule*[right=Let-Mono]{
+ \jj{\Delta'}{C'}\Gamma{e_1}\alpha{\eta_1}\ (\mathrm{IH}(e_1))\\
+ \jj{\Delta'}{C'}{\Gamma,x:\mono\alpha}{e_2}\tau{\eta_2}\ (\mathrm{IH}(e_2))}
+ {\jj{\Delta'}{C'}\Gamma{\lete x{e_1}{e_2}}\tau{\eta_1\cup\eta_2}}.
+\]
+Sub によって効果を $\epsilon$ にし、$e=\lete x{e_1}{e_2}$ に対する
+Exists と Strengthen で $\J e\tau\epsilon$ を得る。
+\end{Case}
+
+\begin{Case}{Perform}
+$\ops(\op)=\forall\bar\beta:\bar\kappa.P\Rightarrow\tau_1\to\tau_2$、
+$\bar a=(\bar\beta:\bar\kappa,\eta:1)$ とする。
+\[
+ D=P\land\mathcal G(e:\tau_1\,!\,\eta)
+ \land\tau_2\leq\tau\land\{\op\}\cup\eta\leq\epsilon.
+\]
+$P$ と型・効果の包含は項環境非依存なので、式\eqref{env:holds}により
+\[
+ C'\models_{\Delta'}P,\quad
+ C'\models_{\Delta'}\mathcal I(\Gamma,e,\tau_1,\eta),\quad
+ C'\models_{\Delta'}\tau_2\leq\tau,\quad
+ C'\models_{\Delta'}\{\op\}\cup\eta\leq\epsilon.
+\]
+\[
+ \inferrule*[right=Perform]{\Delta'\vdash\bar\beta:\bar\kappa\\
+ C'\models_{\Delta'}P[\bar\beta/\bar\beta]=P\\
+ \jj{\Delta'}{C'}\Gamma e{\tau_1}\eta\ (\mathrm{IH}(e))}
+ {\jj{\Delta'}{C'}\Gamma{\perform\op e}{\tau_2}{\{\op\}\cup\eta}}.
+\]
+Sub の二前提は上の二包含である。従って
+$\jj{\Delta'}{C'}\Gamma{\perform\op e}\tau\epsilon$。
+項を $\perform\op e$ として、その生成式に Exists と Strengthen を適用する。
+\end{Case}
+
+\begin{Case}{Handle}
+$h=\{\mathsf{return}\ x\mapsto r;\op(x,k)\mapsto c\}$、
+$\bar a=(\alpha:0,\eta_0:1,\beta:0,\eta:1)$ とし、
+\begin{align*}
+ D={}&\mathcal G(e:\alpha\,!\,\eta_0)\land\eta_0\leq\{\op\}\cup\eta\\
+ &\land\Def x{\mono\alpha}{\mathcal G(r:\beta\,!\,\eta)}
+ \land H_c(\beta,\eta)\land\beta\leq\tau\land\eta\leq\epsilon.
+\end{align*}
+環境付加の連言・単相定義の法則から
+\[
+ C'\models_{\Delta'}\mathcal I(\Gamma,e,\alpha,\eta_0),\quad
+ C'\models_{\Delta'}\mathcal I(\Gamma,x:\mono\alpha,r,\beta,\eta).
+\]
+節の新鮮な宣言変数を $\bar\gamma$ と書き、宣言の型・条件も改名する。
+$\Gamma_c=\Gamma,x:\mono{\tau_1},k:\mono{\tau_2\xrightarrow\eta\beta}$ とすると
+\begin{align*}
+ C'&\models_{\Delta'}L_\Gamma(H_c(\beta,\eta))\\
+ &\models_{\Delta'}\forall\bar\gamma.\bigl(P\Rightarrow
+       \mathcal I(\Gamma_c,c,\beta,\eta)\bigr)
+       &&\text{（式\eqref{env:forall}、\eqref{env:implies}、\eqref{env:mono}）},\\
+ C'\land P&\models_{\Delta',\bar\gamma}\mathcal I(\Gamma_c,c,\beta,\eta).
+\end{align*}
+三つの帰納仮定と Handle により
+\[
+ \inferrule*[right=Handle]{
+ \jj{\Delta'}{C'}\Gamma e\alpha{\eta_0}\\
+ C'\models_{\Delta'}\eta_0\leq\{\op\}\cup\eta\\
+ \jj{\Delta'}{C'}{\Gamma,x:\mono\alpha}r\beta\eta\\
+ \jj{\Delta',\bar\gamma}{C'\land P}{\Gamma_c}c\beta\eta}
+ {\jj{\Delta'}{C'}\Gamma{\handle e h}\beta\eta}.
+\]
+$C'\models_{\Delta'}\beta\leq\tau$、$C'\models_{\Delta'}\eta\leq\epsilon$ で Sub を適用し、
+$\bar a$ を Exists で閉じ、Strengthen で $\J{\handle e h}\tau\epsilon$ を得る。
+\end{Case}
+
+全分岐を得たので、$C=\mathcal I(\Gamma,e,\tau,\epsilon)$ と具体化する。
+\[
+ \mathcal I(\Gamma,e,\tau,\epsilon)\models_\Delta\mathcal I(\Gamma,e,\tau,\epsilon)
+ \quad\Longrightarrow\quad
+ \jj\Delta{\mathcal I(\Gamma,e,\tau,\epsilon)}\Gamma e\tau\epsilon.
+\]
+左辺は反射性、整形式性は補題\ref{lem:gen-wf}。
+この強い命題は \lean{inferenceSoundnessAux} に対応する。
+\end{proof}
+
+\clearpage
+\subsection{完全性}
+\label{sec:complete}
+\proofspace
+\begin{samepage}
+\begin{theorem}[完全性]\label{thm:complete}
+$\A$、$\Delta$ の全 kind の宣言済み条件、$\ent C{\Feas(\Gamma)}$、
+$\J e\tau\epsilon$ を仮定すると
+\[
+ \ent C{\infers\Gamma e\tau\epsilon}.
+\]
+対応は \lean{inferenceCompleteness : InferenceCompletenessGoal S M sig}。
+整形式性・作用域は型付け導出から得る。
+\end{theorem}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:thm:complete}
+型付け導出に帰納する。一般化するのは有効な割当て $\nu$ と項意味環境 $\iota$ であり、
+各前提導出に対する帰納仮定は
+\begin{equation}\label{eq:complete-ih}
+ \forall\nu,\iota\text{ valid}.\quad
+ \nu;\iota\models C\land\Feas(\Gamma)
+ \ \Longrightarrow\ \nu;\iota\models\infers\Gamma e\tau\epsilon
+\end{equation}
+である。以下 $\nu;\iota\models C\land\Feas(\Gamma)$ を固定し、
+$\kappa=\Gamma_\nu(\iota)$ と置く。補題\ref{lem:env}により $\kappa$ は有効であり、
+\[
+ \nu;\iota\models\infers\Gamma e\tau\epsilon
+ \ \Longleftrightarrow\
+ \nu;\kappa\models\gen e\tau\epsilon
+ \qquad(\nu;\iota\models\Feas(\Gamma)) .
+\]
+各ケースで右辺を示す。$\uparrow a=\{b\in M_0\mid a\leq b\}$ と書く。
+
+\begin{Case}{Var}
+\begin{align*}
+ C\models\inst\sigma\tau,\quad\Gamma(x)=\sigma
+ &\Longrightarrow \den\tau_\nu\in\den\sigma_\nu=\kappa(x)
+       &&\text{（\eqref{eq:instance}、環境検索）},\\
+ \den\tau_\nu\in\kappa(x),\quad\emp^M\leq\emp^M
+ &\Longrightarrow\nu;\kappa\models\gen x\tau\emp
+       &&\text{（\eqref{g:var}）}.
+\end{align*}
+\end{Case}
+\begin{Case}{Lam}
+前提は $\jj\Delta C{\Gamma,x:\mono{\tau_1}}e{\tau_2}\eta$。
+\begin{align*}
+ \nu;\iota\models\Feas(\Gamma)
+ &\Longrightarrow\nu;\iota\models\Feas(\Gamma,x:\mono{\tau_1})
+       &&\text{（\eqref{env:push}、\eqref{eq:mono}）},\\
+ &\Longrightarrow\nu;\kappa[x\mapsto\uparrow\den{\tau_1}_\nu]
+       \models\gen e{\tau_2}\eta
+       &&\text{（本体の IH、\eqref{env:holds}）}.
+\end{align*}
+新鮮な $\alpha,\eta',\beta$ に対し
+\[
+ \nu'=\nu[\alpha\mapsto\den{\tau_1}_\nu,
+           \eta'\mapsto\den\eta_\nu,\beta\mapsto\den{\tau_2}_\nu].
+\]
+補題\ref{lem:rebase}により、同じ更新環境で
+\[
+ \nu';\kappa[x\mapsto\uparrow\den\alpha_{\nu'}]\models\gen e\beta{\eta'},
+ \qquad
+ \den{\arr\alpha{\eta'}\beta}_{\nu'}=\den{\arr{\tau_1}\eta{\tau_2}}_\nu .
+\]
+従ってこの三証人で
+\[
+ \nu';\kappa\models
+ \Def x{\mono\alpha}{\gen e\beta{\eta'}}\land
+ R(\arr\alpha{\eta'}\beta,\arr{\tau_1}\eta{\tau_2},\emp,\emp)
+ \ \xRightarrow{\eqref{g:lam}}\
+ \nu;\kappa\models\gen{\lambda x.e}{\arr{\tau_1}\eta{\tau_2}}\emp .
+\]
+\end{Case}
+\begin{Case}{App}
+二つの IH と\eqref{env:holds}より
+\[
+ \nu;\kappa\models\gen{e_1}{\arr{\tau_1}\eta\tau}{\epsilon_1},
+ \qquad \nu;\kappa\models\gen{e_2}{\tau_1}{\epsilon_2}.
+\]
+$\nu'=\nu[\alpha\mapsto\den{\tau_1},\eta'\mapsto\den\eta,
+\eta_1\mapsto\den{\epsilon_1},\eta_2\mapsto\den{\epsilon_2}]$ とする。
+補題\ref{lem:rebase}と効果合併の法則から
+\begin{gather*}
+ \nu';\kappa\models\gen{e_1}{\arr\alpha{\eta'}\tau}{\eta_1}
+              \land\gen{e_2}\alpha{\eta_2},\\
+ \den{(\eta'\cup\eta_1)\cup\eta_2}_{\nu'}
+ =\den{(\epsilon_1\cup\epsilon_2)\cup\eta}_\nu
+ \leq\den{(\epsilon_1\cup\epsilon_2)\cup\eta}_\nu .
+\end{gather*}
+この四証人を\eqref{g:app}に入れて
+$\nu;\kappa\models\gen{e_1e_2}\tau{(\epsilon_1\cup\epsilon_2)\cup\eta}$。
+\end{Case}
+\begin{Case}{Let-Mono / nonvalue RHS}
+$\neg\Val(e_1)$ とする。\eqref{env:push}で単相環境の実現可能性を供給すると、二つの IH は
+\[
+ \nu;\kappa\models\gen{e_1}{\tau_1}{\epsilon_1},\qquad
+ \nu;\kappa[x\mapsto\uparrow\den{\tau_1}_\nu]\models\gen{e_2}\tau{\epsilon_2}.
+\]
+$\nu'=\nu[\alpha\mapsto\den{\tau_1},\eta_1\mapsto\den{\epsilon_1},
+\eta_2\mapsto\den{\epsilon_2}]$ とおけば、補題\ref{lem:rebase}より
+\begin{gather*}
+ \nu';\kappa\models\gen{e_1}\alpha{\eta_1}\land
+       \Def x{\mono\alpha}{\gen{e_2}\tau{\eta_2}},\\
+ \den{\eta_1\cup\eta_2}_{\nu'}=\den{\epsilon_1\cup\epsilon_2}_\nu .
+\end{gather*}
+この三証人と反射性を\eqref{g:mono}に入れる。
+\end{Case}
+\begin{Case}{Let-Mono / value RHS}
+$e_1=v$、$\sigma=\mono{\tau_1}$、$\sigma_g=\sigma_v^\Gamma$ と置く。
+\begin{align*}
+ \nu;\iota\models\infers\Gamma v{\tau_1}{\epsilon_1}
+ &\Longrightarrow\nu;\iota\models\infers\Gamma v{\tau_1}\emp
+       &&\text{（右辺の IH、補題\ref{lem:gen-mono}）},\\
+ &\Longrightarrow\den\sigma_\nu\subseteq\den{\sigma_g}_\nu
+       &&\text{（補題\ref{lem:comparison}、量化列は空）},\\
+ \nu;\iota\models\Feas(\sigma)
+ &\Longrightarrow\nu;\iota\models\Feas(\sigma_g)
+       &&\text{（同補題の実現可能性の結論）}.
+\end{align*}
+本体の IH と環境単調性を順に使う：
+\begin{align*}
+ \nu;\kappa[x\mapsto\den\sigma_\nu]\models\gen{e_2}\tau{\epsilon_2}
+ &\Longrightarrow\nu;\kappa[x\mapsto\den{\sigma_g}_\nu]
+                   \models\gen{e_2}\tau{\epsilon_2}
+                   &&\text{（補題\ref{lem:ground}）},\\
+ &\Longrightarrow\nu;\iota\models\infers{\Gamma,x:\sigma_g}{e_2}\tau{\epsilon_2}
+                   &&\text{（\eqref{env:push}、\eqref{env:holds}）},\\
+ &\Longrightarrow\nu;\iota\models\infers\Gamma{\lete x v{e_2}}\tau{\epsilon_1\cup\epsilon_2}
+                   &&\text{（\eqref{eq:valuelet}、補題\ref{lem:gen-mono}）}.
+\end{align*}
+最後の効果包含は $\epsilon_2\leq\epsilon_1\cup\epsilon_2$。
+\end{Case}
+\begin{Case}{Let-Poly}
+$\sigma=\forall\bar\alpha.D\Rightarrow\tau_1$、$\sigma_g=\sigma_v^\Gamma$ とする。
+任意の $\bar a\in M_{\bar\kappa}$ について $\nu_a=\nu[\bar\alpha\mapsto\bar a]$ と置く。
+\begin{align*}
+ \nu_a;\iota\models D
+ &\Longrightarrow\nu_a;\iota\models(C\land D)\land\Feas(\Gamma)
+       &&\text{（$\bar\alpha\#(C,\Gamma)$）},\\
+ &\Longrightarrow\nu_a;\iota\models\infers\Gamma v{\tau_1}\emp
+       &&\text{（右辺だけの IH）}.
+\end{align*}
+従って、包含と実現可能性を別々に得る：
+\begin{gather*}
+ \bigl[\forall\bar a.\ \nu_a;\iota\models D
+       \Rightarrow\nu_a;\iota\models\infers\Gamma v{\tau_1}\emp\bigr]
+ \ \xRightarrow{\text{補題\ref{lem:comparison}}}\
+ \den\sigma_\nu\subseteq\den{\sigma_g}_\nu,\\
+ C\models\exists\bar\alpha.D,\quad\nu;\iota\models C
+ \Longrightarrow\Feas(\sigma)
+ \Longrightarrow\den\sigma_\nu\ne\emp
+ \Longrightarrow\den{\sigma_g}_\nu\ne\emp
+ \Longrightarrow\Feas(\sigma_g).
+\end{gather*}
+本体への IH の前提は
+$\nu;\iota\models C\land\Feas(\Gamma,x:\sigma)$ である。
+\begin{align*}
+ \nu;\kappa[x\mapsto\den\sigma_\nu]\models\gen{e_2}\tau\epsilon
+ &\Longrightarrow\nu;\kappa[x\mapsto\den{\sigma_g}_\nu]\models\gen{e_2}\tau\epsilon
+      &&\text{（包含、補題\ref{lem:ground}）},\\
+ &\Longrightarrow\nu;\iota\models\infers{\Gamma,x:\sigma_g}{e_2}\tau\epsilon
+      &&\text{（実現可能性、\eqref{env:holds}）},\\
+ &\Longrightarrow\nu;\iota\models\infers\Gamma{\lete x v{e_2}}\tau\epsilon
+      &&\text{（\eqref{eq:valuelet}）}.
+\end{align*}
+ここで用いた完全性の仮定は右辺と本体への IH だけである。
+\end{Case}
+\begin{Case}{Perform}
+宣言を $\op:\forall\bar\beta.P\Rightarrow\tau_1\to\tau_2$、型引数を $\bar t$ とする。
+$\nu'=\nu[\bar\beta\mapsto\den{\bar t}_\nu,\eta\mapsto\den{\epsilon_0}_\nu]$ とおく。
+\begin{align*}
+ C\models P[\bar t/\bar\beta],\quad\nu;\iota\models C
+ &\Longrightarrow\nu';\kappa\models P
+      &&\text{（補題\ref{lem:semantic-subst}、$\FPI(P)=\emp$）},\\
+ \nu;\kappa\models\gen e{\tau_1[\bar t/\bar\beta]}{\epsilon_0}
+ &\Longrightarrow\nu';\kappa\models\gen e{\tau_1}\eta
+      &&\text{（引数の IH、補題\ref{lem:rebase}）}.
+\end{align*}
+さらに $\den{\tau_i}_{\nu'}=\den{\tau_i[\bar t/\bar\beta]}_\nu$ と
+$\den{\{\op\}\cup\eta}_{\nu'}=\den{\{\op\}\cup\epsilon_0}_\nu$。
+従って $P$、引数生成、$R$ の反射性を同じ証人で満たし、\eqref{g:perform}を得る。
+\end{Case}
+\begin{Case}{Handle}
+規則の入力を $\tau_0,\epsilon_0$、出力を $\tau,\epsilon$ とする。
+\[
+ \nu'=\nu[\alpha\mapsto\den{\tau_0},\eta_0\mapsto\den{\epsilon_0},
+           \beta\mapsto\den\tau,\eta\mapsto\den\epsilon].
+\]
+本体・return の IH と補題\ref{lem:rebase}から
+\begin{gather*}
+ \nu';\kappa\models\gen e\alpha{\eta_0},\qquad
+ \nu';\kappa\models\eta_0\leq\{\op\}\cup\eta,\\
+ \nu';\kappa[x\mapsto\uparrow\den\alpha_{\nu'}]\models\gen r\beta\eta.
+\end{gather*}
+節の宣言変数を新鮮な $\bar\gamma$ に改名する。任意の $\bar a$ に対し
+$\nu_a=\nu[\bar\gamma\mapsto\bar a]$、$\nu'_a=\nu'[\bar\gamma\mapsto\bar a]$ とする。
+\begin{gather*}
+ \Gamma_c=\Gamma,x:\mono{\tau_1},k:\mono{\arr{\tau_2}\epsilon\tau},\\
+ \nu'_a;\kappa\models P
+ \Longrightarrow\nu_a;\iota\models C\land P\land\Feas(\Gamma_c)
+ \xRightarrow{\mathrm{IH}_c}\nu_a;\iota\models\infers{\Gamma_c}c\tau\epsilon,\\
+ \kappa'_c=\kappa[x\mapsto\uparrow\den{\tau_1}_{\nu'_a}]
+                [k\mapsto\uparrow\den{\arr{\tau_2}\eta\beta}_{\nu'_a}],\\
+ \nu'_a;\kappa'_c\models\gen c\beta\eta
+       \qquad\text{（\eqref{env:holds}、補題\ref{lem:rebase}）}.
+\end{gather*}
+宣言の $P,\tau_1,\tau_2$ は $\bar\gamma$ だけを読むので、四証人の追加で変わらない。
+よって
+\[
+ \nu';\kappa\models\forall\bar\gamma.
+ \bigl(P\Rightarrow\Def x{\mono{\tau_1}}
+      {\Def k{\mono{\arr{\tau_2}\eta\beta}}{\gen c\beta\eta}}\bigr).
+\]
+これと上の三成分、$\nu';\kappa\models R(\beta,\tau,\eta,\epsilon)$ を
+\eqref{g:handle}に入れる。
+\end{Case}
+\begin{Case}{Sub}
+\[
+ \underbrace{\nu;\kappa\models\gen e{\tau_0}{\epsilon_0}}_{\mathrm{IH}},\quad
+ \underbrace{\den{\tau_0}_\nu\leq\den\tau_\nu,
+             \ \den{\epsilon_0}_\nu\leq\den\epsilon_\nu}_{C\models\tau_0\leq\tau\land\epsilon_0\leq\epsilon}
+ \ \xRightarrow{\text{補題\ref{lem:gen-mono}}}\
+ \nu;\kappa\models\gen e\tau\epsilon .
+\]
+\end{Case}
+\begin{Case}{Strengthen}
+\[
+ \nu;\iota\models D\land\Feas(\Gamma),\quad D\models C
+ \Longrightarrow\nu;\iota\models C\land\Feas(\Gamma)
+ \xRightarrow{\mathrm{IH}}\nu;\iota\models\infers\Gamma e\tau\epsilon .
+\]
+\end{Case}
+\begin{Case}{Exists}
+\begin{align*}
+ \nu;\iota\models\exists\bar\alpha.D
+ &\Longrightarrow\exists\bar a.\ \nu_a;\iota\models D\land\Feas(\Gamma)
+      &&\text{（$\bar\alpha\#\Gamma$）},\\
+ &\Longrightarrow\nu_a;\iota\models\infers\Gamma e\tau\epsilon
+      &&\text{（内側の IH）},\\
+ &\Longrightarrow\nu;\iota\models\infers\Gamma e\tau\epsilon
+      &&\text{（$\bar\alpha\#(\Gamma,\tau,\epsilon)$、補題\ref{lem:gen-wf}）}.
+\end{align*}
+\end{Case}
+最後に全割当てについて
+\[
+ \nu;\iota\models C
+ \xRightarrow{C\models\Feas(\Gamma)}\nu;\iota\models C\land\Feas(\Gamma)
+ \xRightarrow{\eqref{eq:complete-ih}}\nu;\iota\models\infers\Gamma e\tau\epsilon .
+\]
+これが \lean{typingCompletenessHolds} から \lean{inferenceCompleteness} への移行である。
+\end{proof}
+
+\subsection{主要制約性}
+\begin{definition}[主要制約]
+固定した $(\Delta,\Gamma,e,\tau,\epsilon)$ に対し、$D$ が主要制約であるとは
+\[
+ \jj\Delta D\Gamma e\tau\epsilon
+ \quad\land\quad
+ \forall C.\bigl(\ent C{\Feas(\Gamma)}\land\J e\tau\epsilon\bigr)
+       \Rightarrow\ent C D
+\]
+が成り立つこと。$C$ の整形式性は型付けから従う。
+\end{definition}
+\proofspace
+\begin{samepage}
+\begin{theorem}[主要制約性]\label{thm:principal}
+定理\ref{thm:sound}と同じ前提で $\infers\Gamma e\tau\epsilon$ は主要制約である。
+Lean では \lean{constraintGenerationPrincipality : PrincipalityGoal S M sig}。
+\end{theorem}
+
+\begin{proof}\leavevmode\label{proof:thm:principal}
+$D=\infers\Gamma e\tau\epsilon$ と置く。主要制約の二成分は
+\[
+ \inferrule{\text{定理\ref{thm:sound}の整形式性・作用域・宣言済み条件}}
+      {\jj\Delta D\Gamma e\tau\epsilon}
+ \qquad
+ \inferrule{C\models\Feas(\Gamma)\qquad\jj\Delta C\Gamma e\tau\epsilon}
+      {C\models D}\;\text{（定理\ref{thm:complete}）}.
+\]
+右の導出を任意の $C$ について全称化し、左と連言で結ぶ。
+\end{proof}
+\end{samepage}
+
+この定理は最汎代入・ソルバー・決定可能性を主張しない。
+
+\section{保存・進行・効果安全性}
+\label{sec:safety}
+\proofspace
+\begin{samepage}
+\begin{theorem}[一歩保存]\label{thm:preservation}
+$\AS$、$\J e\tau\epsilon$、$e\longrightarrow e'$ なら
+$\J{e'}\tau\epsilon$。
+$\Delta,C,\Gamma$ は開いていてよい。対応は
+\lean{preservation : PreservationGoal S M sig}。
+\end{theorem}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:thm:preservation}
+簡約導出に帰納し、$\Delta,C,\Gamma,\tau,\epsilon$ を一般化する。
+Context の IH は任意の型文脈・制約・項環境における内側簡約の保存である。
+
+\begin{Case}{Beta}
+$\Val(v)$ とする。補題\ref{lem:redex}の Beta の結論を次のデータで使う：
+\[
+ \inferrule{\jj\Delta C\Gamma{(\lambda x.e_0)\,v}\tau\epsilon\qquad\Val(v)}
+      {\jj\Delta C\Gamma{e_0[v/x]}\tau\epsilon}\;\text{（補題\ref{lem:redex}）}.
+\]
+\end{Case}
+
+\begin{Case}{Let-Value}
+$\Val(v)$ とする。補題\ref{lem:redex}の Let-Value の結論を次のデータで使う：
+\[
+ \inferrule{\jj\Delta C\Gamma{\lete x v{e_0}}\tau\epsilon\qquad\Val(v)}
+      {\jj\Delta C\Gamma{e_0[v/x]}\tau\epsilon}\;\text{（補題\ref{lem:redex}）}.
+\]
+\end{Case}
+
+\begin{Case}{Return}
+$\Val(v)$ とする。補題\ref{lem:redex}の Return の結論を次のデータで使う：
+\[
+ \inferrule{\jj\Delta C\Gamma{\handle v h}\tau\epsilon\qquad\Val(v)}
+      {\jj\Delta C\Gamma{r[v/x]}\tau\epsilon}\;\text{（補題\ref{lem:redex}）}.
+\]
+\end{Case}
+
+\begin{Case}{Operation}
+$K=\lambda z.\handle{E[z]}h$ とおく。
+\[
+ \inferrule{\jj\Delta C\Gamma{\handle{E[\perform\op v]}h}\tau\epsilon
+       \\ \Val(v)\qquad\op\notin\operatorname{handled}(E)}
+      {\jj\Delta C\Gamma{c[v/x,K/k]}\tau\epsilon}
+      \;\text{（定理\ref{thm:op-preservation}）}.
+\]
+\end{Case}
+
+\begin{Case}{Context}
+$e=E[e_0]$、$e'=E[e_1]$、$e_0\longrightarrow e_1$ とする。
+\begin{gather*}
+ \mathrm{IH}:\quad\forall\Delta',D,\Gamma',\tau',\epsilon'.\quad
+ \jj{\Delta'}D{\Gamma'}{e_0}{\tau'}{\epsilon'}
+ \Longrightarrow\jj{\Delta'}D{\Gamma'}{e_1}{\tau'}{\epsilon'},\\
+ e_0\longrightarrow e_1\Longrightarrow\neg\Val(e_0)
+       \quad\text{（補題\ref{lem:values}）},\\
+ \inferrule{\J{E[e_0]}\tau\epsilon\qquad\neg\Val(e_0)\qquad\mathrm{IH}}
+      {\J{E[e_1]}\tau\epsilon}\;\text{（補題\ref{lem:ctx-replace}）}.
+\end{gather*}
+\end{Case}
+\end{proof}
+\proofspace
+\begin{samepage}
+\begin{theorem}[多歩保存]\label{thm:steps}
+$\AS$、$\J e\tau\epsilon$、$e\longrightarrow^*e'$ なら $\J{e'}\tau\epsilon$。
+対応は \lean{preservationSteps}。
+\end{theorem}
+
+\begin{proof}\leavevmode\label{proof:thm:steps}
+多歩導出に帰納し、初期の型付けを一般化する。
+\begin{Case}{Refl}
+\[e\longrightarrow^*e,\qquad\jj\Delta C\Gamma e\tau\epsilon
+   \Longrightarrow\jj\Delta C\Gamma e\tau\epsilon .\]
+\end{Case}
+\begin{Case}{Tail}
+\[
+ \inferrule{\displaystyle
+       \inferrule{e\longrightarrow^*e_1\qquad\J e\tau\epsilon}
+            {\J{e_1}\tau\epsilon}\;\mathrm{IH}
+       \qquad e_1\longrightarrow e'}
+      {\J{e'}\tau\epsilon}\;\text{（定理\ref{thm:preservation}）}.
+\]
+\end{Case}
+\end{proof}
+\end{samepage}
+\proofspace
+\begin{samepage}
+\begin{theorem}[進行と許された未処理操作]\label{thm:progress}
+$\AS$ と $\jj\emp C\emp e\tau\epsilon$ を仮定する。
+任意の有効な大域割当て $\nu$ と有効な $\iota$ が $\nu;\iota\models C$ を満たすなら
+\[
+ \Val(e)\ \lor\ (\exists e'.\ e\longrightarrow e')\ \lor\
+ \exists\op.\ \Unhandled(e,\op)\land\op\in\eff(\den\epsilon_\nu).
+\]
+対応は \lean{progressEffectSafety : ProgressGoal S M sig}。
+空の $\Delta$ でも大域自由型・効果変数の割当ては残る。
+\end{theorem}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:thm:progress}
+任意の $\Delta$ で、型付け導出に帰納する。一般化するのは $\Gamma=\emp$ の証拠と
+有効な局所割当てである。各 IH は $\nu;\iota\models C$ の下で
+\[
+ \Val(e)\ \lor\ \exists e'.\ e\longrightarrow e'
+ \ \lor\ \exists\op.\ \Unhandled(e,\op)\land\op\in\eff(\den\epsilon_\nu)
+\]
+を与える。$S_\delta=\eff(\den\delta_\nu)$ と略記する。
+\begin{Case}{Var}
+\[\Gamma=\emp,\quad\Gamma(x)=\sigma
+   \Longrightarrow x\in\dom\emp=\emp\Longrightarrow\bot.\]
+\end{Case}
+\begin{Case}{Lam}
+\[\Val(\lambda x.e_0)\quad\Longrightarrow\quad\text{第一分岐}.\]
+\end{Case}
+\begin{Case}{App}
+結論効果は $\epsilon=(\epsilon_1\cup\epsilon_2)\cup\eta$。
+関数側の IH の各結果を次のように使う：
+\begin{align*}
+ e_1\longrightarrow e'_1
+ &\Longrightarrow e_1e_2\longrightarrow e'_1e_2,\\
+ e_1=E[\perform\op v],\quad\op\notin\operatorname{handled}(E)
+ &\Longrightarrow e_1e_2=(E[\ ]\,e_2)[\perform\op v],\\
+ \op\in S_{\epsilon_1}
+ &\Longrightarrow\op\in S_{\epsilon_1}\cup S_{\epsilon_2}\cup S_\eta=S_\epsilon.
+\end{align*}
+$\Val(e_1)$ の場合だけ引数側の IH を使う：
+\begin{align*}
+ e_2\longrightarrow e'_2&\Longrightarrow e_1e_2\longrightarrow e_1e'_2,\\
+ e_2=E[\perform\op v]&\Longrightarrow e_1e_2=(e_1E[\ ])[\perform\op v],\\
+ \op\in S_{\epsilon_2}&\Longrightarrow\op\in S_\epsilon,\\
+ \Val(e_2),\quad\FV(e_1)=\emp
+ &\xRightarrow{\text{補題\ref{lem:values}}}e_1=\lambda x.e_0
+   \Longrightarrow e_1e_2\longrightarrow e_0[e_2/x].
+\end{align*}
+App の両フレームは $\operatorname{handled}$ を変えない。
+\end{Case}
+\begin{Case}{Let-Mono}
+右辺の IH と $S_{\epsilon_1}\subseteq S_{\epsilon_1\cup\epsilon_2}$ より
+\begin{align*}
+ \Val(e_1)&\Longrightarrow\lete x{e_1}{e_2}\longrightarrow e_2[e_1/x],\\
+ e_1\longrightarrow e'_1
+ &\Longrightarrow\lete x{e_1}{e_2}\longrightarrow\lete x{e'_1}{e_2},\\
+ e_1=E[\perform\op v],\ \op\in S_{\epsilon_1}
+ &\Longrightarrow\lete x{e_1}{e_2}=(\lete x{E[\ ]}{e_2})[\perform\op v],\\
+ &\hspace{1em}\op\in S_{\epsilon_1\cup\epsilon_2}.
+\end{align*}
+Let-RHS フレームは非遮蔽条件を保つ。
+\end{Case}
+\begin{Case}{Let-Poly}
+\[\Val(v)\quad\Longrightarrow\quad\lete x v{e_2}\longrightarrow e_2[v/x]
+   \quad\text{（\Rule{Let-Value}）}.\]
+\end{Case}
+\begin{Case}{Perform}
+引数の IH の三分岐に対し
+\begin{align*}
+ \Val(e_0)&\Longrightarrow\Unhandled(\perform\op{e_0},\op),\quad
+                \op\in\{\op\}\cup S_{\epsilon_0},\\
+ e_0\longrightarrow e'_0
+ &\Longrightarrow\perform\op{e_0}\longrightarrow\perform\op{e'_0},\\
+ e_0=E[\perform{\op'}v],\quad\op'\in S_{\epsilon_0}
+ &\Longrightarrow\perform\op{e_0}=(\perform\op{E[\ ]})[\perform{\op'}v],\\
+ &\hspace{1em}\op'\in\{\op\}\cup S_{\epsilon_0}.
+\end{align*}
+最初は穴文脈、最後は Perform フレームが未処理操作の証人である。
+\end{Case}
+\begin{Case}{Handle}
+本体の IH の値・簡約分岐は
+\[
+ \Val(e_0)\Rightarrow\handle{e_0}h\longrightarrow r[e_0/x],\qquad
+ e_0\longrightarrow e'_0\Rightarrow\handle{e_0}h\longrightarrow\handle{e'_0}h.
+\]
+未処理分岐の証人を $e_0=E[\perform{\op'}v]$ とする。
+\begin{align*}
+ \op'=\op,\quad\op\notin\operatorname{handled}(E)
+ &\Longrightarrow\handle{e_0}h\longrightarrow
+ c[v/x,(\lambda z.\handle{E[z]}h)/k],\\
+ \op'\ne\op,\quad\op'\notin\operatorname{handled}(E)
+ &\Longrightarrow\op'\notin\operatorname{handled}(\handle{E[\ ]}h),\\
+ \op'\in S_{\epsilon_0}\subseteq\{\op\}\cup S_\epsilon,\quad\op'\ne\op
+ &\Longrightarrow\op'\in S_\epsilon.
+\end{align*}
+包含は $C\models\epsilon_0\leq\{\op\}\cup\epsilon$ と実際の充足割当てから得る。
+\end{Case}
+\begin{Case}{Sub}
+\[
+ \Val(e)\Rightarrow\Val(e),\quad
+ e\longrightarrow e'\Rightarrow e\longrightarrow e',\quad
+ \op\in S_{\epsilon_0}\xRightarrow{C\models\epsilon_0\leq\epsilon}\op\in S_\epsilon.
+\]
+三式を前提導出の IH の三分岐にそれぞれ適用する。
+\end{Case}
+\begin{Case}{Strengthen}
+\[\nu;\iota\models D,\quad D\models C
+   \Longrightarrow\nu;\iota\models C
+   \xRightarrow{\mathrm{IH}}\text{同じ項・効果での三分岐}.\]
+\end{Case}
+\begin{Case}{Exists}
+\begin{gather*}
+ \nu;\iota\models\exists\bar\alpha.D
+ \Longrightarrow\exists\bar a\in M_{\bar\kappa}.\
+        \nu_a;\iota\models D,\qquad\nu_a=\nu[\bar\alpha\mapsto\bar a],\\
+ \mathrm{IH}_{\nu_a}:\quad\Val(e)\ \lor\ \exists e'.\ e\longrightarrow e'
+ \ \lor\ \exists\op.\ \Unhandled(e,\op)\land\op\in\eff(\den\epsilon_{\nu_a}),\\
+ \bar\alpha\#\epsilon\Longrightarrow\den\epsilon_{\nu_a}=\den\epsilon_\nu.
+\end{gather*}
+値・簡約の命題は割当てに依存せず、第三分岐は最後の等式で移る。
+\end{Case}
+得られた全 $\Delta$ に対する命題を $\Delta=\emp$ に特殊化する。
+\end{proof}
+\proofspace
+\begin{samepage}
+\begin{theorem}[到達状態の効果安全性]\label{thm:safety}
+$\AS$、$\jj\emp C\emp e\tau\epsilon$、$e\longrightarrow^*e'$ を仮定する。
+有効な $\nu,\iota$ で $\nu;\iota\models C$ なら
+\[
+ \Val(e')\ \lor\ (\exists e''.\ e'\longrightarrow e'')\ \lor\
+ \exists\op.\ \Unhandled(e',\op)\land\op\in\eff(\den\epsilon_\nu).
+\]
+対応は \lean{effectSafety : EffectSafetyGoal S M sig}。
+\end{theorem}
+
+\begin{proof}\leavevmode\label{proof:thm:safety}
+\begin{gather*}
+ \inferrule{\jj\emp C\emp e\tau\epsilon\qquad e\longrightarrow^*e'}
+      {\jj\emp C\emp{e'}\tau\epsilon}\;\text{（定理\ref{thm:steps}）},\\
+ \jj\emp C\emp{e'}\tau\epsilon,\quad\nu;\iota\models C
+ \\ \xRightarrow{\text{定理\ref{thm:progress}}}
+ \Val(e')\lor\exists e''.\ e'\longrightarrow e''
+ \lor\exists\op.\ \Unhandled(e',\op)\land\op\in\eff(\den\epsilon_\nu).
+\end{gather*}
+両段階で同じ $C,\tau,\epsilon,\nu,\iota$ を使う。
+\end{proof}
+\end{samepage}
+
+\proofspace
+\begin{samepage}
+\begin{corollary}[空効果での到達状態]\label{thm:empty}
+$\AS$、$\operatorname{Sat}_\emp(C)$、$\jj\emp C\emp e\tau\emp$、
+$e\longrightarrow^*e'$ なら $\Val(e')\lor\exists e''.\ e'\longrightarrow e''$。
+対応は \lean{emptyEffectSafety : EmptyEffectSafetyGoal S M sig}。
+\end{corollary}
+
+\begin{proof}\leavevmode\label{proof:thm:empty}
+\begin{gather*}
+ \operatorname{Sat}_\emp(C)\Longrightarrow
+       \exists\nu,\iota\text{ valid}.\ \nu;\iota\models C,\\
+ \jj\emp C\emp e\tau\emp,\quad e\longrightarrow^*e',\quad\nu;\iota\models C
+ \\ \xRightarrow{\text{定理\ref{thm:safety}}}
+ \Val(e')\lor\exists e''.\ e'\longrightarrow e''
+ \lor\exists\op.\ \Unhandled(e',\op)\land\op\in\eff(\emp^M),\\
+ \op\in\eff(\emp^M)=\emp\Longrightarrow\bot.
+\end{gather*}
+従って第三分岐を除き、$\Val(e')\lor\exists e''.\ e'\longrightarrow e''$。
+\end{proof}
+\end{samepage}
+
+保存の証明には型・効果代入、スキーム値代入、文脈置換、操作節具体化を用いる。
+進行は保存を前提にしない独立の導出帰納法である。
+各定理の証明はその直後に示した。そこで用いた補題とその証明は
+付録\ref{app:structural}--\ref{app:safety}にまとめる。
+
+\section{型クラスと述語条件付き操作の例}
+\label{sec:examples}
+\begin{definition}[固定型クラスモデル]
+型の意味値は $\mathsf{Int},\mathsf{Bool},\mathsf{List}(a)$、
+$\arr a u b$ とアリティを持つ追加構成子の有限木である。
+効果の意味値は操作の有限集合であり、型木とは別の kind を持つ。
+関数型は反変・共変順序で比較し、その他の根の型は等しい場合だけ比較する
+（List の引数を共変にはしない）。
+$\mathsf{Member}(q,a)$ は宣言済みインスタンス規則と superclass 規則の最小帰納的閉包。
+例えば $\mathsf{Ord}(a)\Rightarrow\mathsf{Eq}(a)$、
+$\mathsf{Eq}(a)\Rightarrow\mathsf{Eq}(\mathsf{List}(a))$ を解釈できる。
+\end{definition}
+\lean{TypeClasses.fixedFramework} と \lean{TypeClasses.fixedArrowSeparated}
+がモデル法則を与える。本書ではこれらを適用し、モデル構築の全証明は収録対象としない。
+所属は実行可能な辞書や探索手続きではない。
+\lean{TypeClasses.inferenceSoundness}、\lean{TypeClasses.inferenceCompleteness}、
+\lean{TypeClasses.constraintGenerationPrincipality} は三定理の特殊化である。
+
+\begin{example}[多相 let の二つの具体化]
+$\mathsf{id}=\lambda z.z$、$\sigma_{\mathsf{id}}=\forall\alpha.\top\Rightarrow
+\arr\alpha\emp\alpha$ とする。
+\[
+ \lete f{\mathsf{id}}{f\,f}.
+\]
+左の $f$ を $\alpha=\arr\beta\emp\beta$、右の $f$ を $\alpha=\beta$ として具体化すると
+\[
+ \frac{
+  \Gamma,f:\sigma_{\mathsf{id}}\vdash f:
+    \arr{(\arr\beta\emp\beta)}\emp{(\arr\beta\emp\beta)}\,!\,\emp
+  \qquad
+  \Gamma,f:\sigma_{\mathsf{id}}\vdash f:\arr\beta\emp\beta\,!\,\emp}
+ {\Gamma,f:\sigma_{\mathsf{id}}\vdash f\,f:\arr\beta\emp\beta\,!\,\emp}
+\]
+を得る（共通の $\Delta;\top$ と空効果合併の \Rule{Sub} を省略）。
+$\Feas(\sigma_{\mathsf{id}})=\exists\alpha.\top$ は kind $0$ の非空性から従う。
+異なる型・潜在効果での利用は
+\lean{InferenceRegression.polymorphicTwoUsesRoundTrip} と
+\lean{polymorphicTwoUsesSatisfiable} の回帰例にも現れる。
+\end{example}
+
+\begin{example}[条件付き呼出しと節での条件利用]\label{ex:conditional}
+\begin{align*}
+ \ops(\op)&=\forall\beta:0.\ \mathsf{Eq}(\beta)\Rightarrow\beta\to\beta,\\
+ \Gamma(\mathsf{eq})&=\forall\alpha:0.\ \mathsf{Eq}(\alpha)\Rightarrow
+   \arr\alpha\emp{(\arr\alpha\emp{\mathsf{Bool}})},\\
+ c&=\lete z{\mathsf{eq}\ x\ x}{k\ x}.
+\end{align*}
+呼出側で $\ent C{\mathsf{Eq}(\tau)}$ と $\J v\tau\emp$ があれば
+\[
+ \J{\perform\op v}\tau{\{\op\}\cup\emp}.
+\]
+節では任意の $\beta$ に対して $C\land\mathsf{Eq}(\beta)$ を仮定するため、
+$\mathsf{eq}$ を $\beta$ で具体化できる。
+$k:\arr\beta\epsilon{\tau'}$ の下で
+$\mathsf{eq}\ x\ x:\mathsf{Bool}\,!\,\emp$ と $k\ x:\tau'\,!\,\epsilon$ を得る。
+\Rule{Let-Mono} と効果法則で $c:\tau'\,!\,\epsilon$。
+全称生成式は
+\[
+ \forall\beta:0.\mathsf{Eq}(\beta)\Rightarrow
+ \Def x{\mono\beta}{(\Def k{\mono{\arr\beta\epsilon{\tau'}}}
+    {\gen c{\tau'}\epsilon})}.
+\]
+$\mathsf{Eq}(\beta)$ を外側で全称に証明する必要はない。
+Lean 対応は \lean{ConditionalOperationsRegression.performAt}、
+\lean{clauseFromCondition}、\lean{handledMethodTyping}。
+同じ例の生成制約は \lean{handledMethodGeneratedSatisfiable} により、
+自由型変数を Int に割り当てた場合に充足可能である。
+\end{example}
+
+\begin{example}[実際の操作捕捉]
+例\ref{ex:conditional}の $c$ と return 節 $r=x$ を持つ $h$ をとり、
+$E=[\ ]$ とする。$K=\lambda z.\handle z h$ なので
+\begin{align*}
+ \handle{\perform\op v}h
+ &\longrightarrow \lete z{\mathsf{eq}\ v\ v}{K\ v}.
+\end{align*}
+$\mathsf{eq}$ は開いた環境の変数であり、ここでその実行本体は仮定しない。
+この一歩の型保存は開いた $\Gamma$ にも適用される。
+別に $c=k\ x$ の handler なら
+\[
+ \handle{\perform\op v}h\longrightarrow K\ v
+ \longrightarrow\handle v h\longrightarrow v.
+\]
+各矢印は順に \Rule{Operation}, \Rule{Beta}, \Rule{Return} である。
+存在型引数を使う実際の回帰は \lean{ConditionalOperationsRegression} の
+\lean{existentialArgumentCapturePreserved}、
+混合 kind と継続の利用は \lean{SafetyRegression} を参照する。
+\end{example}
+
+\begin{example}[偽条件と混合量化]
+$P=\bot$ の宣言では充足する $C$ から直接の \Rule{Perform} の前提
+$C\models\bot$ は導けない。生成式にも $\exists\bar\beta,\eta.(\bot\land\cdots)$ が残る。
+節の $\forall\bar\beta.(\bot\Rightarrow D)$ は常に真である。
+これらは \lean{ConditionalOperationsRegression.falseCallUnsatisfiable}、
+\lean{falseClauseVacuous}、\lean{falseConditionKeepsEnvironment} に対応する。
+型付け可能性と充足可能性を混同しない：矛盾した制約の下での宣言済み項の健全性は依然成立する。
+
+型・効果を共に量化する宣言の例は
+\[
+ \op:\forall\alpha:0,\eta:1.\ \top\Rightarrow
+       (\arr\alpha\eta\alpha)\to(\arr\alpha\eta\alpha).
+\]
+引数列は $[\tau,\epsilon]$ であり、入力・出力・条件のすべてに同じ代入を使う。
+節はすべての $a\in M_0,u\in M_1$ に対して検査する。
+\lean{Regression.mixedClauseTyping}、\lean{mixedClauseInstantiated} と
+\lean{SafetyRegression} がこの量化と捕捉を検査している。
+\end{example}
+
+\appendix
+\section{意味論・生成に必要な補題と証明}
+\label{app:semantic}
+本付録からは、特記しない限り $\A$ と、表示された式・環境の整形式性を仮定する。
+型付けに関する補題で新たな結論の制約を使うときは、その制約が項環境に依存せず整形式であることも要求する。
+これらは \lean{JudgmentWF} の成分である。
+局所変数の新鮮な拡張は名前付き表示では恒等的に埋め込む。
+各補題の Lean 名は対応表にも列挙する。
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[kind・新鮮性・代入の基本性質]\label{lem:binding}
+kind を保つ $\theta:\Delta\to\Delta'$ に対し、
+\begin{gather*}
+ \Delta\vdash t:\kappa\ \Longrightarrow\ \Delta'\vdash\theta t:\kappa,
+ \qquad \kind(\den t_\nu)=\kappa,\\
+ \den{\theta t}_{\nu'}=\den t_{\nu'\circ\theta},
+ \qquad (\nu'\circ\theta)(\alpha)=\den{\theta\alpha}_{\nu'},\\
+ \theta(\theta' X)=(\theta\circ\theta')X,
+ \quad \theta(C\land D)=\theta C\land\theta D,\\
+ \theta(P[\bar\tau/\bar\beta])=P[\theta\bar\tau/\bar\beta]
+ \quad\text{（閉じた操作宣言の条件 $P$）}.
+\end{gather*}
+最後の性質は入力型・出力型にも成り立つ。
+$\theta$ は制約・スキームの整形式性と自由項名を保つ。
+新鮮な変数の拡張は、元の式の解釈を変えない。
+項代入は作用域を保ち、値を値で置換した結果は値である。
+異なる新鮮名 $x,k$ と $x\#K$ に対し
+$c[K/k][v/x]=c[v/x,K/k]$。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:binding}
+型の構造帰納法で $\Delta,\Delta',\theta,\nu'$ を一般化する。
+各 IH は部分型についての kind 保存、評価可換性、代入合成である。
+
+\begin{Case}{Type-Variable}
+\begin{gather*}
+ \Delta(\alpha)=\kappa\Longrightarrow\Delta'\vdash\theta\alpha:\kappa,
+ \qquad\den{\theta\alpha}_{\nu'}=(\nu'\circ\theta)(\alpha)=\den\alpha_{\nu'\circ\theta},\\
+ \theta(\theta'\alpha)=(\theta\circ\theta')(\alpha),\qquad
+ \kind(\nu(\alpha))=\kappa\quad\text{（割当ての有効性）}.
+\end{gather*}
+大域自由変数は代入で固定され、その割当ての有効性を使う。
+\end{Case}
+
+\begin{Case}{Type-Constructor}
+$f:\kappa_1\cdots\kappa_n\to\kappa$ とする。
+\begin{gather*}
+ \inferrule{\Delta\vdash t_i:\kappa_i\ (1\leq i\leq n)}
+      {\Delta'\vdash f(\theta t_1,\ldots,\theta t_n):\kappa}
+       \quad\text{（各 IH、構成子の kind 規則）},\\
+ \den{\theta f(\bar t)}_{\nu'}
+ =f^M(\overline{\den{\theta t}_{\nu'}})
+ =f^M(\overline{\den t_{\nu'\circ\theta}})
+ =\den{f(\bar t)}_{\nu'\circ\theta},\\
+ \theta(\theta'f(\bar t))=f(\overline{\theta(\theta't)})
+ =f(\overline{(\theta\circ\theta')t})=(\theta\circ\theta')f(\bar t).
+\end{gather*}
+モデルの kind 法則は $\kind(f^M(\bar a))=\kappa$ を与える。
+矢印・空効果・単一操作・合併もこの式の構成子である。
+\end{Case}
+次に制約・スキームの整形式導出に相互帰納する。
+$\Delta;\Xi\vdash X\ \mathsf{wf}$ から
+$\Delta';\Xi\vdash\theta X\ \mathsf{wf}$ と $\FPI(\theta X)=\FPI(X)$ を同時に示す。
+束縛名を新鮮に選び、$\theta^+$ は新しい束縛変数を固定する拡張とする。
+
+\begin{Case}{Constraint-Truth}
+\[
+ \theta\top=\top,\qquad\FPI(\theta(\top))=\emp.
+\]
+各部分の整形式性を IH（型引数には上の型の帰納法）で移し、この構成子の整形式規則を適用する。
+\end{Case}
+
+\begin{Case}{Constraint-False}
+\[
+ \theta\bot=\bot,\qquad\FPI(\theta(\bot))=\emp.
+\]
+各部分の整形式性を IH（型引数には上の型の帰納法）で移し、この構成子の整形式規則を適用する。
+\end{Case}
+
+\begin{Case}{Constraint-Atom}
+\[
+ \theta p(\bar t)=p(\theta\bar t),\qquad\FPI(\theta(p(\bar t)))=\emp.
+\]
+各部分の整形式性を IH（型引数には上の型の帰納法）で移し、この構成子の整形式規則を適用する。
+\end{Case}
+
+\begin{Case}{Constraint-Inst}
+\[
+ \theta(\inst x\tau)=\inst x{\theta\tau},\qquad\FPI(\theta(\inst x\tau))=\{x\}.
+\]
+各部分の整形式性を IH（型引数には上の型の帰納法）で移し、この構成子の整形式規則を適用する。
+\end{Case}
+
+\begin{Case}{Constraint-Conjunction}
+\[
+ \theta(C\land D)=\theta C\land\theta D,\qquad\FPI(\theta(C\land D))=\FPI(C)\cup\FPI(D).
+\]
+各部分の整形式性を IH（型引数には上の型の帰納法）で移し、この構成子の整形式規則を適用する。
+\end{Case}
+
+\begin{Case}{Constraint-Implication}
+\[
+ \theta(P\Rightarrow D)=\theta P\Rightarrow\theta D,\qquad\FPI(\theta(P\Rightarrow D))=\FPI(D).
+\]
+各部分の整形式性を IH（型引数には上の型の帰納法）で移し、この構成子の整形式規則を適用する。
+含意の前件では $\FPI(\theta P)=\FPI(P)=\emp$ も保つ。
+\end{Case}
+
+\begin{Case}{Constraint-Exists}
+\[
+ \theta(\exists\bar\alpha.D)=\exists\bar\alpha.\theta^+D,\qquad\FPI(\theta(\exists\bar\alpha.D))=\FPI(D).
+\]
+各部分の整形式性を IH（型引数には上の型の帰納法）で移し、この構成子の整形式規則を適用する。
+\end{Case}
+
+\begin{Case}{Constraint-Forall}
+\[
+ \theta(\forall\bar\alpha.D)=\forall\bar\alpha.\theta^+D,\qquad\FPI(\theta(\forall\bar\alpha.D))=\FPI(D).
+\]
+各部分の整形式性を IH（型引数には上の型の帰納法）で移し、この構成子の整形式規則を適用する。
+\end{Case}
+
+\begin{Case}{Constraint-Scheme}
+\[
+ \theta(\forall\bar\alpha.D\Rightarrow\tau)=\forall\bar\alpha.\theta^+D\Rightarrow\theta^+\tau,\qquad\FPI(\theta(\forall\bar\alpha.D\Rightarrow\tau))=\FPI(D).
+\]
+各部分の整形式性を IH（型引数には上の型の帰納法）で移し、この構成子の整形式規則を適用する。
+\end{Case}
+
+\begin{Case}{Constraint-Def}
+\[
+ \theta(\Def x\sigma D)=\Def x{\theta\sigma}{\theta D},\qquad\FPI(\theta(\Def x\sigma D))=\FPI(\sigma)\cup(\FPI(D)\setminus\{x\}).
+\]
+各部分の整形式性を IH（型引数には上の型の帰納法）で移し、この構成子の整形式規則を適用する。
+\end{Case}
+代入合成も上の各構成子等式に IH を入れる。量化の内側では
+$(\theta\circ\theta')^+=\theta^+\circ(\theta')^+$ を用いる。
+閉じた宣言の式 $T\in\{P,\tau_1,\tau_2\}$ について
+\[
+ \FTV(T)\subseteq\{\bar\beta\},\qquad
+ \theta(T[\bar t/\bar\beta])=T[\theta\bar t/\bar\beta].
+\]
+また $\bar\alpha\#X$ なら
+$\den X_{\nu[\bar\alpha\mapsto\bar a]}=\den X_\nu$。
+項に関する残りの主張は $e$ の構造帰納法による。$S(e)=e[v/x]$ と置き、全束縛名を
+$x,k,\FV(v),\FV(K)$ から新鮮にする。
+
+\begin{Case}{Term-Var}
+\[S(x)=v,\quad S(y)=y\ (y\ne x).\]
+各部分に IH を適用すると
+\[
+ \FV(S(e))\subseteq(\FV(e)\setminus\{x\})\cup\FV(v),\qquad
+ e[K/k][v/x]=e[v/x,K/k].
+\]
+変数 $k$ では $K[v/x]=K$（$x\#K$）、変数 $x$ では両辺が $v$。
+\end{Case}
+
+\begin{Case}{Term-Lam}
+\[S(\lambda y.e)=\lambda y.S(e).\]
+各部分に IH を適用すると
+\[
+ \FV(S(e))\subseteq(\FV(e)\setminus\{x\})\cup\FV(v),\qquad
+ e[K/k][v/x]=e[v/x,K/k].
+\]
+束縛名は新鮮なので、表示した構成子の下に IH をそのまま入れられる。
+\end{Case}
+
+\begin{Case}{Term-App}
+\[S(e_1e_2)=S(e_1)S(e_2).\]
+各部分に IH を適用すると
+\[
+ \FV(S(e))\subseteq(\FV(e)\setminus\{x\})\cup\FV(v),\qquad
+ e[K/k][v/x]=e[v/x,K/k].
+\]
+束縛名は新鮮なので、表示した構成子の下に IH をそのまま入れられる。
+\end{Case}
+
+\begin{Case}{Term-Let}
+\[S(\lete y{e_1}{e_2})=\lete y{S(e_1)}{S(e_2)}.\]
+各部分に IH を適用すると
+\[
+ \FV(S(e))\subseteq(\FV(e)\setminus\{x\})\cup\FV(v),\qquad
+ e[K/k][v/x]=e[v/x,K/k].
+\]
+束縛名は新鮮なので、表示した構成子の下に IH をそのまま入れられる。
+\end{Case}
+
+\begin{Case}{Term-Perform}
+\[S(\perform\op e)=\perform\op{S(e)}.\]
+各部分に IH を適用すると
+\[
+ \FV(S(e))\subseteq(\FV(e)\setminus\{x\})\cup\FV(v),\qquad
+ e[K/k][v/x]=e[v/x,K/k].
+\]
+束縛名は新鮮なので、表示した構成子の下に IH をそのまま入れられる。
+\end{Case}
+
+\begin{Case}{Term-Handle}
+\begin{gather*}
+ h=\{\mathsf{return}\ y\mapsto r;\op(y,k_0)\mapsto c\},\\
+ S(h)=\{\mathsf{return}\ y\mapsto S(r);\op(y,k_0)\mapsto S(c)\},\qquad
+ S(\handle e h)=\handle{S(e)}{S(h)}.
+\end{gather*}
+各部分に IH を適用すると
+\[
+ \FV(S(e))\subseteq(\FV(e)\setminus\{x\})\cup\FV(v),\qquad
+ e[K/k][v/x]=e[v/x,K/k].
+\]
+束縛名は新鮮なので、表示した構成子の下に IH をそのまま入れられる。
+\end{Case}
+値の二形では
+$\Val(x)\land\Val(v)\Rightarrow\Val(S(x))$、
+$\Val(\lambda y.e)\Rightarrow\Val(\lambda y.S(e))$。
+以上で作用域保存・値保存・二値同時代入の等式を得る。
+\end{proof}
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[代入と意味論]\label{lem:semantic-subst}
+整形式な $C,\sigma$ に対して
+\[
+ \nu';\iota\models\theta C\ \Longleftrightarrow\
+ \nu'\circ\theta;\iota\models C,
+ \qquad
+ \den{\theta\sigma}_{\nu',\iota}=\den\sigma_{\nu'\circ\theta,\iota}.
+\]
+したがって $\ent C D$ なら $\theta C\models_{\Delta'}\theta D$。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:semantic-subst}
+制約とスキームに相互帰納し、$\theta,\nu',\iota$ を一般化する。
+$\mu=\nu'\circ\theta$ とおく。IH は部分制約の充足の同値と部分スキームの集合の等しさである。
+
+\begin{Case}{Truth}
+\[
+\nu';\iota\models\theta\top\ \Longleftrightarrow\ \mathrm{true}\ \Longleftrightarrow\ \mu;\iota\models\top.\]
+充足の定義による。
+\end{Case}
+
+\begin{Case}{False}
+\[
+\nu';\iota\models\theta\bot\ \Longleftrightarrow\ \mathrm{false}\ \Longleftrightarrow\ \mu;\iota\models\bot.\]
+充足の定義による。
+\end{Case}
+
+\begin{Case}{Atom}
+\[
+\nu';\iota\models p(\theta\bar t)\ \Longleftrightarrow\ p^M(\overline{\den{\theta t}_{\nu'}})\ \Longleftrightarrow\ p^M(\overline{\den t_\mu}).\]
+型の評価等式は補題\ref{lem:binding}、論理結合には両部分の IH の同値を使う。
+\end{Case}
+
+\begin{Case}{Inst}
+\[
+\nu';\iota\models\inst x{\theta\tau}\ \Longleftrightarrow\ \den{\theta\tau}_{\nu'}\in\iota(x)\ \Longleftrightarrow\ \den\tau_\mu\in\iota(x).\]
+型の評価等式は補題\ref{lem:binding}、論理結合には両部分の IH の同値を使う。
+\end{Case}
+
+\begin{Case}{Conjunction}
+\[
+\nu';\iota\models\theta(C\land D)\ \Longleftrightarrow\ (\mu;\iota\models C)\land(\mu;\iota\models D).\]
+型の評価等式は補題\ref{lem:binding}、論理結合には両部分の IH の同値を使う。
+\end{Case}
+
+\begin{Case}{Implication}
+\[
+\nu';\iota\models\theta(P\Rightarrow D)\ \Longleftrightarrow\ ((\mu;\iota\models P)\Rightarrow(\mu;\iota\models D)).\]
+型の評価等式は補題\ref{lem:binding}、論理結合には両部分の IH の同値を使う。
+\end{Case}
+
+\begin{Case}{Exists}
+$\theta^+$ は $\bar\alpha$ を固定する拡張とする。
+\begin{gather*}
+ (\nu'[\bar\alpha\mapsto\bar a])\circ\theta^+
+       =\mu[\bar\alpha\mapsto\bar a],\\
+ \nu';\iota\models\theta(\exists\bar\alpha.D)
+ \Longleftrightarrow \exists\bar a\in M_{\bar\kappa}.\
+       \nu'[\bar\alpha\mapsto\bar a];\iota\models\theta^+D\\
+ \xLeftrightarrow{\mathrm{IH}} \exists\bar a\in M_{\bar\kappa}.\
+       \mu[\bar\alpha\mapsto\bar a];\iota\models D
+ \Longleftrightarrow\mu;\iota\models\exists\bar\alpha.D.
+\end{gather*}
+\end{Case}
+
+\begin{Case}{Forall}
+$\theta^+$ は $\bar\alpha$ を固定する拡張とする。
+\begin{gather*}
+ (\nu'[\bar\alpha\mapsto\bar a])\circ\theta^+
+       =\mu[\bar\alpha\mapsto\bar a],\\
+ \nu';\iota\models\theta(\forall\bar\alpha.D)
+ \Longleftrightarrow \forall\bar a\in M_{\bar\kappa}.\
+       \nu'[\bar\alpha\mapsto\bar a];\iota\models\theta^+D\\
+ \xLeftrightarrow{\mathrm{IH}} \forall\bar a\in M_{\bar\kappa}.\
+       \mu[\bar\alpha\mapsto\bar a];\iota\models D
+ \Longleftrightarrow\mu;\iota\models\forall\bar\alpha.D.
+\end{gather*}
+\end{Case}
+
+\begin{Case}{Def}
+\begin{align*}
+ \nu';\iota\models\Def x{\theta\sigma}{\theta D}
+ &\Longleftrightarrow\nu';\iota[x\mapsto\den{\theta\sigma}_{\nu',\iota}]\models\theta D\\
+ &\xLeftrightarrow{\mathrm{IH}_\sigma}\nu';\iota[x\mapsto\den\sigma_{\mu,\iota}]\models\theta D\\
+ &\xLeftrightarrow{\mathrm{IH}_D}\mu;\iota[x\mapsto\den\sigma_{\mu,\iota}]\models D.
+\end{align*}
+\end{Case}
+
+\begin{Case}{Scheme}
+$\sigma=\forall\bar\alpha.D\Rightarrow\tau$ とする。
+\begin{align*}
+ b\in\den{\theta\sigma}_{\nu',\iota}
+ &\Longleftrightarrow\exists\bar a.\
+ \nu'[\bar\alpha\mapsto\bar a];\iota\models\theta^+D
+ \ \land\ \den{\theta^+\tau}_{\nu'[\bar\alpha\mapsto\bar a]}\leq b\\
+ &\Longleftrightarrow\exists\bar a.\
+ \mu[\bar\alpha\mapsto\bar a];\iota\models D
+ \ \land\ \den\tau_{\mu[\bar\alpha\mapsto\bar a]}\leq b\\
+ &\Longleftrightarrow b\in\den\sigma_{\mu,\iota}.
+\end{align*}
+第二行は条件の IH と型の評価等式。同じ kind の証人を使う。
+\end{Case}
+含意保存は任意の有効 $\nu',\iota$ に対し
+\[
+ \nu';\iota\models\theta C\Longrightarrow\mu;\iota\models C
+ \xRightarrow{C\models D}\mu;\iota\models D
+ \Longrightarrow\nu';\iota\models\theta D.
+\]
+$\mu$ の有効性は kind 保存から得る。実装の \lean{BoundSubst.Valid} が許す
+未使用の未宣言 kind の改名では、$\mu(\alpha)=\nu'(\theta\alpha)$ とする。
+その kind を参照する整形式型は存在しないため、型文脈全体の宣言済み条件は追加しない。
+\end{proof}
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[基本制約法則とスキーム]\label{lem:basic}
+含意は反射的・推移的である。kind の合う型の順序も反射的・推移的であり、
+\begin{gather*}
+ C\models\emp\leq\epsilon,\qquad
+ C\models\epsilon_2\leq\epsilon_1\cup\epsilon_2,\\
+ (\epsilon_1\cup\epsilon_2)\cup\epsilon_3
+ \equiv_M (\epsilon_3\cup\epsilon_1)\cup\epsilon_2,\\
+ \forall\bar\alpha.(C\land D)
+ \equiv(\forall\bar\alpha.C)\land(\forall\bar\alpha.D).
+\end{gather*}
+ここで $\equiv_M$ は有効割当てで同じ効果意味値を持つこと。
+整形式スキームの解釈は上方閉で、
+\begin{align}
+ \nu;\iota\models\Feas(\sigma)
+ &\ \Longleftrightarrow\ \den\sigma_{\nu,\iota}\ne\emp,\label{eq:nonempty}\\
+ \nu;\iota\models\inst\sigma\tau
+ &\ \Longleftrightarrow\ \den\tau_\nu\in\den\sigma_{\nu,\iota},\label{eq:instance}\\
+ C&\models\inst{\mono\tau}\tau.\label{eq:mono}
+\end{align}
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:basic}
+有効な $\nu,\iota$ を固定する。含意と順序の反射性・推移性は
+\begin{gather*}
+ (\nu;\iota\models C)\Rightarrow(\nu;\iota\models C),\\
+ (\nu;\iota\models C)\xRightarrow{C\models D}(\nu;\iota\models D)
+       \xRightarrow{D\models E}(\nu;\iota\models E),\\
+ a\in M_\kappa\Rightarrow a\leq a,\qquad
+ a\leq b\land b\leq c\Rightarrow a\leq c
+       \quad\text{（モデルの順序法則）}.
+\end{gather*}
+効果にはモデルの効果順序を用いる：
+\begin{gather*}
+ \emp\subseteq\eff(\den\epsilon),\qquad
+ \eff(\den{\epsilon_2})\subseteq\eff(\den{\epsilon_1})\cup\eff(\den{\epsilon_2}),\\
+ (S_1\cup S_2)\cup S_3=(S_3\cup S_1)\cup S_2
+ \Longrightarrow a\leq b\land b\leq a\Longrightarrow a=b,
+\end{gather*}
+ただし $S_i=\eff(\den{\epsilon_i})$、$a,b$ は両合併式の意味値。
+全称連言は
+\[
+ [\forall\bar a.\ (C(\bar a)\land D(\bar a))]
+ \Longleftrightarrow[\forall\bar a.C(\bar a)]\land[\forall\bar a.D(\bar a)].
+\]
+ここで $C(\bar a)$ は拡張割当てでの充足を略記する。
+$\sigma=\forall\bar\alpha.D\Rightarrow\tau_0$、$\nu_a=\nu[\bar\alpha\mapsto\bar a]$ とおく。
+\begin{align*}
+ b\in\den\sigma,\ b\leq c
+ &\Longrightarrow\exists\bar a.\ \nu_a;\iota\models D\land\den{\tau_0}_{\nu_a}\leq b\leq c
+ \Longrightarrow c\in\den\sigma,\\
+ \nu;\iota\models\Feas(\sigma)
+ &\Longleftrightarrow\exists\bar a.\ \nu_a;\iota\models D\\
+ &\Longleftrightarrow\exists\bar a,b\in M_0.\
+       \nu_a;\iota\models D\land\den{\tau_0}_{\nu_a}\leq b
+ \Longleftrightarrow\den\sigma\ne\emp,\\
+ \nu;\iota\models\inst\sigma\tau
+ &\Longleftrightarrow\exists\bar a.\ \nu_a;\iota\models D
+              \land\den{\tau_0}_{\nu_a}\leq\den\tau_\nu
+ \Longleftrightarrow\den\tau_\nu\in\den\sigma.
+\end{align*}
+非空性の順方向では $b=\den{\tau_0}_{\nu_a}$、逆方向では $b$ と順序を捨てる。
+最後の行は $\bar\alpha\#\tau$ を使う。単相では証人列が空なので
+\[
+ \inst{\mono\tau}\tau\equiv\exists\emp.(\top\land\tau\leq\tau),\qquad
+ C\models\inst{\mono\tau}\tau.
+\]
+\end{proof}
+
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[項環境への依存と単調性]\label{lem:ground}
+整形式制約・スキームは自由項名における環境の値だけに依存する。
+特に $\FPI(C)=\FPI(\sigma)=\emp$ なら $\iota$ に依存しない。
+さらに $\iota(x)\subseteq\iota'(x)$ が全 $x$ で成り立つなら
+\[
+ \nu;\iota\models D\ \Longrightarrow\ \nu;\iota'\models D,
+ \qquad \den\sigma_{\nu,\iota}\subseteq\den\sigma_{\nu,\iota'}.
+\]
+よって $\den\sigma\subseteq\den{\sigma'}$ のとき
+$\Def x\sigma D\models\Def x{\sigma'}D$ が同じ割当てで成り立つ。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:ground}
+制約・スキームに相互帰納する。割当てと環境 $\iota,\iota'$ を一般化し、
+自由項名での一致による同値と、全名前での包含による単調性を同時に示す。
+$\iota\subseteq\iota'$ は $\forall x.\ \iota(x)\subseteq\iota'(x)$ を表す。
+
+\begin{Case}{Truth}
+\[\nu;\iota\models \top\ \Longleftrightarrow\ \nu;\iota'\models \top.\]
+充足の定義は項環境を参照しない。この同値は単調性も与える。
+\end{Case}
+
+\begin{Case}{False}
+\[\nu;\iota\models \bot\ \Longleftrightarrow\ \nu;\iota'\models \bot.\]
+充足の定義は項環境を参照しない。この同値は単調性も与える。
+\end{Case}
+
+\begin{Case}{Atom}
+\[\nu;\iota\models p(\bar t)\ \Longleftrightarrow\ \nu;\iota'\models p(\bar t).\]
+充足の定義は項環境を参照しない。この同値は単調性も与える。
+\end{Case}
+
+\begin{Case}{Inst}
+\[
+ \nu;\iota\models\inst x\tau\Longleftrightarrow\den\tau_\nu\in\iota(x),\qquad
+ \iota(x)\subseteq\iota'(x)\Longrightarrow\den\tau_\nu\in\iota'(x).
+\]
+$\iota(x)=\iota'(x)$ なら逆方向も成り立つ。
+\end{Case}
+
+\begin{Case}{Conjunction}
+\[
+ (\nu;\iota\models C)\land(\nu;\iota\models D)
+ \xRightarrow{\mathrm{IH}_C,\mathrm{IH}_D}
+ (\nu;\iota'\models C)\land(\nu;\iota'\models D).
+\]
+一致の主張では各矢印を IH の同値に置き換える。
+\end{Case}
+
+\begin{Case}{Exists}
+\[
+ [\exists\bar a.\ \nu[\bar\alpha\mapsto\bar a];\iota\models D]
+ \xRightarrow{\mathrm{IH}_D}
+ [\exists\bar a.\ \nu[\bar\alpha\mapsto\bar a];\iota'\models D].
+\]
+各 $\bar a$ で同じ IH を使う。一致のときは逆方向も成り立つ。
+\end{Case}
+
+\begin{Case}{Forall}
+\[
+ [\forall\bar a.\ \nu[\bar\alpha\mapsto\bar a];\iota\models D]
+ \xRightarrow{\mathrm{IH}_D}
+ [\forall\bar a.\ \nu[\bar\alpha\mapsto\bar a];\iota'\models D].
+\]
+各 $\bar a$ で同じ IH を使う。一致のときは逆方向も成り立つ。
+\end{Case}
+
+\begin{Case}{Scheme}
+\begin{align*}
+ b\in\den{\forall\bar\alpha.D\Rightarrow\tau}_{\nu,\iota}
+ &\Longrightarrow\exists\bar a.\ \nu_a;\iota\models D\land\den\tau_{\nu_a}\leq b\\
+ &\xRightarrow{\mathrm{IH}_D}\exists\bar a.\ \nu_a;\iota'\models D\land\den\tau_{\nu_a}\leq b\\
+ &\Longrightarrow b\in\den{\forall\bar\alpha.D\Rightarrow\tau}_{\nu,\iota'}.
+\end{align*}
+一致のときは各段が同値である。
+\end{Case}
+
+\begin{Case}{Def}
+\begin{gather*}
+ \den\sigma_{\nu,\iota}\subseteq\den\sigma_{\nu,\iota'}\quad(\mathrm{IH}_\sigma),\\
+ \iota[x\mapsto\den\sigma_{\nu,\iota}]
+ \subseteq\iota'[x\mapsto\den\sigma_{\nu,\iota'}],\\
+ \nu;\iota[x\mapsto\den\sigma_{\nu,\iota}]\models D
+ \xRightarrow{\mathrm{IH}_D}
+ \nu;\iota'[x\mapsto\den\sigma_{\nu,\iota'}]\models D.
+\end{gather*}
+一致の場合、$x$ では $\mathrm{IH}_\sigma$、他の自由名では元の一致を使う。
+\end{Case}
+
+\begin{Case}{Implication}
+一致では $\mathrm{IH}_P,\mathrm{IH}_D$ の同値を使う。単調性では
+\begin{gather*}
+ \nu;\iota\models P\Rightarrow D,\qquad\nu;\iota'\models P,\\
+ \FPI(P)=\emp\Longrightarrow(\nu;\iota'\models P\Longleftrightarrow\nu;\iota\models P),\\
+ \nu;\iota\models D\xRightarrow{\mathrm{IH}_D}\nu;\iota'\models D.
+\end{gather*}
+ここで前件の項環境非依存性が必要である。
+\end{Case}
+最後に $\den\sigma\subseteq\den{\sigma'}$ なら
+\[
+ \iota[x\mapsto\den\sigma]\subseteq\iota[x\mapsto\den{\sigma'}]
+ \Longrightarrow(\nu;\iota\models\Def x\sigma D
+                 \Rightarrow\nu;\iota\models\Def x{\sigma'}D).
+\]
+\end{proof}
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[環境付加の法則]\label{lem:env}
+$L_\Gamma(D)=\mathsf{let}\ \Gamma\ \mathsf{in}\ D$ と略記する。
+整形式 $\Gamma$ と新鮮な $\bar\alpha$ について
+\begin{align}
+ \nu;\iota\models L_\Gamma(D)
+ &\ \Longleftrightarrow\ (\nu;\iota\models\Feas(\Gamma))
+          \land(\nu;\Gamma_\nu(\iota)\models D),\label{env:holds}\\
+ L_\Gamma(D\land E)&\equiv L_\Gamma(D)\land L_\Gamma(E),\label{env:and}\\
+ L_\Gamma(\exists\bar\alpha.D)&\equiv\exists\bar\alpha.L_\Gamma(D),\label{env:exists}\\
+ L_\Gamma(\forall\bar\alpha.D)&\equiv\Feas(\Gamma)\land
+                  \forall\bar\alpha.L_\Gamma(D),\label{env:forall}\\
+ L_\Gamma(P\Rightarrow D)&\equiv\Feas(\Gamma)\land(P\Rightarrow L_\Gamma(D)),\label{env:implies}\\
+ \Feas(\Gamma,x:\sigma)&\equiv\Feas(\Gamma)\land\Feas(\sigma),\label{env:push}\\
+ L_\Gamma(\Def x{\mono\tau}D)&\equiv L_{\Gamma,x:\mono\tau}(D).\label{env:mono}
+\end{align}
+式\eqref{env:implies}では $P$ が項環境に依存しないことを要する。
+$\Gamma_\nu(\iota)$ は有効で、検索された束縛 $\Gamma(x)=\sigma$ に対し
+$\Gamma_\nu(\iota)(x)=\den\sigma_\nu$。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:env}
+環境列に帰納し、$\nu,\iota,D$ を一般化する。
+\begin{Case}{Empty}
+\[
+ L_\emp(D)=D,\quad\Feas(\emp)=\top,\quad\emp_\nu(\iota)=\iota,
+ \quad(D\Longleftrightarrow\top\land D).
+\]
+\end{Case}
+\begin{Case}{Binding}
+$\Gamma=x:\sigma,\Gamma'$、$\iota_x=\iota[x\mapsto\den\sigma_\nu]$ とする。
+\begin{align*}
+ \nu;\iota\models L_\Gamma(D)
+ &\Longleftrightarrow\nu;\iota\models\Feas(\sigma)
+            \ \land\ \nu;\iota_x\models L_{\Gamma'}(D)\\
+ &\xLeftrightarrow{\mathrm{IH}}\nu;\iota\models\Feas(\sigma)
+            \ \land\ \nu;\iota_x\models\Feas(\Gamma')
+            \ \land\ \nu;\Gamma'_\nu(\iota_x)\models D\\
+ &\Longleftrightarrow\nu;\iota\models\Feas(\Gamma)
+            \ \land\ \nu;\Gamma_\nu(\iota)\models D.
+\end{align*}
+最後は環境スキームの項名非依存性（補題\ref{lem:ground}）。検索と有効性は
+\[
+ \iota_x(y)=\begin{cases}\den\sigma_\nu&y=x,\\\iota(y)&y\ne x,\end{cases}
+ \qquad\den\sigma_\nu\text{ は上方閉（補題\ref{lem:basic}）}
+\]
+に IH を適用して得る。
+\end{Case}
+$F=(\nu;\iota\models\Feas(\Gamma))$、$D_a=(\nu_a;\Gamma_\nu(\iota)\models D)$ と略記する。
+$\bar\alpha\#\Gamma$ より $F$ と環境解釈は $\bar a$ に依存しない。
+残る各式は次の同値である：
+\begin{align*}
+ F\land(D\land E)&\Longleftrightarrow(F\land D)\land(F\land E),
+          &&\text{（\eqref{env:and}）},\\
+ F\land\exists\bar a.D_a&\Longleftrightarrow\exists\bar a.(F\land D_a),
+          &&\text{（\eqref{env:exists}）},\\
+ F\land\forall\bar a.D_a&\Longleftrightarrow F\land\forall\bar a.(F\land D_a),
+          &&\text{（\eqref{env:forall}）},\\
+ F\land(P\Rightarrow D)&\Longleftrightarrow F\land(P\Rightarrow(F\land D)),
+          &&\text{（\eqref{env:implies}、$\FPI(P)=\emp$）},\\
+ \Feas(\Gamma,x:\sigma)&\Longleftrightarrow\Feas(\Gamma)\land\Feas(\sigma),
+          &&\text{（\eqref{env:push}）}.
+\end{align*}
+最後に $\Feas(\mono\tau)\equiv\top$ なので
+\[
+ \nu;\iota\models L_\Gamma(\Def x{\mono\tau}D)
+ \Longleftrightarrow F\land(\nu;\Gamma_\nu(\iota)[x\mapsto\den{\mono\tau}_\nu]\models D)
+ \Longleftrightarrow\nu;\iota\models L_{\Gamma,x:\mono\tau}(D).
+\]
+\end{proof}
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[生成の整形式性・自由名・代入]\label{lem:gen-wf}
+$S,\ops$ が整形式で $e$ が項束縛の作用域内にあり、要求型・効果が正しい kind を持つなら
+$\gen e\tau\epsilon$ は整形式。
+さらに $\operatorname{Declared}_\ops(e)$ なら
+\[
+ \FPI(\gen e\tau\epsilon)=\FV(e),\qquad
+ \theta\gen e\tau\epsilon=\gen e{\theta\tau}{\theta\epsilon}
+ \quad(\alpha\text{同値を除く}).
+\]
+整形式な $\Gamma$ と $\FV(e)\subseteq\dom\Gamma$ の下で
+$\infers\Gamma e\tau\epsilon$ は項名に依存しない整形式制約である。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:gen-wf}
+項 $e$ に構造帰納し、$\Delta,\Xi,\tau,\epsilon,\theta$ を一般化する。
+IH は各部分項の生成の整形式性、自由項名の等式、代入可換性である。
+以下 $G_e=\gen e\tau\epsilon$ とし、生成定義の新変数を $\theta$ の像から新鮮に選ぶ。
+
+\begin{Case}{Var}
+IH により
+\[\Delta;\Xi\vdash\inst x\tau\land\emp\leq\epsilon\ \mathsf{wf}.\]
+量化・局所定義・連言の整形式規則と、$R$ の kind 条件を合わせると $\Delta;\Xi\vdash G_e\ \mathsf{wf}$。
+自由名の計算と代入の計算は
+\begin{gather*}
+ \FPI(G_e)=\{x\},\\
+ \theta G_x=(\inst x{\theta\tau})\land\emp\leq\theta\epsilon.
+\end{gather*}
+最後の式は対応する生成式の要求型・効果を $\theta\tau,\theta\epsilon$ にしたものである。
+\end{Case}
+
+\begin{Case}{Lam}
+IH により
+\[\Delta,\alpha:0,\eta:1,\beta:0;\Xi,x\vdash\gen e\beta\eta\ \mathsf{wf}.\]
+量化・局所定義・連言の整形式規則と、$R$ の kind 条件を合わせると $\Delta;\Xi\vdash G_e\ \mathsf{wf}$。
+自由名の計算と代入の計算は
+\begin{gather*}
+ \FPI(G_e)=\FV(e)\setminus\{x\},\\
+ \theta G_{\lambda x.e}=\exists\alpha,\eta,\beta.\ (\Def x{\mono\alpha}{\gen e\beta\eta})\land R(\arr\alpha\eta\beta,\theta\tau,\emp,\theta\epsilon).
+\end{gather*}
+最後の式は対応する生成式の要求型・効果を $\theta\tau,\theta\epsilon$ にしたものである。
+\end{Case}
+
+\begin{Case}{App}
+IH により
+\[\Delta,\alpha:0,\eta:1,\eta_1:1,\eta_2:1;\Xi\vdash\gen{e_1}{\arr\alpha\eta\tau}{\eta_1}\land\gen{e_2}\alpha{\eta_2}\ \mathsf{wf}.\]
+量化・局所定義・連言の整形式規則と、$R$ の kind 条件を合わせると $\Delta;\Xi\vdash G_e\ \mathsf{wf}$。
+自由名の計算と代入の計算は
+\begin{gather*}
+ \FPI(G_e)=\FV(e_1)\cup\FV(e_2),\\
+ \theta G_{e_1e_2}=\exists\alpha,\eta,\eta_1,\eta_2.\ \gen{e_1}{\arr\alpha\eta{\theta\tau}}{\eta_1}\land\gen{e_2}\alpha{\eta_2}\land(\eta\cup\eta_1)\cup\eta_2\leq\theta\epsilon.
+\end{gather*}
+最後の式は対応する生成式の要求型・効果を $\theta\tau,\theta\epsilon$ にしたものである。
+\end{Case}
+
+\begin{Case}{Let-Value}
+IH により
+\[\Delta,\alpha:0;\Xi\vdash\gen v\alpha\emp\ \mathsf{wf},\quad\Delta;\Xi,x\vdash\gen e\tau\epsilon\ \mathsf{wf}.\]
+量化・局所定義・連言の整形式規則と、$R$ の kind 条件を合わせると $\Delta;\Xi\vdash G_e\ \mathsf{wf}$。
+自由名の計算と代入の計算は
+\begin{gather*}
+ \FPI(G_e)=\FV(v)\cup(\FV(e)\setminus\{x\}),\\
+ \theta G_{\lete x v e}=\Let x{\forall\alpha.\gen v\alpha\emp\Rightarrow\alpha}{\gen e{\theta\tau}{\theta\epsilon}}.
+\end{gather*}
+最後の式は対応する生成式の要求型・効果を $\theta\tau,\theta\epsilon$ にしたものである。
+\end{Case}
+
+\begin{Case}{Let-Nonvalue}
+IH により
+\[\Delta,\alpha:0,\eta_1:1,\eta_2:1;\Xi\vdash\gen{e_1}\alpha{\eta_1}\ \mathsf{wf},\quad\Delta,\alpha,\eta_1,\eta_2;\Xi,x\vdash\gen{e_2}\tau{\eta_2}\ \mathsf{wf}.\]
+量化・局所定義・連言の整形式規則と、$R$ の kind 条件を合わせると $\Delta;\Xi\vdash G_e\ \mathsf{wf}$。
+自由名の計算と代入の計算は
+\begin{gather*}
+ \FPI(G_e)=\FV(e_1)\cup(\FV(e_2)\setminus\{x\}),\\
+ \theta G_{\lete x{e_1}{e_2}}=\exists\alpha,\eta_1,\eta_2.\ \gen{e_1}\alpha{\eta_1}\land\Def x{\mono\alpha}{\gen{e_2}{\theta\tau}{\eta_2}}\land\eta_1\cup\eta_2\leq\theta\epsilon.
+\end{gather*}
+最後の式は対応する生成式の要求型・効果を $\theta\tau,\theta\epsilon$ にしたものである。
+\end{Case}
+
+\begin{Case}{Perform}
+$\ops(\op)=\forall\bar\beta.P\Rightarrow\tau_1\to\tau_2$ のとき
+\begin{gather*}
+ \bar\beta;\emp\vdash P\ \mathsf{wf},\quad\bar\beta\vdash\tau_i:0,\quad
+ \Delta,\bar\beta,\eta:1;\Xi\vdash\gen e{\tau_1}\eta\ \mathsf{wf}\quad(\mathrm{IH}),\\
+ \FPI(G_{\perform\op e})=\FPI(P)\cup\FV(e)=\FV(e),\\
+ \theta G_{\perform\op e}=\exists\bar\beta,\eta.\
+ P\land\gen e{\tau_1}\eta\land R(\tau_2,\theta\tau,\{\op\}\cup\eta,\theta\epsilon).
+\end{gather*}
+宣言は閉じているので $\theta$ は $P,\tau_i$ を変えない。
+未宣言なら $G=\bot$、$\theta\bot=\bot$ で整形式。
+自由名の等式には宣言済み前提があり、未宣言の場合は含まない。
+\end{Case}
+
+\begin{Case}{Handle}
+宣言済みの場合、$\Delta'=\Delta,\alpha:0,\eta_0:1,\beta:0,\eta:1$ とおく。
+\begin{gather*}
+ \Delta';\Xi\vdash\gen e\alpha{\eta_0}\ \mathsf{wf},\quad
+ \Delta';\Xi,x\vdash\gen r\beta\eta\ \mathsf{wf},\\
+ \Delta',\bar\gamma;\Xi,x,k\vdash\gen c\beta\eta\ \mathsf{wf}\quad\text{（三つの IH）},\\
+ \FPI(H_c)=\FV(c)\setminus\{x,k\},\quad\FPI(P)=\emp,\\
+ \FPI(G_{\handle e h})=\FV(e)\cup(\FV(r)\setminus\{x\})
+                         \cup(\FV(c)\setminus\{x,k\}),\\
+ \begin{aligned}
+ \theta G_{\handle e h}=\exists\alpha,\eta_0,\beta,\eta.\ \bigl(&
+ \gen e\alpha{\eta_0}\land\eta_0\leq\{\op\}\cup\eta\\
+ &\land\Def x{\mono\alpha}{\gen r\beta\eta}\land H_c\\
+ &\land R(\beta,\theta\tau,\eta,\theta\epsilon)\bigr).
+ \end{aligned}
+\end{gather*}
+$H_c$ の含意前件は項名非依存なので全称含意は整形式。
+未宣言の場合は $G=\bot$、$\theta G=\bot$。
+\end{Case}
+環境付加では、$\Gamma$ の各束縛を順に用いて
+\[
+ \FPI(L_\Gamma G_e)=\FPI(G_e)\setminus\dom\Gamma
+                  =\FV(e)\setminus\dom\Gamma=\emp.
+\]
+各スキームは整形式・項名非依存なので、各 $\Let x\sigma{(-)}$ の整形式規則を適用できる。
+\end{proof}
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[生成の上界単調性と値の純粋性]\label{lem:gen-mono}
+有効な $\iota$ の下で
+\begin{align*}
+ \gen e\tau\epsilon\land\tau\leq\tau'\land\epsilon\leq\epsilon'
+ &\models\gen e{\tau'}{\epsilon'},\\
+ \Val(v)\land(\nu;\iota\models\gen v\tau\epsilon)
+ &\Longrightarrow\nu;\iota\models\gen v\tau\emp.
+\end{align*}
+第一式は割当てごとの主張であり、$e,\ops$ の宣言済み条件は不要。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:gen-mono}
+$e$ に帰納し、要求型・効果と有効な $\nu,\iota$ を一般化する。
+$\nu;\iota\models\gen e\tau\epsilon$、$\den\tau\leq\den{\tau'}$、
+$\den\epsilon\leq\den{\epsilon'}$ を固定する。IH は部分項の同じ主張である。
+以下の各式は同じ割当てで評価する。
+
+\begin{Case}{Var}
+\[
+ \den\tau\in\iota(x),\quad\den\tau\leq\den{\tau'}
+ \Longrightarrow\den{\tau'}\in\iota(x),\qquad
+ \emp^M\leq\den\epsilon\leq\den{\epsilon'}.
+\]
+第一式は有効環境の上方閉性。両式が新しい Var 生成である。
+\end{Case}
+
+\begin{Case}{Lam}
+元の存在証人 $\alpha,\eta,\beta$ と本体制約を保持する。
+\[
+ \den{\arr\alpha\eta\beta}\leq\den\tau\leq\den{\tau'},\qquad
+ \emp^M\leq\den\epsilon\leq\den{\epsilon'}
+ \Longrightarrow R(\arr\alpha\eta\beta,\tau',\emp,\epsilon').
+\]
+\end{Case}
+
+\begin{Case}{App}
+\begin{gather*}
+ \den{\arr\alpha\eta\tau}\leq\den{\arr\alpha\eta{\tau'}}
+       \quad\text{（矢印順序、出力の共変性）},\\
+ \gen{e_1}{\arr\alpha\eta\tau}{\eta_1}
+ \xRightarrow{\mathrm{IH}_1}\gen{e_1}{\arr\alpha\eta{\tau'}}{\eta_1},\\
+ \gen{e_2}\alpha{\eta_2}\text{ を保持},\qquad
+ \den{(\eta\cup\eta_1)\cup\eta_2}\leq\den\epsilon\leq\den{\epsilon'}.
+\end{gather*}
+同じ四証人が新しい生成を満たす。
+\end{Case}
+
+\begin{Case}{Let-Value}
+$\sigma=\forall\alpha.\gen v\alpha\emp\Rightarrow\alpha$ は要求型・効果に依存しない。
+\[
+ \Feas(\sigma),\quad\nu;\iota[x\mapsto\den\sigma]\models\gen e\tau\epsilon
+ \xRightarrow{\mathrm{IH}_e}
+ \Feas(\sigma),\quad\nu;\iota[x\mapsto\den\sigma]\models\gen e{\tau'}{\epsilon'}.
+\]
+更新環境はスキームの上方閉性により有効。
+\end{Case}
+
+\begin{Case}{Let-Nonvalue}
+\begin{gather*}
+ \gen{e_1}\alpha{\eta_1}\text{ を保持},\qquad
+ \nu;\iota[x\mapsto\den{\mono\alpha}]\models\gen{e_2}\tau{\eta_2}
+ \xRightarrow{\mathrm{IH}_2}\nu;\iota[x\mapsto\den{\mono\alpha}]\models\gen{e_2}{\tau'}{\eta_2},\\
+ \den{\eta_1\cup\eta_2}\leq\den\epsilon\leq\den{\epsilon'}.
+\end{gather*}
+同じ共有型・効果証人で\eqref{g:mono}を構成する。
+\end{Case}
+
+\begin{Case}{Perform}
+未宣言なら $\nu;\iota\models\bot\Rightarrow\bot$。
+宣言済みでは存在証人・内部生成・条件をすべて保持し、
+\[
+ \den{\tau_2}\leq\den\tau\leq\den{\tau'},\qquad
+ \den{\{\op\}\cup\eta}\leq\den\epsilon\leq\den{\epsilon'}
+ \Longrightarrow R(\tau_2,\tau',\{\op\}\cup\eta,\epsilon').
+\]
+条件 $P$ と引数生成は同じ証人の下で保たれる。
+\end{Case}
+
+\begin{Case}{Handle}
+未宣言なら $\nu;\iota\models\bot\Rightarrow\bot$。
+宣言済みでは存在証人・内部生成・条件をすべて保持し、
+\[
+ \den{\beta}\leq\den\tau\leq\den{\tau'},\qquad
+ \den{\eta}\leq\den\epsilon\leq\den{\epsilon'}
+ \Longrightarrow R(\beta,\tau',\eta,\epsilon').
+\]
+全称節と継続型の内部変数は変更しない。
+\end{Case}
+
+\begin{Case}{Pure-Var}
+\[
+ \gen x\tau\epsilon\Longrightarrow\inst x\tau,\qquad
+ \inst x\tau\land\emp\leq\emp\Longrightarrow\gen x\tau\emp.
+\]
+\end{Case}
+
+\begin{Case}{Pure-Lam}
+\[
+ \gen{\lambda x.e}\tau\epsilon
+ \Longrightarrow\exists\alpha,\eta,\beta.\
+ \Def x{\mono\alpha}{\gen e\beta\eta}\land\arr\alpha\eta\beta\leq\tau.
+\]
+同じ証人に $\emp\leq\emp$ を加えると $\gen{\lambda x.e}\tau\emp$。
+値の定義は Var と Lam だけなので、純粋性の全場合を尽くす。
+\end{Case}
+\end{proof}
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[生成の評価値への依存]\label{lem:rebase}
+$S,\ops$ が整形式で $e$ が作用域内にあるとする。
+大域自由変数の割当てを共通にし、局所割当て $\nu,\nu'$ と要求型・効果が
+$\den\tau_\nu=\den{\tau'}_{\nu'}$、
+$\den\epsilon_\nu=\den{\epsilon'}_{\nu'}$ を満たすなら
+\[
+ \nu;\iota\models\gen e\tau\epsilon
+ \ \Longleftrightarrow\
+ \nu';\iota\models\gen e{\tau'}{\epsilon'}.
+\]
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:rebase}
+大域自由変数の共通割当てを $\rho$ とする。$\alpha:0,\eta:1$ を新鮮に選び、
+$B=\gen e\alpha\eta$、$\theta=[\tau/\alpha,\epsilon/\eta]$ と置く。
+\begin{align*}
+ \nu;\iota\models\gen e\tau\epsilon
+ &\Longleftrightarrow\nu;\iota\models\theta B
+       &&\text{（補題\ref{lem:gen-wf}）},\\
+ &\Longleftrightarrow\rho[\alpha\mapsto\den\tau_\nu,
+                         \eta\mapsto\den\epsilon_\nu];\iota\models B
+       &&\text{（補題\ref{lem:semantic-subst}）},\\
+ &\Longleftrightarrow\rho[\alpha\mapsto\den{\tau'}_{\nu'},
+                         \eta\mapsto\den{\epsilon'}_{\nu'}];\iota\models B
+       &&\text{（二つの評価値の等しさ）},\\
+ &\Longleftrightarrow\nu';\iota\models\gen e{\tau'}{\epsilon'}
+       &&\text{（同じ二補題、逆方向）}.
+\end{align*}
+中間の割当ては意味値を直接変数に割り当てる。意味値を表す型構文の存在は用いない。
+\end{proof}
+
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[閉じた生成スキームと値 let]\label{lem:generated}
+値 $v$ は $\Gamma$ の作用域内で宣言済みとし、
+\[
+ \sigma_v^\Gamma=\forall\alpha:0.
+       \infers\Gamma v\alpha\emp\Rightarrow\alpha
+ \qquad(\alpha\#\Gamma)
+\]
+とおく。このスキームは項環境に依存せず整形式。
+$\nu;\iota\models\Feas(\Gamma)$ の下で
+\[
+ \den{\sigma_v^\Gamma}_{\nu,\iota}
+ =\den{\forall\alpha.\gen v\alpha\emp\Rightarrow\alpha}_{\nu,\Gamma_\nu(\iota)}.
+\]
+さらに
+\begin{equation}\label{eq:valuelet}
+ \infers\Gamma{\lete x v e}\tau\epsilon
+ \equiv\infers{\Gamma,x:\sigma_v^\Gamma}e\tau\epsilon.
+\end{equation}
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:generated}
+$\kappa=\Gamma_\nu(\iota)$、$\sigma_g=\sigma_v^\Gamma$、
+$\sigma_o=\forall\alpha.\gen v\alpha\emp\Rightarrow\alpha$ と置く。
+補題\ref{lem:gen-wf}から
+\[
+ \Delta;\emp\vdash\sigma_g\ \mathsf{wf},\qquad\FPI(\sigma_g)=\emp.
+\]
+$\nu;\iota\models\Feas(\Gamma)$ の下で、任意の $b\in M_0$ に対し
+\begin{align*}
+ b\in\den{\sigma_g}_{\nu,\iota}
+ &\Longleftrightarrow\exists a\in M_0.\
+     \nu[\alpha\mapsto a];\iota\models\infers\Gamma v\alpha\emp\ \land\ a\leq b\\
+ &\xLeftrightarrow{\eqref{env:holds}}\exists a\in M_0.\
+     \nu[\alpha\mapsto a];\kappa\models\gen v\alpha\emp\ \land\ a\leq b\\
+ &\Longleftrightarrow b\in\den{\sigma_o}_{\nu,\kappa}.
+\end{align*}
+第二行で $\alpha\#\Gamma$ を用いた。従って集合が等しく、\eqref{eq:nonempty}から実現可能性も同値。
+値 let については
+\begin{align*}
+ \nu;\iota\models\infers\Gamma{\lete x v e}\tau\epsilon
+ &\Longleftrightarrow\nu;\iota\models\Feas(\Gamma)\ \land\
+   \nu;\kappa\models\Feas(\sigma_o)\\
+ &\hspace{2em}\land\ \nu;\kappa[x\mapsto\den{\sigma_o}_{\nu,\kappa}]\models\gen e\tau\epsilon\\
+ &\Longleftrightarrow\nu;\iota\models\Feas(\Gamma)\land\Feas(\sigma_g)\\
+ &\hspace{2em}\land\ \nu;\kappa[x\mapsto\den{\sigma_g}_{\nu,\iota}]\models\gen e\tau\epsilon\\
+ &\xLeftrightarrow{\eqref{env:push},\eqref{env:holds}}
+   \nu;\iota\models\infers{\Gamma,x:\sigma_g}e\tau\epsilon.
+\end{align*}
+\end{proof}
+
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[宣言スキームから生成スキームへの包含]\label{lem:comparison}
+整形式 $\sigma=\forall\bar\alpha.D\Rightarrow\tau_0$ と上の $\sigma_v^\Gamma$ をとる。
+有効 $\nu,\iota$ で $\Feas(\Gamma)$ が成立し、次の\textbf{右辺だけの局所仮定}があるとする：
+\[
+ \forall\bar a\in M_{\bar\kappa}.\quad
+ \nu[\bar\alpha\mapsto\bar a];\iota\models D
+ \ \Longrightarrow\
+ \nu[\bar\alpha\mapsto\bar a];\iota\models\infers\Gamma v{\tau_0}\emp.
+\]
+このとき $\den\sigma_{\nu,\iota}\subseteq\den{\sigma_v^\Gamma}_{\nu,\iota}$。
+$\Feas(\sigma)$ も成立するなら $\Feas(\sigma_v^\Gamma)$ も成立する。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:comparison}
+$\kappa=\Gamma_\nu(\iota)$ とおく。任意の $b\in\den\sigma_{\nu,\iota}$ について
+\begin{gather*}
+ \exists\bar a.\quad\nu_a;\iota\models D,\qquad
+ a_0=\den{\tau_0}_{\nu_a}\leq b,\qquad\nu_a=\nu[\bar\alpha\mapsto\bar a],\\
+ \nu_a;\iota\models D
+ \xRightarrow{\text{局所仮定}}\nu_a;\iota\models\infers\Gamma v{\tau_0}\emp
+ \xRightarrow{\eqref{env:holds}}\nu_a;\kappa\models\gen v{\tau_0}\emp.
+\end{gather*}
+新鮮な $\alpha,\beta$ に $a_0,b$ を割り当てると
+\begin{align*}
+ \nu_a;\kappa\models\gen v{\tau_0}\emp
+ &\xRightarrow{\text{補題\ref{lem:rebase}}}
+       \nu[\alpha\mapsto a_0,\beta\mapsto b];\kappa\models\gen v\alpha\emp,\\
+ &\xRightarrow{a_0\leq b,\ \text{補題\ref{lem:gen-mono}}}
+       \nu[\alpha\mapsto a_0,\beta\mapsto b];\kappa\models\gen v\beta\emp,\\
+ &\xRightarrow{\text{補題\ref{lem:rebase}}}
+       \nu[\alpha\mapsto b];\kappa\models\gen v\alpha\emp,\\
+ &\xRightarrow{b\leq b,\ \text{補題\ref{lem:generated}}}
+       b\in\den{\sigma_v^\Gamma}_{\nu,\iota}.
+\end{align*}
+これで包含を得る。実現可能性は別に
+\[
+ \nu;\iota\models\Feas(\sigma)
+ \xRightarrow{\eqref{eq:nonempty}}\exists b.\ b\in\den\sigma
+ \xRightarrow{\subseteq}\exists b.\ b\in\den{\sigma_v^\Gamma}
+ \xRightarrow{\eqref{eq:nonempty}}\nu;\iota\models\Feas(\sigma_v^\Gamma).
+\]
+完全性定理全体と意味値の構文的表現可能性は使っていない。
+\end{proof}
+
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[存在生成式の内側での構成]\label{lem:exists-case}
+$\gen e\tau\epsilon=\exists\bar\alpha.D$ とし、$\ent C{\infers\Gamma e\tau\epsilon}$ と
+結論 $\J e\tau\epsilon$ の整形式性を仮定する。
+$\Delta,\bar\alpha;L_\Gamma(D);\Gamma\vdash e:\tau\,!\,\epsilon$ を構成できれば
+$\J e\tau\epsilon$ を得る。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:exists-case}
+$\bar\alpha\#(C,\Gamma,\tau,\epsilon)$ となるよう束縛名を選ぶ。
+\begin{gather*}
+ C\models\infers\Gamma e\tau\epsilon
+ =L_\Gamma(\exists\bar\alpha.D)
+ \equiv\exists\bar\alpha.L_\Gamma(D)\quad\text{（\eqref{env:exists}）},\\
+ \inferrule{\jj{\Delta,\bar\alpha}{L_\Gamma(D)}\Gamma e\tau\epsilon}
+      {\jj\Delta{\exists\bar\alpha.L_\Gamma(D)}\Gamma e\tau\epsilon}\;\Rule{Exists},\\
+ \inferrule{\jj\Delta{\exists\bar\alpha.L_\Gamma(D)}\Gamma e\tau\epsilon
+       \qquad C\models\exists\bar\alpha.L_\Gamma(D)}
+      {\jj\Delta C\Gamma e\tau\epsilon}\;\Rule{Strengthen}.
+\end{gather*}
+内側制約の整形式性と項名非依存性は補題\ref{lem:gen-wf}、\ref{lem:env}による。
+\end{proof}
+
+
+\proofspace
+\section{型・効果代入、弱化、スキーム値代入}
+\label{app:structural}
+\proofspace
+\begin{samepage}
+\begin{lemma}[型・効果代入]\label{lem:typing-subst}
+$\J e\tau\epsilon$ と有効な kind 保存代入 $\theta:\Delta\to\Delta'$ に対し
+\[
+ \jj{\Delta'}{\theta C}{\theta\Gamma}e{\theta\tau}{\theta\epsilon}.
+\]
+公開の対応は \lean{typingTypeEffectSubstitution}。操作節の型引数列もこの補題で具体化できる。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:typing-subst}
+型付け導出に帰納し、$\Delta',\theta$ を一般化する。
+各 IH は前提導出を任意の有効代入で移す命題である。
+$\theta^+$ は新鮮に改名した束縛変数を固定する拡張。
+補題\ref{lem:binding}が全結論の整形式性を与え、補題\ref{lem:semantic-subst}が
+$C\models D\Rightarrow\theta C\models\theta D$ を与える。
+
+\begin{Case}{Var}
+\[
+ (\theta\Gamma)(x)=\theta(\Gamma(x))=\theta\sigma,\qquad
+ \theta C\models\theta(\inst\sigma\tau)=\inst{\theta\sigma}{\theta\tau}.
+\]
+\[
+\inferrule*[right=Var]{(\theta\Gamma)(x)=\theta\sigma\quad\theta C\models\inst{\theta\sigma}{\theta\tau}}{\jj{\Delta'}{\theta C}{\theta\Gamma}{x}{\theta\tau}{\emp}}
+\]
+\end{Case}
+
+\begin{Case}{Lam}
+本体の IH を $\theta$ に適用する。
+$\theta(\Gamma,x:\mono{\tau_1})=\theta\Gamma,x:\mono{\theta\tau_1}$ より
+\[
+\inferrule*[right=Lam]{\jj{\Delta'}{\theta C}{\theta\Gamma,x:\mono{\theta\tau_1}}{e}{\theta\tau_2}{\theta\eta}\quad(\mathrm{IH})}{\jj{\Delta'}{\theta C}{\theta\Gamma}{\lambda x.e}{\arr{\theta\tau_1}{\theta\eta}{\theta\tau_2}}{\emp}}
+\]
+\end{Case}
+
+\begin{Case}{App}
+二つの IH を同じ $\theta$ に適用する。
+\[
+\inferrule*[right=App]{\jj{\Delta'}{\theta C}{\theta\Gamma}{e_1}{\arr{\theta\tau_1}{\theta\eta}{\theta\tau}}{\theta\epsilon_1}\\\jj{\Delta'}{\theta C}{\theta\Gamma}{e_2}{\theta\tau_1}{\theta\epsilon_2}}{\jj{\Delta'}{\theta C}{\theta\Gamma}{e_1e_2}{\theta\tau}{(\theta\epsilon_1\cup\theta\epsilon_2)\cup\theta\eta}}
+\]
+効果は $\theta((\epsilon_1\cup\epsilon_2)\cup\eta)$ に等しい。
+\end{Case}
+
+\begin{Case}{Let-Mono}
+右辺と本体の IH はそれぞれ次の上段を与える。
+\[
+\inferrule*[right=Let-Mono]{\jj{\Delta'}{\theta C}{\theta\Gamma}{e_1}{\theta\tau_1}{\theta\epsilon_1}\\\jj{\Delta'}{\theta C}{\theta\Gamma,x:\mono{\theta\tau_1}}{e_2}{\theta\tau}{\theta\epsilon_2}}{\jj{\Delta'}{\theta C}{\theta\Gamma}{\lete x{e_1}{e_2}}{\theta\tau}{\theta\epsilon_1\cup\theta\epsilon_2}}
+\]
+\end{Case}
+
+\begin{Case}{Let-Poly}
+$\sigma=\forall\bar\alpha.D\Rightarrow\tau_1$、
+$\theta\sigma=\forall\bar\alpha.\theta^+D\Rightarrow\theta^+\tau_1$ とする。
+\[
+ C\models\exists\bar\alpha.D\Longrightarrow
+ \theta C\models\exists\bar\alpha.\theta^+D.
+\]
+右辺に $\theta^+$、本体に $\theta$ の IH を適用すると
+\[
+\inferrule*[right=Let-Poly]{\jj{\Delta',\bar\alpha}{\theta C\land\theta^+D}{\theta\Gamma}{v}{\theta^+\tau_1}{\emp}\\\jj{\Delta'}{\theta C}{\theta\Gamma,x:\theta\sigma}{e}{\theta\tau}{\theta\epsilon}\\\Val(v)\quad\theta C\models\exists\bar\alpha.\theta^+D}{\jj{\Delta'}{\theta C}{\theta\Gamma}{\lete x v e}{\theta\tau}{\theta\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Perform}
+閉じた宣言について
+\[
+ \theta(P[\bar t/\bar\beta])=P[\theta\bar t/\bar\beta],\qquad
+ \theta(\tau_i[\bar t/\bar\beta])=\tau_i[\theta\bar t/\bar\beta].
+\]
+引数の IH と条件含意の代入から
+\[
+\inferrule*[right=Perform]{\jj{\Delta'}{\theta C}{\theta\Gamma}{e}{\tau_1[\theta\bar t/\bar\beta]}{\theta\epsilon_0}\\\theta C\models P[\theta\bar t/\bar\beta]}{\jj{\Delta'}{\theta C}{\theta\Gamma}{\perform\op e}{\tau_2[\theta\bar t/\bar\beta]}{\{\op\}\cup\theta\epsilon_0}}
+\]
+\end{Case}
+
+\begin{Case}{Handle}
+本体・return に $\theta$、節に $\theta^+$ の IH を適用する。
+\begin{gather*}
+ \Gamma'_r=\theta\Gamma,x:\mono{\theta\tau_0},\qquad
+ \Gamma'_c=\theta\Gamma,x:\mono{\tau_1},k:\mono{\arr{\tau_2}{\theta\epsilon}{\theta\tau}},\\
+ \theta^+(C\land P)=\theta C\land P,\quad
+ \theta C\models\theta\epsilon_0\leq\{\op\}\cup\theta\epsilon.
+\end{gather*}
+\[
+\inferrule*[right=Handle]{\jj{\Delta'}{\theta C}{\theta\Gamma}{e}{\theta\tau_0}{\theta\epsilon_0}\\\jj{\Delta'}{\theta C}{\Gamma'_r}{r}{\theta\tau}{\theta\epsilon}\\\jj{\Delta',\bar\beta}{\theta C\land P}{\Gamma'_c}{c}{\theta\tau}{\theta\epsilon}\\\theta C\models\theta\epsilon_0\leq\{\op\}\cup\theta\epsilon}{\jj{\Delta'}{\theta C}{\theta\Gamma}{\handle e h}{\theta\tau}{\theta\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Sub}
+\[
+\inferrule*[right=Sub]{\jj{\Delta'}{\theta C}{\theta\Gamma}{e}{\theta\tau_0}{\theta\epsilon_0}\quad(\mathrm{IH})\\\theta C\models\theta\tau_0\leq\theta\tau\quad\theta C\models\theta\epsilon_0\leq\theta\epsilon}{\jj{\Delta'}{\theta C}{\theta\Gamma}{e}{\theta\tau}{\theta\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Strengthen}
+\[
+\inferrule*[right=Strengthen]{\jj{\Delta'}{\theta C_0}{\theta\Gamma}{e}{\theta\tau}{\theta\epsilon}\quad(\mathrm{IH})\\\theta C\models\theta C_0}{\jj{\Delta'}{\theta C}{\theta\Gamma}{e}{\theta\tau}{\theta\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Exists}
+$\bar\alpha\#(\theta\Gamma,\theta\tau,\theta\epsilon)$ として
+\[
+\inferrule*[right=Exists]{\jj{\Delta',\bar\alpha}{\theta^+D}{\theta\Gamma}{e}{\theta\tau}{\theta\epsilon}\quad(\mathrm{IH}_{\theta^+})}{\jj{\Delta'}{\exists\bar\alpha.\theta^+D}{\theta\Gamma}{e}{\theta\tau}{\theta\epsilon}}
+\]
+$\exists\bar\alpha.\theta^+D=\theta(\exists\bar\alpha.D)$。
+\end{Case}
+\end{proof}
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[弱化・制約強化]\label{lem:weakening}
+型付け導出 $\J e\tau\epsilon$ は、新鮮な項名への整形式・項環境非依存スキームの
+任意の位置での挿入を許す。また $D\models C$ なら制約を整形式な $D$ に強化できる。
+新鮮な型変数を加えても型付けは保たれる。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:weakening}
+型付け導出に帰納し、挿入位置、$z,\sigma_z$ を一般化する。
+$\Gamma=\Gamma_0,\Gamma_1$、$\Gamma^+=\Gamma_0,z:\sigma_z,\Gamma_1$ とおく。
+全束縛名を $z$ と $\sigma_z$ の自由型変数から新鮮に選ぶ。
+IH は各前提の環境の同じ位置へ束縛を挿入する命題である。
+
+\begin{Case}{Var}
+\[z\notin\dom\Gamma,\quad x\in\dom\Gamma
+ \Longrightarrow x\ne z\ \land\ \Gamma^+(x)=\Gamma(x)=\sigma.\]
+\[
+\inferrule*[right=Var]{\Gamma^+(x)=\sigma\quad C\models\inst\sigma\tau}{\jj{\Delta}{C}{\Gamma^+}{x}{\tau}{\emp}}
+\]
+\end{Case}
+
+\begin{Case}{Lam}
+本体の IH の挿入は $x$ より外側で行う。
+\[
+\inferrule*[right=Lam]{\jj{\Delta}{C}{\Gamma^+,x:\mono{\tau_1}}{e}{\tau_2}{\eta}\quad(\mathrm{IH})}{\jj{\Delta}{C}{\Gamma^+}{\lambda x.e}{\arr{\tau_1}\eta{\tau_2}}{\emp}}
+\]
+\end{Case}
+
+\begin{Case}{App}
+\[
+\inferrule*[right=App]{\jj{\Delta}{C}{\Gamma^+}{e_1}{\arr{\tau_1}\eta\tau}{\epsilon_1}\quad(\mathrm{IH}_1)\\\jj{\Delta}{C}{\Gamma^+}{e_2}{\tau_1}{\epsilon_2}\quad(\mathrm{IH}_2)}{\jj{\Delta}{C}{\Gamma^+}{e_1e_2}{\tau}{(\epsilon_1\cup\epsilon_2)\cup\eta}}
+\]
+\end{Case}
+
+\begin{Case}{Let-Mono}
+\[
+\inferrule*[right=Let-Mono]{\jj{\Delta}{C}{\Gamma^+}{e_1}{\tau_1}{\epsilon_1}\quad(\mathrm{IH}_1)\\\jj{\Delta}{C}{\Gamma^+,x:\mono{\tau_1}}{e_2}{\tau}{\epsilon_2}\quad(\mathrm{IH}_2)}{\jj{\Delta}{C}{\Gamma^+}{\lete x{e_1}{e_2}}{\tau}{\epsilon_1\cup\epsilon_2}}
+\]
+\end{Case}
+
+\begin{Case}{Let-Poly}
+$\sigma=\forall\bar\alpha.D\Rightarrow\tau_1$、$\bar\alpha\#\sigma_z$ とする。
+補題\ref{lem:binding}により $\sigma_z$ は $\Delta,\bar\alpha$ でも整形式。
+\[
+\inferrule*[right=Let-Poly]{\jj{\Delta,\bar\alpha}{C\land D}{\Gamma^+}{v}{\tau_1}{\emp}\quad(\mathrm{IH}_v)\\\jj{\Delta}{C}{\Gamma^+,x:\sigma}{e}{\tau}{\epsilon}\quad(\mathrm{IH}_e)\\\Val(v)\quad C\models\exists\bar\alpha.D}{\jj{\Delta}{C}{\Gamma^+}{\lete x v e}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Perform}
+\[
+\inferrule*[right=Perform]{\jj{\Delta}{C}{\Gamma^+}{e}{\tau_1[\bar t/\bar\beta]}{\epsilon_0}\quad(\mathrm{IH})\\ C\models P[\bar t/\bar\beta]}{\jj{\Delta}{C}{\Gamma^+}{\perform\op e}{\tau_2[\bar t/\bar\beta]}{\{\op\}\cup\epsilon_0}}
+\]
+\end{Case}
+
+\begin{Case}{Handle}
+$\Gamma_c^+=\Gamma^+,x:\mono{\tau_1},k:\mono{\arr{\tau_2}\epsilon\tau}$ と置く。
+return の $x$、節の $x,k$ より外側へ挿入する。
+\[
+\inferrule*[right=Handle]{\jj{\Delta}{C}{\Gamma^+}{e}{\tau_0}{\epsilon_0}\quad(\mathrm{IH}_e)\\\jj{\Delta}{C}{\Gamma^+,x:\mono{\tau_0}}{r}{\tau}{\epsilon}\quad(\mathrm{IH}_r)\\\jj{\Delta,\bar\beta}{C\land P}{\Gamma_c^+}{c}{\tau}{\epsilon}\quad(\mathrm{IH}_c)\\ C\models\epsilon_0\leq\{\op\}\cup\epsilon}{\jj{\Delta}{C}{\Gamma^+}{\handle e h}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Sub}
+\[
+\inferrule*[right=Sub]{\jj{\Delta}{C}{\Gamma^+}{e}{\tau_0}{\epsilon_0}\quad(\mathrm{IH})\\ C\models\tau_0\leq\tau\quad C\models\epsilon_0\leq\epsilon}{\jj{\Delta}{C}{\Gamma^+}{e}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Strengthen}
+\[
+\inferrule*[right=Strengthen]{\jj{\Delta}{C_0}{\Gamma^+}{e}{\tau}{\epsilon}\quad(\mathrm{IH})\qquad C\models C_0}{\jj{\Delta}{C}{\Gamma^+}{e}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Exists}
+\[
+\inferrule*[right=Exists]{\jj{\Delta,\bar\alpha}{D}{\Gamma^+}{e}{\tau}{\epsilon}\quad(\mathrm{IH})\\\bar\alpha\#(\Gamma^+,\tau,\epsilon)}{\jj{\Delta}{\exists\bar\alpha.D}{\Gamma^+}{e}{\tau}{\epsilon}}
+\]
+\end{Case}
+制約強化と型文脈拡張はそれぞれ
+\[
+ \inferrule*[right=Strengthen]{\J e\tau\epsilon\quad D\models C}
+       {\jj\Delta D\Gamma e\tau\epsilon},\qquad
+ \inferrule*{\J e\tau\epsilon\quad\rho:\Delta\hookrightarrow\Delta,\bar\alpha}
+       {\jj{\Delta,\bar\alpha}C\Gamma e\tau\epsilon}
+       \;\text{（補題\ref{lem:typing-subst}）}.
+\]
+節の強化には $D\land P\models C\land P$ を使い、条件 $P$ を保持する。
+\end{proof}
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[型付けが与える作用域と宣言]\label{lem:declared}
+型付け可能な項は作用域内にあり、その全操作は宣言済みである。
+空環境で型付けされた項は閉じている。未宣言操作の呼出しは、矛盾した制約の下でも型付けできない。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:declared}
+作用域については各規則の結論の整形式性から
+$\FV(e)\subseteq\dom\Gamma$。宣言済み条件を型付け導出に帰納して示す。
+$O(e)$ を項に現れる操作名の集合とする。IH は部分項 $e_i$ の $O(e_i)\subseteq\dom\ops$。
+
+\begin{Case}{Var}
+\[O(x)=\emp\subseteq\dom\ops.\]
+各非空成分に IH を適用する。
+\end{Case}
+
+\begin{Case}{Lam}
+\[O(\lambda x.e)=O(e)\subseteq\dom\ops.\]
+各非空成分に IH を適用する。
+\end{Case}
+
+\begin{Case}{App}
+\[O(e_1e_2)=O(e_1)\cup O(e_2)\subseteq\dom\ops.\]
+各非空成分に IH を適用する。
+\end{Case}
+
+\begin{Case}{Let-Mono}
+\[O(\lete x{e_1}{e_2})=O(e_1)\cup O(e_2)\subseteq\dom\ops.\]
+各非空成分に IH を適用する。
+\end{Case}
+
+\begin{Case}{Let-Poly}
+\[O(\lete x v e)=O(v)\cup O(e)\subseteq\dom\ops.\]
+各非空成分に IH を適用する。
+\end{Case}
+
+\begin{Case}{Perform}
+\[O(\perform\op e)=\{\op\}\cup O(e)\subseteq\dom\ops.\]
+$\op\in\dom\ops$ は規則の宣言検索、他の成分は IH による。
+\end{Case}
+
+\begin{Case}{Handle}
+\[O(\handle e h)=\{\op\}\cup O(e)\cup O(r)\cup O(c)\subseteq\dom\ops.\]
+$\op\in\dom\ops$ は規則の宣言検索、他の成分は IH による。
+\end{Case}
+
+\begin{Case}{Sub}
+\[O(e)\subseteq\dom\ops\quad(\mathrm{IH})\]
+前提と結論の項 $e$ は同じなので、この式が結論である。
+\end{Case}
+
+\begin{Case}{Strengthen}
+\[O(e)\subseteq\dom\ops\quad(\mathrm{IH})\]
+前提と結論の項 $e$ は同じなので、この式が結論である。
+\end{Case}
+
+\begin{Case}{Exists}
+\[O(e)\subseteq\dom\ops\quad(\mathrm{IH})\]
+前提と結論の項 $e$ は同じなので、この式が結論である。
+\end{Case}
+従って
+\begin{gather*}
+ \Gamma=\emp\Rightarrow\FV(e)\subseteq\emp,\\
+ \op\notin\dom\ops\land\J{\perform\op e}\tau\epsilon
+ \Rightarrow\op\in\dom\ops\land\op\notin\dom\ops\Rightarrow\bot.
+\end{gather*}
+後者は $C$ の充足可能性を使わない。
+\end{proof}
+
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[値の純粋性と構文的性質]\label{lem:values}
+$\J v\tau\epsilon$ と $\Val(v)$ から $\J v\tau\emp$。
+閉じた値は $\lambda x.e$ の形である。値は一歩簡約しない。
+$E[e]$ が値なら $e$ は値である。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:values}
+純粋性は型付け導出に帰納し、$\Val(v)$ を一般化する。
+IH は各前提が値なら効果を空にした型付けを与える。
+
+\begin{Case}{Var}
+\[\jj\Delta C\Gamma{x}{\tau}\emp.\]
+規則の結論自体が空効果である。
+\end{Case}
+
+\begin{Case}{Lam}
+\[\jj\Delta C\Gamma{\lambda x.e}{\arr{\tau_1}\eta{\tau_2}}\emp.\]
+規則の結論自体が空効果である。
+\end{Case}
+
+\begin{Case}{App}
+\[\Val(e_1e_2)\ \land\ (e_1e_2)\notin\{x,\lambda x.e_0\}\ \Longrightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Let-Mono}
+\[\Val(\lete x{e_1}{e_2})\ \land\ (\lete x{e_1}{e_2})\notin\{x,\lambda x.e_0\}\ \Longrightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Let-Poly}
+\[\Val(\lete x v e)\ \land\ (\lete x v e)\notin\{x,\lambda x.e_0\}\ \Longrightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Perform}
+\[\Val(\perform\op e)\ \land\ (\perform\op e)\notin\{x,\lambda x.e_0\}\ \Longrightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Handle}
+\[\Val(\handle e h)\ \land\ (\handle e h)\notin\{x,\lambda x.e_0\}\ \Longrightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Sub}
+\[
+\inferrule*[right=Sub]{\J v{\tau_0}\emp\quad(\mathrm{IH})\\ C\models\tau_0\leq\tau\quad C\models\emp\leq\emp}{\J v\tau\emp}
+\]
+\end{Case}
+
+\begin{Case}{Strengthen}
+\[
+\inferrule*[right=Strengthen]{\jj\Delta{C_0}\Gamma v\tau\emp\quad(\mathrm{IH})\quad C\models C_0}{\J v\tau\emp}
+\]
+\end{Case}
+
+\begin{Case}{Exists}
+\[
+\inferrule*[right=Exists]{\jj{\Delta,\bar\alpha}D\Gamma v\tau\emp\quad(\mathrm{IH})\quad\bar\alpha\#(\Gamma,\tau,\emp)}{\jj\Delta{\exists\bar\alpha.D}\Gamma v\tau\emp}
+\]
+\end{Case}
+
+\begin{Case}{Closed-Var}
+\[\FV(x)=\{x\}\ne\emp\quad\Longrightarrow\quad x\text{ は閉値でない}.\]
+\end{Case}
+
+\begin{Case}{Closed-Lam}
+\[\Val(v)\land\FV(v)=\emp\land v\ne x\quad\Longrightarrow\quad\exists x,e.\ v=\lambda x.e.\]
+\end{Case}
+
+\begin{Case}{Context-Hole}
+\[E=[\ ]\Longrightarrow(E[e]=e)\Longrightarrow(\Val(E[e])\Rightarrow\Val(e)).\]
+\end{Case}
+
+\begin{Case}{Context-App-Fun}
+\[E[e]=F[e]e_2\Longrightarrow\neg\Val(E[e]).\]
+\end{Case}
+
+\begin{Case}{Context-App-Arg}
+\[E[e]=vF[e]\Longrightarrow\neg\Val(E[e]).\]
+\end{Case}
+
+\begin{Case}{Context-Let-RHS}
+\[E[e]=\lete x{F[e]}{e_2}\Longrightarrow\neg\Val(E[e]).\]
+\end{Case}
+
+\begin{Case}{Context-Perform}
+\[E[e]=\perform\op{F[e]}\Longrightarrow\neg\Val(E[e]).\]
+\end{Case}
+
+\begin{Case}{Context-Handle}
+\[E[e]=\handle{F[e]}h\Longrightarrow\neg\Val(E[e]).\]
+\end{Case}
+
+\begin{Case}{No-Step-Beta}
+\[e_0=(\lambda x.e)v\Longrightarrow\neg\Val(e_0).\]
+\end{Case}
+
+\begin{Case}{No-Step-Let-Value}
+\[e_0=\lete x v e\Longrightarrow\neg\Val(e_0).\]
+\end{Case}
+
+\begin{Case}{No-Step-Return}
+\[e_0=\handle v h\Longrightarrow\neg\Val(e_0).\]
+\end{Case}
+
+\begin{Case}{No-Step-Operation}
+\[e_0=\handle{E[\perform\op v]}h\Longrightarrow\neg\Val(e_0).\]
+\end{Case}
+
+\begin{Case}{No-Step-Context}
+\[\Val(E[e_0]),\quad e_0\longrightarrow e_1
+ \Longrightarrow\Val(e_0)\land\neg\Val(e_0)\Longrightarrow\bot.\]
+第二成分は内側の簡約導出への IH、第一成分は上の文脈の性質。
+\end{Case}
+\end{proof}
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[一般化された値の各利用での具体化]\label{lem:scheme-inst}
+$\sigma=\forall\bar\alpha.D\Rightarrow\tau_0$ とし、
+\[
+ \jj{\Delta,\bar\alpha}{C\land D}\Gamma v{\tau_0}\emp
+\]
+を仮定する。整形式な $E$、$E\models C$、$E\models\inst\sigma\tau$ と
+結論の整形式性があれば $\jj\Delta E\Gamma v\tau\emp$。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:scheme-inst}
+$\bar\alpha\#(E,\Gamma,\tau)$ とし、内側で $K=E\land D\land\tau_0\leq\tau$ と置く。
+\begin{gather*}
+ K\models E\models C,\quad K\models D\quad\Longrightarrow K\models C\land D,\\
+ \inferrule*[right=Strengthen]{\jj{\Delta,\bar\alpha}{C\land D}\Gamma v{\tau_0}\emp
+                    \quad K\models C\land D}
+                    {\jj{\Delta,\bar\alpha}K\Gamma v{\tau_0}\emp},\\
+ \inferrule*[right=Sub]{\jj{\Delta,\bar\alpha}K\Gamma v{\tau_0}\emp
+               \quad K\models\tau_0\leq\tau\quad K\models\emp\leq\emp}
+               {\jj{\Delta,\bar\alpha}K\Gamma v\tau\emp},\\
+ \inferrule*[right=Exists]{\jj{\Delta,\bar\alpha}K\Gamma v\tau\emp}
+                    {\jj\Delta{\exists\bar\alpha.K}\Gamma v\tau\emp}.
+\end{gather*}
+任意の $\nu;\iota\models E$ について、具体化の含意から
+\begin{gather*}
+ \exists\bar a.\ \nu_a;\iota\models D\land\tau_0\leq\tau,
+ \qquad\nu_a=\nu[\bar\alpha\mapsto\bar a],\\
+ \bar\alpha\#E\Longrightarrow\nu_a;\iota\models E,
+ \qquad\nu_a;\iota\models K\Longrightarrow\nu;\iota\models\exists\bar\alpha.K.
+\end{gather*}
+従って $E\models\exists\bar\alpha.K$。最後に
+\[
+ \inferrule*[right=Strengthen]{\jj\Delta{\exists\bar\alpha.K}\Gamma v\tau\emp
+                      \quad E\models\exists\bar\alpha.K}
+                      {\jj\Delta E\Gamma v\tau\emp}.
+\]
+意味的証人 $\bar a$ を型構文へ取り出す操作はしていない。
+\end{proof}
+
+
+\begin{definition}[値によるスキームの実現]
+$\mathcal R(\Delta,C,\Gamma,\sigma,v)$ は、任意の有効な型・効果代入
+$\theta:\Delta\to\Delta'$、整形式な項環境非依存 $E$、kind $0$ の $\tau$ に対し
+\[
+ E\models\theta C,\quad E\models\inst{\theta\sigma}\tau
+ \quad\Longrightarrow\quad
+ \jj{\Delta'}E{\theta\Gamma}v\tau\emp
+\]
+が成り立つこと。これは値代入の帰納法の局所命題であり、モデルの追加法則ではない。
+\end{definition}
+\proofspace
+\begin{samepage}
+\begin{lemma}[一般化から実現へ]\label{lem:realizes}
+補題\ref{lem:scheme-inst}の一般化導出と整形式な $C,\Gamma$ から
+$\mathcal R(\Delta,C,\Gamma,\sigma,v)$ が従う。
+この性質は新鮮な型変数の拡張と制約強化で保たれる。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:realizes}
+任意の有効 $\theta:\Delta\to\Delta'$、$E,\tau$ を固定する。
+\begin{gather*}
+ \jj{\Delta,\bar\alpha}{C\land D}\Gamma v{\tau_0}\emp
+ \xRightarrow{\text{補題\ref{lem:typing-subst}、$\theta^+$}}
+ \jj{\Delta',\bar\alpha}{\theta C\land\theta^+D}{\theta\Gamma}v{\theta^+\tau_0}\emp,\\
+ E\models\theta C,\quad E\models\inst{\theta\sigma}\tau
+ \xRightarrow{\text{補題\ref{lem:scheme-inst}}}
+ \jj{\Delta'}E{\theta\Gamma}v\tau\emp .
+\end{gather*}
+これが $\mathcal R$ の定義である。安定性には拡張の改名
+$\rho:\Delta\hookrightarrow\Delta,\bar\beta$ と $D'\models\rho C$ をとる。
+さらに任意の $\xi:\Delta,\bar\beta\to\Delta''$ に対し
+\begin{gather*}
+ E\models\xi D'\models\xi(\rho C)=(\xi\circ\rho)C,\qquad
+ \xi(\rho\sigma)=(\xi\circ\rho)\sigma,\\
+ \mathcal R(\Delta,C,\Gamma,\sigma,v)
+ \Longrightarrow\jj{\Delta''}E{(\xi\circ\rho)\Gamma}v\tau\emp,\qquad
+ (\xi\circ\rho)\Gamma=\xi(\rho\Gamma).
+\end{gather*}
+含意の移送は補題\ref{lem:semantic-subst}、合成の有効性は補題\ref{lem:binding}。
+$\rho=\mathrm{id}$ が制約強化、$D'=\rho C$ が新鮮な型文脈拡張を与える。
+\end{proof}
+
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[一般のスキーム値代入]\label{lem:value-subst-aux}
+$\jj\Delta C{\Gamma_0,x:\sigma,\Gamma_1}e\tau\epsilon$ と、
+整形式 $D\models C$、$\Val(v)$、$\FV(v)\subseteq\dom\Gamma_0$、
+$\mathcal R(\Delta,D,\Gamma_0,\sigma,v)$ を仮定する。
+$\Gamma_1$ の名前は $v$ から新鮮にしてあるものとすると
+\[
+ \jj\Delta D{\Gamma_0,\Gamma_1}{e[v/x]}\tau\epsilon.
+\]
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:value-subst-aux}
+型付け導出に帰納し、$D,\Gamma_0,x,\sigma,\Gamma_1,v$ を一般化する。
+\[
+ \Gamma=\Gamma_0,x:\sigma,\Gamma_1,\qquad
+ \widehat\Gamma=\Gamma_0,\Gamma_1,\qquad S(e)=e[v/x].
+\]
+各 IH は任意の強い制約の下で、任意の位置の束縛 $x:\sigma$ を除く。
+全項束縛名を $x,\FV(v)$ から新鮮に選ぶ。
+補題\ref{lem:realizes}により、新鮮な型変数列 $\bar\alpha$ と $D'\models D$ に対し
+\[
+ \mathcal R(\Delta,D,\Gamma_0,\sigma,v)
+ \Longrightarrow\mathcal R((\Delta,\bar\alpha),D',\Gamma_0,\sigma,v).
+\]
+右辺の最初の引数は型文脈 $(\Delta,\bar\alpha)$ を表す。
+
+\begin{Case}{Var}
+対象が $x$ のとき
+\begin{gather*}
+ D\models C\models\inst\sigma\tau,\\
+ \mathcal R(\Delta,D,\Gamma_0,\sigma,v)
+ \xRightarrow{\theta=\mathrm{id},\ E=D}
+ \jj\Delta D{\Gamma_0}v\tau\emp
+ \xRightarrow{\text{補題\ref{lem:weakening}}}
+ \jj\Delta D{\widehat\Gamma}v\tau\emp.
+\end{gather*}
+対象が $y\ne x$ のとき
+\[
+ \widehat\Gamma(y)=\Gamma(y)=\sigma_y,\quad
+ D\models C\models\inst{\sigma_y}\tau
+ \xRightarrow{\Rule{Var}}\jj\Delta D{\widehat\Gamma}y\tau\emp .
+\]
+$S(x)=v$、$S(y)=y$ なのでいずれも目的の結論。
+\end{Case}
+
+\begin{Case}{Lam}
+束縛名を $y\#v$ とする。本体の IH では末尾環境を $\Gamma_1,y:\mono{\tau_1}$ にする。
+\[
+\inferrule*[right=Lam]{\jj{\Delta}{D}{\widehat\Gamma,y:\mono{\tau_1}}{S(e)}{\tau_2}{\eta}\quad(\mathrm{IH})}{\jj{\Delta}{D}{\widehat\Gamma}{\lambda y.S(e)}{\arr{\tau_1}\eta{\tau_2}}{\emp}}
+\]
+$S(\lambda y.e)=\lambda y.S(e)$。
+\end{Case}
+
+\begin{Case}{App}
+\[
+\inferrule*[right=App]{\jj{\Delta}{D}{\widehat\Gamma}{S(e_1)}{\arr{\tau_1}\eta\tau}{\epsilon_1}\quad(\mathrm{IH}_1)\\\jj{\Delta}{D}{\widehat\Gamma}{S(e_2)}{\tau_1}{\epsilon_2}\quad(\mathrm{IH}_2)}{\jj{\Delta}{D}{\widehat\Gamma}{S(e_1)S(e_2)}{\tau}{(\epsilon_1\cup\epsilon_2)\cup\eta}}
+\]
+\end{Case}
+
+\begin{Case}{Let-Mono}
+本体の IH には $\Gamma_1,y:\mono{\tau_1}$ を渡す。
+\[
+\inferrule*[right=Let-Mono]{\jj{\Delta}{D}{\widehat\Gamma}{S(e_1)}{\tau_1}{\epsilon_1}\quad(\mathrm{IH}_1)\\\jj{\Delta}{D}{\widehat\Gamma,y:\mono{\tau_1}}{S(e_2)}{\tau}{\epsilon_2}\quad(\mathrm{IH}_2)}{\jj{\Delta}{D}{\widehat\Gamma}{\lete y{S(e_1)}{S(e_2)}}{\tau}{\epsilon_1\cup\epsilon_2}}
+\]
+\end{Case}
+
+\begin{Case}{Let-Poly}
+$\sigma_y=\forall\bar\alpha.Q\Rightarrow\tau_1$、$\bar\alpha\#(D,\Gamma_0,\sigma)$ とする。
+\begin{gather*}
+ D\land Q\models C\land Q,\qquad
+ \mathcal R((\Delta,\bar\alpha),D\land Q,\Gamma_0,\sigma,v),\\
+ D\models C\models\exists\bar\alpha.Q,\qquad
+ \Val(w)\land\Val(v)\Longrightarrow\Val(S(w))\quad\text{（補題\ref{lem:binding}）}.
+\end{gather*}
+右辺には制約 $D\land Q$、本体には $D$ と末尾環境 $\Gamma_1,y:\sigma_y$ を渡す。
+
+\[
+\inferrule*[right=Let-Poly]{\jj{\Delta,\bar\alpha}{D\land Q}{\widehat\Gamma}{S(w)}{\tau_1}{\emp}\quad(\mathrm{IH}_w)\\\jj{\Delta}{D}{\widehat\Gamma,y:\sigma_y}{S(e)}{\tau}{\epsilon}\quad(\mathrm{IH}_e)\\ D\models\exists\bar\alpha.Q\quad\Val(S(w))}{\jj{\Delta}{D}{\widehat\Gamma}{\lete y{S(w)}{S(e)}}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Perform}
+型引数を固定し、$D\models C\models P[\bar t/\bar\beta]$ とする。
+\[
+\inferrule*[right=Perform]{\jj{\Delta}{D}{\widehat\Gamma}{S(e)}{\tau_1[\bar t/\bar\beta]}{\epsilon_0}\quad(\mathrm{IH})\\ D\models P[\bar t/\bar\beta]}{\jj{\Delta}{D}{\widehat\Gamma}{\perform\op{S(e)}}{\tau_2[\bar t/\bar\beta]}{\{\op\}\cup\epsilon_0}}
+\]
+\end{Case}
+
+\begin{Case}{Handle}
+$h' =\{\mathsf{return}\ y\mapsto S(r);\op(y,k)\mapsto S(c)\}$ とする。
+\begin{gather*}
+ \widehat\Gamma_c=\widehat\Gamma,y:\mono{\tau_1},k:\mono{\arr{\tau_2}\epsilon\tau},\\
+ D\land P\models C\land P,\quad
+ \mathcal R((\Delta,\bar\beta),D\land P,\Gamma_0,\sigma,v),\\
+ D\models C\models\epsilon_0\leq\{\op\}\cup\epsilon.
+\end{gather*}
+return の末尾へ $y$、節の末尾へ $y,k$ を追加して IH を適用する。
+
+\[
+\inferrule*[right=Handle]{\jj{\Delta}{D}{\widehat\Gamma}{S(e)}{\tau_0}{\epsilon_0}\quad(\mathrm{IH}_e)\\\jj{\Delta}{D}{\widehat\Gamma,y:\mono{\tau_0}}{S(r)}{\tau}{\epsilon}\quad(\mathrm{IH}_r)\\\jj{\Delta,\bar\beta}{D\land P}{\widehat\Gamma_c}{S(c)}{\tau}{\epsilon}\quad(\mathrm{IH}_c)\\ D\models\epsilon_0\leq\{\op\}\cup\epsilon}{\jj{\Delta}{D}{\widehat\Gamma}{\handle{S(e)}{h\prime}}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Sub}
+$D\models C$ で二つの上界含意を移し、
+\[
+\inferrule*[right=Sub]{\jj{\Delta}{D}{\widehat\Gamma}{S(e)}{\tau_0}{\epsilon_0}\quad(\mathrm{IH})\\ D\models\tau_0\leq\tau\quad D\models\epsilon_0\leq\epsilon}{\jj{\Delta}{D}{\widehat\Gamma}{S(e)}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Strengthen}
+\[
+ D\models C\models C_0,\qquad
+ \jj\Delta{C_0}{\Gamma_0,x:\sigma,\Gamma_1}e\tau\epsilon
+ \xRightarrow{\mathrm{IH}_{D\models C_0}}\jj\Delta D{\widehat\Gamma}{S(e)}\tau\epsilon .
+\]
+実現性の制約 $D$ は変更しない。
+\end{Case}
+
+\begin{Case}{Exists}
+元の結論制約が $C=\exists\bar\alpha.Q$ のとき、$K=D\land Q$ と置く。
+\begin{gather*}
+ K\models Q,\quad K\models D,\qquad
+ \mathcal R((\Delta,\bar\alpha),K,\Gamma_0,\sigma,v),\\
+ \jj{\Delta,\bar\alpha}Q{\Gamma_0,x:\sigma,\Gamma_1}e\tau\epsilon
+ \xRightarrow{\mathrm{IH}_K}\jj{\Delta,\bar\alpha}K{\widehat\Gamma}{S(e)}\tau\epsilon,\\
+ D\models\exists\bar\alpha.Q
+ \Longrightarrow D\models\exists\bar\alpha.(D\land Q)
+       \quad\text{（同じ証人、$\bar\alpha\#D$）}.
+\end{gather*}
+
+\[
+\inferrule*[right=Exists]{\jj{\Delta,\bar\alpha}{K}{\widehat\Gamma}{S(e)}{\tau}{\epsilon}}{\jj{\Delta}{\exists\bar\alpha.K}{\widehat\Gamma}{S(e)}{\tau}{\epsilon}}
+\]
+
+\[
+\inferrule*[right=Strengthen]{\jj{\Delta}{\exists\bar\alpha.K}{\widehat\Gamma}{S(e)}{\tau}{\epsilon}\quad D\models\exists\bar\alpha.K}{\jj{\Delta}{D}{\widehat\Gamma}{S(e)}{\tau}{\epsilon}}
+\]
+\end{Case}
+各結論の作用域は
+$\FV(S(e))\subseteq(\FV(e)\setminus\{x\})\cup\FV(v)\subseteq\dom\widehat\Gamma$
+（補題\ref{lem:binding}）で保たれる。
+\end{proof}
+
+\proofspace
+\begin{samepage}
+\begin{theorem}[多相 let の値代入]\label{thm:scheme-subst}
+$\A$ と次を仮定する。
+\[
+ \Val(v),\qquad
+ \jj{\Delta,\bar\alpha}{C\land D}\Gamma v{\tau_0}\emp,
+ \qquad C\models\exists\bar\alpha.D,
+ \qquad
+ \jj\Delta C{\Gamma,x:\forall\bar\alpha.D\Rightarrow\tau_0}e\tau\epsilon.
+\]
+このとき $\J{e[v/x]}\tau\epsilon$。
+対応は \lean{schemeValueSubstitution}（\lean{SchemeValueSubstitutionGoal}）。
+\end{theorem}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:thm:scheme-subst}
+$\sigma=\forall\bar\alpha.D\Rightarrow\tau_0$ と置く。
+\begin{gather*}
+ \jj{\Delta,\bar\alpha}{C\land D}\Gamma v{\tau_0}\emp
+ \xRightarrow{\text{補題\ref{lem:realizes}}}\mathcal R(\Delta,C,\Gamma,\sigma,v),\\
+ \inferrule*{\jj\Delta C{\Gamma,x:\sigma}e\tau\epsilon
+       \\ \Val(v)\quad C\models C\quad\mathcal R(\Delta,C,\Gamma,\sigma,v)}
+      {\jj\Delta C\Gamma{e[v/x]}\tau\epsilon}
+      \;\text{（補題\ref{lem:value-subst-aux}）}.
+\end{gather*}
+補題の強い制約を $C$、$\Gamma_0=\Gamma$、$\Gamma_1=\emp$ とした。
+$\FV(v)\subseteq\dom\Gamma$ は一般化導出の整形式性から得る。
+公開定理の $C\models\exists\bar\alpha.D$ は保持するが、この代入の導出では使わない。
+\end{proof}
+
+\proofspace
+\begin{samepage}
+\begin{corollary}[単相・二値同時代入]\label{cor:two}
+$\J v{\tau_1}\emp$、$\Val(v)$、
+$\jj\Delta C{\Gamma,x:\mono{\tau_1}}e\tau\epsilon$ から $\J{e[v/x]}\tau\epsilon$。
+さらに $K,v$ が純粋に型付けされた値で、
+\[
+ \J K{\tau_k}\emp,\quad\J v{\tau_1}\emp,\quad
+ \jj\Delta C{\Gamma,x:\mono{\tau_1},k:\mono{\tau_k}}c\tau\epsilon
+\]
+なら $\J{c[v/x,K/k]}\tau\epsilon$。
+\end{corollary}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:cor:two}
+単相では $\bar\alpha=\emp$、$D=\top$ とし、
+\[
+ \mono{\tau_1}=\forall\emp.\top\Rightarrow\tau_1,\quad C\models\exists\emp.\top.
+\]
+\[
+ \inferrule*{\J v{\tau_1}\emp\quad\Val(v)\quad
+       \jj\Delta C{\Gamma,x:\mono{\tau_1}}e\tau\epsilon}
+      {\J{e[v/x]}\tau\epsilon}\;\text{（定理\ref{thm:scheme-subst}）}.
+\]
+二値の場合は次の順でこの単相結論を二回使う。
+\begin{gather*}
+ \J K{\tau_k}\emp
+ \xRightarrow{\text{補題\ref{lem:weakening}}}
+ \jj\Delta C{\Gamma,x:\mono{\tau_1}}K{\tau_k}\emp,\\
+ \jj\Delta C{\Gamma,x:\mono{\tau_1},k:\mono{\tau_k}}c\tau\epsilon
+ \Longrightarrow\jj\Delta C{\Gamma,x:\mono{\tau_1}}{c[K/k]}\tau\epsilon,\\
+ \J v{\tau_1}\emp
+ \Longrightarrow\J{c[K/k][v/x]}\tau\epsilon,\\
+ x\#K\Longrightarrow c[K/k][v/x]=c[v/x,K/k]\quad\text{（補題\ref{lem:binding}）}.
+\end{gather*}
+\end{proof}
+
+
+\proofspace
+\section{評価文脈と操作捕捉の保存}
+\label{app:operation}
+\proofspace
+\begin{samepage}
+\begin{lemma}[評価文脈内の置換]\label{lem:ctx-replace}
+$e_0$ が非値で、任意の $\Delta,C,\Gamma,\tau,\epsilon$ に対して
+$\J{e_0}\tau\epsilon$ から $\J{e_1}\tau\epsilon$ が得られるとする。
+このとき $\J{E[e_0]}\tau\epsilon$ から $\J{E[e_1]}\tau\epsilon$ を得る。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:ctx-replace}
+$E[e_0]$ の型付け導出に帰納し、$E$ と構文の一致を一般化する。
+IH は部分導出の文脈中の同じ $e_0$ を $e_1$ に置換する命題である。
+$\operatorname{head}(e)$ は項の最外側の構成子（変数、lambda、適用など）を表す。
+
+\begin{Case}{Hole}
+\[E=[\ ]\Longrightarrow
+ (\jj\Delta C\Gamma{e_0}\tau\epsilon
+  \Longrightarrow\jj\Delta C\Gamma{e_1}\tau\epsilon)\quad\text{（仮定）}.\]
+以下 $E\ne[\ ]$ とする。
+\end{Case}
+
+\begin{Case}{Var}
+\[E\ne[\ ]\Longrightarrow\operatorname{head}(E[e_0])\in
+ \{\mathsf{app},\mathsf{let},\mathsf{perform},\mathsf{handle}\}
+ \Longrightarrow E[e_0]\ne x.\]
+\end{Case}
+
+\begin{Case}{Lam}
+\[E\ne[\ ]\Longrightarrow\operatorname{head}(E[e_0])\in
+ \{\mathsf{app},\mathsf{let},\mathsf{perform},\mathsf{handle}\}
+ \Longrightarrow E[e_0]\ne \lambda x.e.\]
+\end{Case}
+
+\begin{Case}{App-Fun}
+$E=F[\ ]\,e_2$ の場合、関数側の IH を使う。
+\[
+\inferrule*[right=App]{\jj{\Delta}{C}{\Gamma}{F[e_1]}{\arr{\tau_1}\eta\tau}{\epsilon_1}\quad(\mathrm{IH})\\\jj{\Delta}{C}{\Gamma}{e_2}{\tau_1}{\epsilon_2}}{\jj{\Delta}{C}{\Gamma}{F[e_1]e_2}{\tau}{(\epsilon_1\cup\epsilon_2)\cup\eta}}
+\]
+\end{Case}
+
+\begin{Case}{App-Arg}
+$E=vF[\ ]$ の場合、引数側の IH を使う。
+\[
+\inferrule*[right=App]{\jj{\Delta}{C}{\Gamma}{v}{\arr{\tau_1}\eta\tau}{\epsilon_1}\\\jj{\Delta}{C}{\Gamma}{F[e_1]}{\tau_1}{\epsilon_2}\quad(\mathrm{IH})}{\jj{\Delta}{C}{\Gamma}{vF[e_1]}{\tau}{(\epsilon_1\cup\epsilon_2)\cup\eta}}
+\]
+\end{Case}
+
+\begin{Case}{Let-Mono}
+$E=\lete x{F[\ ]}{e_2}$ とする。
+\[
+\inferrule*[right=Let-Mono]{\jj{\Delta}{C}{\Gamma}{F[e_1]}{\tau_1}{\epsilon_1}\quad(\mathrm{IH})\\\jj{\Delta}{C}{\Gamma,x:\mono{\tau_1}}{e_2}{\tau}{\epsilon_2}}{\jj{\Delta}{C}{\Gamma}{\lete x{F[e_1]}{e_2}}{\tau}{\epsilon_1\cup\epsilon_2}}
+\]
+\end{Case}
+
+\begin{Case}{Let-Poly}
+\[
+ E=\lete x{F[\ ]}{e_2},\quad\Val(F[e_0])
+ \xRightarrow{\text{補題\ref{lem:values}}}\Val(e_0)
+ \xRightarrow{\neg\Val(e_0)}\bot.
+\]
+\end{Case}
+
+\begin{Case}{Perform}
+\[
+\inferrule*[right=Perform]{\jj{\Delta}{C}{\Gamma}{F[e_1]}{\tau_1[\bar t/\bar\beta]}{\epsilon_0}\quad(\mathrm{IH})\\ C\models P[\bar t/\bar\beta]}{\jj{\Delta}{C}{\Gamma}{\perform\op{F[e_1]}}{\tau_2[\bar t/\bar\beta]}{\{\op\}\cup\epsilon_0}}
+\]
+\end{Case}
+
+\begin{Case}{Handle}
+$E=\handle{F[\ ]}h$。
+$\Gamma_c=\Gamma,x:\mono{\tau_1},k:\mono{\arr{\tau_2}\epsilon\tau}$ とする。
+\[
+\inferrule*[right=Handle]{\jj{\Delta}{C}{\Gamma}{F[e_1]}{\tau_0}{\epsilon_0}\quad(\mathrm{IH})\\\jj{\Delta}{C}{\Gamma,x:\mono{\tau_0}}{r}{\tau}{\epsilon}\\\jj{\Delta,\bar\beta}{C\land P}{\Gamma_c}{c}{\tau}{\epsilon}\\ C\models\epsilon_0\leq\{\op\}\cup\epsilon}{\jj{\Delta}{C}{\Gamma}{\handle{F[e_1]}h}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Sub}
+\[
+\inferrule*[right=Sub]{\jj{\Delta}{C}{\Gamma}{E[e_1]}{\tau_0}{\epsilon_0}\quad(\mathrm{IH})\\ C\models\tau_0\leq\tau\quad C\models\epsilon_0\leq\epsilon}{\jj{\Delta}{C}{\Gamma}{E[e_1]}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Strengthen}
+\[
+\inferrule*[right=Strengthen]{\jj{\Delta}{C_0}{\Gamma}{E[e_1]}{\tau}{\epsilon}\quad(\mathrm{IH})\quad C\models C_0}{\jj{\Delta}{C}{\Gamma}{E[e_1]}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Exists}
+置換仮定は内側の $\Delta,\bar\alpha;D;\Gamma$ でも使える。
+\[
+\inferrule*[right=Exists]{\jj{\Delta,\bar\alpha}{D}{\Gamma}{E[e_1]}{\tau}{\epsilon}\quad(\mathrm{IH})\\\bar\alpha\#(\Gamma,\tau,\epsilon)}{\jj{\Delta}{\exists\bar\alpha.D}{\Gamma}{E[e_1]}{\tau}{\epsilon}}
+\]
+\end{Case}
+各構文規則で表示した以外の非穴文脈は外側の構成子が異なる。
+$\operatorname{head}(E[e_0])\ne\operatorname{head}(e)$ なら $E[e_0]=e\Rightarrow\bot$。
+置換後の作用域は各上段の整形式性から得る。
+\end{proof}
+
+\begin{definition}[拡張・強化に安定な文脈型付け]
+$\mathcal K_{\Delta,C,\Gamma}(E;\tau_0,\epsilon_0;\tau,\epsilon)$ は次の命題とする。
+任意の新鮮な型変数列 $\bar\alpha$、整形式な項環境非依存 $D$、
+$D\models_{\Delta,\bar\alpha}C$、kind $0$ の $\tau_z$、新鮮な項名 $z$、項 $u$ に対して
+\[
+ \jj{\Delta,\bar\alpha}D{\Gamma,z:\mono{\tau_z}}u{\tau_0}{\epsilon_0}
+ \ \Longrightarrow\
+ \jj{\Delta,\bar\alpha}D{\Gamma,z:\mono{\tau_z}}{E[u]}\tau\epsilon.
+\]
+$E$ の束縛名は $u,z$ から新鮮にする。
+これは \lean{ContextTyping} の名前付き表示である。
+\end{definition}
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[文脈の構成・合成・移送]\label{lem:ctx-typing}
+型付け規則の非穴側の導出から、それぞれのフレーム
+$[\ ]\,e$, $v\,[\ ]$, $\lete x{[\ ]}e$, $\perform\op{[\ ]}$,
+$\handle{[\ ]}h$ の $\mathcal K$ を構成できる。
+文脈の合成、制約強化、新鮮な型文脈拡張、穴の型・効果の包含に対する前処理を許す。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:ctx-typing}
+任意の $\bar\alpha,D,\tau_z,z,u$ と穴の型付けを固定し、
+$\Delta'=\Delta,\bar\alpha$、$\Gamma'=\Gamma,z:\mono{\tau_z}$ と置く。
+非穴部分の導出は次の三段階で移す：
+\[
+\begin{aligned}
+ \jj\Delta C{\Gamma,\Gamma_b}e\tau\epsilon
+ &\Longrightarrow\jj{\Delta'}C{\Gamma,\Gamma_b}e\tau\epsilon\\
+ &\Longrightarrow\jj{\Delta'}D{\Gamma,\Gamma_b}e\tau\epsilon\\
+ &\Longrightarrow\jj{\Delta'}D{\Gamma',\Gamma_b}e\tau\epsilon .
+\end{aligned}
+\]
+順に補題\ref{lem:typing-subst}（新鮮な改名）、$D\models C$、補題\ref{lem:weakening}を使う。
+各ケースの穴以外の上段はこの移送で得る。
+
+\begin{Case}{App-Fun}
+\[
+\inferrule*[right=App]{\jj{\Delta'}{D}{\Gamma'}{u}{\arr{\tau_1}\eta\tau}{\epsilon_1}\quad\text{（穴）}\\\jj{\Delta'}{D}{\Gamma'}{e_2}{\tau_1}{\epsilon_2}}{\jj{\Delta'}{D}{\Gamma'}{ue_2}{\tau}{(\epsilon_1\cup\epsilon_2)\cup\eta}}
+\]
+\end{Case}
+
+\begin{Case}{App-Arg}
+\[
+\inferrule*[right=App]{\jj{\Delta'}{D}{\Gamma'}{v}{\arr{\tau_1}\eta\tau}{\epsilon_1}\quad\Val(v)\\\jj{\Delta'}{D}{\Gamma'}{u}{\tau_1}{\epsilon_2}\quad\text{（穴）}}{\jj{\Delta'}{D}{\Gamma'}{vu}{\tau}{(\epsilon_1\cup\epsilon_2)\cup\eta}}
+\]
+\end{Case}
+
+\begin{Case}{Let-RHS}
+\[
+\inferrule*[right=Let-Mono]{\jj{\Delta'}{D}{\Gamma'}{u}{\tau_1}{\epsilon_1}\quad\text{（穴）}\\\jj{\Delta'}{D}{\Gamma',x:\mono{\tau_1}}{e_2}{\tau}{\epsilon_2}}{\jj{\Delta'}{D}{\Gamma'}{\lete x u{e_2}}{\tau}{\epsilon_1\cup\epsilon_2}}
+\]
+\end{Case}
+
+\begin{Case}{Perform}
+\[
+\inferrule*[right=Perform]{\jj{\Delta'}{D}{\Gamma'}{u}{\tau_1[\bar t/\bar\beta]}{\epsilon_0}\quad\text{（穴）}\\ D\models C\models P[\bar t/\bar\beta]}{\jj{\Delta'}{D}{\Gamma'}{\perform\op u}{\tau_2[\bar t/\bar\beta]}{\{\op\}\cup\epsilon_0}}
+\]
+\end{Case}
+
+\begin{Case}{Handle}
+$\bar\alpha,\bar\beta$ を互いに新鮮に選び、
+$\Gamma'_c=\Gamma',x:\mono{\tau_1},k:\mono{\arr{\tau_2}\epsilon\tau}$ と置く。
+\[
+ D\land P\models C\land P,\qquad\FTV(P,\tau_1,\tau_2)\subseteq\{\bar\beta\}.
+\]
+従って節の移送でも $P$ を保持できる（\lean{operationClauseShift}）。
+
+\[
+\inferrule*[right=Handle]{\jj{\Delta'}{D}{\Gamma'}{u}{\tau_0}{\epsilon_0}\quad\text{（穴）}\\\jj{\Delta'}{D}{\Gamma',x:\mono{\tau_0}}{r}{\tau}{\epsilon}\\\jj{\Delta',\bar\beta}{D\land P}{\Gamma'_c}{c}{\tau}{\epsilon}\\ D\models\epsilon_0\leq\{\op\}\cup\epsilon}{\jj{\Delta'}{D}{\Gamma'}{\handle u h}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Composition}
+\begin{gather*}
+ \mathcal K(F;\tau_0,\epsilon_0;\tau_1,\epsilon_1),\qquad
+ \mathcal K(E;\tau_1,\epsilon_1;\tau,\epsilon),\\
+ \jj{\Delta'}D{\Gamma'}u{\tau_0}{\epsilon_0}
+ \xRightarrow{\mathcal K(F)}\jj{\Delta'}D{\Gamma'}{F[u]}{\tau_1}{\epsilon_1}
+ \xRightarrow{\mathcal K(E)}\jj{\Delta'}D{\Gamma'}{E[F[u]]}\tau\epsilon .
+\end{gather*}
+全ての $\mathcal K$ の添字は $\Delta,C,\Gamma$。合成の等式は以下の文脈帰納法で得る。
+\end{Case}
+
+\begin{Case}{Composition-Hole}
+\[([\ ]\circ F)[u]=F[u]=[\ ][F[u]].\]
+\end{Case}
+
+\begin{Case}{Composition-App-Fun}
+$E=E_0[\ ]e_2$ の外側フレームを $H$ とする。
+\[(E\circ F)[u]=H[(E_0\circ F)[u]]
+ \overset{\mathrm{IH}}{=}H[E_0[F[u]]]=E[F[u]].\]
+\end{Case}
+
+\begin{Case}{Composition-App-Arg}
+$E=vE_0[\ ]$ の外側フレームを $H$ とする。
+\[(E\circ F)[u]=H[(E_0\circ F)[u]]
+ \overset{\mathrm{IH}}{=}H[E_0[F[u]]]=E[F[u]].\]
+\end{Case}
+
+\begin{Case}{Composition-Let-RHS}
+$E=\lete x{E_0[\ ]}{e_2}$ の外側フレームを $H$ とする。
+\[(E\circ F)[u]=H[(E_0\circ F)[u]]
+ \overset{\mathrm{IH}}{=}H[E_0[F[u]]]=E[F[u]].\]
+\end{Case}
+
+\begin{Case}{Composition-Perform}
+$E=\perform\op{E_0[\ ]}$ の外側フレームを $H$ とする。
+\[(E\circ F)[u]=H[(E_0\circ F)[u]]
+ \overset{\mathrm{IH}}{=}H[E_0[F[u]]]=E[F[u]].\]
+\end{Case}
+
+\begin{Case}{Composition-Handle}
+$E=\handle{E_0[\ ]}h$ の外側フレームを $H$ とする。
+\[(E\circ F)[u]=H[(E_0\circ F)[u]]
+ \overset{\mathrm{IH}}{=}H[E_0[F[u]]]=E[F[u]].\]
+\end{Case}
+
+\begin{Case}{Stronger}
+\[
+ D'\models C'\models C,\quad\jj{\Delta,\bar\alpha}{D'}{\Gamma,z:\mono{\tau_z}}u{\tau_0}{\epsilon_0}
+ \xRightarrow{\mathcal K_{\Delta,C,\Gamma}}
+ \jj{\Delta,\bar\alpha}{D'}{\Gamma,z:\mono{\tau_z}}{E[u]}\tau\epsilon.
+\]
+これが $\mathcal K_{\Delta,C',\Gamma}$ の定義。
+\end{Case}
+
+\begin{Case}{Shift}
+\[
+ (\Delta,\bar\beta),\bar\alpha=\Delta,(\bar\beta,\bar\alpha).
+\]
+拡張後の $\mathcal K$ が量化する $\bar\alpha$ に対し、元の $\mathcal K$ を
+連結した新鮮列 $(\bar\beta,\bar\alpha)$ で使う。
+\[
+ D'\models D\models C,\quad u:\tau_0\,!\,\epsilon_0
+ \xRightarrow{\mathcal K_{\Delta,C,\Gamma}(\bar\beta,\bar\alpha,D')}
+ E[u]:\tau\,!\,\epsilon.
+\]
+両判断の文脈は $\Delta,\bar\beta,\bar\alpha;D';\Gamma,z:\mono{\tau_z}$。
+\end{Case}
+
+\begin{Case}{Sub}
+\begin{gather*}
+ C\models\tau_0\leq\tau_1\land\epsilon_0\leq\epsilon_1,\quad D\models C,\\
+ \jj{\Delta'}D{\Gamma'}u{\tau_0}{\epsilon_0}
+ \xRightarrow{\Rule{Sub}}\jj{\Delta'}D{\Gamma'}u{\tau_1}{\epsilon_1}
+ \xRightarrow{\mathcal K(E;\tau_1,\epsilon_1;\tau,\epsilon)}
+ \jj{\Delta'}D{\Gamma'}{E[u]}\tau\epsilon.
+\end{gather*}
+\end{Case}
+\end{proof}
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[継続の型付け]\label{lem:resume}
+$\mathcal K_{\Delta,C,\Gamma}(F;\tau_0,\epsilon_0;\tau,\epsilon)$ と
+表示式の整形式性があれば
+\[
+ \J{\lambda z.F[z]}{(\arr{\tau_0}\epsilon\tau)}\emp.
+\]
+特に $F=\handle E h$ とすれば deep 継続の型付けとなる。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:resume}
+$z\#(\Gamma,F)$ とする。
+\begin{gather*}
+ \inferrule*[right=Var]{(\Gamma,z:\mono{\tau_0})(z)=\mono{\tau_0}\quad
+                        C\models\inst{\mono{\tau_0}}{\tau_0}}
+       {\jj\Delta C{\Gamma,z:\mono{\tau_0}}z{\tau_0}\emp},\\
+ \inferrule*[right=Sub]{\jj\Delta C{\Gamma,z:\mono{\tau_0}}z{\tau_0}\emp\quad
+                        C\models\tau_0\leq\tau_0\quad C\models\emp\leq\epsilon_0}
+       {\jj\Delta C{\Gamma,z:\mono{\tau_0}}z{\tau_0}{\epsilon_0}},\\
+ \jj\Delta C{\Gamma,z:\mono{\tau_0}}z{\tau_0}{\epsilon_0}
+ \xRightarrow{\mathcal K(F),\ \bar\alpha=\emp,\ D=C,\ \tau_z=\tau_0}
+ \jj\Delta C{\Gamma,z:\mono{\tau_0}}{F[z]}\tau\epsilon,\\
+ \inferrule*[right=Lam]{\jj\Delta C{\Gamma,z:\mono{\tau_0}}{F[z]}\tau\epsilon}
+       {\jj\Delta C\Gamma{\lambda z.F[z]}{\arr{\tau_0}\epsilon\tau}\emp}.
+\end{gather*}
+\end{proof}
+
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[条件付き操作節の具体化]\label{lem:clause-inst}
+式\eqref{eq:clause}の節導出があり、$\Delta\vdash\bar\tau:\bar\kappa$、
+$C\models P[\bar\tau/\bar\beta]$ なら
+\[
+ \jj\Delta C{\Gamma,x:\mono{\tau_1[\bar\tau/\bar\beta]},
+ k:\mono{\arr{\tau_2[\bar\tau/\bar\beta]}\epsilon\tau}}c\tau\epsilon.
+\]
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:clause-inst}
+$\theta=[\bar\tau/\bar\beta]$、$\tau_i'=\tau_i[\bar\tau/\bar\beta]$、$P'=P[\bar\tau/\bar\beta]$ と置く。
+\begin{gather*}
+ \Delta\vdash\bar\tau:\bar\kappa\Longrightarrow
+        \theta:(\Delta,\bar\beta)\to\Delta\text{ は有効},\\
+ \bar\beta\#(C,\Gamma,\tau,\epsilon)
+ \Longrightarrow\theta(C,\Gamma,\tau,\epsilon)=(C,\Gamma,\tau,\epsilon),\\
+ \jj{\Delta,\bar\beta}{C\land P}{\Gamma,x:\mono{\tau_1},k:\mono{\arr{\tau_2}\epsilon\tau}}c\tau\epsilon
+ \xRightarrow{\text{補題\ref{lem:typing-subst}}}
+ \jj\Delta{C\land P'}{\Gamma,x:\mono{\tau_1'},k:\mono{\arr{\tau_2'}\epsilon\tau}}c\tau\epsilon.
+\end{gather*}
+$C\models P'$ より $C\models C\land P'$。従って
+\[
+ \inferrule*[right=Strengthen]{
+ \jj\Delta{C\land P'}{\Gamma,x:\mono{\tau_1'},k:\mono{\arr{\tau_2'}\epsilon\tau}}c\tau\epsilon
+ \\ C\models C\land P'}
+ {\jj\Delta C{\Gamma,x:\mono{\tau_1'},k:\mono{\arr{\tau_2'}\epsilon\tau}}c\tau\epsilon}.
+\]
+入力型・出力型・条件をすべて同じ $\theta$ で具体化した。
+\end{proof}
+
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[操作への経路に沿う消去]\label{lem:op-elim}
+$\J e{\tau_0}{\epsilon_0}$、$e=E[\perform\op v]$、$\Val(v)$ とする。
+任意の整形式な $D\models C$、外側文脈 $F$、宣言
+$\ops(\op)=\forall\bar\beta.P\Rightarrow\tau_1\to\tau_2$、節 $c$、結果 $\tau,\epsilon$ について、
+\begin{gather*}
+ \jj{\Delta,\bar\beta}{D\land P}
+ {\Gamma,x:\mono{\tau_1},k:\mono{\arr{\tau_2}\epsilon\tau}}c\tau\epsilon,\\
+ \mathcal K_{\Delta,D,\Gamma}(F;\tau_0,\epsilon_0;\tau,\epsilon)
+\end{gather*}
+があれば
+\begin{equation}\label{eq:op-elim}
+ \jj\Delta D\Gamma
+ {c[v/x,(\lambda z.(F\circ E)[z])/k]}\tau\epsilon.
+\end{equation}
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:op-elim}
+$e$ の型付け導出に帰納する。一般化するのは
+$E,\op,v,D,F,c,\tau,\epsilon$ と、構文の一致・節導出・文脈型付けの証拠すべてである。
+各 IH は定理と同じ量化を持つ。以下
+\[
+ T(F,E)=c[v/x,(\lambda z.(F\circ E)[z])/k]
+\]
+と略記する。これは項の略記であり、型引数を外へ取り出す操作ではない。
+
+\begin{Case}{Var}
+\[\operatorname{head}(E[\perform\op v])\in
+ \{\mathsf{app},\mathsf{let},\mathsf{perform},\mathsf{handle}\}
+ \Longrightarrow E[\perform\op v]\ne x.\]
+\end{Case}
+
+\begin{Case}{Lam}
+\[\operatorname{head}(E[\perform\op v])\in
+ \{\mathsf{app},\mathsf{let},\mathsf{perform},\mathsf{handle}\}
+ \Longrightarrow E[\perform\op v]\ne \lambda x.e_0.\]
+\end{Case}
+
+\begin{Case}{App-Fun}
+経路を $E=H\circ E_0$、$H=[\ ]\,e_2$ とする。
+穴側の前提導出を $\mathcal D_f$ と書く。補題\ref{lem:ctx-typing}の対応するフレームから
+\begin{gather*}
+ \mathcal D_f:\quad\jj\Delta C\Gamma{E_0[\perform\op v]}{\arr{\tau_1}\eta{\tau_0}}{\epsilon_1},\\
+ \mathcal K_{\Delta,C,\Gamma}(H;\arr{\tau_1}\eta{\tau_0},\epsilon_1;\tau_0,(\epsilon_1\cup\epsilon_2)\cup\eta)
+ \xRightarrow{D\models C}\mathcal K_{\Delta,D,\Gamma}(H;\arr{\tau_1}\eta{\tau_0},\epsilon_1;\tau_0,(\epsilon_1\cup\epsilon_2)\cup\eta),\\
+ \mathcal K_{\Delta,D,\Gamma}(F;\tau_0,(\epsilon_1\cup\epsilon_2)\cup\eta;\tau,\epsilon)
+ \Longrightarrow\mathcal K_{\Delta,D,\Gamma}(F\circ H;\arr{\tau_1}\eta{\tau_0},\epsilon_1;\tau,\epsilon),\\
+ \mathcal D_f,\quad\text{上の合成文脈と同じ節導出}
+ \xRightarrow{\mathrm{IH}_f}\jj\Delta D\Gamma{T(F\circ H,E_0)}\tau\epsilon,\\
+ (F\circ H)\circ E_0=F\circ(H\circ E_0)=F\circ E
+ \Longrightarrow T(F\circ H,E_0)=T(F,E).
+\end{gather*}
+\end{Case}
+
+\begin{Case}{App-Arg}
+経路を $E=H\circ E_0$、$H=v_1[\ ]$ とする。
+穴側の前提導出を $\mathcal D_a$ と書く。補題\ref{lem:ctx-typing}の対応するフレームから
+\begin{gather*}
+ \mathcal D_a:\quad\jj\Delta C\Gamma{E_0[\perform\op v]}{\tau_1}{\epsilon_2},\\
+ \mathcal K_{\Delta,C,\Gamma}(H;\tau_1,\epsilon_2;\tau_0,(\epsilon_1\cup\epsilon_2)\cup\eta)
+ \xRightarrow{D\models C}\mathcal K_{\Delta,D,\Gamma}(H;\tau_1,\epsilon_2;\tau_0,(\epsilon_1\cup\epsilon_2)\cup\eta),\\
+ \mathcal K_{\Delta,D,\Gamma}(F;\tau_0,(\epsilon_1\cup\epsilon_2)\cup\eta;\tau,\epsilon)
+ \Longrightarrow\mathcal K_{\Delta,D,\Gamma}(F\circ H;\tau_1,\epsilon_2;\tau,\epsilon),\\
+ \mathcal D_a,\quad\text{上の合成文脈と同じ節導出}
+ \xRightarrow{\mathrm{IH}_a}\jj\Delta D\Gamma{T(F\circ H,E_0)}\tau\epsilon,\\
+ (F\circ H)\circ E_0=F\circ(H\circ E_0)=F\circ E
+ \Longrightarrow T(F\circ H,E_0)=T(F,E).
+\end{gather*}
+\end{Case}
+
+\begin{Case}{Let-Mono}
+経路を $E=H\circ E_0$、$H=\lete x{[\ ]}{e_2}$ とする。
+穴側の前提導出を $\mathcal D_r$ と書く。補題\ref{lem:ctx-typing}の対応するフレームから
+\begin{gather*}
+ \mathcal D_r:\quad\jj\Delta C\Gamma{E_0[\perform\op v]}{\tau_1}{\epsilon_1},\\
+ \mathcal K_{\Delta,C,\Gamma}(H;\tau_1,\epsilon_1;\tau_0,\epsilon_1\cup\epsilon_2)
+ \xRightarrow{D\models C}\mathcal K_{\Delta,D,\Gamma}(H;\tau_1,\epsilon_1;\tau_0,\epsilon_1\cup\epsilon_2),\\
+ \mathcal K_{\Delta,D,\Gamma}(F;\tau_0,\epsilon_1\cup\epsilon_2;\tau,\epsilon)
+ \Longrightarrow\mathcal K_{\Delta,D,\Gamma}(F\circ H;\tau_1,\epsilon_1;\tau,\epsilon),\\
+ \mathcal D_r,\quad\text{上の合成文脈と同じ節導出}
+ \xRightarrow{\mathrm{IH}_r}\jj\Delta D\Gamma{T(F\circ H,E_0)}\tau\epsilon,\\
+ (F\circ H)\circ E_0=F\circ(H\circ E_0)=F\circ E
+ \Longrightarrow T(F\circ H,E_0)=T(F,E).
+\end{gather*}
+\end{Case}
+
+\begin{Case}{Perform / Argument}
+経路を $E=H\circ E_0$、$H=\perform{\op_0}{[\ ]}$ とする。
+$\tau_{\mathrm{in}}$ と $\tau_0$ はこの呼出しの同じ型引数で具体化した入力型と出力型。
+穴側の前提導出を $\mathcal D_a$ と書く。補題\ref{lem:ctx-typing}の対応するフレームから
+\begin{gather*}
+ \mathcal D_a:\quad\jj\Delta C\Gamma{E_0[\perform\op v]}{\tau_{\mathrm{in}}}{\eta},\\
+ \mathcal K_{\Delta,C,\Gamma}(H;\tau_{\mathrm{in}},\eta;\tau_0,\{\op_0\}\cup\eta)
+ \xRightarrow{D\models C}\mathcal K_{\Delta,D,\Gamma}(H;\tau_{\mathrm{in}},\eta;\tau_0,\{\op_0\}\cup\eta),\\
+ \mathcal K_{\Delta,D,\Gamma}(F;\tau_0,\{\op_0\}\cup\eta;\tau,\epsilon)
+ \Longrightarrow\mathcal K_{\Delta,D,\Gamma}(F\circ H;\tau_{\mathrm{in}},\eta;\tau,\epsilon),\\
+ \mathcal D_a,\quad\text{上の合成文脈と同じ節導出}
+ \xRightarrow{\mathrm{IH}_a}\jj\Delta D\Gamma{T(F\circ H,E_0)}\tau\epsilon,\\
+ (F\circ H)\circ E_0=F\circ(H\circ E_0)=F\circ E
+ \Longrightarrow T(F\circ H,E_0)=T(F,E).
+\end{gather*}
+条件は $D\models C\models P_0[\bar t/\bar\beta]$ としてフレーム内に保持する。
+\end{Case}
+
+\begin{Case}{Handle}
+経路を $E=H\circ E_0$、$H=\handle{[\ ]}{h_0}$ とする。
+$\tau_{\mathrm{in}},\eta$ はこの handler の本体の型・効果。
+穴側の前提導出を $\mathcal D_b$ と書く。補題\ref{lem:ctx-typing}の対応するフレームから
+\begin{gather*}
+ \mathcal D_b:\quad\jj\Delta C\Gamma{E_0[\perform\op v]}{\tau_{\mathrm{in}}}{\eta},\\
+ \mathcal K_{\Delta,C,\Gamma}(H;\tau_{\mathrm{in}},\eta;\tau_0,\epsilon_0)
+ \xRightarrow{D\models C}\mathcal K_{\Delta,D,\Gamma}(H;\tau_{\mathrm{in}},\eta;\tau_0,\epsilon_0),\\
+ \mathcal K_{\Delta,D,\Gamma}(F;\tau_0,\epsilon_0;\tau,\epsilon)
+ \Longrightarrow\mathcal K_{\Delta,D,\Gamma}(F\circ H;\tau_{\mathrm{in}},\eta;\tau,\epsilon),\\
+ \mathcal D_b,\quad\text{上の合成文脈と同じ節導出}
+ \xRightarrow{\mathrm{IH}_b}\jj\Delta D\Gamma{T(F\circ H,E_0)}\tau\epsilon,\\
+ (F\circ H)\circ E_0=F\circ(H\circ E_0)=F\circ E
+ \Longrightarrow T(F\circ H,E_0)=T(F,E).
+\end{gather*}
+この消去補題自体は $\op$ の非遮蔽を仮定しない。
+\end{Case}
+
+\begin{Case}{Let-Poly}
+\[
+ E=\lete x{E_0[\ ]}{e_2},\quad\Val(E_0[\perform\op v])
+ \xRightarrow{\text{補題\ref{lem:values}}}\Val(\perform\op v)
+ \Longrightarrow\bot.
+\]
+\end{Case}
+
+\begin{Case}{Perform / Hole}
+$E=[\ ]$ とする。実際の Perform 導出の型引数を $\bar t$ とし、
+$A=\tau_1[\bar t/\bar\beta]$、$B=\tau_2[\bar t/\bar\beta]$、$P'=P[\bar t/\bar\beta]$ と置く。
+宣言検索の一意性により、呼出しと節の宣言は同じである。
+\begin{gather*}
+ D\models C\models P',\qquad
+ \jj\Delta C\Gamma v A{\eta_0}
+ \xRightarrow{D\models C}\jj\Delta D\Gamma v A{\eta_0}
+ \xRightarrow{\text{補題\ref{lem:values}}}\jj\Delta D\Gamma v A\emp,\\
+ \mathcal K_{\Delta,D,\Gamma}(F;B,\{\op\}\cup\eta_0;\tau,\epsilon)
+ \xRightarrow{\text{補題\ref{lem:resume}}}
+ \jj\Delta D\Gamma{K}{\arr B\epsilon\tau}\emp,
+ \qquad K=\lambda z.F[z],\\
+ \jj{\Delta,\bar\beta}{D\land P}
+       {\Gamma,x:\mono{\tau_1},k:\mono{\arr{\tau_2}\epsilon\tau}}c\tau\epsilon
+ \xRightarrow{D\models P',\ \text{補題\ref{lem:clause-inst}}}
+ \jj\Delta D{\Gamma,x:\mono A,k:\mono{\arr B\epsilon\tau}}c\tau\epsilon.
+\end{gather*}
+
+\[
+\inferrule*[right=\textnormal{系\ref{cor:two}}]{\jj{\Delta}{D}{\Gamma}{v}{A}{\emp}\quad\jj{\Delta}{D}{\Gamma}{K}{\arr B\epsilon\tau}{\emp}\\\jj{\Delta}{D}{\Gamma,x:\mono A,k:\mono{\arr B\epsilon\tau}}{c}{\tau}{\epsilon}\\\Val(v)\quad\Val(K)}{\jj{\Delta}{D}{\Gamma}{c[v/x,K/k]}{\tau}{\epsilon}}
+\]
+$F\circ[\ ]=F$ なので、この結論は $T(F,E)$ の型付け。
+\end{Case}
+
+\begin{Case}{Sub}
+前提の型・効果を $\tau_1,\epsilon_1$ とする。
+\begin{gather*}
+ D\models C\models\tau_1\leq\tau_0\land\epsilon_1\leq\epsilon_0,\\
+ \mathcal K_{\Delta,D,\Gamma}([\ ];\tau_1,\epsilon_1;\tau_0,\epsilon_0)
+ \quad\text{（補題\ref{lem:ctx-typing}の Sub）},\\
+ \mathcal K(F;\tau_0,\epsilon_0;\tau,\epsilon)
+ \Longrightarrow\mathcal K(F\circ[\ ];\tau_1,\epsilon_1;\tau,\epsilon),\\
+ \jj\Delta C\Gamma{E[\perform\op v]}{\tau_1}{\epsilon_1}
+ \xRightarrow{\mathrm{IH}}\jj\Delta D\Gamma{T(F\circ[\ ],E)}\tau\epsilon.
+\end{gather*}
+$F\circ[\ ]=F$ で結論を得る。
+\end{Case}
+
+\begin{Case}{Strengthen}
+\[
+ D\models C\models C_0,\qquad
+ \jj\Delta{C_0}\Gamma{E[\perform\op v]}{\tau_0}{\epsilon_0}
+ \xRightarrow{\mathrm{IH}_{D\models C_0}}\jj\Delta D\Gamma{T(F,E)}\tau\epsilon.
+\]
+節導出と $\mathcal K_{\Delta,D,\Gamma}$ はそのまま IH に渡す。
+\end{Case}
+
+\begin{Case}{Exists}
+元の制約が $C=\exists\bar\alpha.Q$ のとき、$\Delta'=\Delta,\bar\alpha$、$K=D\land Q$ と置く。
+\begin{gather*}
+ K\models Q,\quad K\models D,\quad K\land P\models D\land P,\\
+ \jj{\Delta,\bar\beta}{D\land P}{\Gamma,x:\mono{\tau_1},k:\mono{\arr{\tau_2}\epsilon\tau}}c\tau\epsilon
+ \Longrightarrow
+ \jj{\Delta',\bar\beta}{K\land P}{\Gamma,x:\mono{\tau_1},k:\mono{\arr{\tau_2}\epsilon\tau}}c\tau\epsilon,\\
+ \mathcal K_{\Delta,D,\Gamma}(F;\tau_0,\epsilon_0;\tau,\epsilon)
+ \Longrightarrow\mathcal K_{\Delta',K,\Gamma}(F;\tau_0,\epsilon_0;\tau,\epsilon).
+\end{gather*}
+節は補題\ref{lem:typing-subst}と条件を保持する強化、文脈は補題\ref{lem:ctx-typing}で移す。
+内側の導出に、以上の節・文脈と $K\models Q$ を渡す：
+\[
+ \jj{\Delta'}Q\Gamma{E[\perform\op v]}{\tau_0}{\epsilon_0}
+ \xRightarrow{\mathrm{IH}_{K,F}}
+ \jj{\Delta'}K\Gamma{T(F,E)}\tau\epsilon.
+\]
+この IH の内側で Perform / Hole が選ぶ $\bar t$、$P[\bar t/\bar\beta]$、継続構成、
+二値代入をすべて完了する。その後だけ束縛を閉じる：
+
+\[
+\inferrule*[right=Exists]{\jj{\Delta,\bar\alpha}{K}{\Gamma}{T(F,E)}{\tau}{\epsilon}\quad\bar\alpha\#(\Gamma,\tau,\epsilon)}{\jj{\Delta}{\exists\bar\alpha.K}{\Gamma}{T(F,E)}{\tau}{\epsilon}}
+\]
+
+任意の $\nu;\iota\models D$ について
+\begin{gather*}
+ D\models\exists\bar\alpha.Q\Longrightarrow
+ \exists\bar a.\ \nu_a;\iota\models Q,\qquad
+ \bar\alpha\#D\Longrightarrow\nu_a;\iota\models D,\\
+ \nu_a;\iota\models K\Longrightarrow\nu;\iota\models\exists\bar\alpha.K.
+\end{gather*}
+従って $D\models\exists\bar\alpha.K$。
+\[
+\inferrule*[right=Strengthen]{\jj{\Delta}{\exists\bar\alpha.K}{\Gamma}{T(F,E)}{\tau}{\epsilon}\quad D\models\exists\bar\alpha.K}{\jj{\Delta}{D}{\Gamma}{T(F,E)}{\tau}{\epsilon}}
+\]
+\end{Case}
+上記以外の文脈形は各規則の外側構成子と不一致である。
+存在変数に依存する $\bar t$ を外側で選ぶ主張は用いていない。
+\end{proof}
+
+\proofspace
+\begin{samepage}
+\begin{theorem}[操作捕捉の保存]\label{thm:op-preservation}
+$\AS$、$\Val(v)$、$\op\notin\operatorname{handled}(E)$ を仮定する。さらに
+\[\J{\handle{E[\perform\op v]}h}\tau\epsilon\]
+が成り立つなら
+\[
+ \J{c[v/x,K/k]}\tau\epsilon,
+ \qquad K=\lambda z.\handle{E[z]}h.
+\]
+対応は \lean{operationPreservation : OperationPreservationGoal S M sig}。
+\end{theorem}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:thm:op-preservation}
+handler 全体の型付け導出に帰納し、表示された構文との一致を一般化する。
+$e'=c[v/x,(\lambda z.\handle{E[z]}h)/k]$ と置く。IH は前提導出で同じ $e'$ を型付けする。
+
+\begin{Case}{Handle}
+$F=\handle{[\ ]}h$ とする。元の return・節導出と効果包含から
+\begin{gather*}
+ \mathcal K_{\Delta,C,\Gamma}(F;\tau_0,\epsilon_0;\tau,\epsilon)
+       \quad\text{（補題\ref{lem:ctx-typing}）},\\
+ \jj\Delta C\Gamma{E[\perform\op v]}{\tau_0}{\epsilon_0},\quad C\models C,
+ \quad\text{元の節導出},\quad\mathcal K(F)\\
+ \xRightarrow{\text{補題\ref{lem:op-elim}}}
+ \jj\Delta C\Gamma{c[v/x,(\lambda z.(F\circ E)[z])/k]}\tau\epsilon,\\
+ (F\circ E)[z]=\handle{E[z]}h.
+\end{gather*}
+\end{Case}
+
+\begin{Case}{Sub}
+\[
+\inferrule*[right=Sub]{\jj{\Delta}{C}{\Gamma}{e'}{\tau_0}{\epsilon_0}\quad(\mathrm{IH})\\ C\models\tau_0\leq\tau\quad C\models\epsilon_0\leq\epsilon}{\jj{\Delta}{C}{\Gamma}{e'}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Strengthen}
+\[
+\inferrule*[right=Strengthen]{\jj{\Delta}{C_0}{\Gamma}{e'}{\tau}{\epsilon}\quad(\mathrm{IH})\quad C\models C_0}{\jj{\Delta}{C}{\Gamma}{e'}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Exists}
+\[
+\inferrule*[right=Exists]{\jj{\Delta,\bar\alpha}{D}{\Gamma}{e'}{\tau}{\epsilon}\quad(\mathrm{IH})\quad\bar\alpha\#(\Gamma,\tau,\epsilon)}{\jj{\Delta}{\exists\bar\alpha.D}{\Gamma}{e'}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Var}
+\[\operatorname{head}(x)\ne\mathsf{handle}\Longrightarrow x\ne\handle{E[\perform\op v]}h.\]
+\end{Case}
+
+\begin{Case}{Lam}
+\[\operatorname{head}(\lambda x.e_0)\ne\mathsf{handle}\Longrightarrow \lambda x.e_0\ne\handle{E[\perform\op v]}h.\]
+\end{Case}
+
+\begin{Case}{App}
+\[\operatorname{head}(e_1e_2)\ne\mathsf{handle}\Longrightarrow e_1e_2\ne\handle{E[\perform\op v]}h.\]
+\end{Case}
+
+\begin{Case}{Let-Mono}
+\[\operatorname{head}(\lete x{e_1}{e_2})\ne\mathsf{handle}\Longrightarrow \lete x{e_1}{e_2}\ne\handle{E[\perform\op v]}h.\]
+\end{Case}
+
+\begin{Case}{Let-Poly}
+\[\operatorname{head}(\lete x v{e_2})\ne\mathsf{handle}\Longrightarrow \lete x v{e_2}\ne\handle{E[\perform\op v]}h.\]
+\end{Case}
+
+\begin{Case}{Perform}
+\[\operatorname{head}(\perform{\op_0}{e_0})\ne\mathsf{handle}\Longrightarrow \perform{\op_0}{e_0}\ne\handle{E[\perform\op v]}h.\]
+\end{Case}
+この補助導出は $\A$ で成り立つが、公開定理の $\AS$ と
+$\op\notin\operatorname{handled}(E)$ はそのまま保持する。
+\end{proof}
+
+\proofspace
+\section{基本簡約の保存に必要な補題と証明}
+\label{app:safety}
+\proofspace
+\begin{samepage}
+\begin{lemma}[lambda の適用に対する反転]\label{lem:lambda-app}
+$\jj\Delta C\Gamma{\lambda x.e}{\tau_0}{\epsilon_0}$ とする。
+整形式 $D\models C$、$\Val(v)$、$\jj\Delta D\Gamma v{\tau_1}\emp$、
+$D\models\tau_0\leq\arr{\tau_1}\eta{\tau_2}$ の下で
+$\jj\Delta D\Gamma{e[v/x]}{\tau_2}\eta$。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:lambda-app}
+lambda の型付け導出に帰納し、$D,v,\tau_1,\eta,\tau_2$ と
+lambda の構文との一致を一般化する。IH は各前提に対する同じ反転命題である。
+
+\begin{Case}{Lam}
+実際の本体型を $\tau_b$、入力を $\tau_a$、潜在効果を $\epsilon_b$ とする。
+\begin{gather*}
+ D\models\arr{\tau_a}{\epsilon_b}{\tau_b}\leq\arr{\tau_1}\eta{\tau_2}
+ \Longrightarrow D\models\tau_1\leq\tau_a\land\epsilon_b\leq\eta\land\tau_b\leq\tau_2,\\
+ \jj\Delta D\Gamma v{\tau_1}\emp\xRightarrow{\Rule{Sub}}\jj\Delta D\Gamma v{\tau_a}\emp,\\
+ \jj\Delta C{\Gamma,x:\mono{\tau_a}}e{\tau_b}{\epsilon_b}
+ \xRightarrow{D\models C}\jj\Delta D{\Gamma,x:\mono{\tau_a}}e{\tau_b}{\epsilon_b},\\
+ \jj\Delta D\Gamma{e[v/x]}{\tau_b}{\epsilon_b}\quad\text{（系\ref{cor:two}）}.
+\end{gather*}
+
+\[
+\inferrule*[right=Sub]{\jj{\Delta}{D}{\Gamma}{e[v/x]}{\tau_b}{\epsilon_b}\quad D\models\tau_b\leq\tau_2\quad D\models\epsilon_b\leq\eta}{\jj{\Delta}{D}{\Gamma}{e[v/x]}{\tau_2}{\eta}}
+\]
+\end{Case}
+
+\begin{Case}{Sub}
+\[
+ D\models C\models\tau'_0\leq\tau_0,\quad
+ D\models\tau_0\leq\arr{\tau_1}\eta{\tau_2}
+ \Longrightarrow D\models\tau'_0\leq\arr{\tau_1}\eta{\tau_2}.
+\]
+\[
+ \jj\Delta C\Gamma{\lambda x.e}{\tau'_0}{\epsilon'_0}
+ \xRightarrow{\mathrm{IH},\ D,v,\tau_1,\eta,\tau_2}
+ \jj\Delta D\Gamma{e[v/x]}{\tau_2}\eta .
+\]
+\end{Case}
+
+\begin{Case}{Strengthen}
+\[
+ D\models C\models C_0,\qquad
+ \jj\Delta{C_0}\Gamma{\lambda x.e}{\tau_0}{\epsilon_0}
+ \xRightarrow{\mathrm{IH}_{D\models C_0}}\jj\Delta D\Gamma{e[v/x]}{\tau_2}\eta.
+\]
+\end{Case}
+
+\begin{Case}{Exists}
+$C=\exists\bar\alpha.Q$、$K=D\land Q$ と置く。
+\begin{gather*}
+ K\models Q,\quad K\models D,\quad
+ \jj{\Delta,\bar\alpha}K\Gamma v{\tau_1}\emp,\quad
+ K\models\tau_0\leq\arr{\tau_1}\eta{\tau_2},\\
+ \jj{\Delta,\bar\alpha}Q\Gamma{\lambda x.e}{\tau_0}{\epsilon_0}
+ \xRightarrow{\mathrm{IH}_K}\jj{\Delta,\bar\alpha}K\Gamma{e[v/x]}{\tau_2}\eta,\\
+ \bar\alpha\#(D,\Gamma,\tau_1,\tau_2,\eta),\quad
+ D\models\exists\bar\alpha.Q\Longrightarrow D\models\exists\bar\alpha.K.
+\end{gather*}
+値の導出と矢印包含は拡張・強化で得る。
+\[
+\inferrule*[right=Exists]{\jj{\Delta,\bar\alpha}{K}{\Gamma}{e[v/x]}{\tau_2}{\eta}}{\jj{\Delta}{\exists\bar\alpha.K}{\Gamma}{e[v/x]}{\tau_2}{\eta}}
+\]
+
+\[
+\inferrule*[right=Strengthen]{\jj{\Delta}{\exists\bar\alpha.K}{\Gamma}{e[v/x]}{\tau_2}{\eta}\quad D\models\exists\bar\alpha.K}{\jj{\Delta}{D}{\Gamma}{e[v/x]}{\tau_2}{\eta}}
+\]
+\end{Case}
+
+\begin{Case}{Var}
+\[\operatorname{head}(y)\ne\mathsf{lam}\Longrightarrow y\ne\lambda x.e_0.\]
+\end{Case}
+
+\begin{Case}{App}
+\[\operatorname{head}(e_1e_2)\ne\mathsf{lam}\Longrightarrow e_1e_2\ne\lambda x.e_0.\]
+\end{Case}
+
+\begin{Case}{Let-Mono}
+\[\operatorname{head}(\lete y{e_1}{e_2})\ne\mathsf{lam}\Longrightarrow \lete y{e_1}{e_2}\ne\lambda x.e_0.\]
+\end{Case}
+
+\begin{Case}{Let-Poly}
+\[\operatorname{head}(\lete y w{e_2})\ne\mathsf{lam}\Longrightarrow \lete y w{e_2}\ne\lambda x.e_0.\]
+\end{Case}
+
+\begin{Case}{Perform}
+\[\operatorname{head}(\perform\op{e_0})\ne\mathsf{lam}\Longrightarrow \perform\op{e_0}\ne\lambda x.e_0.\]
+\end{Case}
+
+\begin{Case}{Handle}
+\[\operatorname{head}(\handle{e_0}h)\ne\mathsf{lam}\Longrightarrow \handle{e_0}h\ne\lambda x.e_0.\]
+\end{Case}
+\end{proof}
+
+\proofspace
+\begin{samepage}
+\begin{lemma}[基本簡約の保存]\label{lem:redex}
+$\Val(v)$ の下で Beta、Let-Value、Return の各簡約は型・効果を保つ。
+\end{lemma}
+\end{samepage}
+\nopagebreak[4]
+\begin{proof}\leavevmode\label{proof:lem:redex}
+Beta、Let-Value、Return の各左辺の型付け導出に別々に帰納する。
+$\Delta,C,\Gamma,\tau,\epsilon$ と左辺の構文との一致を一般化する。
+各 IH は同じ簡約の右辺に対する型付けを与える。
+
+\begin{Case}{Beta / App}
+\begin{gather*}
+ \J{\lambda x.e}{\arr{\tau_1}\eta\tau}{\epsilon_1},\quad
+ \J v{\tau_1}{\epsilon_2}\xRightarrow{\text{補題\ref{lem:values}}}\J v{\tau_1}\emp,\\
+ C\models\arr{\tau_1}\eta\tau\leq\arr{\tau_1}\eta\tau,\quad C\models C
+ \xRightarrow{\text{補題\ref{lem:lambda-app}}}\J{e[v/x]}\tau\eta,\\
+ C\models\eta\leq(\epsilon_1\cup\epsilon_2)\cup\eta.
+\end{gather*}
+
+\[
+\inferrule*[right=Sub]{\jj{\Delta}{C}{\Gamma}{e[v/x]}{\tau}{\eta}\quad C\models\tau\leq\tau\quad C\models\eta\leq(\epsilon_1\cup\epsilon_2)\cup\eta}{\jj{\Delta}{C}{\Gamma}{e[v/x]}{\tau}{(\epsilon_1\cup\epsilon_2)\cup\eta}}
+\]
+\end{Case}
+
+\begin{Case}{Let-Value / Let-Mono}
+\begin{gather*}
+ \J v{\tau_1}{\epsilon_1}\Longrightarrow\J v{\tau_1}\emp
+       \quad\text{（補題\ref{lem:values}）},\\
+ \jj\Delta C{\Gamma,x:\mono{\tau_1}}e\tau{\epsilon_2}
+ \xRightarrow{\text{系\ref{cor:two}}}\J{e[v/x]}\tau{\epsilon_2},\\
+ C\models\epsilon_2\leq\epsilon_1\cup\epsilon_2
+ \xRightarrow{\Rule{Sub}}\J{e[v/x]}\tau{\epsilon_1\cup\epsilon_2}.
+\end{gather*}
+\end{Case}
+
+\begin{Case}{Let-Value / Let-Poly}
+\[
+\inferrule*[right=\textnormal{定理\ref{thm:scheme-subst}}]{\Val(v)\quad\jj{\Delta,\bar\alpha}{C\land D}\Gamma v{\tau_0}\emp\\ C\models\exists\bar\alpha.D\quad\jj\Delta C{\Gamma,x:\forall\bar\alpha.D\Rightarrow\tau_0}e\tau\epsilon}{\jj{\Delta}{C}{\Gamma}{e[v/x]}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Return / Handle}
+\[
+ \begin{gathered}
+ \J v{\tau_0}{\epsilon_0}\xRightarrow{\text{補題\ref{lem:values}}}\J v{\tau_0}\emp,\\
+ \jj\Delta C{\Gamma,x:\mono{\tau_0}}r\tau\epsilon
+ \xRightarrow{\text{系\ref{cor:two}}}\J{r[v/x]}\tau\epsilon.
+ \end{gathered}
+\]
+\end{Case}
+
+\begin{Case}{Beta / Sub}
+\[
+\inferrule*[right=Sub]{\jj{\Delta}{C}{\Gamma}{e[v/x]}{\tau_0}{\epsilon_0}\quad(\mathrm{IH})\\ C\models\tau_0\leq\tau\quad C\models\epsilon_0\leq\epsilon}{\jj{\Delta}{C}{\Gamma}{e[v/x]}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Beta / Strengthen}
+\[
+\inferrule*[right=Strengthen]{\jj{\Delta}{C_0}{\Gamma}{e[v/x]}{\tau}{\epsilon}\quad(\mathrm{IH})\quad C\models C_0}{\jj{\Delta}{C}{\Gamma}{e[v/x]}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Beta / Exists}
+\[
+\inferrule*[right=Exists]{\jj{\Delta,\bar\alpha}{D}{\Gamma}{e[v/x]}{\tau}{\epsilon}\quad(\mathrm{IH})\quad\bar\alpha\#(\Gamma,\tau,\epsilon)}{\jj{\Delta}{\exists\bar\alpha.D}{\Gamma}{e[v/x]}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Beta / Var}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{var}\ne\mathsf{app}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Beta / Lam}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{lam}\ne\mathsf{app}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Beta / Let-Mono}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{let}\ne\mathsf{app}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Beta / Let-Poly}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{let}\ne\mathsf{app}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Beta / Perform}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{perform}\ne\mathsf{app}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Beta / Handle}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{handle}\ne\mathsf{app}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Let-Value / Sub}
+\[
+\inferrule*[right=Sub]{\jj{\Delta}{C}{\Gamma}{e[v/x]}{\tau_0}{\epsilon_0}\quad(\mathrm{IH})\\ C\models\tau_0\leq\tau\quad C\models\epsilon_0\leq\epsilon}{\jj{\Delta}{C}{\Gamma}{e[v/x]}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Let-Value / Strengthen}
+\[
+\inferrule*[right=Strengthen]{\jj{\Delta}{C_0}{\Gamma}{e[v/x]}{\tau}{\epsilon}\quad(\mathrm{IH})\quad C\models C_0}{\jj{\Delta}{C}{\Gamma}{e[v/x]}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Let-Value / Exists}
+\[
+\inferrule*[right=Exists]{\jj{\Delta,\bar\alpha}{D}{\Gamma}{e[v/x]}{\tau}{\epsilon}\quad(\mathrm{IH})\quad\bar\alpha\#(\Gamma,\tau,\epsilon)}{\jj{\Delta}{\exists\bar\alpha.D}{\Gamma}{e[v/x]}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Let-Value / Var}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{var}\ne\mathsf{let}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Let-Value / Lam}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{lam}\ne\mathsf{let}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Let-Value / App}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{app}\ne\mathsf{let}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Let-Value / Perform}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{perform}\ne\mathsf{let}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Let-Value / Handle}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{handle}\ne\mathsf{let}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Return / Sub}
+\[
+\inferrule*[right=Sub]{\jj{\Delta}{C}{\Gamma}{r[v/x]}{\tau_0}{\epsilon_0}\quad(\mathrm{IH})\\ C\models\tau_0\leq\tau\quad C\models\epsilon_0\leq\epsilon}{\jj{\Delta}{C}{\Gamma}{r[v/x]}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Return / Strengthen}
+\[
+\inferrule*[right=Strengthen]{\jj{\Delta}{C_0}{\Gamma}{r[v/x]}{\tau}{\epsilon}\quad(\mathrm{IH})\quad C\models C_0}{\jj{\Delta}{C}{\Gamma}{r[v/x]}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Return / Exists}
+\[
+\inferrule*[right=Exists]{\jj{\Delta,\bar\alpha}{D}{\Gamma}{r[v/x]}{\tau}{\epsilon}\quad(\mathrm{IH})\quad\bar\alpha\#(\Gamma,\tau,\epsilon)}{\jj{\Delta}{\exists\bar\alpha.D}{\Gamma}{r[v/x]}{\tau}{\epsilon}}
+\]
+\end{Case}
+
+\begin{Case}{Return / Var}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{var}\ne\mathsf{handle}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Return / Lam}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{lam}\ne\mathsf{handle}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Return / App}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{app}\ne\mathsf{handle}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Return / Let-Mono}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{let}\ne\mathsf{handle}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Return / Let-Poly}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{let}\ne\mathsf{handle}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+
+\begin{Case}{Return / Perform}
+規則の結論の項を $u$、この簡約の左辺を $e_0$ とする。
+\[\operatorname{head}(u)=\mathsf{perform}\ne\mathsf{handle}
+ =\operatorname{head}(e_0)\Longrightarrow u=e_0\Rightarrow\bot.\]
+\end{Case}
+\end{proof}
+
+\section{Lean 宣言との対応と検証範囲}
+\label{app:mapping}
+\subsection{対応の読み方}
+この文書はコミット \texttt{8e10b87fd4ab8567fd5c84453dccc80e98c42fca} の
+\lean{EHMX} を対象とする。数学的な対応表であり、名前付き表現への
+翻訳の正しさを Lean で証明したという意味ではない。
+実装は自由名と束縛添字を分離する。本書は束縛名を新鮮に選び、
+二種類の項変数参照、局所・大域型変数を名前で表示する。
+本文の一つの \Rule{Def} は実装の \lean{def_} と \lean{defFree} の双方を表す。
+実装で必要な添字の移動・開き・交換の補題は、
+補題\ref{lem:binding}の新鮮性・捕獲回避代入・合成にまとめた。
+
+下表の宣言名は原則 \lean{EHMX.} を省略する。
+ファイル名は \lean{EHMX/Proofs/} からの相対名（基礎定義と Goal は \lean{EHMX/}）である。
+表は定義・主要補題とその役割を示す。同じ数学的補題を支える
+構文上の補助等式は複数の Lean 宣言に分かれる。
+\small
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{.23\textwidth}>{\raggedright\arraybackslash}p{.72\textwidth}@{}}
+\toprule 本書の箇所 & ファイル・宣言と役割\\\midrule
+\endfirsthead
+\toprule 本書の箇所 & ファイル・宣言と役割\\\midrule
+\endhead
+\bottomrule\endfoot
+\S\ref{sec:syntax} & \lean{Syntax.lean}: \lean{Ty.HasKind}, \lean{Constraint.WF}, \lean{Scheme.WF}, \lean{Env.WF}, \lean{Expr.Scoped}, \lean{Expr.Declared}, \lean{OpSignature.WF}。kind・作用域・条件前件の制限。\\
+\S\ref{sec:model} & \lean{Semantics.lean}: \lean{Constraint.Holds}, \lean{Scheme.denote}, \lean{Entails}, \lean{Satisfiable}, \lean{EffectFramework}, \lean{ArrowSeparated}。モデルと全前提。\\
+\S\ref{sec:typing} & \lean{Typing.lean}: \lean{JudgmentWF}, \lean{Typing}, \lean{typingWF}。\lean{Operational.lean}: \lean{EvalCtx}, \lean{Expr.resume}, \lean{Step}, \lean{Steps}, \lean{Unhandled}。\\
+\S\ref{sec:inference} & \lean{Inference.lean}: \lean{resultConstraint}, \lean{generate}, \lean{infer}。\lean{Goals.lean}: 推論三 Goal と \lean{PrincipalConstraint}。\\
+補題\ref{lem:binding} & \lean{Kind.lean}: \lean{kindShift}, \lean{kindAppend}, \lean{operationInstantiation}, \lean{evalKind}, \lean{evalShift}。\lean{TypeSubstitution.lean}: \lean{kindSubstBound}, \lean{substBoundWF}, \lean{substBoundFpi}, \lean{substBoundComp}, \lean{declarationOpenSubstBound}, \lean{declarationConditionSubstBound}, \lean{declarationConditionOpenSubstBound}, \lean{conditionDeclarationAppend}。\\
+補題\ref{lem:semantic-subst} & \lean{TypeSubstitution.lean}: \lean{evalSubstBound}, \lean{substBoundSemantics}, \lean{BoundSubst.realization}, \lean{entailsSubstBound}。\lean{SchemeInstantiation.lean}: \lean{constraintShiftHolds}, \lean{entailsShift}。代入・新鮮拡張と解釈。\\
+補題\ref{lem:basic} & \lean{ConstraintLaws.lean}: \lean{entailsRefl}, \lean{entailsTrans}, \lean{leRefl}, \lean{effectEmptyBelow}, \lean{forallHoldsIntro}, \lean{forallHoldsElim}, \lean{forallConjunction}, \lean{schemeUpperSet}, \lean{monoInstance}。\lean{Reduction.lean}: \lean{leTrans}, \lean{effectUnionRight}, \lean{arrowLeComponents}。\\
+補題\ref{lem:basic}の所属 & \lean{InferenceEnvironment.lean}: \lean{instanceConstraintHolds}。\lean{InferenceCompleteness.lean}: \lean{schemeExistsNonempty}, \lean{monoExists}, \lean{monoDenoteCongruence}。\\
+補題\ref{lem:ground} & \lean{InferenceEnvironment.lean}: \lean{groundAgreement}, \lean{constraintGroundIndependent}, \lean{schemeGroundIndependent}, \lean{groundMonotonicity}, \lean{definitionMonotone}。包含による本体生成の移送。\\
+補題\ref{lem:env} & \lean{InferenceEnvironment.lean}: \lean{envLetInHolds}, \lean{envInterpretValid}, \lean{envInterpretLookup}, \lean{envPushExists}, \lean{envExistsShift}, \lean{envLetInConjunction}, \lean{envLetInExists}, \lean{envLetInForall}, \lean{envLetInImplication}。\lean{InferenceSoundness.lean}: \lean{envLetInMono}。\\
+補題\ref{lem:gen-wf} & \lean{Generation.lean}: \lean{generationWF}, \lean{generationScope}。\lean{InferenceEnvironment.lean}: \lean{inferWF}, \lean{inferScope}, \lean{inferJudgmentWF}。\lean{GenerationProperties.lean}: \lean{generationSubstitution}, \lean{generationShift}, \lean{generationShiftHolds}。\\
+補題\ref{lem:gen-mono} & \lean{GenerationProperties.lean}: \lean{generationValuePure}, \lean{boundTypeSchemeUpperSet}, \lean{generationMonotone}。\lean{InferenceSupport.lean}: \lean{inferenceMonotone}。\\
+補題\ref{lem:rebase} & \lean{GenerationProperties.lean}: \lean{generationRebase}, \lean{generationEvalCongruence}。意味値を型構文へ戻さず生成を移す。\\
+補題\ref{lem:generated} & 同ファイル：\lean{generatedScheme}, \lean{generatedSchemeWF}, \lean{generatedSchemeScope}, \lean{generatedSchemeDenote}, \lean{generatedSchemeExists}, \lean{valueLetGeneration}。\\
+補題\ref{lem:comparison} & 同ファイル：\lean{generatedSchemeComparison}。\lean{InferenceCompleteness.lean}: \lean{valueLetCompletenessHolds}。包含と実現可能性を分離する。\\
+\S\ref{sec:sound} & \lean{InferenceSupport.lean}: \lean{scopedLookup}, \lean{inferenceVariableConstraint}, \lean{inferenceVariable}, \lean{inferenceExistsCase}, \lean{inferenceValueLet}。\\
+\S\ref{sec:sound}（続） & \lean{InferenceSoundness.lean}: \lean{inferenceLambda}, \lean{inferenceApplication}, \lean{inferenceMonoLet}, \lean{inferencePerform}, \lean{inferenceHandle}, \lean{entailsForallOpen}, \lean{entailsForallImplicationOpen}, \lean{inferenceSoundnessAux}, \lean{inferenceSoundness}。\\
+\S\ref{sec:complete} & \lean{InferenceSupport.lean}: \lean{variableCompletenessHolds}。\lean{InferenceCompleteness.lean}: \lean{generationLambdaHolds}, \lean{generationApplicationHolds}, \lean{generationMonoLetHolds}, \lean{generationPerformHolds}, \lean{generationHandleHolds}, \lean{inferShiftHolds}, \lean{typingCompletenessHolds}, \lean{inferenceCompleteness}。\\
+定理\ref{thm:principal} & \lean{InferencePrincipality.lean}: \lean{constraintGenerationPrincipality}。三つの公開 Goal の結合。\\
+補題\ref{lem:typing-subst}, \ref{lem:clause-inst} & \lean{TypingTypeSubstitution.lean}: \lean{typingTypeEffectSubstitution}, \lean{typingInstantiate}, \lean{operationClauseInstantiation}。\\
+補題\ref{lem:weakening} & \lean{Weakening.lean}: \lean{typingWeakeningAt}, \lean{typingWeakening}。\lean{ValueSubstitution.lean}: \lean{typingWeakeningBlock}。\lean{OperationContext.lean}: \lean{typingStronger}, \lean{typingShiftStronger}。\\
+補題\ref{lem:values} & \lean{Typing.lean}: \lean{valuePure}, \lean{closedValueLambda}, \lean{typingDeclared}, \lean{unknownPerformNotTypable}。\lean{EvaluationContext.lean}: \lean{valueNoStep}, \lean{evalCtxValue}, \lean{valueOpening}。\\
+補題\ref{lem:scheme-inst}, \ref{lem:realizes} & \lean{SchemeInstantiation.lean}: \lean{schemeValueInstantiation}。\lean{ValueSubstitution.lean}: \lean{RealizesScheme}, \lean{realizesSchemeShift}, \lean{generalizedValueRealizes}, \lean{RealizesScheme.use}。\\
+補題\ref{lem:value-subst-aux}, 定理\ref{thm:scheme-subst}, 系\ref{cor:two} & \lean{ValueSubstitution.lean}: \lean{typingValueSubstitutionAux}, \lean{schemeValueSubstitution}, \lean{valueSubstitution}。\lean{Operation.lean}: \lean{exprOpenTwo}, \lean{twoValueSubstitution}。\\
+補題\ref{lem:ctx-replace} & \lean{EvaluationContext.lean}: \lean{evalCtxReplacement}。非値の穴の全型文脈での置換。\\
+補題\ref{lem:ctx-typing} & \lean{OperationContext.lean}: \lean{ContextTyping}, \lean{operationClauseShift}, \lean{ContextTyping.comp}, \lean{ContextTyping.appFun}, \lean{ContextTyping.appArg}, \lean{ContextTyping.letRhs}, \lean{ContextTyping.perform}, \lean{ContextTyping.handle}, \lean{ContextTyping.stronger}, \lean{ContextTyping.shift}, \lean{ContextTyping.sub}。\\
+補題\ref{lem:resume}, \ref{lem:op-elim}, 定理\ref{thm:op-preservation} & \lean{Operation.lean}: \lean{resumeContextTyping}, \lean{resumeTyping}, \lean{operationElimination}, \lean{operationPreservationAux}, \lean{operationPreservation}。\\
+補題\ref{lem:lambda-app}, \ref{lem:redex} & \lean{Reduction.lean}: \lean{lambdaApplication}, \lean{betaPreservation}, \lean{letPreservation}, \lean{returnPreservation}。\\
+定理\ref{thm:preservation}, \ref{thm:steps}, \ref{thm:safety}, 系\ref{thm:empty} & \lean{Preservation.lean}: \lean{preservation}, \lean{preservationSteps}, \lean{effectSafety}, \lean{emptyEffectSafety}。\\
+定理\ref{thm:progress} & \lean{Progress.lean}: \lean{typingClosed}, \lean{effectsUnion}, \lean{effectsSingleton}, \lean{progressGeneral}, \lean{progressEffectSafety}, \lean{emptyEffectProgress}。\\
+\S\ref{sec:examples} & \lean{TypeClasses.lean} と \lean{Proofs/TypeClasses.lean}（モデル）、\lean{Regression.lean}, \lean{InferenceTheoremRegression.lean}, \lean{SafetyRegression.lean}, \lean{ConditionalOperationsRegression.lean}（適用例）。\\
+\end{longtable}
+\normalsize
+
+\clearpage
+\subsection{依存関係と照合の要点}
+数学的な依存関係は次の順で閉じている。
+\begin{align*}
+ \text{意味論・環境・生成の法則}
+ &\longrightarrow \text{健全性・完全性}\longrightarrow\text{主要制約性},\\
+ \text{型・効果代入と弱化}
+ &\longrightarrow\text{スキーム具体化・値代入},\\
+ \text{値代入と文脈型付け}
+ &\longrightarrow\text{基本簡約・操作捕捉の保存},\\
+ \text{一歩保存}&\longrightarrow\text{多歩保存},\\
+ \text{多歩保存と独立の進行}&\longrightarrow\text{到達状態の効果安全性}.
+\end{align*}
+スキーム包含の前提は右辺の局所帰納仮定であり、完全性そのものではない。
+保存の前提に操作保存を仮定として追加していない。
+$\mathcal R$ と $\mathcal K$ は導出から構成する補助命題であり、
+モデル法則にも最終 Goal の追加前提にも含まれない。
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule 帰納法 & 対象 & 全分岐の記載箇所\\\midrule
+健全性 & 項の構造（let を値で分割） & \S\ref{sec:sound}\\
+完全性 & Typing の10構成子 & \S\ref{sec:complete}\\
+型・効果代入、弱化、値代入 & Typing の10構成子 & 付録\ref{app:structural}\\
+文脈置換・操作消去 & Typing と文脈形 & 付録\ref{app:operation}\\
+一歩保存 & Step の5構成子 & 定理\ref{thm:preservation}の直後\\
+進行 & Typing の10構成子 & 定理\ref{thm:progress}の直後\\
+多歩保存 & Steps の2構成子 & 定理\ref{thm:steps}の直後\\\bottomrule
+\end{tabular}
+\end{center}
+
+\clearpage
+\subsection{再生成と限界}
+組版は Tectonic 0.17.0、XeTeX 系のエンジン、\lean{xeCJK}、原ノ味フォント（本文は明朝）を用いる。
+再生成手順と検証記録は同梱の \lean{ehmx-paper-build.txt} に記す。
+Lean の版は \mbox{\lean{leanprover/lean4:v4.34.1}}。
+検証は標準ビルド、既存 Goal の型検査、推論回帰、公理監査と、
+本書に記載した宣言名の照合を対象とする。
+公理監査の許容依存は \lean{propext}, \lean{Classical.choice}, \lean{Quot.sound} のみ。
+
+Lean の定義・証明は変更していない。本書は既存仕様 PDF と別の成果物であり、
+将来の Lean 変更に対する PDF の更新・再生成・整合性検査の義務を追加しない。
+本書の数学的記述自体は Lean のカーネルによる検証対象ではなく、宣言・証明との照合による。
+ソルバー、最汎代入、辞書変換、型クラス探索器、型クラスのメソッド本体の実行法則は対象外である。
+
+\begin{thebibliography}{9}
+\bibitem{attapl}
+Fran\c{c}ois Pottier and Didier R\'emy.
+The Essence of ML Type Inference.
+In Benjamin C. Pierce (ed.), \emph{Advanced Topics in Types and Programming Languages},
+MIT Press, 2005, Chapter 10, pp. 389--489.
+参照箇所：429--430頁、Theorems 10.4.4, 10.4.8, 10.5.8, 10.5.11。
+ローカル資料：\lean{docs/references/attapl-chapter10-the_essence_of_ml_type_inference.pdf}。
+\bibitem{freeze}
+Frank Emrich, Jan Stolarek, James Cheney, and Sam Lindley.
+\emph{Constraint-based type inference for FreezeML}.
+arXiv:2207.09914v1, 20 July 2022.
+\url{https://arxiv.org/abs/2207.09914v1}.
+ローカル資料：\lean{docs/references/2207.09914v1.pdf}。
+\end{thebibliography}
+\end{document}

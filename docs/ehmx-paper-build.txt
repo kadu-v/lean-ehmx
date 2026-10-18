@@ -1,0 +1,170 @@
+EHM(X) 論文の再生成・検証記録
+===========================
+
+成果物
+  ソース: docs/ehmx-paper.tex
+  PDF: output/pdf/ehmx-paper.pdf (A4、一段組、56ページ)
+  検証日: 2026-10-18 (Asia/Tokyo)
+  対応する Lean ソースの Git commit:
+    8e10b87fd4ab8567fd5c84453dccc80e98c42fca
+
+組版環境
+  macOS / aarch64-apple-darwin
+  Tectonic 0.17.0 (公式配布バイナリ)
+  Tectonic の既定バンドル: default_bundle_v33
+  バンドル識別ハッシュ:
+    6ffe055852f8faf66c0acbe1a7fb27f87b869a90bad1204f3bf4d9683f597c7c
+  LaTeX2e 2021-11-15 patch level 1
+  L3 programming layer 2022-02-24
+  xeCJK 2021-12-12 v3.8.8
+  needspace 2010/09/12 v1.3d
+  和文: HaranoAjiMincho-Regular.otf / HaranoAjiMincho-Bold.otf
+        HaranoAjiGothic-Medium.otf (サンセリフ設定)
+  欧文: TeX Gyre Termes、等幅: Latin Modern Mono
+  フォント・TeX パッケージは Tectonic のバンドルから取得する。
+  フォントは PDF に埋め込まれている。
+  画像化: Poppler pdftoppm 25.12.0
+  Lean: leanprover/lean4:v4.34.1 (lean-toolchain に従う)
+
+通常の再生成 (リポジトリのルートで実行)
+  mkdir -p output/pdf
+  tectonic --outdir output/pdf docs/ehmx-paper.tex
+
+  Tectonic 0.17.0 を PATH に用意する。初回はバンドル取得のため
+  ネットワーク接続が必要。Tectonic が目次・相互参照の再処理を行う。
+  資源がキャッシュ済みなら --only-cached を追加して実行できる。
+  作成日時などの PDF メタデータは再生成時に変わり得る。
+
+ログを残す再生成と画像化
+  mkdir -p tmp/pdfs/ehmx-paper/pages
+  tectonic --keep-logs --keep-intermediates --outdir tmp/pdfs/ehmx-paper docs/ehmx-paper.tex
+  pdftoppm -scale-to 1800 -png tmp/pdfs/ehmx-paper/ehmx-paper.pdf tmp/pdfs/ehmx-paper/pages/page
+  pdfinfo tmp/pdfs/ehmx-paper/ehmx-paper.pdf
+  pdffonts tmp/pdfs/ehmx-paper/ehmx-paper.pdf
+
+  ログの検査例 (一致なしが期待結果; rg の終了コードは 1):
+  rg -n 'Overfull|Underfull|Missing character|undefined|Warning' tmp/pdfs/ehmx-paper/ehmx-paper.log
+
+  全ページの画像を確認した後、次で成果物へ反映する。
+  cp tmp/pdfs/ehmx-paper/ehmx-paper.pdf output/pdf/ehmx-paper.pdf
+
+初版作成時の検証結果
+  - Tectonic のコンパイル成功。上記ログ検査の一致なし。
+    未解決参照・欠落文字・Overfull/Underfull の警告なし。
+  - 最終 PDF の全27ページを PNG 化し、全ページを目視確認。
+    推論規則、証明、数式、改ページ、ヘッダ、対応表を確認した。
+  - lake build: 成功 (840 jobs)。
+  - lake env lean tests/EHMXGoals.lean: 成功。
+  - lake env lean tests/EHMXInference.lean: 成功。
+  - lake env lean tests/EHMXAxioms.lean: 成功。
+    1195個の EHMX 定理宣言の公理依存を監査。
+    許容依存は propext、Classical.choice、Quot.sound のみ。
+  - 本文の宣言名199個について、import EHMX と適切な namespace の
+    open を置いた一時ファイルで #check を実行し、すべて成功。
+    ファイル名・namespace 名・一般の説明文字列は宣言数に含めない。
+  - git diff --check と、新規テキストファイルの空白検査を実施。
+
+内容の照合
+  推論三定理の前提・結論から依存補題を確認した。
+  完全性の環境実現可能性、公開安全性定理の ArrowSeparated、
+  進行の充足割当てを明記した。
+  操作捕捉では存在量化された型引数・条件を作用域内に保ち、
+  継続の構成と値代入を行う。多相 let のスキーム包含は局所的な
+  帰納仮定から示し、実現可能性を別に扱う。
+  各帰納法の分岐は対応する定理・補題の直後に記載し、
+  宣言対応は付録 E にまとめた。
+
+記法の読みやすさの修正 (2026-10-18)
+  Definition 1.2 の t_kappa、tau ::= t_0、epsilon ::= t_1 という
+  圧縮した表記を、共通の構文 t ::= alpha | f(t_1,...,t_n) と、
+  単相型 tau / 効果 epsilon の意味・例の表に分けた。
+  型スキーム sigma の定義箇所への案内を追加した。
+  数学的内容および Lean ソースの変更はない。
+  再コンパイル成功。上記ログ検査の一致なし。引き続き27ページ。
+  全ページを再画像化し、変更された2-16ページを目視確認した。
+  1、17-27ページは既に確認済みの画像とバイト単位で一致した。
+  この記法修正に対して Lean の検証は再実行していない。
+
+判断の説明の追加 (2026-10-18)
+  第1節の冒頭に判断と推論規則の読み方を追加した。
+  kind 判断、制約・スキームの整形式性、充足、意味的含意、
+  型付け、一歩・多歩簡約について、日本語の読み方を明記した。
+  Delta、Xi、Gamma、nu、iota の役割と、セミコロン、turnstile、
+  models、wf、型付けの ! の意味を説明した。
+  操作の条件 P の整形式性を判断式で示し、Eq(beta) の例を追加した。
+  型付けには恒等関数の例を加え、評価効果と関数の潜在効果を区別した。
+  TeX のコンパイル成功。未解決参照・欠落文字・組版警告なし。
+  全28ページを画像化して目視確認し、依存関係の表示を改ページで
+  分断しないよう調整した。空白検査も実施した。
+  定理の前提・結論、証明、Lean ソースの変更はない。
+  説明の追加のみのため Lean の検証は再実行していない。
+
+定理と証明の配置の修正 (2026-10-18)
+  健全性と完全性の全証明を、それぞれ本文の定理4.1、4.2の直後へ移動。
+  主要制約性は引き続き定理4.4の直後に証明を置く。
+  一歩・多歩保存、進行、到達状態の効果安全性も各定理の直後へ移動。
+  効果安全性と空効果の系の合同証明は、各主張の直後の証明に分けた。
+  存在生成式の補助補題は証明と一緒に付録 A に移動した。
+  付録の構成は A-E に整理し、目次と本文・対応表の参照先を更新した。
+  推論の健全性は8ページ、完全性は9-10ページ、主要制約性は10ページ。
+  36件の定理・補題・系のステートメントが元の記述と一致すること、
+  全件の直後に証明があること、130個の Case が保持されたことを検査。
+  合同証明の分割を除き、移動した証明本文が保持されていることも検査した。
+  最終版は29ページ。コンパイル成功、未解決参照・欠落文字・組版警告なし。
+  全ページを画像化して目視確認し、git diff --check と新規テキストの
+  空白検査を実施した。Lean ソースの変更と証明の追加はない。
+  文書の構成変更のため Lean の検証は再実行していない。
+
+健全性の Case Lam の数式化 (2026-10-18)
+  圧縮した文章による証明を、次の数式による導出に展開した。
+  - 新鮮な型・効果変数、内側の環境 Delta'、生成制約 D、C' の定義。
+  - 環境付加の同値変形と、本体の推論制約・型上界・効果上界の取り出し。
+  - 本体への帰納仮定と Lam、Sub の推論木。
+  - 存在量化と環境付加の交換、および Exists、Strengthen の推論木。
+  EHMX/Proofs/InferenceSoundness.lean の inferenceLambda と照合した。
+  完全性のステートメントだけが前ページ末尾に残らないよう改ページした。
+  Case Lam は8-9ページ。完全性は10-11ページ、主要制約性は11ページ。
+  最終版は30ページ。コンパイル成功、未解決参照・欠落文字・組版警告なし。
+  全ページを再画像化し、変更ページの配置を目視確認した。
+  1、3-7ページは前回確認済みの画像とバイト単位で一致した。
+  定理の前提・結論と Lean ソースの変更はない。Lean の検証は再実行していない。
+
+全証明の数式化 (2026-10-18)
+  本文・付録の36件すべての証明を数式中心の導出へ書き直した。
+  まとめていた帰納法の分岐を分け、130個から243個の Case に展開。
+  帰納対象、一般化する変数、帰納仮定を明記し、各分岐で
+  代入した帰納仮定、意味論の等式、含意の連鎖、推論木を示した。
+  多相 let ではスキーム包含と環境実現可能性を分け、包含の証明に
+  局所的な帰納仮定を用いた。操作捕捉では存在量化された型引数と
+  条件を作用域内に保持して、継続構成・具体化・値代入を行った。
+  36件のステートメントが修正前と文字列単位で一致することを検査。
+  全件で主張の直後に証明を置き、主張と証明開始が同じページに
+  あることを LaTeX のラベル情報で検査した。未解決の参照なし。
+  現行版の推論三定理の開始ページ:
+    健全性 (定理4.1): 8ページ、証明は8-10ページ。
+    完全性 (定理4.2): 11ページ、証明は11-13ページ。
+    主要制約性 (定理4.4): 14ページ。
+  最終版は56ページ。Tectonic のコンパイル成功。
+  未解決参照・欠落文字・フォント警告・Overfull/Underfull の警告なし。
+  フォントはすべて埋め込み。全56ページを PNG 化し、目視確認した。
+  最終修正で変わらなかったページは確認済み画像とのバイト一致を検査し、
+  変わったページは再確認した。数式・推論木・改ページ・見出しを確認。
+  git diff --check と新規テキストファイルの空白検査を実施した。
+  Lean ソース・証明の変更や追加はない。Lean の検証は再実行していない。
+  上記「初版作成時の検証結果」の Lean 検証は初版時点の記録である。
+
+参照資料 (既存ローカル PDF、SHA-256)
+  docs/references/2207.09914v1.pdf
+    3885c022d3c171a8552150c33bf655657372416ac7730d9038bd90b2520fb815
+  docs/references/attapl-chapter10-the_essence_of_ml_type_inference.pdf
+    205dedec53c0015a902379ca5cf2eac578cec4b83c8cfad9809c18080baf6895
+  前者は組版の参考。HM(X) の定理の対応先は後者の第10章。
+
+範囲と限界
+  Lean の定義・証明は変更していない。新しい Lean 証明は追加していない。
+  名前付きの数学的記述と Lean 実装の対応表は、機械検証済みの
+  翻訳定理ではない。#check は宣言名の存在を検査するものであり、
+  TeX の文章・数式そのものの正しさを機械検証するものではない。
+  型クラスモデルは適用例とし、その全モデル法則の証明は収録対象外。
+  本 PDF は既存仕様 PDF とは別の成果物であり、将来の Lean 更新に
+  対する PDF 更新・再生成・整合性検査の義務を追加しない。
