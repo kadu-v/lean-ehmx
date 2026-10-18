@@ -14,6 +14,8 @@ EHMX は新しい名前空間・公開入口に追加し、HMX の定義と証�
 
 EHMX の [仕様](docs/ehmx-spec.md) と [補題TODO](docs/ehmx-todo.md) に、前提・結論・証明状況を記録しています。保存と安全性に加え、`inferenceSoundness`・`inferenceCompleteness`・`constraintGenerationPrincipality` が `Goals.lean` の三つの推論命題をそのまま満たします。健全性は項の構造、完全性は既存の `Typing` 導出に帰納法を適用しています。完全性の環境実現可能性条件は維持し、充足可能性・`ArrowSeparated`・意味論の値の構文的表現可能性は追加していません。主要制約性は固定した要求型・効果に対する制約の含意を保証します。ソルバーや最汎代入の存在は対象外です。既存の [仕様PDF](output/pdf/ehmx-spec.pdf) は今回更新していません。
 
+[型クラスの固定モデル](docs/typeclasses.md)も EHM(X) の具体的な X として構成しました。`EHMX.TypeClasses.fixedFramework` は任意の HMX 形式の宣言データについて成立し、関数型の潜在効果と反変・共変の順序を保持します。同名前空間の推論三定理はモデル法則を内部で証明し、元の作用域・kind・環境実現可能性の条件を維持します。資格付き `eq` の利用と、多相操作を処理する deep handler について、直接型付け・生成制約への含意・主要制約性・Int の割当てによる充足可能性を検査しています。
+
 ```lean
 import EHMX
 
@@ -37,6 +39,11 @@ import EHMX
 #check EHMX.generatedSchemeComparison
 #check EHMX.inferenceValueLet
 #check EHMX.Concrete.framework
+#check EHMX.TypeClasses.fixedFramework
+#check EHMX.TypeClasses.fixedArrowSeparated
+#check EHMX.TypeClasses.inferenceSoundness
+#check EHMX.TypeClasses.inferenceCompleteness
+#check EHMX.TypeClasses.constraintGenerationPrincipality
 ```
 
 `progressEffectSafety` は、閉じた型付き項が値・簡約可能・効果に含まれる未処理操作のいずれかであることを証明します。`effectSafety` は多歩保存を使い、この保証を任意の到達状態に適用します。`emptyEffectSafety` は充足可能な制約と空効果の下で、到達状態が値または簡約可能であることを示します。`EHMX.Goals` の `...Goal` は命題の定義であり、対応する証明は別の `theorem` 宣言です。
@@ -87,7 +94,10 @@ lake env lean tests/EHMXInference.lean
 | [LocallyNameless](HMX/LocallyNameless/Syntax.lean) | 束縛変数を添字で表す証明用構文・意味論・型付け |
 | [Correspondence](HMX/LocallyNameless/Correspondence.lean) | 名前付き表現との対応、作用域条件付き命題 |
 | [Proofs](HMX/LocallyNameless/Proofs.lean) | 補助補題、表現対応、推論定理の証明 |
-| [TypeClasses](HMX/TypeClasses.lean) | 単一引数クラス・スーパークラス・条件付きインスタンスの固定モデル |
+| [TypeClasses](HMX/TypeClasses.lean) | HMX の単一引数クラス・スーパークラス・条件付きインスタンスの固定モデル |
+| [EHMX.TypeClasses](EHMX/TypeClasses.lean) | HMX と宣言を共有し、潜在効果を保持する型木とクラス所属 |
+| [EHMX.Proofs.TypeClasses](EHMX/Proofs/TypeClasses.lean) | モデル法則、規則の含意、HMX 所属との対応、推論三定理の特殊化 |
+| [EHMX.TypeClassesRegression](EHMX/TypeClassesRegression.lean) | 所属・否定例、メソッド利用、多相操作の handler、生成制約の充足可能性 |
 
 ## 主要な証明
 

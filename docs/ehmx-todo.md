@@ -112,3 +112,23 @@ ATTAPL §10.5 の保存（10.5.8）・型安全性（10.5.11）に対応する E
 検査結果：`lake build`（836 jobs）、`tests/EHMXGoals.lean`、`tests/EHMXInference.lean`、`tests/EHMXAxioms.lean`（925件の定理宣言）、`git diff --check` が成功。公理監査の許容依存は `propext`・`Classical.choice`・`Quot.sound` のみ。追加公理や sorry は使用していない。
 
 三つの推論 Goal に残る証明義務はない。充足可能性・`ArrowSeparated`・意味論の値の構文的表現可能性を追加しておらず、構文・型付け規則・生成規則・HMX 基盤は維持した。ソルバーと最汎代入の存在証明は対象外。上記の追加回帰 TODO は三定理の完成条件とは別である。PDF の更新・再生成・整合性検査は実施していない。
+
+
+## 型クラス固定モデルの構成と適用
+
+目標は、HMX と同じ宣言形式の単一引数型クラスを EHM(X) の X として構成し、ATTAPL 10.4.4・10.4.8・429–430頁の推論保証の EHM(X) 拡張を適用することである。モデル構成は具体的な X の新しい実例であり、原典の番号付き定理の転記ではない。
+
+- [x] `GroundType`・`Ground`。型木と有限集合効果を分離し、追加構成子のアリティと入れ子の潜在効果を保持。
+- [x] `groundRefl`・`groundTrans`・`groundAntisymm`・`fixedFramework`。反変・共変の関数型順序と効果集合の法則を証明し、任意の `ClassEnv` のモデルを構成。
+- [x] `constructTag`・`constructArguments`・`constructorPreserves`・`fixedArrowSeparated`。整形式適用で名前と全引数を保存し、通常の構成子と専用関数型を分離。
+- [x] `classAtomMeaning`・`superclassEntailment`・`instanceEntailment`・`memberDeclared`。規則を制約含意へ接続。宣言の保証には `E.WF`、型引数には kind 0、潜在効果には kind 1 を明示。
+- [x] `embedConstruct`・`eraseConstruct`・`memberEmbedIff`。空効果埋込み上で HMX の所属と同値。推論体系全体の翻訳は対象外。
+- [x] `TypeClasses.inferenceSoundness`・`TypeClasses.inferenceCompleteness`・`TypeClasses.constraintGenerationPrincipality`。既存三定理を特殊化し、呼出側にモデル法則を要求しない。元の条件は維持。
+- [x] `TypeClassesRegression.lean`。Eq・Ord・Empty、入れ子リスト、空環境、アリティ0・3、任意の潜在効果の関数型、循環だけでは所属がないことを検査。
+- [x] `eqLambdaTyping`・`handledMethodTyping`・`universalClauseTyping`。資格付きメソッド利用と多相操作を処理する deep handler の独立した直接導出。
+- [x] 両例の健全性・完全性・主要制約性と `eqLambdaGeneratedSatisfiable`・`handledMethodGeneratedSatisfiable`。Int の具体的割当てで生成制約を充足。
+- [x] 標準 `import EHMX` と `tests/EHMXInference.lean` で公開入口を適用検査。README・型クラス説明・仕様・TODO を更新。
+
+検査結果：`lake build`（839 jobs）、既存 Goal 型検査、推論回帰、全 EHMX 定理の公理監査（1098宣言）が成功。許容公理は `propext`・`Classical.choice`・`Quot.sound` のみで、sorry・追加公理はない。既存の Assumptions・Goal・構文・型付け規則・生成規則・HMX 定義は変更していない。
+
+この固定モデルと適用の完了条件に残る証明義務はない。次に必要なモデル補題もない。辞書変換、メソッド本体の実行意味や法則、インスタンス探索器、GHC 拡張、Haskell 全体との同値性、ソルバーの存在は対象外であり、完成した保証とは区別する。PDF の更新・再生成・整合性検査は行っていない。

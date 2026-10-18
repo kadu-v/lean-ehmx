@@ -62,3 +62,30 @@ example : ¬ Satisfiable Concrete.signature Concrete.model []
 example : generate signature (.perform 9 identity) base .empty = .falsity := unknownOperationRejected
 example (C : Constraint) : ¬ Typing Concrete.signature Concrete.model signature [] C {}
     (.perform 9 identity) base .empty := unknownOperationHasNoDerivation C
+
+namespace TypeClassesPublic
+open EHMX.TypeClasses
+open EHMX.TypeClasses.Regression
+
+example : EffectFramework (TypeClasses.signature E) (TypeClasses.model E) := fixedFramework E
+
+example : Typing (TypeClasses.signature exampleEnv) (TypeClasses.model exampleEnv) operations []
+    (infer operations initialEnv eqLambda (eqType alpha) .empty) initialEnv eqLambda (eqType alpha) .empty :=
+  TypeClasses.inferenceSoundness exampleEnv operations operationsWF [] initialEnv eqLambda (eqType alpha) .empty
+    (by simp) initialEnvWF (typingWF eqLambdaTyping).2.2.2.1 (typingDeclared eqLambdaTyping)
+    (eqTypeKind alphaKind) (emptyKind (fixedFramework exampleEnv).signature)
+
+example : Entails (TypeClasses.signature exampleEnv) (TypeClasses.model exampleEnv) [] eqConstraint
+    (infer operations argumentEnv handledMethod boolTy .empty) :=
+  TypeClasses.inferenceCompleteness exampleEnv operations operationsWF [] eqConstraint argumentEnv
+    handledMethod boolTy .empty (by simp) argumentEnvRealizable handledMethodTyping
+
+example : PrincipalConstraint (TypeClasses.signature exampleEnv) (TypeClasses.model exampleEnv) operations []
+    argumentEnv handledMethod boolTy .empty (infer operations argumentEnv handledMethod boolTy .empty) :=
+  TypeClasses.constraintGenerationPrincipality exampleEnv operations operationsWF [] argumentEnv handledMethod
+    boolTy .empty (by simp) argumentEnvWF (typingWF handledMethodTyping).2.2.2.1
+    (typingDeclared handledMethodTyping) boolKind (emptyKind (fixedFramework exampleEnv).signature)
+
+example : Satisfiable (TypeClasses.signature exampleEnv) (TypeClasses.model exampleEnv) []
+    (infer operations argumentEnv handledMethod boolTy .empty) := handledMethodGeneratedSatisfiable
+end TypeClassesPublic

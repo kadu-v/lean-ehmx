@@ -15,3 +15,6 @@ import EHMX.Regression
 import EHMX.InferenceRegression
 import EHMX.SafetyRegression
 import EHMX.InferenceTheoremRegression
+import EHMX.TypeClasses
+import EHMX.Proofs.TypeClasses
+import EHMX.TypeClassesRegression

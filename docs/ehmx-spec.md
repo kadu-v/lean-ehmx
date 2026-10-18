@@ -98,7 +98,21 @@ operationClauseInstantiation は引数と継続の型を同じ型・効果引数
 
 ソルバー、参照・ストア、組込み定数の簡約、複数操作節、shallow handler は対象外である。既存 HMX の証明や参照先リポジトリを変更していない。
 
-## 9 再現と検証
+## 9 型クラスを X とする固定モデル
+
+`EHMX.TypeClasses` は HMX の `ClassEnv`・`InstanceRule`・整形式条件・アリティを共有する具体モデルである。型の意味値は Int・Bool・リスト・効果付き関数型・宣言アリティに従う追加構成子の木、効果の意味値は有限操作集合とする。関数型は引数に反変、結果型と潜在効果に共変とし、ほかの型木は同一の場合のみ比較する。宣言番号0は関数型頭部として維持するが、型構文では専用 `.arrow` を使い、`.other 0` は宣言しない。
+
+`Member` はインスタンスとスーパークラス規則の最小閉包であり、クラスの非空性や所属判定器を前提にしない。関数型インスタンスの二つの型引数は入力型・結果型を参照し、潜在効果を検査しない。入れ子を含む効果付き型木を保持し、効果 kind 自体へのクラス制約は対象外とする。不正適用の全域化には Int を使い、`constructTag`・`constructArguments`・`constructorPreserves` が整形式な適用の名前と全引数を保存する。
+
+`fixedFramework` と `fixedArrowSeparated` は任意の宣言データに対して証明済みである。`instanceEntailment` は `E.WF` と型引数の kind 0・潜在効果の kind 1 を要求し、`memberDeclared` は `E.WF` の下で所属先の宣言済み性を保証する。`memberEmbedIff` は空の潜在効果で埋め込んだ HMX 型木のクラス所属と元の所属の同値性を証明する。推論体系全体の同値性は主張しない。
+
+同名前空間の `inferenceSoundness`・`inferenceCompleteness`・`constraintGenerationPrincipality` はモデル法則を内部で構成し、既存三定理を適用する。これは ATTAPL 10.4.4・10.4.8・429–430頁の EHM(X) 拡張の具体化であり、モデル構成そのものを原典の番号付き定理とは扱わない。操作シグネチャの整形式性、作用域、kind、完全性の環境実現可能性は元のまま維持する。
+
+`TypeClassesRegression.lean` は Eq・Ord・Empty、条件付きリスト、空のクラス環境、追加構成子、任意の潜在効果を持つ関数型インスタンス、スーパークラス循環を検査する。資格付き `eq` の通常のスキームを用いる `λx.λy.eq x y` と、多相操作 `op : ∀β. β → β` を含む `eq (perform op x) y` の deep handler を直接型付けする。全称操作節では引数を継続へ渡し、処理後の効果は空である。両例に推論三定理を適用し、Int の割当てによる生成制約の充足可能性も証明する。
+
+詳細と前提の対応は [型クラスモデル](typeclasses.md) を参照。辞書変換、メソッド本体や法則、インスタンス探索器、GHC 拡張、Haskell 全体との同値性、ソルバーの存在は対象外である。
+
+## 10 再現と検証
 
 lake build は HMX、EHMX、回帰例を検査する。回帰例は実行・生成・型付けを区別する。handlerGenerationWF は生成制約の整形式性であり、handler 全体の推論健全性ではない。SafetyRegression.lean は実際の型付けに最終保存定理を適用し、混合引数、let 右辺の捕捉、継続の二回利用、開いた環境、同じ操作・異なる操作の handler、操作節からの再実行を検査する。存在量化された型引数を使い、exists_ / strengthen / sub を経由する捕捉も含む。tests/EHMXGoals.lean は完成した九つの Goal と任意の Δ C Γ T ε に対する多歩保存の型を直接検査し、tests/EHMXAxioms.lean は全 EHMX 定理の依存公理を監査する。InferenceRegression.lean は開いた環境、遮蔽、束縛の複数段参照、充足不能な環境、値 let の局所的な健全性、混合 kind の操作と handler の生成補題を検査する。さらに InferenceTheoremRegression.lean は最終三定理を開いた環境・全項構成子・値への letMono・一つの let の異なる型と潜在効果での利用・充足不能な生成制約へ適用する。主要制約性から別の制約による含意も検査する。CI では tests/EHMXGoals.lean と tests/EHMXInference.lean も実行する。
 
