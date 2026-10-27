@@ -12,6 +12,24 @@
 
 証明済みの範囲と必要な前提は、以下の「証明の範囲」に記載しています。原典の章全体や、CEHMX の資源安全性の完成を主張するものではありません。
 
+## モチベーション：関数が起こせる効果を制限する
+
+```haskell
+-- 疑似コード：未処理の書き込み効果を禁止し、ほかの効果は許す
+effect { 
+    readInt : Unit → Int
+    writeInt : Int → Unit
+}
+
+noWrite : ∀α ε. writeInt ∉ ε ⇒ (Unit → ε α) → ε α
+noWrite task = task ()
+
+noWrite (λ_ → 42)                       -- OK：ε = {}
+noWrite (λ_ → perform readInt ())       -- OK：ε = {readInt}
+noWrite (λ_ → perform writeInt 42)      -- NG：writeInt ∉ {writeInt} は不成立
+-- writeInt ∉ ε は ({writeInt} ⊆ ε) ⇒ False の略記
+```
+
 ## ビルドと検証
 
 [elan](https://github.com/leanprover/elan) を導入し、リポジトリのルートで実行します。初回のツールチェーン・依存ライブラリ・キャッシュの取得にはネットワーク接続が必要です。
